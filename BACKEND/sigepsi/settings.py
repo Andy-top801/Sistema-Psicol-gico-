@@ -41,6 +41,7 @@ SHARED_APPS = (
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
+    'drf_spectacular',
     
     # local
     'apps.users',
@@ -58,6 +59,7 @@ TENANT_APPS = (
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
+    'drf_spectacular',
     
     # local
     'apps.users',
@@ -158,10 +160,17 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'no-reply@sigepsi.com')
 PASSWORD_RESET_TIMEOUT = 60 * 5
 
 REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     )
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'SIGEPSI API',
+    'DESCRIPTION': 'Documentación de la API del sistema SIGEPSI',
+    'VERSION': '1.0.0',
 }
