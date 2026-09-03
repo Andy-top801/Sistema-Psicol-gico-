@@ -4,6 +4,7 @@
   grid-template-columns: repeat(4, 1fr);
   gap: var(--space-5);
   margin-bottom: var(--space-10);
+  padding: 0 var(--space-10);
 }
 
 .stat-card {
@@ -91,6 +92,7 @@
   color: var(--color-text);
   margin-bottom: var(--space-5);
   letter-spacing: -0.3px;
+  padding: 0 var(--space-10);
 }
 
 /* --- Quick Actions --- */
@@ -98,6 +100,7 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: var(--space-5);
+  padding: 0 var(--space-10);
 }
 
 .quick-action {
@@ -159,6 +162,7 @@
   border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: var(--shadow-sm);
+  margin: 0 var(--space-10);
 }
 
 .info-row {
