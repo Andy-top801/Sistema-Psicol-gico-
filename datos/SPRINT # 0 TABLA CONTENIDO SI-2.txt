@@ -1,0 +1,151 @@
+================================================================================
+TABLA DE CONTENIDO - PROYECTO SISTEMAS-2 (S2-2026)
+================================================================================
+
+PÁGINA 1
+--------------------------------------------------------------------------------
+1.  Caratula
+2.  Tabla de contenido
+3.  Introducción
+4.  Antecedentes
+    a.  Fundamentación teórica
+    b.  Sistemas similares
+    c.  Casos de estudio
+5.  Descripción del problema
+6.  Objetivos
+    a.  General
+    b.  Específicos
+7.  Alcance
+8.  Elementos del SIBC (Sistema de Información... - pendiente siglas)
+9.  Tecnología
+    a.  Para el desarrollo
+    b.  Para la puesta en marcha
+10. Costos para la puesta en marcha
+    a.  Hardware
+    b.  Software
+    c.  Comunicaciones
+    d.  Humanos
+    e.  Logística
+11. Beneficios para el cliente
+    a.  Tiempo
+    b.  Esfuerzo humano
+    c.  Costos
+12. Bibliografía
+    a.  Libros/literatura papel/digital
+    b.  Sitios web especializados
+    c.  Personas (Entrevistas/comunicación con casos de estudio)
+
+================================================================================
+PÁGINA 2
+================================================================================
+
+CAPÍTULO 1: MARCO REFERENCIAL Y ÁGIL
+--------------------------------------------------------------------------------
+1.1  Marco Referencial
+     (Fundamentos, generalidades, características, conceptos específicos del rubro
+     que están elaborando su proyecto)
+
+1.2  Marco de trabajo ágil SCRUM
+
+================================================================================
+CAPÍTULO 2: HERRAMIENTAS TECNOLÓGICAS PARA EL DESARROLLO
+--------------------------------------------------------------------------------
+- Lenguaje de Programación (WEB, MÓVIL)
+- Frameworks y entornos de ejecución
+- Sistema de gestor de base de datos
+- Lenguaje de modelado de software (Modelo C4)
+- Herramienta de diseño y modelado (Enterprise Architect)
+- Entorno de Desarrollo
+- Infraestructura de software (IaaS)
+- Servicio en la nube (Cloud Computing)
+  (Azure, Amazon AWS, IBM Cloud, Google Cloud, otros)
+- SAAS (Software as a Service, SaaS)
+- Herramientas Colaborativas para Seguimientos de Proyectos
+  (Jira Software, Trello, Confluence, otros)
+- Sistema de control de Versiones de código (Git)
+- Herramientas de Gestión de Código en la Nube (Bitbucket)
+
+================================================================================
+CAPÍTULO 3: REQUERIMIENTOS
+--------------------------------------------------------------------------------
+3.1  Propósito
+3.2  Ámbito del Sistema
+3.3  Equipo SCRUM
+     (Product Owner, Stakeholders, Scrum Master, Scrum Development)
+3.4  Definiciones, Acrónimos y Abreviaturas (Referencias)
+3.5  Funciones del Producto
+     (Describir características de funcionalidad)
+3.5  Product Backlog (nota: duplicado en numeración, probablemente 3.6)
+3.6  Requisitos Funcionales
+     (Elaborar tabla App web y móvil)
+3.7  Requisitos no funcionales
+3.8  Lista de casos de uso (web y móvil)
+3.9  Paquetes y casos de Uso
+3.10 Planificación Sprint (Diagrama de Gantt)
+
+================================================================================
+PÁGINA 3
+================================================================================
+CAPITULO 4
+DESARROLLO POR SPRINT
+--------------------------------------------------------------------------------
+
+1.  SPRINT PLANNING
+    1.1  Objetivos del Sprint
+    1.2  Historias de usuario
+         (tarjetas 3C, Planning Poker, prototipos)
+    1.3  Contexto del sistema
+    1.4  Sprint Backlog
+    1.5  Equipo SCRUM
+
+2.  PROCESO/PATRÓN DE DESARROLLO POR HISTORIA DE USUARIO
+    2.1  Diseño
+         2.1.1  Diseño de la arquitectura
+         2.1.2  Diseño de datos
+         2.1.3  Diseño de la lógica de negocio
+    2.2  Implementación
+         2.2.1  Componentes y artefactos generados
+    2.3  Pruebas
+         2.3.1  Plan de pruebas (criterios de aceptación)
+         2.3.2  Reporte de prueba
+
+3.  DAILY SCRUM (o Scrum diario)
+
+4.  SPRINT REVIEW
+
+5.  SPRINT RETROSPECTIVE
+
+6.  BURNDOWN Y BURNUP
+    (Gráfica de tareas y Datos de tareas)
+
+7.  GRÁFICA DE ESFUERZO Y DATOS DE ESFUERZO
+
+8.  SCRUM TASKBOARD
+    (Backlog, To Do, Doing, Done)
+    - Sprint 1
+    - Sprint 2
+    - Sprint 3
+    - Sprint 4
+
+================================================================================
+PÁGINA 4
+================================================================================
+
+BIBLIOGRAFÍA
+--------------------------------------------------------------------------------
+(Detalle de fuentes)
+
+ANEXOS
+--------------------------------------------------------------------------------
+- Caso de Estudio 1
+- Caso de Estudio 2
+- Caso de Estudio 3
+
+CRONOGRAMA DE SPRINTS - S2-2026 (SISTEMAS-2)
+--------------------------------------------------------------------------------
+Sprint 0:  25 y 27 agosto
+Sprint 1:  08 y 10 septiembre
+Sprint 2:  06 y 08 octubre
+Sprint 3:  03 y 05 noviembre
+Sprint 4:  24 y 26 noviembre
+================================================================================

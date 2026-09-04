@@ -1,0 +1,43 @@
+(Transcrito por TurboScribe. Actualizar a Ilimitado para eliminar este mensaje.)
+
+Esto es para el primer examen parcial. Sin embargo, en la parte del proyecto, estamos con escala, pero estamos igual con UML. Entonces, esto es para el proyecto.
+
+Entonces, eso es lo que hay que ver los lineamientos, para que no se equivoquen, ni tampoco hagan diagramas que sea 1.x, habíamos pedido 2.5 más. Eso significa que en estas versiones, cada uno de los modelos está totalmente identificado con sus características de cada uno de estos artefactos. Por ejemplo, si comenzamos desde la definición de UML, es la misma.
+
+O sea, visualizamos significa que tenemos vista en todos los ámbitos del desarrollo del software. Visualizamos el área de los datos, visualizamos la parte de la arquitectura, visualizamos la etapa donde ustedes empiezan a hacer las capturas de los requisitos, visualizamos la etapa de los procesos, visualizamos la lógica de negocio. O sea, la vista se encuentra en todos los escenarios que ustedes puedan identificar cada una de ellas.
+
+Entonces, como visualizaciones, UML presenta un conjunto de modelos. Estos modelos son diagramas que forman las características que deben representar lo que nosotros queremos trabajar dentro de un área. Entonces, es así que esta parte de visualización UML, desde que se creó con su versión ECO 1.x y 2.0 hacia arriba, las vistas se encuentran dentro de las características.
+
+Cuando decimos especificar, para poder desarrollar hay especificaciones. Esas especificaciones, en primera instancia, tal vez son algo escrito como un perfil, donde nosotros empezamos a decir qué características debe tener cada una de las distintas funcionalidades que nosotros queremos trabajar dentro de un área. Esas especificaciones pueden estar hechas en dos sectores.
+
+Uno se llama requisito funcional y el otro se llama requisito no funcional. Entonces, los requisitos funcionales son los que nosotros queremos que trabaje el software. Sin embargo, los requisitos no funcionales es cómo nosotros queremos que se proteja, que tenga la seguridad, que se pueda trabajar dentro de ámbitos adecuados.
+
+Tal es así que fíjense que cuando ustedes empiezan a trabajar con administración de usuarios y fíjense cuando hacen un inicio de sesión, cuando ustedes recién están comenzando a colocar el nombre del usuario y la contraseña, ya buscamos protección. Ya decimos que nuestra contraseña debe estar cifrada, no debe almacenarse en una tabla de la base de datos, debería tener un conjunto de características, como por ejemplo, que es cierto que tiene 8 caracteres, pero está en un mercado que tiene números, tiene minúsculas, tiene mayúsculas, tiene caracteres especiales, o sea, ya desde ahí. Entonces, eso significa que estamos haciendo requisitos no funcionales, se llaman eso.
+
+Entonces, todo lo que trabajamos en la etapa de la autenticación y en la etapa de la autorización, son autorización y autenticación, para poder trabajar con la mitad, por ahí todo lo demás. Es así, fíjense, que cuando ustedes van detallando cada uno de ellos, sabemos exactamente lo que nosotros queremos representar. Por eso, cuando aquí dice documentar, lo que estamos haciendo es el documento.
+
+Entonces, el documento de ustedes, hasta este momento, está dentro de la característica de la parte inicial del proyecto. Es por eso que hemos hecho un sprint cero. En este sprint cero, se han visto las características necesarias, prioridades, quién es primero y quién después, por qué.
+
+Porque sucede que estamos trabajando con este marco de trabajo. Entonces, en ese momento, cuando ustedes han hecho el sprint cero, no solamente han usado modelos OML, han utilizado las estrategias del desarrollo del software. Dentro de la disciplina de desarrollo del software, al margen que yo esté ligado a un paradigma de desarrollo del software, siempre va a pasar por requisitos, análisis, diseño, implementación y prueba.
+
+Eso en el ámbito de desarrollo. Cuando ya lanzamos versiones, ya se llama mantenimiento del software. Cuando ya tenemos versiones operativas, trabajando en un lugar.
+
+Pero mientras está en construcción, seguimos trabajando bajo la estrategia del desarrollo. Es así que ustedes van a poder también notar que este documento, dependiendo de lo que ustedes trabajen, con qué paradigma de desarrollo del software, se empieza a documentar. Y luego dice construir los artesanos del sistema.
+
+O sea, dentro de una construcción, si bien es cierto, los modelos a nosotros nos ayudan muchísimo. Por ejemplo, cuando ustedes quieren hacer una base de datos, ustedes no se sientan y hacen por hacerlo. Lo primero que han hecho, lógicamente han pensado cómo quedará.
+
+Entonces, parece que ustedes toman un diagrama de clase y empiezan a ver exactamente qué se llama la clase, qué atributos tiene la clase, qué tipo de relación va a tener, qué tipo de multiplicidad es la más apropiada y adecuada para que podamos saber exactamente cuál es el modelo que nosotros queremos hacer. Lo mismo cuando hacemos los casos de uso, trabajando con el proceso unificado, que dentro del proceso unificado, con las características que también dice qué debe ser el primero dirigido por caso de uso. Entonces, aquí estamos obligados básicamente a que cada uno de los requisitos que escribimos alguna vez en un documento sea parte de lo que viene a ser un caso de uso.
+
+Entonces, es así que cuando ustedes lo están trabajando, identificamos captura de requisitos. Entonces, captura de requisitos, como ya el proceso unificado es una metodología robusta, ahí viene el conjunto de actividades. Entonces, estas actividades que ustedes han podido ver, en cualquier libro que tomen del proceso unificado, lo primero que dice es identifique quiénes son sus casos de uso, identifique quiénes son sus actores.
+
+Entonces, a medida que nosotros hemos recolectado en un perfil el conjunto de funcionalidades, por ejemplo, en el imparcial, se le ha dado un conjunto de funcionalidades mínimas. Ustedes habrán podido ver que tiene un conjunto de módulos, pero no estoy pidiendo que hagan un conjunto de características de todo. Por eso, le definí una lista de requisitos funcionales mínimos.
+
+Cada grupo personaliza, ¿qué más me tiene en ruido? Cada grupo puede decir, esto lo voy a aumentar, esto lo voy a hacer. Por eso es que se le ha explicado cuál es el ámbito, el alcance, la frontera que tiene, para que ustedes, en función a lo que van trabajando, van delimitando el alcance. Y para que también ustedes no se imaginen, o tampoco digan, a ver qué, cuánto lo hago, qué tan grande va a ser, o qué tan chico va a ser mi proyecto, le hice una lista, le elaboré una lista de requisitos funcionales, para que ustedes tengan, como se dice, una referencia genérica entre todos los grupos.
+
+Sobre eso, ustedes personalizan. Entonces, dicen ustedes, todo esto que son requisitos mínimos, que va a ser parte de mi documento, yo le agrego esto más. Entonces, ahí vemos que cada uno ha colocado alguna característica más.
+
+La misma situación, hemos trabajado ya con el Ejército. Es por eso que estamos en el punto de partida. Estamos iniciando un proyecto con lo que es un marco de trabajo ágil, y por otro lado estamos haciendo un examen parcial, con el proceso unificado.
+
+Entonces, tenemos que tener las directrices y los lineamientos bien esclarecidos, para que ustedes puedan trabajar sin ningún tipo de dificultad. Entonces, fíjense, ahorita ustedes están trabajando ya en el examen parcial. Ya se les dijo cuál es el tamaño, qué características se tienen, porque estamos trabajando con un buen médico.
+
+(Transcrito por TurboScribe. Actualizar a Ilimitado para eliminar este mensaje.)

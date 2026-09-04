@@ -1,0 +1,73 @@
+(Transcrito por TurboScribe. Actualizar a Ilimitado para eliminar este mensaje.)
+
+Bienvenidos por caso de gusto, Centro de arquitectura y... ¿Qué se llama la última? ¿Qué se llama la última? ¿Se olvidaron? No puede ser. Van a ir a sistema uno. ¿Qué se llama la última? ¿Ninguno? ¿Qué, güey? ¿La lluvia afectó? A ver, ahí atrás.
+
+¿Qué se llama la tercera característica del proceso unificado? Interactivo. ¿Habla usted? Interactivo. Interactivo e incremental.
+
+¿Cómo saben? Nada más que nos quieren decir. Interactivo e incremental. Son iteraciones.
+
+Y fíjense que hemos hecho tres fechas, ¿no es cierto? Entonces, para ustedes lo vean, tres fechas. Entonces, la primera, interactivo e incremental, debe verse completista. No es de que en la primera solo me mandan perfil.
+
+Si me mandan perfil, no me he hecho absolutamente nada. Interactivo e incremental. ¿Qué significa interactivo e incremental? De que, al menos, cuando hacemos el uso del proceso unificado, interactivo e incremental significa que debo entregar un producto al finalizar.
+
+Porque ustedes, en ese caso de uso, ¿qué es lo que han hecho? Priorizar cuál es lo más urgente que yo necesito desarrollar. Entonces, ustedes eligen. Necesito el caso de uso 1, el caso de uso 7, el caso de uso 15, el caso de uso 23.
+
+No sé cuántos casos de uso tienen. Todo eso es mi primera iteración, que van a decir acá, ¿no? Entonces, ¿qué le van a hacer? Van a hacer todo lo que implica el proceso unificado. ¿Qué implica? Captura de requisitos, ¿qué hacen? Los casos de uso.
+
+¿Cuántos puntos son en la parte de captura de requisitos? Cinco. ¿Cuáles son los cinco? Identificar caso de uso. ¿Qué más? Y actores. 
+
+¿Segundo? Priorizar caso de uso. ¿Tercero? Detalle de caso de uso. ¿Cuarto? Estructural.
+
+Prototipo. Nos olviden de su prototipo. Y el último, estructural, lo modelo del caso de uso.
+
+Entonces, no quiero ver documentación incompleta para este sábado que toca presentar el primer documento del primer examen parcial. Entonces, esto es lo que ustedes han visto en el sistema 1. Ahora, luego van a pasar al segundo flujo de trabajo que se llama análisis. ¿Cuántos puntos hay aquí? A ver, acuérdense.
+
+¿Cuántos puntos son en análisis? Siete. ¿El primero qué se llama? Identificación de paquetes. ¿Qué se llama? Identificar paquetes.
+
+Ya, pero ¿qué se llama eso? Identificar paquetes, pero ¿qué se llama el nombrecito de la actividad? A ver. No, eso es diseño, ya es. El flujo de trabajo de diseño está en análisis todavía.
+
+¿Qué se llama? A ver. Padre Velasco. ¿Cuál es? Está pensando, está acordándose.
+
+¿Nada? En vez de diseño, ¿qué cosa sería? Análisis de arquitectura, ¿se acuerda? Análisis. Ya me dijeron diseño de arquitectura. Estoy en el flujo de trabajo.
+
+A ver, ¿vamos denumerándolo? Ya, porque yo sé que me lo van a presentar a media y no queremos devolverlo lo este, ya. Vamos a empezar por esto primero, ya. Por esto.
+
+¿Qué es lo que contiene? Significa que después de haber hecho el perfil que les pedí poquito para el primer examen comercial, ¿no es cierto? Es que no se lo he definido. Yo les dije nada más los puntos. Pero luego, ustedes miren, y aquí se acuerden cuando a la hora que lo van a hacer, lo presentan a media.
+
+Entonces, ¿qué significa que cuando ustedes digan? Esto es para el proceso unificado con UML en realidad. Ya trabajando con su flujo de trabajo, que significa el primero captura de requisito. Ahí lo vamos a anotar para hacer un repaso genérico del anterior semestre.
+
+¿Qué es lo que será considerado aquí? Entonces, ustedes en el 1.1 identifican los casos de uso y actores. Entonces, no se olviden que ahí hacen una lista de todos los posibles actores que deben interactuar. Yo no voy a definir un actor que no va a interactuar con algún caso de uso.
+
+Todo en algún momento sí o sí interactúa. Y los casos de uso son las tareas donde se lo van especificando. En 1.2, ¿qué será? Priorización de casos de uso.
+
+Ya no se olviden que en esta priorización existen diferentes maneras para que ustedes lo puedan trabajar. Significa que hemos trabajado con altos, medios y bajos. Empezamos a clasificar cada caso de uso, qué característica de esfuerzo tiene.
+
+Normalmente cuando son transacciones, significa una venta, una compra, una inscripción, una devolución, un carrito, lo que usted quiera. No es lo mismo que yo pueda registrar un cliente, que pueda registrar un proveedor, que pueda registrar un vendedor. Porque ahí no necesito, de repente, más que una tablita.
+
+Cuando ustedes van a la base ATO, ustedes dicen, a ver, registrar una tupla aquí en esta tablita de la base ATO. Y se acabó. Entonces, ¿eso qué significa? Que nosotros estamos trabajando con el caso de uso base, se llama.
+
+Caso de uso base, básico. Porque no necesito de mucha información, no estoy haciendo una integración. Solamente estoy preparando, más bien, para que luego las transacciones las utilicen.
+
+Entonces, eso habría que un poquito definirlo. Entonces, a veces, si yo digo, bueno, a ver, yo quiero hacer una venta. Entonces, ¿qué es lo que debería preparar? Primeramente, debería buscar al cliente, registrar al vendedor, si es que fuera de manera presencial.
+
+Registrarlo, que se llama, al cliente, al vendedor. Y, de repente, al almacenero, si lo embala los productos. Porque todo modelo de negocio, dependiendo cómo se lo trabaje, se involucran actores.
+
+Entonces, si yo digo venta, es verdad que ya tengo el vendedor, tengo el cliente, ya puedo hacer este tipo de proceso. Pero me olvidé de lo más importante. Porque no hago nada yo con personas si no tengo productos que vender.
+
+Entonces, lo primero que debía hacer en mi primera iteración es trabajar con el inventario. Es que si el inventario yo no lo hice, ¿qué le voy a vender? Así lo hubiera registrado al cliente, lo hubiera registrado al vendedor. No tengo el producto para vender.
+
+Entonces, como no tengo el producto, entonces, el siguiente caso de uso en que yo debo trabajar son los productos. No se olviden jóvenes que cuando hablamos de producto, hay que hablar de productos en todo el ámbito de un producto. O sea, un producto puede tener marca, puede tener modelo, puede tener lote, puede tener familia, unidades de medida, dependiendo.
+
+En el caso nuestro, que es ropa, ¿síganse? Ropa. Hemos dicho que es una tienda de ropa. Entonces, todas las personas tienen la misma talla, ¿entienden? Todas las personas tienen diferentes tallas.
+
+Entonces, yo tengo que saber cómo lo voy a clasificar en mi inventario. No solamente voy a decir, a ver, ¿en qué registre este producto? Talla. Y aparte de eso, marca.
+
+Y aparte de eso, los colores son demasiado importantes, es un atributo importantísimo. Porque hay gente que no le gusta ponerse, se ve un color blanco o negro de repente toda su vida, ¿no? No se pone de colores fuertes, ¿entienden? Y hay otra persona que no le gusta para nada esos colores de preferencia. Obviamente, cada uno sabe cómo se va a vestir, ¿no es cierto? Entonces, ¿qué sucede? Que a veces hay personas que no les gusta tener dos colores en una sola prenda o un solo color.
+
+A otros les gusta floreados, acuados, o sea, hay de todo. ¿Se dan cuenta entonces? Entonces, ¿qué tratamiento yo le voy a dar a mi inventario? Porque lo que no quiero ver yo es que ustedes nada más registren el producto y se acabó. Entonces, hay marca, talla, modelo, colores.
+
+Y no se olviden que los colores son multivaluados, tienen más de un valor. Porque a veces las coleras tienen tres o cuatro colores, o las blusas, o las camisas, o lo que ustedes quieran. Hay camisas que son blancas, pero las mangas les ponen, o los cuellos les ponen negro, ¿lo ven? Entonces, esas características, ¿cómo ustedes lo van a almacenar? Entonces, ¿qué están haciendo ustedes para almacenar ese producto? Una vez que yo hice mi tratamiento de mi inventario, ya tengo mi inventario, ya tengo el cliente, ya tengo la venta.
+
+Recién puedo hacer una transacción. ¿Qué significa entonces hacer una transacción? Que el cliente va a poder mirar el catálogo digital, porque eso es lo que apuntamos. A que el cliente va a poder ver en la web o en su móvil el catálogo digital.
+
+(Transcrito por TurboScribe. Actualizar a Ilimitado para eliminar este mensaje.)
