@@ -1,213 +1,118 @@
-<div class="centro-config-page">
-  <!-- Breadcrumbs & Header -->
-  <div class="page-topbar-nav">
-    <span class="breadcrumb-item">Panel de Administración</span>
-    <span class="breadcrumb-separator">></span>
-    <span class="breadcrumb-current">Configuración del Centro</span>
-  </div>
+<div class="breadcrumbs">
+  <span>Panel</span><span>›</span><span class="breadcrumb-current">Configuración del centro</span>
+</div>
 
-  <div class="page-header-row">
-    <div>
-      <h1 class="page-title">Perfil del Centro Psicológico</h1>
-    </div>
-    <div class="header-actions">
-      <button type="button" class="btn btn-outline">
-        <svg viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px;margin-right:6px;"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg>
-        Vista Previa Perfil Público
-      </button>
-      <button type="button" class="btn btn-primary-emerald" (click)="onSave()" [disabled]="isLoading">
-        <svg *ngIf="!isLoading" viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px;margin-right:6px;"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-        <span *ngIf="!isLoading">Guardar Cambios</span>
-        <span *ngIf="isLoading" class="btn-spinner"></span>
-      </button>
-    </div>
-  </div>
-
-  <!-- Tabs Navigation -->
-  <div class="tabs-nav-bar">
-    <button 
-      class="tab-nav-btn" 
-      [class.active]="activeTab === 'generales'" 
-      (click)="setTab('generales')">
-      Datos Generales
-    </button>
-    <button 
-      class="tab-nav-btn" 
-      [class.active]="activeTab === 'horarios'" 
-      (click)="setTab('horarios')">
-      Horarios de Atención
-    </button>
-    <button 
-      class="tab-nav-btn" 
-      [class.active]="activeTab === 'especialidades'" 
-      (click)="setTab('especialidades')">
-      Especialidades
-    </button>
-    <button 
-      class="tab-nav-btn" 
-      [class.active]="activeTab === 'branding'" 
-      (click)="setTab('branding')">
-      Branding & Logo
+<app-page-header
+  eyebrow="CU1 · HU-04"
+  title="Perfil del centro psicológico"
+  subtitle="Datos institucionales visibles para los pacientes.">
+  <div actions>
+    <button type="button" class="btn btn--primary" (click)="onSave()" [disabled]="isLoading">
+      {{ isLoading ? 'Guardando…' : 'Guardar cambios' }}
     </button>
   </div>
+</app-page-header>
 
-  <!-- Feedback Alerts -->
-  <div *ngIf="successMessage" class="alert-box alert-success mb-4">
-    <svg viewBox="0 0 20 20" fill="currentColor" style="width:18px;height:18px;"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-    <span>{{ successMessage }}</span>
-  </div>
+<div *ngIf="loadError" class="alert-box alert-danger">
+  No se pudo cargar la configuración.
+  <button type="button" class="link-btn" (click)="loadConfig()">Reintentar</button>
+</div>
+<div *ngIf="successMessage" class="alert-box alert-success">{{ successMessage }}</div>
+<div *ngIf="errorMessage" class="alert-box alert-danger">{{ errorMessage }}</div>
 
-  <div *ngIf="errorMessage" class="alert-box alert-danger mb-4">
-    <svg viewBox="0 0 20 20" fill="currentColor" style="width:18px;height:18px;"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
-    <span>{{ errorMessage }}</span>
-  </div>
+<div class="tabs-nav-bar">
+  <button class="tab-nav-btn" [class.active]="activeTab === 'generales'" (click)="setTab('generales')">Datos generales</button>
+  <button class="tab-nav-btn" [class.active]="activeTab === 'horarios'" (click)="setTab('horarios')">Horarios</button>
+  <button class="tab-nav-btn" [class.active]="activeTab === 'especialidades'" (click)="setTab('especialidades')">Especialidades</button>
+  <button class="tab-nav-btn" [class.active]="activeTab === 'branding'" (click)="setTab('branding')">Branding</button>
+</div>
 
-  <!-- TAB 1: DATOS GENERALES -->
-  <div *ngIf="activeTab === 'generales'" class="card-section">
-    <div class="card-section-header">
-      <div>
-        <h2 class="section-title">Información Institucional del Centro</h2>
-        <p class="section-subtitle">Datos legales y de contacto visibles para los pacientes en la plataforma de reservas.</p>
+<div class="content-card">
+  <!-- Generales -->
+  <div *ngIf="activeTab === 'generales'" class="form">
+    <div class="field">
+      <label class="field__label">Nombre del centro</label>
+      <input type="text" [(ngModel)]="centro.nombre" class="field__input">
+    </div>
+    <div class="form__row">
+      <div class="field">
+        <label class="field__label">Identificación fiscal / NIF / RIF</label>
+        <input type="text" [(ngModel)]="centro.nif_rif" class="field__input">
       </div>
-      <div class="health-verification-badge">
-        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-        Verificado Habilitación Salud
+      <div class="field">
+        <label class="field__label">Registro sanitario / licencia</label>
+        <input type="text" [(ngModel)]="centro.registro_sanitario" class="field__input">
       </div>
     </div>
-
-    <div class="form-content">
-      <!-- Nombre del Centro -->
-      <div class="field-full">
-        <label class="form-label">NOMBRE DEL CENTRO / CLÍNICA <span class="text-danger">*</span></label>
-        <div class="input-with-icon">
-          <svg class="input-icon" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
-          </svg>
-          <input type="text" [(ngModel)]="centro.nombre" class="form-input" placeholder="Centro Psicográfico MenteSana & Bienestar Integral">
-        </div>
+    <div class="field">
+      <label class="field__label">Dirección</label>
+      <input type="text" [(ngModel)]="centro.direccion" class="field__input">
+    </div>
+    <div class="form__row">
+      <div class="field">
+        <label class="field__label">Teléfono de atención</label>
+        <input type="text" [(ngModel)]="centro.telefono" class="field__input">
       </div>
-
-      <!-- Fila 2: NIF/RIF y Registro Sanitario -->
-      <div class="form-row-2">
-        <div class="field">
-          <label class="form-label">IDENTIFICACIÓN FISCAL / NIF / RIF <span class="text-danger">*</span></label>
-          <input type="text" [(ngModel)]="centro.nif_rif" class="form-input" placeholder="J-90182743-2">
-        </div>
-        <div class="field">
-          <label class="form-label">REGISTRO SANITARIO / LICENCIA <span class="text-danger">*</span></label>
-          <input type="text" [(ngModel)]="centro.registro_sanitario" class="form-input" placeholder="RES-MED-2024-8891">
-        </div>
+      <div class="field">
+        <label class="field__label">Correo oficial</label>
+        <input type="email" [(ngModel)]="centro.email" class="field__input">
       </div>
-
-      <!-- Fila 3: Dirección Física -->
-      <div class="field-full">
-        <label class="form-label">DIRECCIÓN FÍSICA PRINCIPAL <span class="text-danger">*</span></label>
-        <input type="text" [(ngModel)]="centro.direccion" class="form-input" placeholder="Av. El Poblado #43A-12, Edificio Médica Suite 502, Medellín">
+    </div>
+    <div class="form__row">
+      <div class="field">
+        <label class="field__label">Modalidad de atención</label>
+        <select [(ngModel)]="centro.modalidad" class="field__input">
+          <option value="Presencial">Presencial</option>
+          <option value="Telepsicología (Online)">Telepsicología (online)</option>
+          <option value="Híbrida (Presencial + Telepsicología)">Híbrida</option>
+        </select>
       </div>
-
-      <!-- Fila 4: Teléfono y Correo Oficial -->
-      <div class="form-row-2">
-        <div class="field">
-          <label class="form-label">TELÉFONO DE ATENCIÓN AL PACIENTE <span class="text-danger">*</span></label>
-          <input type="text" [(ngModel)]="centro.telefono" class="form-input" placeholder="+57 (604) 444-9621">
-        </div>
-        <div class="field">
-          <label class="form-label">CORREO ELECTRÓNICO OFICIAL <span class="text-danger">*</span></label>
-          <input type="email" [(ngModel)]="centro.email" class="form-input" placeholder="contacto@mentesanapsicologia.com">
-        </div>
-      </div>
-
-      <!-- Fila 5: Modalidad y Línea de Crisis -->
-      <div class="form-row-2">
-        <div class="field">
-          <label class="form-label">MODALIDAD DE ATENCIÓN</label>
-          <select [(ngModel)]="centro.modalidad" class="form-input custom-select">
-            <option value="Presencial">Presencial únicamente</option>
-            <option value="Telepsicología (Online)">Telepsicología (Online) únicamente</option>
-            <option value="Híbrida (Presencial + Telepsicología)">Híbrida (Presencial + Telepsicología)</option>
-          </select>
-        </div>
-        <div class="field">
-          <label class="form-label">LÍNEA DIRECTA DE CRISIS (24/7)</label>
-          <input type="text" [(ngModel)]="centro.linea_crisis" class="form-input" placeholder="+57 (300) 911-2233">
-        </div>
+      <div class="field">
+        <label class="field__label">Línea directa de crisis (24/7)</label>
+        <input type="text" [(ngModel)]="centro.linea_crisis" class="field__input">
       </div>
     </div>
   </div>
 
-  <!-- TAB 2: HORARIOS DE ATENCIÓN -->
-  <div *ngIf="activeTab === 'horarios'" class="card-section">
-    <div class="card-section-header">
-      <div>
-        <h2 class="section-title">Horarios de Atención Semanal</h2>
-        <p class="section-subtitle">Establezca los turnos operativos disponibles para la agenda y reserva de consultas.</p>
+  <!-- Horarios -->
+  <div *ngIf="activeTab === 'horarios'" class="form">
+    <div class="form__row">
+      <div class="field">
+        <label class="field__label">Lunes a viernes</label>
+        <input type="text" [(ngModel)]="centro.horarios_atencion['lunes_viernes']" class="field__input" placeholder="08:00 - 18:00">
       </div>
-    </div>
-    <div class="form-content">
-      <div class="form-row-2" *ngIf="centro.horarios_atencion">
-        <div class="field">
-          <label class="form-label">LUNES A VIERNES</label>
-          <input type="text" [(ngModel)]="centro.horarios_atencion['lunes_viernes']" class="form-input" placeholder="08:00 - 19:00">
-        </div>
-        <div class="field">
-          <label class="form-label">SÁBADOS</label>
-          <input type="text" [(ngModel)]="centro.horarios_atencion['sabado']" class="form-input" placeholder="08:00 - 13:00">
-        </div>
+      <div class="field">
+        <label class="field__label">Sábados</label>
+        <input type="text" [(ngModel)]="centro.horarios_atencion['sabado']" class="field__input" placeholder="08:00 - 13:00">
       </div>
     </div>
   </div>
 
-  <!-- TAB 3: ESPECIALIDADES -->
-  <div *ngIf="activeTab === 'especialidades'" class="card-section">
-    <div class="card-section-header">
-      <div>
-        <h2 class="section-title">Especialidades Terapéuticas</h2>
-        <p class="section-subtitle">Áreas de atención clínica habilitadas en el centro médico.</p>
-      </div>
+  <!-- Especialidades -->
+  <div *ngIf="activeTab === 'especialidades'" class="form">
+    <div class="chips-select">
+      <span class="spec-tag" *ngFor="let esp of centro.especialidades; let i = index">
+        {{ esp }}
+        <button type="button" class="chip-x" (click)="removeEspecialidad(i)">&times;</button>
+      </span>
+      <span class="spec-tag spec-empty" *ngIf="centro.especialidades.length === 0">Sin especialidades</span>
     </div>
-    <div class="form-content">
-      <div class="specialties-chips">
-        <span class="specialty-chip" *ngFor="let esp of centro.especialidades; let i = index">
-          {{ esp }}
-          <button type="button" class="btn-remove-chip" (click)="removeEspecialidad(i)">&times;</button>
-        </span>
-      </div>
-
-      <div class="add-specialty-row mt-4">
-        <input 
-          type="text" 
-          [(ngModel)]="newEspecialidad" 
-          class="form-input" 
-          placeholder="Añadir nueva especialidad (ej. Psicoanálisis)"
-          (keyup.enter)="addEspecialidad()">
-        <button type="button" class="btn btn-outline" (click)="addEspecialidad()">
-          + Agregar
-        </button>
-      </div>
+    <div class="add-row">
+      <input type="text" [(ngModel)]="newEspecialidad" class="field__input"
+        placeholder="Añadir especialidad" (keyup.enter)="addEspecialidad()">
+      <button type="button" class="btn btn--outline" (click)="addEspecialidad()">Agregar</button>
     </div>
   </div>
 
-  <!-- TAB 4: BRANDING & LOGO -->
-  <div *ngIf="activeTab === 'branding'" class="card-section">
-    <div class="card-section-header">
-      <div>
-        <h2 class="section-title">Identidad Visual & Branding</h2>
-        <p class="section-subtitle">Personalice el logotipo y los colores corporativos para los reportes y el portal del paciente.</p>
-      </div>
+  <!-- Branding -->
+  <div *ngIf="activeTab === 'branding'" class="form">
+    <div class="field">
+      <label class="field__label">Color primario</label>
+      <input type="color" [(ngModel)]="centro.primary_color" class="field__input">
     </div>
-    <div class="form-content">
-      <div class="branding-box">
-        <div class="branding-logo-preview">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:48px;height:48px;color:#0d9488;">
-            <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/>
-            <circle cx="12" cy="12" r="3"/>
-          </svg>
-        </div>
-        <div>
-          <button type="button" class="btn btn-outline">Subir Nuevo Logotipo</button>
-          <p class="text-muted text-xs mt-2">Formatos aceptados: PNG, SVG o WEBP (máx. 2MB). Fondo transparente recomendado.</p>
-        </div>
-      </div>
+    <div class="field">
+      <label class="field__label">URL del logo</label>
+      <input type="text" [(ngModel)]="centro.logo_url" class="field__input" placeholder="https://…">
     </div>
   </div>
 </div>

@@ -760,6 +760,55 @@ textarea.modal-input {
   border-radius: var(--radius-lg);
   padding: var(--space-5);
 }
+.content-card__header {
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+.content-card__title {
+  font-size: var(--font-size-md);
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+}
+.content-card__subtitle {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin: 4px 0 0;
+}
+
+/* ---------- Formularios (layout) ---------- */
+.form {
+  display: flex;
+  flex-direction: column;
+}
+.form__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+.form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+.field__hint-text {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: 4px;
+}
+textarea.field__input {
+  height: auto;
+  min-height: 84px;
+  padding: 10px 12px;
+  resize: vertical;
+}
+@media (max-width: 640px) {
+  .form__row {
+    grid-template-columns: 1fr;
+  }
+}
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));

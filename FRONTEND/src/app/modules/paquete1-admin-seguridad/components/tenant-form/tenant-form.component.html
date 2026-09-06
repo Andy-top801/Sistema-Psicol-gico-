@@ -1,14 +1,15 @@
-<header class="page-header">
-  <div>
-    <h1 class="page-header__title">Registrar Centro Psicológico</h1>
-    <p class="page-header__desc">Configure un nuevo centro. Esto aprovisionará un esquema de base de datos aislado (Multi-Tenant).</p>
+<app-page-header
+  eyebrow="CU1 · HU-03"
+  title="Registrar centro psicológico"
+  subtitle="Se crea un esquema de base de datos aislado (Multi-Tenant) y su primer administrador.">
+  <div actions>
+    <a routerLink="/tenants" class="btn btn--outline">Cancelar</a>
   </div>
-</header>
+</app-page-header>
 
 <div class="content-card">
   <div class="content-card__header">
     <h3 class="content-card__title">Datos del centro</h3>
-    <p class="content-card__subtitle">Todos los campos son obligatorios.</p>
   </div>
 
   <form [formGroup]="tenantForm" (ngSubmit)="onSubmit()" class="form">
@@ -17,32 +18,52 @@
         <label for="name" class="field__label">Nombre del centro</label>
         <input type="text" id="name" formControlName="name" class="field__input" placeholder="Ej: Clínica San Juan">
       </div>
-      
       <div class="field">
-        <label for="schema_name" class="field__label">Nombre del esquema (BD)</label>
-        <input type="text" id="schema_name" formControlName="schema_name" class="field__input" placeholder="Ej: clinicasanjuan">
-        <span class="field__hint-text">Solo letras minúsculas sin espacios ni caracteres especiales.</span>
+        <label for="schema_name" class="field__label">Identificador (esquema)</label>
+        <input type="text" id="schema_name" formControlName="schema_name" class="field__input" placeholder="clinicasanjuan">
+        <span class="field__hint-text">Minúsculas, números y guion bajo. Empieza por letra.</span>
       </div>
     </div>
 
     <div class="field">
-      <label for="domain_url" class="field__label">Dominio principal</label>
-      <input type="text" id="domain_url" formControlName="domain_url" class="field__input" placeholder="Ej: clinicasanjuan.sigepsi.com">
-      <span class="field__hint-text">Este será el subdominio de acceso para el centro.</span>
+      <label for="domain_url" class="field__label">Subdominio de acceso</label>
+      <input type="text" id="domain_url" formControlName="domain_url" class="field__input" placeholder="clinicasanjuan.localhost">
+      <span class="field__hint-text">El centro accederá desde este subdominio.</span>
     </div>
 
-    <div *ngIf="errorMessage" class="alert alert--error">
-      {{ errorMessage }}
+    <div class="content-card__header" style="margin-top: var(--space-4)">
+      <h3 class="content-card__title">Administrador inicial del centro</h3>
+      <p class="content-card__subtitle">Podrá entrar de inmediato y crear el resto del personal.</p>
     </div>
 
-    <div *ngIf="successMessage" class="alert alert--success">
-      {{ successMessage }}
+    <div class="form__row">
+      <div class="field">
+        <label for="admin_first_name" class="field__label">Nombre</label>
+        <input type="text" id="admin_first_name" formControlName="admin_first_name" class="field__input">
+      </div>
+      <div class="field">
+        <label for="admin_last_name" class="field__label">Apellido</label>
+        <input type="text" id="admin_last_name" formControlName="admin_last_name" class="field__input">
+      </div>
     </div>
+
+    <div class="form__row">
+      <div class="field">
+        <label for="admin_email" class="field__label">Correo del administrador</label>
+        <input type="email" id="admin_email" formControlName="admin_email" class="field__input" placeholder="admin@centro.com">
+      </div>
+      <div class="field">
+        <label for="admin_password" class="field__label">Contraseña</label>
+        <input type="password" id="admin_password" formControlName="admin_password" class="field__input" placeholder="••••••••">
+      </div>
+    </div>
+
+    <div *ngIf="errorMessage" class="alert alert--error">{{ errorMessage }}</div>
+    <div *ngIf="successMessage" class="alert alert--success">{{ successMessage }}</div>
 
     <div class="form__actions">
       <button type="submit" class="btn btn--primary" [disabled]="tenantForm.invalid || isLoading">
-        <span *ngIf="!isLoading">Aprovisionar centro</span>
-        <span *ngIf="isLoading" class="btn__loader"></span>
+        {{ isLoading ? 'Aprovisionando…' : 'Crear centro' }}
       </button>
     </div>
   </form>

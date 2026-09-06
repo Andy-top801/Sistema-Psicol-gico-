@@ -1,14 +1,17 @@
 import { Component, OnInit } from '@angular/core';
 import { CentroService, CentroConfig } from '../../../../services/centro.service';
 
+type Tab = 'generales' | 'horarios' | 'especialidades' | 'branding';
+
 @Component({
   selector: 'app-centro-config',
+  standalone: false,
   templateUrl: './centro-config.component.html',
-  styleUrls: ['./centro-config.component.css']
+  styleUrls: ['./centro-config.component.css'],
 })
 export class CentroConfigComponent implements OnInit {
-  activeTab: 'generales' | 'horarios' | 'especialidades' | 'branding' = 'generales';
-  
+  activeTab: Tab = 'generales';
+
   centro: CentroConfig = {
     nombre: '',
     nif_rif: '',
@@ -16,19 +19,16 @@ export class CentroConfigComponent implements OnInit {
     direccion: '',
     telefono: '',
     email: '',
-    modalidad: 'Híbrida (Presencial + Telepsicología)',
+    modalidad: 'Presencial',
     linea_crisis: '',
-    horarios_atencion: {
-      lunes_viernes: '08:00 - 19:00',
-      sabado: '08:00 - 13:00'
-    },
-    especialidades: []
+    horarios_atencion: {},
+    especialidades: [],
   };
 
   isLoading = false;
+  loadError = false;
   successMessage = '';
   errorMessage = '';
-
   newEspecialidad = '';
 
   constructor(private centroService: CentroService) {}
@@ -39,53 +39,59 @@ export class CentroConfigComponent implements OnInit {
 
   loadConfig(): void {
     this.isLoading = true;
+    this.loadError = false;
     this.centroService.getConfig().subscribe({
       next: (config) => {
-        this.centro = config;
+        this.centro = {
+          ...this.centro,
+          ...config,
+          horarios_atencion: config.horarios_atencion ?? {},
+          especialidades: config.especialidades ?? [],
+        };
         this.isLoading = false;
       },
       error: () => {
+        this.loadError = true;
         this.isLoading = false;
-      }
+      },
     });
   }
 
-  setTab(tab: 'generales' | 'horarios' | 'especialidades' | 'branding'): void {
+  setTab(tab: Tab): void {
     this.activeTab = tab;
   }
 
   addEspecialidad(): void {
-    if (this.newEspecialidad.trim()) {
-      if (!this.centro.especialidades) {
-        this.centro.especialidades = [];
-      }
-      this.centro.especialidades.push(this.newEspecialidad.trim());
-      this.newEspecialidad = '';
+    const v = this.newEspecialidad.trim();
+    if (v && !this.centro.especialidades.includes(v)) {
+      this.centro.especialidades.push(v);
     }
+    this.newEspecialidad = '';
   }
 
   removeEspecialidad(index: number): void {
-    if (this.centro.especialidades) {
-      this.centro.especialidades.splice(index, 1);
-    }
+    this.centro.especialidades.splice(index, 1);
   }
 
   onSave(): void {
     this.isLoading = true;
     this.successMessage = '';
     this.errorMessage = '';
-
     this.centroService.saveConfig(this.centro).subscribe({
       next: (saved) => {
-        this.centro = saved;
+        this.centro = {
+          ...saved,
+          horarios_atencion: saved.horarios_atencion ?? {},
+          especialidades: saved.especialidades ?? [],
+        };
         this.isLoading = false;
-        this.successMessage = '¡Perfil institucional guardado exitosamente!';
-        setTimeout(() => this.successMessage = '', 4000);
+        this.successMessage = 'Configuración del centro guardada.';
+        setTimeout(() => (this.successMessage = ''), 4000);
       },
       error: () => {
         this.isLoading = false;
-        this.errorMessage = 'Ocurrió un error al guardar los cambios.';
-      }
+        this.errorMessage = 'No se pudieron guardar los cambios.';
+      },
     });
   }
 }

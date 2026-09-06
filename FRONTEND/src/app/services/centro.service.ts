@@ -1,8 +1,12 @@
 import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
+import { apiUrl } from '../core/api';
+
+/** CU1 / HU-04 — configuración institucional del centro (uno por tenant). */
 export interface CentroConfig {
-  id?: number;
+  id?: string;
   nombre: string;
   nif_rif: string;
   registro_sanitario: string;
@@ -11,51 +15,24 @@ export interface CentroConfig {
   email: string;
   modalidad: string;
   linea_crisis: string;
-  horarios_atencion?: { [key: string]: string };
-  especialidades?: string[];
-  branding?: {
-    logo_url?: string;
-    color_primario?: string;
-  };
+  horarios_atencion: { [key: string]: string };
+  especialidades: string[];
+  logo_url?: string;
+  primary_color?: string;
+  updated_at?: string;
 }
 
-/**
- * Config del centro. Hoy persiste en localStorage (no hay endpoint dedicado de
- * config del tenant); cuando exista se migra a `apiUrl(API.tenants)`.
- */
 @Injectable({ providedIn: 'root' })
 export class CentroService {
-  private storageKey = 'sigepsi_centro_config';
+  private url = apiUrl('users/centro-config/');
 
-  private defaultConfig: CentroConfig = {
-    nombre: 'Centro Psicológico',
-    nif_rif: '',
-    registro_sanitario: '',
-    direccion: '',
-    telefono: '',
-    email: '',
-    modalidad: 'Presencial',
-    linea_crisis: '',
-    horarios_atencion: {},
-    especialidades: [],
-  };
+  constructor(private http: HttpClient) {}
 
   getConfig(): Observable<CentroConfig> {
-    try {
-      const local = localStorage.getItem(this.storageKey);
-      if (local) return of(JSON.parse(local) as CentroConfig);
-    } catch {
-      /* ignore */
-    }
-    return of(this.defaultConfig);
+    return this.http.get<CentroConfig>(this.url);
   }
 
-  saveConfig(config: CentroConfig): Observable<CentroConfig> {
-    try {
-      localStorage.setItem(this.storageKey, JSON.stringify(config));
-    } catch {
-      /* ignore */
-    }
-    return of(config);
+  saveConfig(config: Partial<CentroConfig>): Observable<CentroConfig> {
+    return this.http.put<CentroConfig>(this.url, config);
   }
 }

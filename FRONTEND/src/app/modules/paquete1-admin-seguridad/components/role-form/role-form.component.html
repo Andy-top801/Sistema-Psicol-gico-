@@ -1,53 +1,49 @@
-<header class="page-header">
-  <div>
-    <h1 class="page-header__title">Nuevo Rol</h1>
-    <p class="page-header__desc">Cree un rol personalizado y asigne permisos de acceso específicos.</p>
+<app-page-header
+  eyebrow="CU4"
+  title="Nuevo rol"
+  subtitle="Crea un rol y asígnale permisos de acceso.">
+  <div actions>
+    <a routerLink="/roles" class="btn btn--outline">Cancelar</a>
   </div>
-  <a routerLink="/roles" class="btn btn--outline" style="text-decoration: none;">Cancelar</a>
-</header>
+</app-page-header>
 
 <div class="content-card">
   <form [formGroup]="roleForm" (ngSubmit)="onSubmit()" class="form">
-    
     <div class="field">
-      <label for="name" class="field__label">Nombre del Rol</label>
-      <input type="text" id="name" formControlName="name" class="field__input" placeholder="Ej: Recepcionista Mañana">
+      <label for="name" class="field__label">Nombre del rol</label>
+      <input type="text" id="name" formControlName="name" class="field__input" placeholder="Ej: Recepcionista">
     </div>
 
     <div class="field">
       <label for="description" class="field__label">Descripción</label>
-      <textarea id="description" formControlName="description" class="field__input" rows="3" placeholder="Breve descripción de las responsabilidades..."></textarea>
+      <textarea id="description" formControlName="description" class="field__input" rows="3"
+        placeholder="Responsabilidades del rol…"></textarea>
     </div>
 
-    <div class="field" style="margin-top: 16px;">
-      <label class="field__label">Permisos de Acceso</label>
-      <p class="field__hint-text" style="margin-top: -4px; margin-bottom: 12px;">Seleccione las acciones que este rol podrá realizar dentro del sistema.</p>
-      
-      <div formArrayName="permisos" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; background: var(--color-bg); padding: 16px; border-radius: 8px; border: 1px solid var(--color-border);">
-        
-        <div *ngFor="let permiso of permisosFormArray.controls; let i = index" style="display: flex; align-items: flex-start; gap: 8px;">
-          <input type="checkbox" [formControlName]="i" [id]="'permiso_' + i" style="margin-top: 4px; width: 16px; height: 16px; accent-color: var(--color-primary);">
-          <label [for]="'permiso_' + i" style="font-size: 13px; color: var(--color-text); cursor: pointer; user-select: none;">
+    <div class="field">
+      <label class="field__label">Permisos de acceso</label>
+      <p class="field__hint-text">Selecciona lo que este rol podrá hacer.</p>
+      <div formArrayName="permisos" class="perms-grid">
+        <label
+          *ngFor="let permiso of permisosFormArray.controls; let i = index"
+          class="perm-item">
+          <input type="checkbox" [formControlName]="i">
+          <span>
             <strong>{{ permisosDisponibles[i].name }}</strong>
-            <div style="color: var(--color-text-muted); font-size: 11px; margin-top: 2px;">{{ permisosDisponibles[i].codename }}</div>
-          </label>
-        </div>
-        
-        <div *ngIf="permisosDisponibles.length === 0" style="color: var(--color-text-muted); font-size: 13px;">
-          Cargando permisos disponibles...
-        </div>
+            <span class="perm-code">{{ permisosDisponibles[i].codename }}</span>
+          </span>
+        </label>
+        <p *ngIf="permisosDisponibles.length === 0" class="field__hint-text">
+          Cargando permisos…
+        </p>
       </div>
     </div>
 
-    <div *ngIf="errorMessage" class="alert alert--error" style="margin-top: 16px;">
-      <svg viewBox="0 0 20 20" fill="currentColor" style="width:20px;height:20px;"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
-      {{ errorMessage }}
-    </div>
+    <div *ngIf="errorMessage" class="alert alert--error">{{ errorMessage }}</div>
 
-    <div class="form__actions" style="margin-top: 32px;">
+    <div class="form__actions">
       <button type="submit" class="btn btn--primary" [disabled]="roleForm.invalid || isLoading">
-        <span *ngIf="!isLoading">Crear Rol</span>
-        <span *ngIf="isLoading" class="btn__loader"></span>
+        {{ isLoading ? 'Creando…' : 'Crear rol' }}
       </button>
     </div>
   </form>

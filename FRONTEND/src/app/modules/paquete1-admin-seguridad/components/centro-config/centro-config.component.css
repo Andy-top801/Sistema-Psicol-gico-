@@ -1,1 +1,25 @@
-/* Estilos migrados al sistema global (src/styles.css) — solo tokens. */
+.breadcrumb-current {
+  color: var(--color-text);
+  font-weight: 600;
+}
+.add-row {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+.add-row .field__input {
+  flex: 1;
+}
+.chip-x {
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  margin-left: 4px;
+}
+input[type='color'].field__input {
+  padding: 4px;
+  width: 80px;
+}
