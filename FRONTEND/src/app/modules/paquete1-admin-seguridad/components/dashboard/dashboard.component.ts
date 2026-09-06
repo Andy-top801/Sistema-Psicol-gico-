@@ -1,59 +1,54 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
+
 import { AuthService } from '../../../../services/auth.service';
+import { ROLE_LABEL } from '../../../../core/models/user.model';
+import { apiUrl, API } from '../../../../core/api';
 
 @Component({
   selector: 'app-dashboard',
   standalone: false,
   templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.css']
+  styleUrls: ['./dashboard.component.css'],
 })
 export class DashboardComponent implements OnInit {
-  userName: string = 'Administrador';
-  userRole: string = 'SuperAdmin';
+  userName = '';
+  userRole = '';
   isLoading = false;
+  loadError = false;
 
-  // Live Backend Metrics
-  citasTotales: number = 24;
-  pacientesTotales: number = 56;
-  inasistencias: number = 2;
-  cargaProfesional: number = 8;
-  centrosActivos: number = 3;
+  citasTotales = 0;
+  pacientesTotales = 0;
+  inasistencias = 0;
+  cargaProfesional = 0;
+  centrosActivos = 0;
 
   constructor(
     private authService: AuthService,
-    private http: HttpClient,
-    private router: Router
+    private http: HttpClient
   ) {}
 
   ngOnInit(): void {
-    const user = this.authService.getUser();
-    if (user) {
-      this.userName = user.first_name || user.email || 'Administrador';
-      this.userRole = user.rol_nombre || (user.is_superuser ? 'SuperAdmin' : 'Personal');
-    }
+    this.userName = this.authService.displayName() || 'Usuario';
+    this.userRole = ROLE_LABEL[this.authService.primaryRole()];
     this.loadMetrics();
   }
 
   loadMetrics(): void {
     this.isLoading = true;
-    this.http.get<any>('http://localhost:8000/api/users/dashboard/', {
-      headers: this.authService.getAuthHeaders()
-    }).subscribe({
+    this.loadError = false;
+    this.http.get<any>(apiUrl(API.dashboard)).subscribe({
       next: (data) => {
-        if (data) {
-          this.citasTotales = data.citas_totales !== undefined ? data.citas_totales : 24;
-          this.pacientesTotales = data.pacientes_totales !== undefined ? data.pacientes_totales : 56;
-          this.inasistencias = data.inasistencias !== undefined ? data.inasistencias : 2;
-          this.cargaProfesional = data.carga_profesional !== undefined ? data.carga_profesional : 8;
-        }
+        this.citasTotales = data?.citas_totales ?? 0;
+        this.pacientesTotales = data?.pacientes_totales ?? 0;
+        this.inasistencias = data?.inasistencias ?? 0;
+        this.cargaProfesional = data?.carga_profesional ?? 0;
         this.isLoading = false;
       },
       error: () => {
-        // En caso de que no haya citas creadas aún, mantener valores demo del Sprint 0
+        this.loadError = true;
         this.isLoading = false;
-      }
+      },
     });
   }
 }

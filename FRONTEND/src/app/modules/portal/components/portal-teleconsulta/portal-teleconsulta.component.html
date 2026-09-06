@@ -1,0 +1,55 @@
+<app-page-header
+  eyebrow="CU13"
+  title="Teleconsulta"
+  subtitle="Ingresa a tus sesiones virtuales a la hora agendada.">
+</app-page-header>
+
+<div *ngIf="loadError" class="alert-box alert-danger">
+  No se pudieron cargar tus teleconsultas.
+  <button type="button" class="link-btn" (click)="load()">Reintentar</button>
+</div>
+
+<p *ngIf="isLoading" class="muted">Cargando…</p>
+
+<app-empty-state
+  *ngIf="!isLoading && teleconsultas.length === 0"
+  title="Sin teleconsultas"
+  message="Cuando el centro programe una sesión virtual para ti, aparecerá aquí.">
+</app-empty-state>
+
+<div class="tc-card" *ngFor="let t of teleconsultas">
+  <div class="tc-card__info">
+    <span class="badge" [attr.data-estado]="t.estado">{{ t.estado_display || t.estado }}</span>
+    <span class="muted">Sala: {{ t.room_name }}</span>
+  </div>
+  <div class="tc-card__actions">
+    <button
+      type="button"
+      class="btn btn-primary-emerald"
+      [disabled]="t.estado === 'finalizada' || t.estado === 'cancelada'"
+      (click)="entrar(t)">
+      Entrar a la sala
+    </button>
+    <a
+      class="btn btn-secondary-dark"
+      [href]="t.enlace_paciente"
+      target="_blank"
+      rel="noopener">
+      Abrir en pestaña
+    </a>
+  </div>
+</div>
+
+<div *ngIf="salaAbierta" class="room-modal" (click)="cerrarSala()">
+  <div class="room-modal__frame" (click)="$event.stopPropagation()">
+    <div class="room-modal__bar">
+      <span>Sesión: {{ salaAbierta.room_name }}</span>
+      <button type="button" class="btn-close-modal" (click)="cerrarSala()">&times;</button>
+    </div>
+    <iframe
+      *ngIf="safeUrl"
+      [src]="safeUrl"
+      allow="camera; microphone; fullscreen; display-capture; autoplay"
+      class="room-modal__iframe"></iframe>
+  </div>
+</div>

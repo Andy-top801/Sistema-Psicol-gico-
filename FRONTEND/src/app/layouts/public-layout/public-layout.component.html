@@ -1,0 +1,38 @@
+<div class="auth-shell">
+  <!-- Panel showcase -->
+  <aside class="auth-showcase">
+    <div class="auth-showcase__top">
+      <app-brand-logo variant="full" [showSub]="true" mono size="lg"></app-brand-logo>
+    </div>
+    <div class="auth-showcase__body">
+      <h2 class="auth-showcase__title">
+        Gestión integral de centros de salud mental
+      </h2>
+      <p class="auth-showcase__text">
+        Citas, expedientes clínicos, teleconsulta y seguimiento terapéutico en una
+        sola plataforma, con aislamiento de datos por centro.
+      </p>
+      <ul class="auth-showcase__list">
+        <li>Agenda y confirmación de citas</li>
+        <li>Teleconsulta con sala segura</li>
+        <li>Alertas de priorización clínica</li>
+        <li>Portal para pacientes</li>
+      </ul>
+    </div>
+    <div class="auth-showcase__foot">
+      <span *ngIf="isPublicDomain">Acceso de plataforma</span>
+      <span *ngIf="!isPublicDomain">{{ centerName }}</span>
+    </div>
+  </aside>
+
+  <!-- Panel formulario -->
+  <main class="auth-form-panel">
+    <div class="auth-form-topbar">
+      <app-brand-logo variant="full" size="sm" class="auth-form-topbar__brand"></app-brand-logo>
+      <app-theme-toggle></app-theme-toggle>
+    </div>
+    <div class="auth-form-inner">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+</div>

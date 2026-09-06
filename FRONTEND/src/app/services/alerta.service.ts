@@ -1,13 +1,15 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { AuthService } from './auth.service';
+
+import { apiUrl, API } from '../core/api';
+import { Paged, unwrap } from '../core/models/paged.model';
 
 export interface AlertaPriorizacion {
   id: string;
   paciente: string;
   paciente_details?: {
-    id: number;
+    id: string;
     email: string;
     first_name: string;
     last_name: string;
@@ -23,38 +25,42 @@ export interface AlertaPriorizacion {
   updated_at: string;
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class AlertaService {
-  private apiUrl = 'http://localhost:8000/api/users/alertas/';
+  private base = apiUrl(API.alertas);
 
-  constructor(
-    private http: HttpClient,
-    private authService: AuthService
-  ) {}
+  constructor(private http: HttpClient) {}
 
   getAlertas(): Observable<AlertaPriorizacion[]> {
-    return this.http.get<AlertaPriorizacion[]>(this.apiUrl, {
-      headers: this.authService.getAuthHeaders()
-    });
+    return this.http
+      .get<AlertaPriorizacion[] | Paged<AlertaPriorizacion>>(this.base)
+      .pipe(unwrap<AlertaPriorizacion>());
   }
 
   getAlerta(id: string): Observable<AlertaPriorizacion> {
-    return this.http.get<AlertaPriorizacion>(`${this.apiUrl}${id}/`, {
-      headers: this.authService.getAuthHeaders()
-    });
+    return this.http.get<AlertaPriorizacion>(`${this.base}${id}/`);
   }
 
-  patchAlerta(id: string, data: Partial<AlertaPriorizacion>): Observable<AlertaPriorizacion> {
-    return this.http.patch<AlertaPriorizacion>(`${this.apiUrl}${id}/`, data, {
-      headers: this.authService.getAuthHeaders()
-    });
+  createAlerta(data: Partial<AlertaPriorizacion>): Observable<AlertaPriorizacion> {
+    return this.http.post<AlertaPriorizacion>(this.base, data);
   }
 
-  createAlerta(data: any): Observable<AlertaPriorizacion> {
-    return this.http.post<AlertaPriorizacion>(this.apiUrl, data, {
-      headers: this.authService.getAuthHeaders()
+  patchAlerta(
+    id: string,
+    data: Partial<AlertaPriorizacion>
+  ): Observable<AlertaPriorizacion> {
+    return this.http.patch<AlertaPriorizacion>(`${this.base}${id}/`, data);
+  }
+
+  /** Acción del backend: pasa la alerta a "en revisión". */
+  revisarAlerta(id: string): Observable<AlertaPriorizacion> {
+    return this.http.post<AlertaPriorizacion>(`${this.base}${id}/revisar/`, {});
+  }
+
+  /** Acción del backend: marca la alerta como resuelta con la acción tomada. */
+  resolverAlerta(id: string, accionTomada: string): Observable<AlertaPriorizacion> {
+    return this.http.post<AlertaPriorizacion>(`${this.base}${id}/resolver/`, {
+      accion_tomada: accionTomada,
     });
   }
 }

@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { AuthService } from './auth.service';
+
+import { apiUrl, API } from '../core/api';
+import { Paged, unwrap } from '../core/models/paged.model';
 
 export interface Teleconsulta {
   id: string;
@@ -17,44 +19,35 @@ export interface Teleconsulta {
   updated_at: string;
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class TeleconsultaService {
-  private apiUrl = 'http://localhost:8000/api/users/teleconsultas/';
+  private base = apiUrl(API.teleconsultas);
 
-  constructor(
-    private http: HttpClient,
-    private authService: AuthService
-  ) {}
+  constructor(private http: HttpClient) {}
 
   getTeleconsultas(): Observable<Teleconsulta[]> {
-    return this.http.get<Teleconsulta[]>(this.apiUrl, {
-      headers: this.authService.getAuthHeaders()
-    });
+    return this.http
+      .get<Teleconsulta[] | Paged<Teleconsulta>>(this.base)
+      .pipe(unwrap<Teleconsulta>());
   }
 
   getTeleconsulta(id: string): Observable<Teleconsulta> {
-    return this.http.get<Teleconsulta>(`${this.apiUrl}${id}/`, {
-      headers: this.authService.getAuthHeaders()
-    });
+    return this.http.get<Teleconsulta>(`${this.base}${id}/`);
   }
 
   createTeleconsulta(data: { cita: string }): Observable<Teleconsulta> {
-    return this.http.post<Teleconsulta>(this.apiUrl, data, {
-      headers: this.authService.getAuthHeaders()
-    });
+    return this.http.post<Teleconsulta>(this.base, data);
   }
 
   iniciarTeleconsulta(id: string): Observable<Teleconsulta> {
-    return this.http.post<Teleconsulta>(`${this.apiUrl}${id}/iniciar/`, {}, {
-      headers: this.authService.getAuthHeaders()
-    });
+    return this.http.post<Teleconsulta>(`${this.base}${id}/iniciar/`, {});
   }
 
   finalizarTeleconsulta(id: string): Observable<Teleconsulta> {
-    return this.http.post<Teleconsulta>(`${this.apiUrl}${id}/finalizar/`, {}, {
-      headers: this.authService.getAuthHeaders()
-    });
+    return this.http.post<Teleconsulta>(`${this.base}${id}/finalizar/`, {});
+  }
+
+  cancelarTeleconsulta(id: string): Observable<Teleconsulta> {
+    return this.http.post<Teleconsulta>(`${this.base}${id}/cancelar/`, {});
   }
 }

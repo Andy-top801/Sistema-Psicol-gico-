@@ -137,11 +137,18 @@ class Cita(models.Model):
         REPROGRAMADA = 'reprogramada', 'Reprogramada'
         INASISTENCIA = 'inasistencia', 'Inasistencia'
 
+    class Modalidad(models.TextChoices):
+        PRESENCIAL = 'presencial', 'Presencial'
+        VIRTUAL = 'virtual', 'Virtual'
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE, related_name='citas')
     psicologo = models.ForeignKey(Psicologo, on_delete=models.CASCADE, related_name='citas')
     fecha_hora = models.DateTimeField()
     duracion_minutos = models.PositiveIntegerField(default=60)
+    modalidad = models.CharField(
+        max_length=10, choices=Modalidad.choices, default=Modalidad.PRESENCIAL
+    )
     estado = models.CharField(max_length=20, choices=Estado.choices, default=Estado.RESERVADA)
     motivo = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)

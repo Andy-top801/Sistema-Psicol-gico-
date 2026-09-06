@@ -1,0 +1,40 @@
+<app-page-header
+  eyebrow="Portal del paciente"
+  title="Mi perfil"
+  subtitle="Revisa tus datos y mantén tu información de contacto al día.">
+</app-page-header>
+
+<div class="perfil-grid">
+  <section class="content-card">
+    <h3 class="card-title">Datos de la cuenta</h3>
+    <dl class="data-list">
+      <div><dt>Nombre</dt><dd>{{ user?.first_name }} {{ user?.last_name }}</dd></div>
+      <div><dt>Correo</dt><dd>{{ user?.email }}</dd></div>
+      <div><dt>Rol</dt><dd>{{ roleLabel }}</dd></div>
+    </dl>
+    <button type="button" class="btn btn-secondary-dark" (click)="solicitarCambioPassword()">
+      Cambiar contraseña
+    </button>
+    <p *ngIf="resetSent" class="muted mt-2">
+      Si tu correo está registrado recibirás instrucciones para restablecer la contraseña.
+    </p>
+  </section>
+
+  <section class="content-card">
+    <h3 class="card-title">Contacto</h3>
+    <div *ngIf="savedOk" class="alert-box alert-success mb-3">Datos actualizados.</div>
+    <div *ngIf="saveError" class="alert-box alert-danger mb-3">{{ saveError }}</div>
+
+    <div class="input-grp">
+      <label class="lbl">Teléfono</label>
+      <input type="text" [(ngModel)]="phone" class="modal-input">
+    </div>
+    <div class="input-grp">
+      <label class="lbl">Dirección</label>
+      <input type="text" [(ngModel)]="direccion" class="modal-input">
+    </div>
+    <button type="button" class="btn btn-primary-emerald" [disabled]="saving" (click)="guardar()">
+      {{ saving ? 'Guardando…' : 'Guardar cambios' }}
+    </button>
+  </section>
+</div>

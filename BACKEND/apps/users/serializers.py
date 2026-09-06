@@ -177,11 +177,21 @@ class MobilePasswordResetConfirmSerializer(serializers.Serializer):
 
 class UserProfileSerializer(serializers.ModelSerializer):
     roles = serializers.SlugRelatedField(many=True, read_only=True, slug_field='name')
+    is_superuser = serializers.BooleanField(read_only=True)
+    is_staff = serializers.BooleanField(read_only=True)
+    paciente_id = serializers.SerializerMethodField()
 
     class Meta:
         model = Usuario
-        fields = ['id', 'email', 'first_name', 'last_name', 'phone', 'roles']
+        fields = [
+            'id', 'email', 'first_name', 'last_name', 'phone', 'roles',
+            'is_superuser', 'is_staff', 'paciente_id',
+        ]
         read_only_fields = fields
+
+    def get_paciente_id(self, obj):
+        paciente = getattr(obj, 'paciente', None)
+        return str(paciente.id) if paciente else None
 
 
 class EspecialidadSerializer(serializers.ModelSerializer):
@@ -361,7 +371,8 @@ class CitaSerializer(serializers.ModelSerializer):
         model = Cita
         fields = [
             'id', 'paciente', 'paciente_details', 'psicologo', 'psicologo_details',
-            'fecha_hora', 'duracion_minutos', 'estado', 'motivo', 'created_at', 'updated_at',
+            'fecha_hora', 'duracion_minutos', 'modalidad', 'estado', 'motivo',
+            'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 
@@ -457,11 +468,27 @@ class TeleconsultaSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at',
         ]
 
+    def validate_cita(self, cita):
+        if cita.estado in (Cita.Estado.CANCELADA, Cita.Estado.INASISTENCIA):
+            raise serializers.ValidationError(
+                'No se puede crear una teleconsulta para una cita cancelada o con inasistencia.'
+            )
+        return cita
+
     def create(self, validated_data):
         import uuid as _uuid
         room_name = f'sigepsi-{_uuid.uuid4().hex[:12]}'
-        enlace = f'{JITSI_BASE_URL}/{room_name}'
+        base = f'{JITSI_BASE_URL}/{room_name}'
+        # Enlaces diferenciados: el del psicólogo entra directo como "Psicólogo";
+        # el del paciente pasa por la sala de espera como "Paciente".
+        # (Un rol de moderador real requiere Jitsi JWT / JaaS — fuera de alcance.)
         validated_data['room_name'] = room_name
-        validated_data['enlace_psicologo'] = enlace
-        validated_data['enlace_paciente'] = enlace
+        validated_data['enlace_psicologo'] = (
+            f'{base}#config.prejoinPageEnabled=false'
+            '&userInfo.displayName=%22Psic%C3%B3logo%22'
+        )
+        validated_data['enlace_paciente'] = (
+            f'{base}#config.prejoinPageEnabled=true'
+            '&userInfo.displayName=%22Paciente%22'
+        )
         return super().create(validated_data)

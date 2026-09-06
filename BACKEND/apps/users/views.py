@@ -21,6 +21,7 @@ from .serializers import (
     AlertaPriorizacionSerializer, TeleconsultaSerializer,
 )
 from .tokens import make_reset_code
+from .permissions import HasAnyRole, IsSelfPacienteOrStaff, user_roles, STAFF_ROLES
 
 # --- ViewSets for Web ---
 
@@ -43,31 +44,80 @@ class UsuarioViewSet(viewsets.ModelViewSet):
 class EspecialidadViewSet(viewsets.ModelViewSet):
     queryset = Especialidad.objects.all()
     serializer_class = EspecialidadSerializer
-    permission_classes = [IsAuthenticated, permissions.IsAdminUser]
+    permission_classes = [IsAuthenticated, HasAnyRole]
+    read_roles = STAFF_ROLES | {'paciente'}
+    write_roles = {'superadmin', 'admincentro', 'coordinador'}
 
 
 class PsicologoViewSet(viewsets.ModelViewSet):
     queryset = Psicologo.objects.select_related('usuario').prefetch_related('especialidades')
     serializer_class = PsicologoSerializer
-    permission_classes = [IsAuthenticated, permissions.IsAdminUser]
+    permission_classes = [IsAuthenticated, HasAnyRole]
+    read_roles = STAFF_ROLES | {'paciente'}
+    write_roles = {'superadmin', 'admincentro', 'coordinador'}
 
 
 class DisponibilidadPsicologoViewSet(viewsets.ModelViewSet):
     queryset = DisponibilidadPsicologo.objects.select_related('psicologo', 'psicologo__usuario')
     serializer_class = DisponibilidadPsicologoSerializer
-    permission_classes = [IsAuthenticated, permissions.IsAdminUser]
+    permission_classes = [IsAuthenticated, HasAnyRole]
+    read_roles = STAFF_ROLES | {'paciente'}
+    write_roles = {'superadmin', 'admincentro', 'coordinador', 'psicologo'}
 
 
 class PacienteViewSet(viewsets.ModelViewSet):
     queryset = Paciente.objects.select_related('usuario')
     serializer_class = PacienteSerializer
-    permission_classes = [IsAuthenticated, permissions.IsAdminUser]
+    permission_classes = [IsAuthenticated, HasAnyRole]
+    read_roles = STAFF_ROLES | {'paciente'}
+    write_roles = STAFF_ROLES | {'paciente'}
+
+    def get_permissions(self):
+        perms = super().get_permissions()
+        if self.action in ('retrieve', 'update', 'partial_update'):
+            perms.append(IsSelfPacienteOrStaff())
+        return perms
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        roles = user_roles(self.request.user)
+        if roles == {'paciente'}:
+            return qs.filter(usuario=self.request.user)
+        return qs
 
 
 class CitaViewSet(viewsets.ModelViewSet):
     queryset = Cita.objects.select_related('paciente__usuario', 'psicologo__usuario').all()
     serializer_class = CitaSerializer
-    permission_classes = [IsAuthenticated, permissions.IsAdminUser]
+    permission_classes = [IsAuthenticated, HasAnyRole]
+    read_roles = STAFF_ROLES | {'paciente'}
+    write_roles = STAFF_ROLES | {'paciente'}
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        roles = user_roles(self.request.user)
+        if roles == {'paciente'}:
+            qs = qs.filter(paciente__usuario=self.request.user)
+        elif roles == {'psicologo'}:
+            qs = qs.filter(psicologo__usuario=self.request.user)
+
+        params = self.request.query_params
+        estado = params.get('estado')
+        fecha = params.get('fecha')
+        if estado:
+            qs = qs.filter(estado=estado)
+        if fecha:
+            qs = qs.filter(fecha_hora__date=fecha)
+        if params.get('sin_teleconsulta') in ('1', 'true'):
+            qs = qs.filter(teleconsulta__isnull=True)
+        return qs
+
+    def perform_create(self, serializer):
+        roles = user_roles(self.request.user)
+        if roles == {'paciente'}:
+            serializer.save(estado=Cita.Estado.RESERVADA)
+        else:
+            serializer.save()
 
     @action(detail=True, methods=['post'])
     def confirmar(self, request, pk=None):
@@ -86,7 +136,13 @@ class CitaViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def reprogramar(self, request, pk=None):
         cita = self.get_object()
-        serializer = self.get_serializer(cita, data=request.data, partial=True)
+        nueva = request.data.get('nueva_fecha_hora') or request.data.get('fecha_hora')
+        if not nueva:
+            return Response(
+                {'nueva_fecha_hora': 'Este campo es obligatorio.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        serializer = self.get_serializer(cita, data={'fecha_hora': nueva}, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save(estado=Cita.Estado.REPROGRAMADA)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -114,7 +170,9 @@ class AlertaPriorizacionViewSet(viewsets.ModelViewSet):
     """CU10 – CRUD de alertas + acciones para cambiar su estado."""
     queryset = AlertaPriorizacion.objects.select_related('paciente__usuario').all()
     serializer_class = AlertaPriorizacionSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasAnyRole]
+    read_roles = {'superadmin', 'admincentro', 'coordinador', 'psicologo'}
+    write_roles = {'superadmin', 'admincentro', 'coordinador', 'psicologo'}
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -157,7 +215,18 @@ class TeleconsultaViewSet(viewsets.ModelViewSet):
     """CU13 – Crear sala Jitsi vinculada a una cita y gestionar su ciclo de vida."""
     queryset = Teleconsulta.objects.select_related('cita__paciente__usuario', 'cita__psicologo__usuario').all()
     serializer_class = TeleconsultaSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasAnyRole]
+    read_roles = STAFF_ROLES | {'paciente'}
+    write_roles = STAFF_ROLES
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        roles = user_roles(self.request.user)
+        if roles == {'paciente'}:
+            return qs.filter(cita__paciente__usuario=self.request.user)
+        if roles == {'psicologo'}:
+            return qs.filter(cita__psicologo__usuario=self.request.user)
+        return qs
 
     @action(detail=True, methods=['post'], url_path='iniciar')
     def iniciar(self, request, pk=None):

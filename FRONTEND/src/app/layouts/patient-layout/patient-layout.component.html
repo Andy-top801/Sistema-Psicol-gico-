@@ -1,0 +1,48 @@
+<div class="portal-shell">
+  <header class="portal-topbar">
+    <app-brand-logo variant="full" size="sm"></app-brand-logo>
+
+    <nav class="portal-nav">
+      <a
+        *ngFor="let item of navItems"
+        class="portal-nav__item"
+        [routerLink]="item.path"
+        routerLinkActive="is-active"
+        [routerLinkActiveOptions]="{ exact: item.path === '/portal' }">
+        <app-nav-icon [name]="item.icon"></app-nav-icon>
+        <span>{{ item.label }}</span>
+      </a>
+    </nav>
+
+    <div class="portal-topbar__right">
+      <span class="portal-center">{{ centerName }}</span>
+      <app-theme-toggle></app-theme-toggle>
+      <div class="portal-user">
+        <button type="button" class="portal-user__trigger" (click)="toggleMenu()">
+          <span class="portal-user__avatar">{{ initials }}</span>
+        </button>
+        <div class="portal-user__dropdown" *ngIf="menuOpen()">
+          <strong>{{ userName }}</strong>
+          <button type="button" (click)="logout()">Cerrar sesión</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="portal-content">
+    <router-outlet></router-outlet>
+  </main>
+
+  <!-- Barra inferior en móvil -->
+  <nav class="portal-tabbar">
+    <a
+      *ngFor="let item of navItems"
+      class="portal-tabbar__item"
+      [routerLink]="item.path"
+      routerLinkActive="is-active"
+      [routerLinkActiveOptions]="{ exact: item.path === '/portal' }">
+      <app-nav-icon [name]="item.icon"></app-nav-icon>
+      <span>{{ item.label }}</span>
+    </a>
+  </nav>
+</div>

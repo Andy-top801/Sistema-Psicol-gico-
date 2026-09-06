@@ -1,0 +1,65 @@
+<div class="auth-form">
+  <div class="auth-top-hint">
+    <span>¿Nuevo centro?</span>
+    <a routerLink="/register-admin">Solicitar acceso</a>
+  </div>
+
+  <h1 class="auth-title">
+    {{ isPublicDomain ? 'Acceso de plataforma' : 'Bienvenido a ' + centerName }}
+  </h1>
+  <p class="auth-subtitle">
+    {{ isPublicDomain
+      ? 'Panel de superadministración. El personal de un centro ingresa desde el subdominio de su centro.'
+      : 'Ingresa con tus credenciales para acceder a tu centro.' }}
+  </p>
+
+  <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+    <div *ngIf="errorMessage" class="alert alert--error" role="alert">{{ errorMessage }}</div>
+
+    <div class="field">
+      <label for="email" class="field__label">Correo electrónico</label>
+      <input type="email" id="email" formControlName="email" class="field__input"
+        placeholder="tu@correo.com" autocomplete="email">
+    </div>
+
+    <div class="field">
+      <div class="field__label-row">
+        <label for="password" class="field__label">Contraseña</label>
+        <a routerLink="/password-reset" class="link-btn">¿Olvidaste tu contraseña?</a>
+      </div>
+      <div class="pw-wrap">
+        <input [type]="showPassword ? 'text' : 'password'" id="password" formControlName="password"
+          class="field__input" placeholder="••••••••" autocomplete="current-password">
+        <button type="button" class="pw-toggle" (click)="togglePasswordVisibility()"
+          [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+          {{ showPassword ? '🙈' : '👁' }}
+        </button>
+      </div>
+    </div>
+
+    <label class="remember-label">
+      <input type="checkbox" formControlName="rememberMe">
+      <span>Recordar mi correo en este equipo</span>
+    </label>
+
+    <button type="submit" class="btn btn--primary auth-submit" [disabled]="isLoading">
+      {{ isLoading ? 'Ingresando…' : 'Iniciar sesión' }}
+    </button>
+  </form>
+
+  <div class="demo-box" *ngIf="isPublicDomain">
+    <span class="demo-box__label">Cuenta de prueba</span>
+    <button type="button" class="chip-toggle" (click)="fillDemo('admin@sigepsi.com', 'admin123')">
+      Superadmin
+    </button>
+  </div>
+
+  <div class="demo-box" *ngIf="!isPublicDomain">
+    <span class="demo-box__label">Cuentas de prueba ({{ centerName }})</span>
+    <div class="demo-chips">
+      <button type="button" class="chip-toggle" (click)="fillDemo('admin@' + centerName.toLowerCase() + '.com', 'Demo1234!')">Admin centro</button>
+      <button type="button" class="chip-toggle" (click)="fillDemo('psicologo@' + centerName.toLowerCase() + '.com', 'Demo1234!')">Psicólogo</button>
+      <button type="button" class="chip-toggle" (click)="fillDemo('paciente@' + centerName.toLowerCase() + '.com', 'Demo1234!')">Paciente</button>
+    </div>
+  </div>
+</div>

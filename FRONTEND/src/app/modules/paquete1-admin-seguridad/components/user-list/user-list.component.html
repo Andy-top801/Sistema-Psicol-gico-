@@ -22,107 +22,80 @@
     </div>
   </div>
 
-  <!-- Tarjetas de Métricas por Rol -->
-  <div class="roles-metrics-grid">
-    <!-- Psicólogos -->
-    <div class="role-stat-card active-card">
-      <div class="role-card-header">
-        <span class="role-name-text">Psicólogos</span>
-        <span class="role-badge-tag teal-tag">90%</span>
-      </div>
-      <div class="role-card-sub">18 Licencias activas</div>
+  <!-- Tarjetas de métricas por rol -->
+  <div class="kpi-grid-row">
+    <div class="kpi-card">
+      <span class="kpi-label">PSICÓLOGOS</span>
+      <div class="kpi-val text-emerald">{{ psicologosCount }}</div>
+      <span class="kpi-desc">Profesionales clínicos</span>
     </div>
-
-    <!-- Recepcionistas -->
-    <div class="role-stat-card">
-      <div class="role-card-header">
-        <span class="role-name-text">Recepcionistas</span>
-        <span class="role-badge-tag amber-tag">Turnos</span>
-      </div>
-      <div class="role-card-sub">5 Habilitados</div>
+    <div class="kpi-card">
+      <span class="kpi-label">RECEPCIONISTAS</span>
+      <div class="kpi-val">{{ recepcionistasCount }}</div>
+      <span class="kpi-desc">Admisión y turnos</span>
     </div>
-
-    <!-- Coordinadores -->
-    <div class="role-stat-card">
-      <div class="role-card-header">
-        <span class="role-name-text">Coordinadores</span>
-        <span class="role-badge-tag purple-tag">Admin</span>
-      </div>
-      <div class="role-card-sub">3 Direcciones</div>
+    <div class="kpi-card">
+      <span class="kpi-label">COORDINADORES</span>
+      <div class="kpi-val text-teal">{{ coordinadoresCount }}</div>
+      <span class="kpi-desc">Supervisión clínica</span>
     </div>
-
-    <!-- Psiquiatras / Médicos -->
-    <div class="role-stat-card">
-      <div class="role-card-header">
-        <span class="role-name-text">Psiquiatras / Médicos</span>
-        <span class="role-badge-tag blue-tag">Médico</span>
-      </div>
-      <div class="role-card-sub">4 Especialistas</div>
+    <div class="kpi-card">
+      <span class="kpi-label">ADMINISTRADORES</span>
+      <div class="kpi-val">{{ adminCount }}</div>
+      <span class="kpi-desc">Gestión del centro</span>
     </div>
   </div>
 
-  <!-- Barra de Filtro de Rol -->
-  <div class="filters-panel-row">
-    <div class="filter-dropdown-wrapper">
-      <label class="filter-label">Filtrar Rol:</label>
-      <select [value]="selectedRole" (change)="onRoleSelect($any($event.target).value)" class="filter-dropdown">
-        <option value="all">Todos los Roles</option>
-        <option value="PSIC">Psicólogo</option>
-        <option value="COORD">Coordinador</option>
-        <option value="RECEP">Recepcionista</option>
-        <option value="PSIQUIATRA">Psiquiatra</option>
+  <!-- Barra de filtro de rol -->
+  <div class="filter-bar">
+    <div class="f-group">
+      <label class="f-label">Filtrar rol:</label>
+      <select [value]="selectedRole" (change)="onRoleSelect($any($event.target).value)" class="f-select">
+        <option value="all">Todos los roles</option>
+        <option value="psicolog">Psicólogo</option>
+        <option value="coordinador">Coordinador</option>
+        <option value="recepcion">Recepcionista</option>
+        <option value="admin">Administrador</option>
       </select>
     </div>
-    <div class="count-registered-text">
-      Mostrando {{ filteredUsers.length }} profesionales registrados
+    <div class="filter-count">
+      Mostrando {{ filteredUsers.length }} usuarios registrados
     </div>
   </div>
 
-  <!-- Tabla de Personal & Roles -->
-  <div class="table-card-container">
-    <table class="modern-rbac-table">
+  <div *ngIf="loadError" class="alert-box alert-danger">
+    No se pudieron cargar los usuarios.
+    <button type="button" class="link-btn" (click)="loadUsers()">Reintentar</button>
+  </div>
+
+  <!-- Tabla de personal y roles -->
+  <div class="table-scroll">
+    <table class="data-table">
       <thead>
         <tr>
           <th>PROFESIONAL / CORREO</th>
-          <th>CENTRO PSICOLÓGICO</th>
-          <th>ROL EN SISTEMA</th>
-          <th>ESPECIALIDAD / DEPT.</th>
-          <th>ESTADO ACTIVO</th>
-          <th style="text-align: right;">ACCIÓN PERMISOS</th>
+          <th>CENTRO</th>
+          <th>ROL</th>
+          <th>ESTADO</th>
+          <th class="ta-right">PERMISOS</th>
         </tr>
       </thead>
       <tbody>
         <tr *ngIf="isLoading">
-          <td colspan="6" class="loading-state">Cargando personal y permisos...</td>
+          <td colspan="5" class="loading-state">Cargando personal…</td>
+        </tr>
+        <tr *ngIf="!isLoading && filteredUsers.length === 0">
+          <td colspan="5" class="loading-state">No hay usuarios registrados.</td>
         </tr>
         <tr *ngFor="let user of filteredUsers">
           <td>
-            <div class="prof-cell">
-              <div class="prof-avatar">
-                {{ user.first_name.charAt(0) }}{{ user.last_name.charAt(0) }}
-              </div>
-              <div class="prof-info">
-                <span class="prof-name">{{ user.first_name }} {{ user.last_name }}</span>
-                <span class="prof-email">{{ user.email }}</span>
-              </div>
+            <div class="person-cell">
+              <span class="person-name">{{ user.first_name }} {{ user.last_name }}</span>
+              <span class="person-sub">{{ user.email }}</span>
             </div>
           </td>
-          <td>
-            <span class="center-name-text">{{ user.centro_nombre }}</span>
-          </td>
-          <td>
-            <span 
-              class="role-pill-badge"
-              [class.pill-psicologo]="user.rol_nombre.includes('PSIC')"
-              [class.pill-coordinador]="user.rol_nombre.includes('COORD') || user.rol_nombre.includes('ADMIN')"
-              [class.pill-recepcionista]="user.rol_nombre.includes('RECEP')"
-              [class.pill-psiquiatra]="user.rol_nombre.includes('PSIQUIATRA')">
-              {{ user.rol_nombre }}
-            </span>
-          </td>
-          <td>
-            <span class="dept-text">{{ user.especialidad }}</span>
-          </td>
+          <td><span class="muted">{{ user.centro_nombre }}</span></td>
+          <td><span class="badge">{{ user.rol_nombre }}</span></td>
           <td>
             <!-- Switch interactivo -->
             <label class="switch-toggle" title="Cambiar estado del usuario">
@@ -130,9 +103,9 @@
               <span class="slider-round"></span>
             </label>
           </td>
-          <td style="text-align: right;">
-            <button type="button" class="btn-edit-permissions" (click)="openPermissions(user)">
-              Editar Permisos
+          <td class="ta-right">
+            <button type="button" class="btn btn-secondary-dark" (click)="openPermissions(user)">
+              Editar permisos
             </button>
           </td>
         </tr>

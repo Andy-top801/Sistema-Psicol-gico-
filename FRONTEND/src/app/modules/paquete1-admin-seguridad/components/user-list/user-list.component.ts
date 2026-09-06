@@ -1,207 +1,145 @@
 import { Component, OnInit } from '@angular/core';
 import { UserService } from '../../../../services/user.service';
 import { RoleService } from '../../../../services/role.service';
+import { TenantContextService } from '../../../../core/services/tenant-context.service';
+import { normalizeRole } from '../../../../core/models/user.model';
 
 export interface UserItem {
-  id: number;
+  id: string;
   first_name: string;
   last_name: string;
   email: string;
   centro_nombre: string;
   rol_nombre: string;
-  especialidad: string;
   is_active: boolean;
-  permisos?: string[];
 }
 
 @Component({
   selector: 'app-user-list',
   standalone: false,
   templateUrl: './user-list.component.html',
-  styleUrls: ['./user-list.component.css']
+  styleUrls: ['./user-list.component.css'],
 })
 export class UserListComponent implements OnInit {
   users: UserItem[] = [];
   filteredUsers: UserItem[] = [];
   roles: any[] = [];
   isLoading = true;
+  loadError = false;
   selectedRole = 'all';
+  centerName = '';
 
-  // Stats
-  psicologosCount = 18;
-  recepcionistasCount = 5;
-  coordinadoresCount = 3;
-  psiquiatrasCount = 4;
+  psicologosCount = 0;
+  recepcionistasCount = 0;
+  coordinadoresCount = 0;
+  adminCount = 0;
 
-  // Modal de Permisos
   showPermissionModal = false;
   selectedUserForPerms: UserItem | null = null;
   permModules = [
-    { name: 'Expedientes Pacientes', read: true, write: true, delete: false },
-    { name: 'Agenda & Citas Médicas', read: true, write: true, delete: true },
-    { name: 'Facturación & Pagos', read: true, write: false, delete: false },
-    { name: 'Configuración del Centro', read: false, write: false, delete: false }
+    { name: 'Expedientes de pacientes', read: true, write: true, delete: false },
+    { name: 'Agenda y citas', read: true, write: true, delete: true },
+    { name: 'Teleconsulta', read: true, write: false, delete: false },
+    { name: 'Configuración del centro', read: false, write: false, delete: false },
   ];
 
   constructor(
     private userService: UserService,
-    private roleService: RoleService
-  ) {}
+    private roleService: RoleService,
+    tenant: TenantContextService
+  ) {
+    this.centerName = tenant.isPublicDomain ? 'Plataforma' : tenant.prettyName;
+  }
 
   ngOnInit(): void {
-    this.loadRoles();
+    this.roleService.getRoles().subscribe({
+      next: (data) => (this.roles = data ?? []),
+      error: () => {},
+    });
     this.loadUsers();
   }
 
-  loadRoles() {
-    this.roleService.getRoles().subscribe({
-      next: (data) => {
-        this.roles = data;
-      },
-      error: (err) => console.error('Error cargando roles', err)
-    });
-  }
-
-  loadUsers() {
+  loadUsers(): void {
     this.isLoading = true;
+    this.loadError = false;
     this.userService.getUsers().subscribe({
       next: (data: any[]) => {
-        if (data && data.length > 0) {
-          this.users = data.map((u, i) => {
-            const roleName = this.extractRole(u);
-            return {
-              id: u.id,
-              first_name: u.first_name || 'Usuario',
-              last_name: u.last_name || `#${u.id}`,
-              email: u.email,
-              centro_nombre: u.centro_nombre || 'Centro Psicológico MenteSana',
-              rol_nombre: roleName,
-              especialidad: u.especialidad || this.getDefaultSpecialty(roleName),
-              is_active: u.is_active !== undefined ? u.is_active : true
-            };
-          });
-        }
-
-        // Si la BD contiene pocos usuarios, añadir los profesionales del wireframe
-        if (this.users.length < 4) {
-          const wireframeUsers: UserItem[] = [
-            {
-              id: 101,
-              first_name: 'Carmen',
-              last_name: 'Valenzuela',
-              email: 'c.valenzuela@mentesana.org',
-              centro_nombre: 'Centro Psicológico MenteSana',
-              rol_nombre: 'PSICÓLOGO',
-              especialidad: 'Terapia Cognitivo-Conductual',
-              is_active: true
-            },
-            {
-              id: 102,
-              first_name: 'Roberto',
-              last_name: 'Mendoza',
-              email: 'r.mendoza@sanmartin.com',
-              centro_nombre: 'Clínica de Salud Mental San Martín',
-              rol_nombre: 'COORDINADOR',
-              especialidad: 'Gestión Clínica & Supervisión',
-              is_active: true
-            },
-            {
-              id: 103,
-              first_name: 'Elena',
-              last_name: 'Ríos',
-              email: 'e.rios@mentesana.org',
-              centro_nombre: 'Centro Psicológico MenteSana',
-              rol_nombre: 'RECEPCIONISTA',
-              especialidad: 'Admisión & Turnos',
-              is_active: true
-            },
-            {
-              id: 104,
-              first_name: 'Alejandro',
-              last_name: 'Sotomayor',
-              email: 'a.sotomayor@redneuros.org',
-              centro_nombre: 'Red Hospitalaria de Neuropsiquiatría',
-              rol_nombre: 'PSIQUIATRA',
-              especialidad: 'Neuropsiquiatría Adultos',
-              is_active: true
-            }
-          ];
-
-          // Evitar duplicados por email
-          wireframeUsers.forEach(wu => {
-            if (!this.users.some(u => u.email === wu.email)) {
-              this.users.push(wu);
-            }
-          });
-        }
-
+        this.users = (data ?? []).map((u) => ({
+          id: String(u.id),
+          first_name: u.first_name || 'Usuario',
+          last_name: u.last_name || '',
+          email: u.email,
+          centro_nombre: this.centerName,
+          rol_nombre: this.extractRole(u),
+          is_active: u.is_active ?? true,
+        }));
+        this.recalcStats();
         this.applyFilter();
         this.isLoading = false;
       },
-      error: (err) => {
-        console.error('Error cargando usuarios', err);
+      error: () => {
+        this.loadError = true;
         this.isLoading = false;
-      }
+      },
     });
   }
 
-  extractRole(u: any): string {
-    if (u.rol_nombre) return u.rol_nombre.toUpperCase();
-    if (u.roles && u.roles.length > 0) {
-      const r = this.roles.find(ro => ro.id === u.roles[0]);
-      if (r) return r.name.toUpperCase();
+  private extractRole(u: any): string {
+    const details = u.roles_details ?? u.roles;
+    if (Array.isArray(details) && details.length) {
+      const first = details[0];
+      const name = typeof first === 'string' ? first : first?.name;
+      if (name) return String(name).toUpperCase();
     }
     if (u.is_superuser) return 'SUPERADMIN';
-    return 'PSICÓLOGO';
+    return 'SIN ROL';
   }
 
-  getDefaultSpecialty(role: string): string {
-    if (role.includes('PSIC')) return 'Terapia Cognitivo-Conductual';
-    if (role.includes('COORD') || role.includes('ADMIN')) return 'Gestión Clínica & Supervisión';
-    if (role.includes('RECEP')) return 'Admisión & Turnos';
-    if (role.includes('PSIQUIATRA')) return 'Neuropsiquiatría Adultos';
-    return 'Atención General';
+  private recalcStats(): void {
+    const count = (frag: string) =>
+      this.users.filter((u) => normalizeRole(u.rol_nombre).includes(frag)).length;
+    this.psicologosCount = count('psicolog');
+    this.recepcionistasCount = count('recepcion');
+    this.coordinadoresCount = count('coordinador');
+    this.adminCount = count('admin');
   }
 
-  onRoleSelect(role: string) {
+  onRoleSelect(role: string): void {
     this.selectedRole = role;
     this.applyFilter();
   }
 
-  applyFilter() {
+  applyFilter(): void {
     if (this.selectedRole === 'all') {
       this.filteredUsers = [...this.users];
     } else {
-      this.filteredUsers = this.users.filter(u => 
-        u.rol_nombre.toUpperCase().includes(this.selectedRole.toUpperCase())
+      const frag = this.selectedRole.toLowerCase();
+      this.filteredUsers = this.users.filter((u) =>
+        normalizeRole(u.rol_nombre).includes(frag)
       );
     }
   }
 
-  toggleActive(user: UserItem) {
+  toggleActive(user: UserItem): void {
     const newState = !user.is_active;
     user.is_active = newState;
     this.userService.patchUser(user.id, { is_active: newState }).subscribe({
       next: () => {},
-      error: () => {
-        // revert if error
-        user.is_active = !newState;
-      }
+      error: () => (user.is_active = !newState),
     });
   }
 
-  openPermissions(user: UserItem) {
+  openPermissions(user: UserItem): void {
     this.selectedUserForPerms = user;
     this.showPermissionModal = true;
   }
 
-  closePermissions() {
+  closePermissions(): void {
     this.showPermissionModal = false;
     this.selectedUserForPerms = null;
   }
 
-  savePermissions() {
-    // Guardar permisos feedback
+  savePermissions(): void {
     this.closePermissions();
   }
 }

@@ -1,30 +1,32 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { AuthService } from './auth.service';
 
-@Injectable({
-  providedIn: 'root'
-})
+import { apiUrl, API } from '../core/api';
+import { Paged, unwrap } from '../core/models/paged.model';
+
+@Injectable({ providedIn: 'root' })
 export class RoleService {
-  private apiUrl = 'http://localhost:8000/api/users/roles/';
-  private permisosUrl = 'http://localhost:8000/api/users/permisos/';
+  private rolesUrl = apiUrl(API.roles);
+  private permisosUrl = apiUrl(API.permisos);
 
-  constructor(private http: HttpClient, private authService: AuthService) { }
+  constructor(private http: HttpClient) {}
 
   getRoles(): Observable<any[]> {
-    return this.http.get<any[]>(this.apiUrl, { headers: this.authService.getAuthHeaders() });
+    return this.http.get<any[] | Paged<any>>(this.rolesUrl).pipe(unwrap<any>());
   }
 
-  getRole(id: number): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}${id}/`, { headers: this.authService.getAuthHeaders() });
+  getRole(id: string): Observable<any> {
+    return this.http.get<any>(`${this.rolesUrl}${id}/`);
   }
 
   createRole(role: any): Observable<any> {
-    return this.http.post<any>(this.apiUrl, role, { headers: this.authService.getAuthHeaders() });
+    return this.http.post<any>(this.rolesUrl, role);
   }
 
   getPermisos(): Observable<any[]> {
-    return this.http.get<any[]>(this.permisosUrl, { headers: this.authService.getAuthHeaders() });
+    return this.http
+      .get<any[] | Paged<any>>(this.permisosUrl)
+      .pipe(unwrap<any>());
   }
 }

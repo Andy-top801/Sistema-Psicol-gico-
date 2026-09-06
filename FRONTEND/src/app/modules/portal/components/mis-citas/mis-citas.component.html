@@ -1,0 +1,72 @@
+<app-page-header
+  eyebrow="CU11"
+  title="Mis citas"
+  subtitle="Consulta tus próximas sesiones, cancélalas o solicita una reprogramación.">
+</app-page-header>
+
+<div *ngIf="loadError" class="alert-box alert-danger">
+  No se pudieron cargar tus citas.
+  <button type="button" class="link-btn" (click)="load()">Reintentar</button>
+</div>
+
+<p *ngIf="isLoading" class="muted">Cargando…</p>
+
+<ng-container *ngIf="!isLoading">
+  <section class="citas-section">
+    <h3 class="citas-section__title">Próximas</h3>
+    <app-empty-state *ngIf="proximas.length === 0" title="No tienes citas próximas"></app-empty-state>
+    <div class="cita-card" *ngFor="let c of proximas">
+      <div class="cita-card__date">
+        <span>{{ c.fecha_hora | date:'d MMM' }}</span>
+        <strong>{{ c.fecha_hora | date:'HH:mm' }}</strong>
+      </div>
+      <div class="cita-card__body">
+        <strong>{{ c.psicologo_details?.first_name }} {{ c.psicologo_details?.last_name }}</strong>
+        <span class="muted">{{ c.modalidad === 'virtual' ? 'Teleconsulta' : 'Presencial' }} · {{ c.duracion_minutos }} min</span>
+        <span class="badge" [attr.data-estado]="c.estado">{{ c.estado | uppercase }}</span>
+      </div>
+      <div class="cita-card__actions">
+        <button type="button" class="btn btn-secondary-dark" (click)="openReprogramar(c)">Reprogramar</button>
+        <button type="button" class="btn btn-danger-soft" [disabled]="working" (click)="cancelar(c)">Cancelar</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="citas-section">
+    <h3 class="citas-section__title">Historial</h3>
+    <app-empty-state *ngIf="historial.length === 0" title="Sin citas anteriores"></app-empty-state>
+    <div class="cita-row" *ngFor="let c of historial">
+      <span>{{ c.fecha_hora | date:'d MMM y, HH:mm' }}</span>
+      <span>{{ c.psicologo_details?.first_name }} {{ c.psicologo_details?.last_name }}</span>
+      <span class="badge" [attr.data-estado]="c.estado">{{ c.estado | uppercase }}</span>
+    </div>
+  </section>
+</ng-container>
+
+<div *ngIf="showReprogramar" class="modal-backdrop" (click)="closeReprogramar()">
+  <div class="modal-dialog" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3 class="modal-title">Solicitar reprogramación</h3>
+      <button class="btn-close-modal" (click)="closeReprogramar()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div *ngIf="actionError" class="alert-box alert-danger mb-3">{{ actionError }}</div>
+      <div class="form-grid-2">
+        <div class="input-grp">
+          <label class="lbl">Nueva fecha</label>
+          <input type="date" [(ngModel)]="nuevaFecha" class="modal-input">
+        </div>
+        <div class="input-grp">
+          <label class="lbl">Nueva hora</label>
+          <input type="time" [(ngModel)]="nuevaHora" class="modal-input">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary-dark" (click)="closeReprogramar()">Cancelar</button>
+      <button type="button" class="btn btn-primary-emerald" [disabled]="working" (click)="confirmarReprogramar()">
+        {{ working ? 'Enviando…' : 'Solicitar' }}
+      </button>
+    </div>
+  </div>
+</div>

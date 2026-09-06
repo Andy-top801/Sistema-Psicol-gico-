@@ -1,0 +1,47 @@
+<app-page-header
+  eyebrow="Portal del paciente"
+  [title]="'Hola, ' + (nombre || 'paciente')"
+  subtitle="Consulta tus próximas citas y tus sesiones de teleconsulta.">
+</app-page-header>
+
+<div class="portal-grid">
+  <section class="portal-card">
+    <h3 class="portal-card__title">Próxima cita</h3>
+    <ng-container *ngIf="!isLoading; else cargando">
+      <div *ngIf="proximaCita; else sinCita" class="next-appt">
+        <div class="next-appt__date">
+          <span class="next-appt__day">{{ proximaCita.fecha_hora | date:'d MMM' }}</span>
+          <span class="next-appt__time">{{ proximaCita.fecha_hora | date:'HH:mm' }}</span>
+        </div>
+        <div class="next-appt__info">
+          <strong>{{ proximaCita.psicologo_details?.first_name }} {{ proximaCita.psicologo_details?.last_name }}</strong>
+          <span class="next-appt__modalidad">
+            {{ proximaCita.modalidad === 'virtual' ? 'Teleconsulta' : 'Presencial' }} · {{ proximaCita.duracion_minutos }} min
+          </span>
+          <span class="badge" [attr.data-estado]="proximaCita.estado">{{ proximaCita.estado | uppercase }}</span>
+        </div>
+      </div>
+      <ng-template #sinCita>
+        <app-empty-state title="No tienes citas próximas"
+          message="Cuando el centro agende una cita para ti, aparecerá aquí."></app-empty-state>
+      </ng-template>
+    </ng-container>
+    <ng-template #cargando><p class="muted">Cargando…</p></ng-template>
+    <a routerLink="/portal/citas" class="portal-card__link">Ver todas mis citas ({{ citasCount }})</a>
+  </section>
+
+  <section class="portal-card">
+    <h3 class="portal-card__title">Teleconsultas</h3>
+    <ul class="tc-list" *ngIf="teleconsultasProximas.length; else sinTc">
+      <li *ngFor="let t of teleconsultasProximas">
+        <span class="badge" [attr.data-estado]="t.estado">{{ t.estado_display || t.estado }}</span>
+        <a [href]="t.enlace_paciente" target="_blank" rel="noopener">Entrar a la sala</a>
+      </li>
+    </ul>
+    <ng-template #sinTc>
+      <app-empty-state title="Sin teleconsultas programadas"
+        message="Tus sesiones virtuales aparecerán aquí cuando estén listas."></app-empty-state>
+    </ng-template>
+    <a routerLink="/portal/teleconsulta" class="portal-card__link">Ir a teleconsulta</a>
+  </section>
+</div>

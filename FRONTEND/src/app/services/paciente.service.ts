@@ -1,12 +1,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { AuthService } from './auth.service';
+
+import { apiUrl, API } from '../core/api';
+import { Paged, unwrap } from '../core/models/paged.model';
 
 export interface Paciente {
   id: string;
   usuario: {
-    id: number;
+    id: string;
     email: string;
     first_name: string;
     last_name: string;
@@ -17,47 +19,39 @@ export interface Paciente {
   documento_identidad?: string;
   genero?: string;
   created_at?: string;
+  updated_at?: string;
   citas_count?: number;
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class PacienteService {
-  private apiUrl = 'http://localhost:8000/api/users/pacientes/';
+  private base = apiUrl(API.pacientes);
 
-  constructor(
-    private http: HttpClient,
-    private authService: AuthService
-  ) {}
+  constructor(private http: HttpClient) {}
 
   getPacientes(): Observable<Paciente[]> {
-    return this.http.get<Paciente[]>(this.apiUrl, {
-      headers: this.authService.getAuthHeaders()
-    });
+    return this.http
+      .get<Paciente[] | Paged<Paciente>>(this.base)
+      .pipe(unwrap<Paciente>());
   }
 
   getPaciente(id: string): Observable<Paciente> {
-    return this.http.get<Paciente>(`${this.apiUrl}${id}/`, {
-      headers: this.authService.getAuthHeaders()
-    });
+    return this.http.get<Paciente>(`${this.base}${id}/`);
   }
 
   createPaciente(data: any): Observable<Paciente> {
-    return this.http.post<Paciente>(this.apiUrl, data, {
-      headers: this.authService.getAuthHeaders()
-    });
+    return this.http.post<Paciente>(this.base, data);
   }
 
   updatePaciente(id: string, data: any): Observable<Paciente> {
-    return this.http.put<Paciente>(`${this.apiUrl}${id}/`, data, {
-      headers: this.authService.getAuthHeaders()
-    });
+    return this.http.put<Paciente>(`${this.base}${id}/`, data);
+  }
+
+  patchPaciente(id: string, data: any): Observable<Paciente> {
+    return this.http.patch<Paciente>(`${this.base}${id}/`, data);
   }
 
   deletePaciente(id: string): Observable<any> {
-    return this.http.delete(`${this.apiUrl}${id}/`, {
-      headers: this.authService.getAuthHeaders()
-    });
+    return this.http.delete(`${this.base}${id}/`);
   }
 }

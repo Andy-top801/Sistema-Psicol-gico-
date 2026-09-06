@@ -1,0 +1,83 @@
+<div class="app-shell" [class.app-shell--collapsed]="collapsed()">
+  <!-- Overlay del drawer en móvil -->
+  <div class="shell-overlay" *ngIf="drawerOpen()" (click)="closeDrawer()"></div>
+
+  <!-- Sidebar -->
+  <aside class="shell-sidebar" [class.is-open]="drawerOpen()">
+    <div class="sidebar-brand">
+      <app-brand-logo [variant]="collapsed() ? 'mark' : 'full'" [showSub]="true" mono size="md"></app-brand-logo>
+      <button type="button" class="sidebar-collapse-btn" (click)="toggleCollapsed()" title="Contraer menú">
+        <svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+
+    <div class="sidebar-center">
+      <span class="sidebar-center__label">Centro</span>
+      <span class="sidebar-center__name">{{ centerName }}</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a
+        *ngFor="let item of navItems"
+        class="nav-item"
+        [routerLink]="item.path"
+        routerLinkActive="is-active"
+        [routerLinkActiveOptions]="{ exact: item.path === '/dashboard' }"
+        (click)="closeDrawer()">
+        <app-nav-icon [name]="item.icon"></app-nav-icon>
+        <span class="nav-item__label">{{ item.label }}</span>
+        <span class="nav-item__cu" *ngIf="item.cu && !collapsed()">{{ item.cu }}</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <span class="sidebar-user__avatar">{{ userInitials }}</span>
+        <span class="sidebar-user__info" *ngIf="!collapsed()">
+          <span class="sidebar-user__name">{{ userName }}</span>
+          <span class="sidebar-user__role">{{ userRole }}</span>
+        </span>
+      </div>
+      <button type="button" class="sidebar-logout" (click)="logout()">
+        <svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span *ngIf="!collapsed()">Cerrar sesión</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Área principal -->
+  <div class="shell-main">
+    <header class="shell-topbar">
+      <button type="button" class="topbar-hamburger" (click)="toggleDrawer()" aria-label="Abrir menú">
+        <svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+
+      <div class="topbar-context">
+        <span class="topbar-center">{{ centerName }}</span>
+      </div>
+
+      <div class="topbar-actions">
+        <app-theme-toggle></app-theme-toggle>
+        <div class="user-menu">
+          <button type="button" class="user-menu__trigger" (click)="toggleUserMenu()">
+            <span class="user-menu__avatar">{{ userInitials }}</span>
+            <span class="user-menu__name">{{ userName }}</span>
+            <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="user-menu__dropdown" *ngIf="userMenuOpen()">
+            <div class="user-menu__header">
+              <strong>{{ userName }}</strong>
+              <span>{{ userEmail }}</span>
+              <span class="user-menu__badge">{{ userRole }}</span>
+            </div>
+            <button type="button" class="user-menu__item" (click)="logout()">Cerrar sesión</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="shell-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>
