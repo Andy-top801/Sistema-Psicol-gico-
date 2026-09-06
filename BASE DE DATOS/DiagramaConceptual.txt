@@ -1,0 +1,93 @@
+@startuml
+!theme plain
+hide circle
+hide methods
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+' ==========================================
+' Ajustes de espaciado para que no sea un bollo
+' ==========================================
+skinparam nodesep 100
+skinparam ranksep 100
+skinparam ClassBackgroundColor #FFFFFF
+skinparam ClassBorderColor #333333
+
+' ==========================================
+' Entidades (Clases) en Español
+' ==========================================
+
+class CENTRO {
+  +Id
+  +NombreEsquema
+  +Nombre
+  +EsActivo
+  +FechaCreacion
+}
+
+class DOMINIO {
+  +Id
+  +UrlDominio
+  +EsPrincipal
+}
+
+class CONFIGURACION {
+  +Id
+  +Direccion
+  +CorreoContacto
+  +TelefonoContacto
+  +UrlLogo
+  +ColorPrimario
+}
+
+class USUARIO {
+  +Id
+  +Correo
+  +Contrasena
+  +Nombres
+  +Apellidos
+  +Telefono
+  +EsSuperAdmin
+  +EsActivo
+  +FechaCreacion
+}
+
+class ROL {
+  +Id
+  +Nombre
+  +Descripcion
+}
+
+class PERMISO {
+  +Id
+  +Nombre
+  +Codigo
+}
+
+class USUARIO_ROL {
+  +FechaAsignacion
+}
+
+class ROL_PERMISO {
+  +FechaAsignacion
+}
+
+' ==========================================
+' Relaciones y Direcciones (para un diseño limpio)
+' ==========================================
+
+' Distribuimos Dominio abajo y Configuración a la derecha del Centro
+CENTRO "1..1" -down- "1..*" DOMINIO : +TIENE >
+CENTRO "1..1" -right- "1..1" CONFIGURACION : +POSEE >
+
+' El Usuario va hacia abajo del Centro
+CENTRO "1..1" -down- "0..*" USUARIO : +TIENE >
+
+' Hacemos que Rol y Permiso se desplieguen hacia la derecha para hacer una línea clara
+USUARIO "0..*" -right- "0..*" ROL : +TIENE >
+(USUARIO, ROL) .. USUARIO_ROL
+
+ROL "0..*" -right- "0..*" PERMISO : +CONTIENE >
+(ROL, PERMISO) .. ROL_PERMISO
+
+@enduml

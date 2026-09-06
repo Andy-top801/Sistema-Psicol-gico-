@@ -1,0 +1,50 @@
+<header class="page-header">
+  <div>
+    <h1 class="page-header__title">Gestión de Roles</h1>
+    <p class="page-header__desc">Administre los roles del sistema y asigne permisos específicos para el control de acceso.</p>
+  </div>
+  <a routerLink="/roles/nuevo" class="btn btn--primary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+    <svg viewBox="0 0 20 20" fill="currentColor" style="width: 18px; height: 18px;"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+    Nuevo Rol
+  </a>
+</header>
+
+<div class="content-card">
+  <div class="table-container">
+    <div *ngIf="isLoading" style="padding: 40px; text-align: center; color: var(--color-text-muted);">
+      Cargando roles...
+    </div>
+
+    <table class="data-table" *ngIf="!isLoading">
+      <thead>
+        <tr>
+          <th style="width: 25%;">Nombre del Rol</th>
+          <th style="width: 40%;">Descripción</th>
+          <th style="width: 20%;">Permisos Asignados</th>
+          <th style="width: 15%;">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="roles.length === 0">
+          <td colspan="4" style="text-align: center; padding: 20px;">No hay roles registrados.</td>
+        </tr>
+        <tr *ngFor="let role of roles">
+          <td>
+            <div style="font-weight: 500; color: var(--color-text);">{{ role.name }}</div>
+          </td>
+          <td style="color: var(--color-text-secondary); font-size: 13px;">
+            {{ role.description || 'Sin descripción' }}
+          </td>
+          <td>
+            <span class="badge badge--info">{{ role.permisos?.length || 0 }} permisos</span>
+          </td>
+          <td>
+            <button class="btn btn--icon" title="Editar">
+              <svg viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/></svg>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

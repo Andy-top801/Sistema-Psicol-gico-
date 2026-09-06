@@ -1,0 +1,55 @@
+<div class="admin-layout">
+  <!-- Sidebar (Panel lateral persistente) -->
+  <aside class="sidebar">
+    <div class="sidebar__brand">
+      <svg class="sidebar__logo" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M16 4C9.37 4 4 9.37 4 16C4 22.63 9.37 28 16 28C22.63 28 28 22.63 28 16C28 9.37 22.63 4 16 4ZM16 24C11.58 24 8 20.42 8 16C8 11.58 11.58 8 16 8C20.42 8 24 11.58 24 16C24 20.42 20.42 24 16 24Z" fill="white" fill-opacity="0.9"/>
+        <circle cx="16" cy="16" r="4" fill="white"/>
+      </svg>
+      <span class="sidebar__title">SIGEPSI</span>
+    </div>
+
+    <nav class="sidebar__nav">
+      <span class="sidebar__section-label">Principal</span>
+      <a routerLink="/dashboard" routerLinkActive="sidebar__link--active" class="sidebar__link">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>
+        Inicio
+      </a>
+
+      <span class="sidebar__section-label">Gestión Administrativa</span>
+      <a routerLink="/tenants/new" routerLinkActive="sidebar__link--active" class="sidebar__link">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd"/></svg>
+        Centros Psicológicos
+      </a>
+      <a routerLink="/users" routerLinkActive="sidebar__link--active" class="sidebar__link">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg>
+        Usuarios
+      </a>
+      <a routerLink="/roles" routerLinkActive="sidebar__link--active" class="sidebar__link">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+        Roles y Permisos
+      </a>
+    </nav>
+
+    <div class="sidebar__footer">
+      <div class="sidebar__user">
+        <div class="sidebar__avatar">
+          {{ userName.charAt(0) }}
+        </div>
+        <div class="sidebar__user-info">
+          <span class="sidebar__user-name">{{ userName }}</span>
+          <span class="sidebar__user-role">{{ userRole }}</span>
+        </div>
+      </div>
+      <button class="sidebar__logout" (click)="logout()">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clip-rule="evenodd"/></svg>
+        Cerrar sesión
+      </button>
+    </div>
+  </aside>
+
+  <!-- Contenedor Principal (Cambia dinámicamente) -->
+  <main class="main-content">
+    <router-outlet></router-outlet>
+  </main>
+</div>

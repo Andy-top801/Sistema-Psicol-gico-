@@ -1,0 +1,49 @@
+<header class="page-header">
+  <div>
+    <h1 class="page-header__title">Registrar Centro Psicológico</h1>
+    <p class="page-header__desc">Configure un nuevo centro. Esto aprovisionará un esquema de base de datos aislado (Multi-Tenant).</p>
+  </div>
+</header>
+
+<div class="content-card">
+  <div class="content-card__header">
+    <h3 class="content-card__title">Datos del centro</h3>
+    <p class="content-card__subtitle">Todos los campos son obligatorios.</p>
+  </div>
+
+  <form [formGroup]="tenantForm" (ngSubmit)="onSubmit()" class="form">
+    <div class="form__row">
+      <div class="field">
+        <label for="name" class="field__label">Nombre del centro</label>
+        <input type="text" id="name" formControlName="name" class="field__input" placeholder="Ej: Clínica San Juan">
+      </div>
+      
+      <div class="field">
+        <label for="schema_name" class="field__label">Nombre del esquema (BD)</label>
+        <input type="text" id="schema_name" formControlName="schema_name" class="field__input" placeholder="Ej: clinicasanjuan">
+        <span class="field__hint-text">Solo letras minúsculas sin espacios ni caracteres especiales.</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="domain_url" class="field__label">Dominio principal</label>
+      <input type="text" id="domain_url" formControlName="domain_url" class="field__input" placeholder="Ej: clinicasanjuan.sigepsi.com">
+      <span class="field__hint-text">Este será el subdominio de acceso para el centro.</span>
+    </div>
+
+    <div *ngIf="errorMessage" class="alert alert--error">
+      {{ errorMessage }}
+    </div>
+
+    <div *ngIf="successMessage" class="alert alert--success">
+      {{ successMessage }}
+    </div>
+
+    <div class="form__actions">
+      <button type="submit" class="btn btn--primary" [disabled]="tenantForm.invalid || isLoading">
+        <span *ngIf="!isLoading">Aprovisionar centro</span>
+        <span *ngIf="isLoading" class="btn__loader"></span>
+      </button>
+    </div>
+  </form>
+</div>

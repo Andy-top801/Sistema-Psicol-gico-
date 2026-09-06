@@ -1,0 +1,49 @@
+<header class="page-header">
+  <div>
+    <h1 class="page-header__title">Gestión de Usuarios</h1>
+    <p class="page-header__desc">Administre los usuarios que tienen acceso al sistema, como psicólogos y personal.</p>
+  </div>
+  <a routerLink="/users/new" class="btn btn--primary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+    Nuevo Usuario
+  </a>
+</header>
+
+<div class="content-card">
+  <div class="table-container">
+    <div *ngIf="isLoading" style="padding: 40px; text-align: center; color: var(--color-text-muted);">
+      Cargando usuarios...
+    </div>
+
+    <table class="data-table" *ngIf="!isLoading">
+      <thead>
+        <tr>
+          <th>Nombre Completo</th>
+          <th>Correo Electrónico</th>
+          <th>Rol Principal</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="users.length === 0">
+          <td colspan="4" style="text-align: center; padding: 20px;">No hay usuarios registrados.</td>
+        </tr>
+        <tr *ngFor="let user of users">
+          <td>
+            <div style="font-weight: 500; color: var(--color-text);">
+              {{ user.first_name }} {{ user.last_name }}
+            </div>
+          </td>
+          <td>{{ user.email }}</td>
+          <td>
+            <span class="badge badge--info">{{ getRoleName(user.roles) }}</span>
+          </td>
+          <td>
+            <span class="badge" [class.badge--success]="user.is_active" [class.badge--error]="!user.is_active">
+              Activo
+            </span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

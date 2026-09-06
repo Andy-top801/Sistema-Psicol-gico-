@@ -1,0 +1,214 @@
+/* ============================================================
+   AdminLayoutComponent — Layout base para rutas autenticadas
+   Estética: Salud Mental (Calma, Elegancia Premium)
+   ============================================================ */
+
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* --- Sidebar --- */
+.sidebar {
+  width: 260px; /* Un poco más ancha para respirar */
+  min-width: 260px;
+  background: var(--color-sidebar);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-6) 0;
+  box-shadow: var(--shadow-lg);
+  z-index: 10;
+}
+
+.sidebar__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0 var(--space-8);
+  margin-bottom: var(--space-10);
+}
+
+.sidebar__logo {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  color: var(--color-secondary-light); /* Toque cálido en el logo */
+}
+
+.sidebar__logo path,
+.sidebar__logo circle {
+  fill: currentColor;
+}
+
+.sidebar__title {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: white;
+}
+
+.sidebar__nav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 var(--space-4);
+}
+
+.sidebar__section-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.4);
+  padding: var(--space-5) var(--space-4) var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.sidebar__section-label:first-child {
+  margin-top: 0;
+}
+
+.sidebar__link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 10px var(--space-4);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  transition: all var(--transition);
+}
+
+.sidebar__link svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  transition: transform var(--transition);
+}
+
+.sidebar__link:hover {
+  color: white;
+  background: var(--color-sidebar-hover);
+}
+
+.sidebar__link:hover svg {
+  transform: translateX(2px);
+}
+
+.sidebar__link--active {
+  color: var(--color-sidebar);
+  background: var(--color-secondary-light); /* Contraste suave cálido */
+  font-weight: 600;
+}
+
+.sidebar__link--active:hover {
+  color: var(--color-sidebar);
+  background: var(--color-secondary);
+}
+
+.sidebar__link--active svg {
+  color: var(--color-sidebar);
+}
+
+/* --- Footer del Sidebar --- */
+.sidebar__footer {
+  padding: var(--space-5) var(--space-4) var(--space-4);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.sidebar__user {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0 var(--space-2);
+}
+
+.sidebar__avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-secondary-light);
+  color: var(--color-sidebar);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.sidebar__user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar__user-name {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: white;
+}
+
+.sidebar__user-role {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.sidebar__logout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.sidebar__logout svg {
+  width: 16px;
+  height: 16px;
+}
+
+.sidebar__logout:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* --- Main Content Area --- */
+.main-content {
+  flex: 1;
+  background: var(--color-bg);
+  overflow-y: auto;
+  position: relative;
+}
+
+/* --- Responsive --- */
+@media (max-width: 900px) {
+  .sidebar {
+    position: fixed;
+    height: 100vh;
+    transform: translateX(-100%);
+    transition: transform var(--transition);
+  }
+  
+  /* Aquí se agregaría la lógica para mostrar el sidebar en móvil 
+     añadiendo una clase .sidebar--open, pero por ahora lo ocultamos */
+}
