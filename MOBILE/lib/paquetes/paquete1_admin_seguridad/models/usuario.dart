@@ -7,6 +7,9 @@ class Usuario {
   final String lastName;
   final String phone;
   final List<String> roles;
+  final bool isSuperuser;
+  final bool isStaff;
+  final String? pacienteId;
 
   const Usuario({
     required this.id,
@@ -15,9 +18,38 @@ class Usuario {
     required this.lastName,
     required this.phone,
     required this.roles,
+    this.isSuperuser = false,
+    this.isStaff = false,
+    this.pacienteId,
   });
 
-  bool get esPaciente => roles.contains('Paciente');
+  /// Normaliza un nombre de rol: sin acentos, minúsculas, sin espacios.
+  static String _norm(String value) {
+    const from = 'áàäâéèëêíìïîóòöôúùüûñ';
+    const to = 'aaaaeeeeiiiioooouuuun';
+    var s = value.toLowerCase();
+    for (var i = 0; i < from.length; i++) {
+      s = s.replaceAll(from[i], to[i]);
+    }
+    return s.replaceAll(RegExp(r'\s+'), '');
+  }
+
+  List<String> get rolesNormalizados => roles.map(_norm).toList();
+
+  bool get esPaciente => rolesNormalizados.contains('paciente');
+
+  bool get esStaff =>
+      isSuperuser ||
+      isStaff ||
+      rolesNormalizados.any(
+        (r) => const {
+          'superadmin',
+          'admincentro',
+          'coordinador',
+          'psicologo',
+          'recepcionista',
+        }.contains(r),
+      );
 
   factory Usuario.fromJson(Map<String, dynamic> json) {
     return Usuario(
@@ -29,6 +61,9 @@ class Usuario {
       roles: (json['roles'] as List<dynamic>? ?? [])
           .map((r) => r.toString())
           .toList(),
+      isSuperuser: json['is_superuser'] as bool? ?? false,
+      isStaff: json['is_staff'] as bool? ?? false,
+      pacienteId: json['paciente_id']?.toString(),
     );
   }
 }

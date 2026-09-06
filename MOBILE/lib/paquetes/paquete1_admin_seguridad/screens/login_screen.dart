@@ -6,7 +6,6 @@ import '../widgets/auth_header.dart';
 import '../widgets/auth_text_field.dart';
 import '../widgets/gradient_button.dart';
 import 'forgot_password_screen.dart';
-import 'register_screen.dart';
 
 /// CU02 — Gestionar inicio de sesión y autenticación (HU-02).
 class LoginScreen extends StatefulWidget {

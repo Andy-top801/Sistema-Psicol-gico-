@@ -19,8 +19,10 @@ class ApiConfig {
   static const String refreshEndpoint = '/users/auth/refresh/';
   static const String meEndpoint = '/users/me/';
 
-  // HU-10 / CU27 / RF-31
-  static const String passwordResetEndpoint = '/users/auth/password-reset/request/';
+  // HU-10 / CU27 / RF-31 — flujo de CÓDIGO de 6 dígitos (móvil).
+  // OJO: NO usar `/password-reset/request/` (esa acción manda un enlace con
+  // token, para la web). `PasswordResetRequestView` manda el código.
+  static const String passwordResetEndpoint = '/users/auth/password-reset/';
   static const String passwordResetVerifyEndpoint =
       '/users/auth/password-reset-verify/';
   static const String passwordResetConfirmEndpoint =

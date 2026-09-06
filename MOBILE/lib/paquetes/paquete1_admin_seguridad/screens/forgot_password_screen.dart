@@ -8,7 +8,8 @@ import '../widgets/gradient_button.dart';
 import 'verify_reset_code_screen.dart';
 
 /// CU27 — Recuperar contraseña o credenciales de acceso (HU-10a / RF-31):
-/// solicitud del código por correo.
+/// solicitud del código de un solo uso por correo. Al enviarlo avanza a
+/// [VerifyResetCodeScreen].
 class ForgotPasswordScreen extends StatefulWidget {
   static const routeName = '/forgot-password';
 
@@ -30,7 +31,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   bool _isLoading = false;
   String? _errorMessage;
-  bool _sent = false;
 
   @override
   void dispose() {
@@ -57,54 +57,27 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       _errorMessage = null;
     });
 
+    final email = _emailController.text.trim();
     try {
-      await _service.requestPasswordReset(email: _emailController.text.trim());
+      await _service.requestPasswordReset(email: email);
       if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-        _sent = true;
-      });
-    } on ApiException catch (e) {
-      setState(() {
-        _isLoading = false;
-        _errorMessage = e.message;
-      });
-    } catch (_) {
-      setState(() {
-        _isLoading = false;
-        _errorMessage =
-            'No se pudo conectar con el servidor. Verifica tu conexión.';
-      });
-    }
-  }
-
-  Future<void> _resend() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      await _service.requestPasswordReset(email: _emailController.text.trim());
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enlace reenviado con éxito.')),
+      setState(() => _isLoading = false);
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) =>
+              VerifyResetCodeScreen(email: email, service: _service),
+        ),
       );
     } on ApiException catch (e) {
       setState(() {
         _isLoading = false;
         _errorMessage = e.message;
-        _sent = false;
       });
     } catch (_) {
       setState(() {
         _isLoading = false;
         _errorMessage =
             'No se pudo conectar con el servidor. Verifica tu conexión.';
-        _sent = false;
       });
     }
   }
@@ -124,8 +97,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   const AuthHeader(
                     compact: true,
                     title: 'Recuperar contraseña',
-                    subtitle:
-                        'Te enviaremos un enlace a tu correo para restablecerla',
+                    subtitle: 'Te enviaremos un código a tu correo',
                   ),
                   Positioned(
                     top: 8,
@@ -148,96 +120,42 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       topRight: Radius.circular(28),
                     ),
                   ),
-                  child: _sent ? _buildSentState(context) : _buildForm(),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        AuthTextField(
+                          controller: _emailController,
+                          label: 'Correo electrónico',
+                          icon: Icons.mail_outline,
+                          keyboardType: TextInputType.emailAddress,
+                          validator: _validateEmail,
+                        ),
+                        if (_errorMessage != null) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            _errorMessage!,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 24),
+                        GradientButton(
+                          label: 'Enviar código',
+                          isLoading: _isLoading,
+                          onPressed: _submit,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildForm() {
-    return Form(
-      key: _formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          AuthTextField(
-            controller: _emailController,
-            label: 'Correo electrónico',
-            icon: Icons.mail_outline,
-            keyboardType: TextInputType.emailAddress,
-            validator: _validateEmail,
-          ),
-          if (_errorMessage != null) ...[
-            const SizedBox(height: 12),
-            Text(
-              _errorMessage!,
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
-          ],
-          const SizedBox(height: 24),
-          GradientButton(
-            label: 'Enviar enlace',
-            isLoading: _isLoading,
-            onPressed: _submit,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSentState(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const Icon(
-          Icons.mark_email_read_outlined,
-          size: 48,
-          color: Color(0xFF1E8A7E),
-        ),
-        const SizedBox(height: 16),
-        const Text(
-          'Revisa tu correo',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Si el correo está registrado, recibirás un enlace de recuperación válido por 5 minutos.',
-          textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.grey.shade600),
-        ),
-        const SizedBox(height: 24),
-        GradientButton(
-          label: 'Volver al inicio de sesión',
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-        ),
-        const SizedBox(height: 12),
-        TextButton(
-          onPressed: _isLoading ? null : _resend,
-          child: _isLoading
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1E8A7E)),
-                  ),
-                )
-              : const Text(
-                  'Volver a enviar enlace',
-                  style: TextStyle(
-                    color: Color(0xFF1E8A7E),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-        ),
-      ],
     );
   }
 }
