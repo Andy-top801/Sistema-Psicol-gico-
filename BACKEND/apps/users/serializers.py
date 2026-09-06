@@ -1,6 +1,6 @@
 import re
 from rest_framework import serializers
-from .models import Usuario, Rol, Permiso
+from .models import Usuario, Rol, Permiso, Especialidad, Psicologo, DisponibilidadPsicologo
 from django.contrib.auth.hashers import make_password
 
 def validate_secure_password(value):
@@ -178,3 +178,103 @@ class UserProfileSerializer(serializers.ModelSerializer):
         model = Usuario
         fields = ['id', 'email', 'first_name', 'last_name', 'phone', 'roles']
         read_only_fields = fields
+
+
+class EspecialidadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Especialidad
+        fields = ['id', 'name', 'description']
+
+
+class DisponibilidadPsicologoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DisponibilidadPsicologo
+        fields = ['id', 'psicologo', 'dia_semana', 'hora_inicio', 'hora_fin', 'activo']
+
+
+PSICOLOGO_ROLE_NAME = 'Psicólogo'
+
+
+class PsicologoSerializer(serializers.ModelSerializer):
+    usuario = UserProfileSerializer(read_only=True)
+    especialidades_details = EspecialidadSerializer(source='especialidades', many=True, read_only=True)
+    email = serializers.EmailField(write_only=True)
+    username = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    password = serializers.CharField(write_only=True, required=False, allow_blank=False, validators=[validate_secure_password])
+    first_name = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    last_name = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    phone = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    especialidades = serializers.PrimaryKeyRelatedField(queryset=Especialidad.objects.all(), many=True, required=False)
+
+    class Meta:
+        model = Psicologo
+        fields = [
+            'id', 'usuario', 'email', 'username', 'password',
+            'first_name', 'last_name', 'phone', 'modalidad_atencion',
+            'activo', 'especialidades', 'especialidades_details',
+        ]
+
+    def validate_email(self, value):
+        value = value.strip().lower()
+        if Usuario.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError('Ya existe una cuenta con este correo electrónico.')
+        return value
+
+    def create(self, validated_data):
+        especialidades = validated_data.pop('especialidades', [])
+        email = validated_data.pop('email')
+        password = validated_data.pop('password')
+        username = validated_data.pop('username', '') or email
+        user = Usuario.objects.create_user(
+            username=username,
+            email=email,
+            password=password,
+            first_name=validated_data.pop('first_name', ''),
+            last_name=validated_data.pop('last_name', ''),
+            phone=validated_data.pop('phone', ''),
+        )
+        rol_psicologo, _ = Rol.objects.get_or_create(
+            name=PSICOLOGO_ROLE_NAME,
+            defaults={'description': 'Psicólogo registrado desde el panel administrativo'},
+        )
+        user.roles.add(rol_psicologo)
+        psicologo = Psicologo.objects.create(usuario=user, **validated_data)
+        if especialidades:
+            psicologo.especialidades.set(especialidades)
+        return psicologo
+
+    def update(self, instance, validated_data):
+        especialidades = validated_data.pop('especialidades', None)
+        user = instance.usuario
+
+        for attr in ['email', 'username', 'first_name', 'last_name', 'phone']:
+            if attr in validated_data:
+                value = validated_data.pop(attr)
+                if attr == 'email':
+                    user.email = value.strip().lower()
+                elif attr == 'username':
+                    if value:
+                        user.username = value
+                else:
+                    setattr(user, attr, value)
+
+        if 'password' in validated_data:
+            user.set_password(validated_data.pop('password'))
+
+        user.save()
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        if especialidades is not None:
+            instance.especialidades.set(especialidades)
+
+        rol_psicologo, _ = Rol.objects.get_or_create(
+            name=PSICOLOGO_ROLE_NAME,
+            defaults={'description': 'Psicólogo registrado desde el panel administrativo'},
+        )
+        if not user.roles.filter(pk=rol_psicologo.pk).exists():
+            user.roles.add(rol_psicologo)
+
+        return instance

@@ -10,12 +10,13 @@ import uuid
 from django.conf import settings
 from django.core.mail import send_mail
 
-from .models import Usuario, Rol, Permiso, TokenRecuperacion
+from .models import Usuario, Rol, Permiso, TokenRecuperacion, Especialidad, Psicologo, DisponibilidadPsicologo
 from .serializers import (
     UsuarioSerializer, RolSerializer, PermisoSerializer,
     PasswordResetRequestSerializer, PasswordResetConfirmSerializer,
     MobilePasswordResetConfirmSerializer, PasswordResetVerifySerializer,
-    RegisterSerializer, UserProfileSerializer
+    RegisterSerializer, UserProfileSerializer, EspecialidadSerializer,
+    PsicologoSerializer, DisponibilidadPsicologoSerializer
 )
 from .tokens import make_reset_code
 
@@ -35,6 +36,24 @@ class UsuarioViewSet(viewsets.ModelViewSet):
     queryset = Usuario.objects.all()
     serializer_class = UsuarioSerializer
     permission_classes = [IsAuthenticated]
+
+
+class EspecialidadViewSet(viewsets.ModelViewSet):
+    queryset = Especialidad.objects.all()
+    serializer_class = EspecialidadSerializer
+    permission_classes = [IsAuthenticated, permissions.IsAdminUser]
+
+
+class PsicologoViewSet(viewsets.ModelViewSet):
+    queryset = Psicologo.objects.select_related('usuario').prefetch_related('especialidades')
+    serializer_class = PsicologoSerializer
+    permission_classes = [IsAuthenticated, permissions.IsAdminUser]
+
+
+class DisponibilidadPsicologoViewSet(viewsets.ModelViewSet):
+    queryset = DisponibilidadPsicologo.objects.select_related('psicologo', 'psicologo__usuario')
+    serializer_class = DisponibilidadPsicologoSerializer
+    permission_classes = [IsAuthenticated, permissions.IsAdminUser]
 
 class PasswordResetViewSet(viewsets.ViewSet):
     permission_classes = [AllowAny]

@@ -1,3 +1,8 @@
 from django.contrib import admin
 
-# Register your models here.
+from .models import Especialidad, Psicologo, DisponibilidadPsicologo
+
+
+admin.site.register(Especialidad)
+admin.site.register(Psicologo)
+admin.site.register(DisponibilidadPsicologo)

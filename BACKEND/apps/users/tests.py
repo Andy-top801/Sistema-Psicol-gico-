@@ -5,7 +5,7 @@ from django_tenants.test.cases import TenantTestCase
 from django_tenants.test.client import TenantClient
 
 from apps.tenants.models import Dominio
-from apps.users.models import Usuario
+from apps.users.models import Usuario, Especialidad, Psicologo, DisponibilidadPsicologo
 from apps.users.tokens import make_reset_code
 
 REGISTER_URL = '/api/users/auth/register/'
@@ -14,6 +14,9 @@ ME_URL = '/api/users/me/'
 PASSWORD_RESET_URL = '/api/users/auth/password-reset/'
 PASSWORD_RESET_VERIFY_URL = '/api/users/auth/password-reset-verify/'
 PASSWORD_RESET_CONFIRM_URL = '/api/users/auth/password-reset-confirm/'
+PSICOLOGOS_URL = '/api/users/psicologos/'
+ESPECIALIDADES_URL = '/api/users/especialidades/'
+DISPONIBILIDADES_URL = '/api/users/disponibilidades-psicologo/'
 
 
 class RegisterAndAuthTests(TenantTestCase):
@@ -202,3 +205,93 @@ class PasswordResetTests(TenantTestCase):
         )
 
         self.assertEqual(reused_response.status_code, 400)
+
+
+class PsicologoAdminTests(TenantTestCase):
+    @classmethod
+    def get_test_schema_name(cls):
+        return 'users_psicologo_test'
+
+    @classmethod
+    def get_test_tenant_domain(cls):
+        return 'users-psicologo.test.com'
+
+    def setUp(self):
+        super().setUp()
+        Dominio.objects.get_or_create(
+            tenant=self.tenant,
+            defaults={'domain': f'{self.tenant.schema_name}.test.com', 'is_primary': True},
+        )
+        self.client = TenantClient(self.tenant)
+        self.admin_user = Usuario.objects.create_superuser(
+            username='admin@test.com',
+            email='admin@test.com',
+            password='Admin123@',
+        )
+        self.especialidad = Especialidad.objects.create(name='Terapia Cognitivo Conductual')
+
+    def _post(self, url, payload, **extra):
+        return self.client.post(
+            url, data=json.dumps(payload), content_type='application/json', **extra
+        )
+
+    def _admin_token(self):
+        response = self._post(LOGIN_URL, {'email': 'admin@test.com', 'password': 'Admin123@'})
+        self.assertEqual(response.status_code, 200)
+        return response.json()['access']
+
+    def _create_psicologo(self):
+        user = Usuario.objects.create_user(
+            username='psicologo.base@test.com',
+            email='psicologo.base@test.com',
+            password='ClaveSegura123@',
+        )
+        psicologo = Psicologo.objects.create(usuario=user)
+        return psicologo
+
+    def test_admin_can_create_psicologo_with_role_and_specialty(self):
+        response = self._post(
+            PSICOLOGOS_URL,
+            {
+                'email': 'psicologo1@test.com',
+                'password': 'ClaveSegura123@',
+                'first_name': 'Carlos',
+                'last_name': 'Lopez',
+                'phone': '77777777',
+                'modalidad_atencion': 'mixta',
+                'especialidades': [str(self.especialidad.id)],
+            },
+            HTTP_AUTHORIZATION=f'Bearer {self._admin_token()}',
+        )
+
+        self.assertEqual(response.status_code, 201)
+        psicologo = Psicologo.objects.get(usuario__email='psicologo1@test.com')
+        self.assertTrue(psicologo.usuario.roles.filter(name='Psicólogo').exists())
+        self.assertTrue(psicologo.especialidades.filter(pk=self.especialidad.pk).exists())
+
+    def test_admin_can_create_especialidad(self):
+        response = self._post(
+            ESPECIALIDADES_URL,
+            {'name': 'Psicoterapia Infantil', 'description': 'Atención a niños'},
+            HTTP_AUTHORIZATION=f'Bearer {self._admin_token()}',
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(Especialidad.objects.filter(name='Psicoterapia Infantil').exists())
+
+    def test_admin_can_create_disponibilidad(self):
+        psicologo = self._create_psicologo()
+        response = self._post(
+            DISPONIBILIDADES_URL,
+            {
+                'psicologo': str(psicologo.id),
+                'dia_semana': 1,
+                'hora_inicio': '08:00:00',
+                'hora_fin': '12:00:00',
+                'activo': True,
+            },
+            HTTP_AUTHORIZATION=f'Bearer {self._admin_token()}',
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(DisponibilidadPsicologo.objects.filter(psicologo=psicologo).exists())

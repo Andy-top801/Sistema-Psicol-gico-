@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.conf import settings
 import uuid
 
 class Permiso(models.Model):
@@ -46,3 +47,65 @@ class TokenRecuperacion(models.Model):
     token = models.CharField(max_length=255, unique=True)
     fecha_expiracion = models.DateTimeField()
     usado = models.BooleanField(default=False)
+
+
+class Especialidad(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+
+class Psicologo(models.Model):
+    class ModalidadAtencion(models.TextChoices):
+        PRESENCIAL = 'presencial', 'Presencial'
+        VIRTUAL = 'virtual', 'Virtual'
+        MIXTA = 'mixta', 'Mixta'
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    usuario = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='psicologo',
+    )
+    especialidades = models.ManyToManyField(Especialidad, related_name='psicologos', blank=True)
+    modalidad_atencion = models.CharField(
+        max_length=20,
+        choices=ModalidadAtencion.choices,
+        default=ModalidadAtencion.PRESENCIAL,
+    )
+    activo = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f'{self.usuario.email} ({self.get_modalidad_atencion_display()})'
+
+
+class DisponibilidadPsicologo(models.Model):
+    class DiaSemana(models.IntegerChoices):
+        LUNES = 1, 'Lunes'
+        MARTES = 2, 'Martes'
+        MIERCOLES = 3, 'Miércoles'
+        JUEVES = 4, 'Jueves'
+        VIERNES = 5, 'Viernes'
+        SABADO = 6, 'Sábado'
+        DOMINGO = 7, 'Domingo'
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    psicologo = models.ForeignKey(Psicologo, on_delete=models.CASCADE, related_name='disponibilidades')
+    dia_semana = models.PositiveSmallIntegerField(choices=DiaSemana.choices)
+    hora_inicio = models.TimeField()
+    hora_fin = models.TimeField()
+    activo = models.BooleanField(default=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['psicologo', 'dia_semana', 'hora_inicio', 'hora_fin'],
+                name='uniq_disponibilidad_psicologo_slot',
+            )
+        ]
+
+    def __str__(self):
+        return f'{self.psicologo.usuario.email} - {self.get_dia_semana_display()}'

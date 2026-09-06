@@ -8,6 +8,9 @@ from .views import (
     UsuarioViewSet,
     RolViewSet,
     PermisoViewSet,
+    EspecialidadViewSet,
+    PsicologoViewSet,
+    DisponibilidadPsicologoViewSet,
     PasswordResetViewSet,
     MeView,
     RegisterView,
@@ -20,6 +23,9 @@ router = DefaultRouter()
 router.register(r'usuarios', UsuarioViewSet)
 router.register(r'roles', RolViewSet)
 router.register(r'permisos', PermisoViewSet)
+router.register(r'especialidades', EspecialidadViewSet)
+router.register(r'psicologos', PsicologoViewSet)
+router.register(r'disponibilidades-psicologo', DisponibilidadPsicologoViewSet)
 router.register(r'auth/password-reset', PasswordResetViewSet, basename='password-reset')
 
 app_name = 'users'
