@@ -81,7 +81,9 @@ class Command(BaseCommand):
             roles = {}
             for key, (rn, desc, is_staff) in ROLES.items():
                 roles[key], _ = Rol.objects.get_or_create(name=rn, defaults={'description': desc})
-            Permiso.objects.get_or_create(name='Ver citas', codename='read_citas')
+            Permiso.objects.get_or_create(
+                codename='read_citas', defaults={'name': 'Ver citas'}
+            )
 
             # Usuarios del personal
             admin = self._user(User, f'admin@{prefix}.com', 'Admin', name.split()[-1],
@@ -157,6 +159,15 @@ class Command(BaseCommand):
                 username=email, email=email, password=DEMO_PASSWORD,
                 first_name=first, last_name=last, is_staff=is_staff,
             )
-            self.stdout.write(f'    usuario: {email}')
+            self.stdout.write(f'    usuario nuevo: {email}')
+        else:
+            # Alinea la contraseña y el flag de staff de los usuarios demo.
+            user.set_password(DEMO_PASSWORD)
+            user.is_staff = is_staff
+            if not user.first_name:
+                user.first_name = first
+            if not user.last_name:
+                user.last_name = last
+            user.save()
         user.roles.add(rol)
         return user
