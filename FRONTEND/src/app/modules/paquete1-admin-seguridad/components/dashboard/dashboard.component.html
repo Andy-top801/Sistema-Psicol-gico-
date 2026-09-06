@@ -1,166 +1,75 @@
-<div class="dashboard-wrapper">
-  <!-- Header de Bienvenida -->
-  <div class="dash-header-row">
+<app-page-header
+  eyebrow="CU9"
+  [title]="'Panel de control'"
+  subtitle="Métricas operativas del centro en tiempo real.">
+  <div actions>
+    <a routerLink="/users/new" class="btn btn--primary">Registrar usuario</a>
+  </div>
+</app-page-header>
+
+<div *ngIf="loadError" class="alert-box alert-danger">
+  No se pudieron cargar las métricas.
+  <button type="button" class="link-btn" (click)="loadMetrics()">Reintentar</button>
+</div>
+
+<div class="kpi-grid-row">
+  <div class="kpi-card">
+    <span class="kpi-label">CONSULTAS REGISTRADAS</span>
+    <div class="kpi-val text-teal">{{ citasTotales }}</div>
+    <span class="kpi-desc">Total de citas en el centro</span>
+  </div>
+  <div class="kpi-card">
+    <span class="kpi-label">PACIENTES EN SEGUIMIENTO</span>
+    <div class="kpi-val">{{ pacientesTotales }}</div>
+    <span class="kpi-desc">Expedientes activos</span>
+  </div>
+  <div class="kpi-card">
+    <span class="kpi-label">PSICÓLOGOS HABILITADOS</span>
+    <div class="kpi-val text-emerald">{{ cargaProfesional }}</div>
+    <span class="kpi-desc">Disponibles para atención</span>
+  </div>
+  <div class="kpi-card">
+    <span class="kpi-label">INASISTENCIAS</span>
+    <div class="kpi-val text-red">{{ inasistencias }}</div>
+    <span class="kpi-desc">Reportadas en el sistema</span>
+  </div>
+</div>
+
+<h2 class="dash-section">Accesos directos</h2>
+<div class="cards-grid">
+  <a routerLink="/citas" class="quick-card">
+    <app-nav-icon name="calendar"></app-nav-icon>
     <div>
-      <h1 class="dash-title">Panel de Control & Resumen Operativo</h1>
-      <p class="dash-subtitle">Métricas clínicas, disponibilidad de profesionales y estado de centros en tiempo real.</p>
+      <strong>Agenda y citas</strong>
+      <p>Programación, confirmación y reprogramación (CU11).</p>
     </div>
-    <div class="dash-header-actions">
-      <a routerLink="/users/new" class="btn btn-primary-emerald">
-        <svg viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px;margin-right:6px;"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
-        Registrar Usuario
-      </a>
+  </a>
+  <a routerLink="/teleconsultas" class="quick-card">
+    <app-nav-icon name="video"></app-nav-icon>
+    <div>
+      <strong>Teleconsultas</strong>
+      <p>Salas virtuales con Jitsi Meet (CU13).</p>
     </div>
-  </div>
-
-  <!-- Tarjetas Métricas Superiores -->
-  <div class="dash-stats-grid">
-    <!-- Citas Totales -->
-    <div class="dash-stat-card">
-      <div class="stat-icon-wrapper teal-bg">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 22px; height: 22px; color: #2dd4bf;">
-          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-          <line x1="16" y1="2" x2="16" y2="6"/>
-          <line x1="8" y1="2" x2="8" y2="6"/>
-          <line x1="3" y1="10" x2="21" y2="10"/>
-        </svg>
-      </div>
-      <div class="stat-info">
-        <span class="stat-num">{{ citasTotales }}</span>
-        <span class="stat-name">Consultas Registradas</span>
-      </div>
+  </a>
+  <a routerLink="/pacientes" class="quick-card">
+    <app-nav-icon name="folder"></app-nav-icon>
+    <div>
+      <strong>Pacientes</strong>
+      <p>Expedientes y datos clínicos (CU7).</p>
     </div>
-
-    <!-- Pacientes Atendidos -->
-    <div class="dash-stat-card">
-      <div class="stat-icon-wrapper blue-bg">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 22px; height: 22px; color: #60a5fa;">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-          <circle cx="9" cy="7" r="4"/>
-          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-        </svg>
-      </div>
-      <div class="stat-info">
-        <span class="stat-num">{{ pacientesTotales }}</span>
-        <span class="stat-name">Pacientes en Seguimiento</span>
-      </div>
+  </a>
+  <a routerLink="/psicologos" class="quick-card">
+    <app-nav-icon name="stethoscope"></app-nav-icon>
+    <div>
+      <strong>Psicólogos</strong>
+      <p>Disponibilidad y carga de trabajo (CU6/CU8).</p>
     </div>
-
-    <!-- Carga Profesional Activa -->
-    <div class="dash-stat-card">
-      <div class="stat-icon-wrapper purple-bg">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 22px; height: 22px; color: #c084fc;">
-          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-        </svg>
-      </div>
-      <div class="stat-info">
-        <span class="stat-num">{{ cargaProfesional }}</span>
-        <span class="stat-name">Psicólogos Habilitados</span>
-      </div>
+  </a>
+  <a routerLink="/alertas" class="quick-card">
+    <app-nav-icon name="alert"></app-nav-icon>
+    <div>
+      <strong>Alertas de priorización</strong>
+      <p>Inasistencias, riesgo de abandono y seguimiento (CU10).</p>
     </div>
-
-    <!-- Inasistencias / Faltas -->
-    <div class="dash-stat-card">
-      <div class="stat-icon-wrapper amber-bg">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 22px; height: 22px; color: #fbbf24;">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="12" y1="8" x2="12" y2="12"/>
-          <line x1="12" y1="16" x2="12.01" y2="16"/>
-        </svg>
-      </div>
-      <div class="stat-info">
-        <span class="stat-num">{{ inasistencias }}</span>
-        <span class="stat-name">Inasistencias Reportadas</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Accesos Rápidos Módulos Sprint 1 (Clínica y Agenda) -->
-  <div class="dash-section-title">ACCESOS DIRECTOS — GESTIÓN CLÍNICA & AGENDA (SP1)</div>
-  <div class="quick-links-grid" style="margin-bottom: 28px;">
-    <a routerLink="/citas" class="quick-card">
-      <div class="quick-icon-box" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">
-        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/></svg>
-      </div>
-      <div class="quick-details">
-        <strong class="quick-title">Agenda & Citas (CU11)</strong>
-        <p class="quick-desc">Programación, confirmación, reprogramación inmediata e inasistencias.</p>
-      </div>
-    </a>
-
-    <a routerLink="/teleconsultas" class="quick-card">
-      <div class="quick-icon-box" style="background: rgba(45, 212, 191, 0.15); color: #2dd4bf;">
-        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z"/></svg>
-      </div>
-      <div class="quick-details">
-        <strong class="quick-title">Teleconsultas Jitsi (CU13)</strong>
-        <p class="quick-desc">Salas virtuales WebRTC encriptadas y telemedicina.</p>
-      </div>
-    </a>
-
-    <a routerLink="/pacientes" class="quick-card">
-      <div class="quick-icon-box" style="background: rgba(96, 165, 250, 0.15); color: #60a5fa;">
-        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>
-      </div>
-      <div class="quick-details">
-        <strong class="quick-title">Expedientes Pacientes (CU7)</strong>
-        <p class="quick-desc">Fichas clínicas, antecedentes y datos demográficos.</p>
-      </div>
-    </a>
-
-    <a routerLink="/psicologos" class="quick-card">
-      <div class="quick-icon-box" style="background: rgba(192, 132, 252, 0.15); color: #c084fc;">
-        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"/></svg>
-      </div>
-      <div class="quick-details">
-        <strong class="quick-title">Equipo de Psicólogos (CU6/8)</strong>
-        <p class="quick-desc">Control de disponibilidad semanal y balance de carga de trabajo.</p>
-      </div>
-    </a>
-
-    <a routerLink="/alertas" class="quick-card">
-      <div class="quick-icon-box" style="background: rgba(248, 113, 113, 0.15); color: #f87171;">
-        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
-      </div>
-      <div class="quick-details">
-        <strong class="quick-title">Alertas Clínicas (CU10)</strong>
-        <p class="quick-desc">Monitor de inasistencias críticas, riesgo de abandono y seguimiento.</p>
-      </div>
-    </a>
-  </div>
-
-  <!-- Accesos Rápidos Módulos Sprint 0 -->
-  <div class="dash-section-title">ACCESOS DIRECTOS — ADMINISTRACIÓN & SEGURIDAD (SP0)</div>
-  <div class="quick-links-grid">
-    <a routerLink="/tenants" class="quick-card">
-      <div class="quick-icon-box">
-        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd"/></svg>
-      </div>
-      <div class="quick-details">
-        <strong class="quick-title">Gestión de Centros (Tenants)</strong>
-        <p class="quick-desc">Aprovisionamiento multi-tenant, planes y dominios.</p>
-      </div>
-    </a>
-
-    <a routerLink="/users" class="quick-card">
-      <div class="quick-icon-box">
-        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg>
-      </div>
-      <div class="quick-details">
-        <strong class="quick-title">Personal y Permisos RBAC</strong>
-        <p class="quick-desc">Supervisión de psicólogos, roles granulares y switches.</p>
-      </div>
-    </a>
-
-    <a routerLink="/centro-config" class="quick-card">
-      <div class="quick-icon-box">
-        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>
-      </div>
-      <div class="quick-details">
-        <strong class="quick-title">Perfil del Centro</strong>
-        <p class="quick-desc">Datos institucionales, horarios y especialidades.</p>
-      </div>
-    </a>
-  </div>
+  </a>
 </div>

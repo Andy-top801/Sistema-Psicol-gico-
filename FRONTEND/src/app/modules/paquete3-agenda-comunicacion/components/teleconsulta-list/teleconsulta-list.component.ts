@@ -5,8 +5,9 @@ import { CitaService, Cita } from '../../../../services/cita.service';
 
 @Component({
   selector: 'app-teleconsulta-list',
+  standalone: false,
   templateUrl: './teleconsulta-list.component.html',
-  styleUrls: ['./teleconsulta-list.component.css']
+  styleUrls: ['./teleconsulta-list.component.css'],
 })
 export class TeleconsultaListComponent implements OnInit {
   teleconsultas: Teleconsulta[] = [];
@@ -54,11 +55,23 @@ export class TeleconsultaListComponent implements OnInit {
       }
     });
 
-    this.citaService.getCitas().subscribe({
+    this.citaService.getCitas({ sin_teleconsulta: 1 }).subscribe({
       next: (citas) => {
-        this.citasDisponibles = citas;
+        this.citasDisponibles = (citas ?? []).filter(
+          (c) => c.estado !== 'cancelada' && c.estado !== 'inasistencia'
+        );
       },
-      error: () => {}
+      error: () => {},
+    });
+  }
+
+  cancelar(t: Teleconsulta): void {
+    this.teleconsultaService.cancelarTeleconsulta(t.id).subscribe({
+      next: () => {
+        this.showSuccess('Teleconsulta cancelada.');
+        this.loadData();
+      },
+      error: () => (this.errorMessage = 'No se pudo cancelar la teleconsulta.'),
     });
   }
 
