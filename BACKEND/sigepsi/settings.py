@@ -142,7 +142,13 @@ USE_TZ = True
 STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CORS_ALLOW_ALL_ORIGINS = True # Development only
+CORS_ALLOW_ALL_ORIGINS = True  # Development only
+# Necesario para el admin de Django y formularios sobre subdominios *.localhost
+# (la API usa JWT, no CSRF). En producción usar los dominios reales.
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000', 'http://localhost:4200',
+    'http://*.localhost:8000', 'http://*.localhost:4200',
+]
 
 # HU-10 / CU27 / RF-31: recuperación de contraseña. Por defecto imprime el
 # correo en la consola (útil en desarrollo sin credenciales SMTP reales);

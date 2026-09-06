@@ -1,27 +1,56 @@
-# FRONTEND
+# SIGEPSI — Frontend (Angular 18)
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 18.2.21.
+Panel administrativo web + portal de paciente para la plataforma de gestión de
+centros de salud mental. Multi-tenant **por subdominio**.
 
-## Development server
+## Requisitos
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+- Node 18+ y npm
+- Backend corriendo (ver `../BACKEND`)
 
-## Code scaffolding
+## Puesta en marcha (desarrollo)
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+```bash
+npm install
+ng serve            # ya trae host 0.0.0.0 y allowedHosts: ['.localhost']
+```
 
-## Build
+La API se resuelve automáticamente a partir del host del navegador
+(`environment.development.ts`): al abrir `http://sanamente.localhost:4200` las
+peticiones van a `http://sanamente.localhost:8000` y `django-tenants` resuelve el
+esquema del centro por el `Host`.
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+### Subdominios en local
 
-## Running unit tests
+Chrome, Edge y Firefox resuelven `*.localhost` a `127.0.0.1` automáticamente. En
+otros navegadores, añade a `C:\Windows\System32\drivers\etc\hosts`:
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+```
+127.0.0.1  localhost sanamente.localhost norte.localhost
+```
 
-## Running end-to-end tests
+### URLs de prueba
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+| URL | Quién entra |
+|---|---|
+| `http://localhost:4200` | Superadmin de plataforma (`admin@sigepsi.com` / `admin123`) |
+| `http://sanamente.localhost:4200` | Personal y pacientes de "Sanamente" (`Demo1234!`) |
+| `http://norte.localhost:4200` | Personal y pacientes de "Centro Norte" (`Demo1234!`) |
 
-## Further help
+Cuentas demo del centro (contraseña `Demo1234!`):
+`admin@sanamente.com`, `coordinador@sanamente.com`, `recepcion@sanamente.com`,
+`psicologo@sanamente.com`, `paciente@sanamente.com` (y equivalentes `@norte.com`).
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+## Arquitectura
+
+- `src/app/core/` — `apiUrl`, interceptores (auth + errores), guards
+  (`auth`/`role`/`public`), `ThemeService`, `TenantContextService`, modelos.
+- `src/app/shared/` — `SharedModule`: `BrandLogo`, `ThemeToggle`, `NavIcon`,
+  `PageHeader`, `EmptyState`.
+- `src/app/layouts/` — `PublicLayout` (auth), `AdminLayout` (staff, responsive),
+  `PatientLayout` (portal).
+- `src/app/modules/` — `auth`, `paquete1-admin-seguridad` (panel), `paquete2/3`
+  (clínica SP1), `portal` (paciente SP1).
+- `src/styles.css` — sistema de diseño único: tokens en `:root` (claro por
+  defecto) y `[data-theme="dark"]` + `@media (prefers-color-scheme: dark)`.
+  **Regla:** los componentes usan `var(--…)`, nunca hex.
