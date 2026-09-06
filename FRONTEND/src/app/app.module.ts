@@ -4,7 +4,6 @@ import { provideHttpClient } from '@angular/common/http';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { Paquete1AdminSeguridadModule } from './modules/paquete1-admin-seguridad/paquete1-admin-seguridad.module';
 
 @NgModule({
   declarations: [
@@ -12,8 +11,7 @@ import { Paquete1AdminSeguridadModule } from './modules/paquete1-admin-seguridad
   ],
   imports: [
     BrowserModule,
-    AppRoutingModule,
-    Paquete1AdminSeguridadModule
+    AppRoutingModule
   ],
   providers: [provideHttpClient()],
   bootstrap: [AppComponent]

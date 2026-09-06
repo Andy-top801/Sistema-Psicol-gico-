@@ -1,49 +1,189 @@
-<header class="page-header">
-  <div>
-    <h1 class="page-header__title">Gestión de Usuarios</h1>
-    <p class="page-header__desc">Administre los usuarios que tienen acceso al sistema, como psicólogos y personal.</p>
-  </div>
-  <a routerLink="/users/new" class="btn btn--primary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
-    Nuevo Usuario
-  </a>
-</header>
-
-<div class="content-card">
-  <div class="table-container">
-    <div *ngIf="isLoading" style="padding: 40px; text-align: center; color: var(--color-text-muted);">
-      Cargando usuarios...
+<div class="rbac-page">
+  <!-- Header con Píldora de Control -->
+  <div class="rbac-header-row">
+    <div>
+      <div class="hipaa-badge">
+        <span class="hipaa-label">CONTROL DE ACCESO</span>
+        <span class="hipaa-sep">|</span>
+        <span class="hipaa-sub">HIPAA & GDPR Ready</span>
+      </div>
+      <h1 class="page-title">Gestión de Personal & Permisos (RBAC)</h1>
+      <p class="page-subtitle">
+        Administre psicólogos, recepcionistas y coordinadores. Configure accesos granulares por módulo clínico.
+      </p>
     </div>
 
-    <table class="data-table" *ngIf="!isLoading">
+    <div class="header-actions">
+      <button type="button" class="btn btn-secondary-dark">Plantillas de Roles</button>
+      <a routerLink="/users/new" class="btn btn-primary-emerald">
+        <svg viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px;margin-right:6px;"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+        + Invitar Colaborador
+      </a>
+    </div>
+  </div>
+
+  <!-- Tarjetas de Métricas por Rol -->
+  <div class="roles-metrics-grid">
+    <!-- Psicólogos -->
+    <div class="role-stat-card active-card">
+      <div class="role-card-header">
+        <span class="role-name-text">Psicólogos</span>
+        <span class="role-badge-tag teal-tag">90%</span>
+      </div>
+      <div class="role-card-sub">18 Licencias activas</div>
+    </div>
+
+    <!-- Recepcionistas -->
+    <div class="role-stat-card">
+      <div class="role-card-header">
+        <span class="role-name-text">Recepcionistas</span>
+        <span class="role-badge-tag amber-tag">Turnos</span>
+      </div>
+      <div class="role-card-sub">5 Habilitados</div>
+    </div>
+
+    <!-- Coordinadores -->
+    <div class="role-stat-card">
+      <div class="role-card-header">
+        <span class="role-name-text">Coordinadores</span>
+        <span class="role-badge-tag purple-tag">Admin</span>
+      </div>
+      <div class="role-card-sub">3 Direcciones</div>
+    </div>
+
+    <!-- Psiquiatras / Médicos -->
+    <div class="role-stat-card">
+      <div class="role-card-header">
+        <span class="role-name-text">Psiquiatras / Médicos</span>
+        <span class="role-badge-tag blue-tag">Médico</span>
+      </div>
+      <div class="role-card-sub">4 Especialistas</div>
+    </div>
+  </div>
+
+  <!-- Barra de Filtro de Rol -->
+  <div class="filters-panel-row">
+    <div class="filter-dropdown-wrapper">
+      <label class="filter-label">Filtrar Rol:</label>
+      <select [value]="selectedRole" (change)="onRoleSelect($any($event.target).value)" class="filter-dropdown">
+        <option value="all">Todos los Roles</option>
+        <option value="PSIC">Psicólogo</option>
+        <option value="COORD">Coordinador</option>
+        <option value="RECEP">Recepcionista</option>
+        <option value="PSIQUIATRA">Psiquiatra</option>
+      </select>
+    </div>
+    <div class="count-registered-text">
+      Mostrando {{ filteredUsers.length }} profesionales registrados
+    </div>
+  </div>
+
+  <!-- Tabla de Personal & Roles -->
+  <div class="table-card-container">
+    <table class="modern-rbac-table">
       <thead>
         <tr>
-          <th>Nombre Completo</th>
-          <th>Correo Electrónico</th>
-          <th>Rol Principal</th>
-          <th>Estado</th>
+          <th>PROFESIONAL / CORREO</th>
+          <th>CENTRO PSICOLÓGICO</th>
+          <th>ROL EN SISTEMA</th>
+          <th>ESPECIALIDAD / DEPT.</th>
+          <th>ESTADO ACTIVO</th>
+          <th style="text-align: right;">ACCIÓN PERMISOS</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngIf="users.length === 0">
-          <td colspan="4" style="text-align: center; padding: 20px;">No hay usuarios registrados.</td>
+        <tr *ngIf="isLoading">
+          <td colspan="6" class="loading-state">Cargando personal y permisos...</td>
         </tr>
-        <tr *ngFor="let user of users">
+        <tr *ngFor="let user of filteredUsers">
           <td>
-            <div style="font-weight: 500; color: var(--color-text);">
-              {{ user.first_name }} {{ user.last_name }}
+            <div class="prof-cell">
+              <div class="prof-avatar">
+                {{ user.first_name.charAt(0) }}{{ user.last_name.charAt(0) }}
+              </div>
+              <div class="prof-info">
+                <span class="prof-name">{{ user.first_name }} {{ user.last_name }}</span>
+                <span class="prof-email">{{ user.email }}</span>
+              </div>
             </div>
           </td>
-          <td>{{ user.email }}</td>
           <td>
-            <span class="badge badge--info">{{ getRoleName(user.roles) }}</span>
+            <span class="center-name-text">{{ user.centro_nombre }}</span>
           </td>
           <td>
-            <span class="badge" [class.badge--success]="user.is_active" [class.badge--error]="!user.is_active">
-              Activo
+            <span 
+              class="role-pill-badge"
+              [class.pill-psicologo]="user.rol_nombre.includes('PSIC')"
+              [class.pill-coordinador]="user.rol_nombre.includes('COORD') || user.rol_nombre.includes('ADMIN')"
+              [class.pill-recepcionista]="user.rol_nombre.includes('RECEP')"
+              [class.pill-psiquiatra]="user.rol_nombre.includes('PSIQUIATRA')">
+              {{ user.rol_nombre }}
             </span>
+          </td>
+          <td>
+            <span class="dept-text">{{ user.especialidad }}</span>
+          </td>
+          <td>
+            <!-- Switch interactivo -->
+            <label class="switch-toggle" title="Cambiar estado del usuario">
+              <input type="checkbox" [checked]="user.is_active" (change)="toggleActive(user)">
+              <span class="slider-round"></span>
+            </label>
+          </td>
+          <td style="text-align: right;">
+            <button type="button" class="btn-edit-permissions" (click)="openPermissions(user)">
+              Editar Permisos
+            </button>
           </td>
         </tr>
       </tbody>
     </table>
+  </div>
+</div>
+
+<!-- Modal de Permisos Granulares -->
+<div *ngIf="showPermissionModal" class="modal-backdrop">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <div>
+        <h3 class="modal-title">Permisos Granulares por Módulo</h3>
+        <p class="modal-subtitle">
+          Configurando accesos para: <strong>{{ selectedUserForPerms?.first_name }} {{ selectedUserForPerms?.last_name }}</strong> ({{ selectedUserForPerms?.rol_nombre }})
+        </p>
+      </div>
+      <button class="btn-close-modal" (click)="closePermissions()">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <table class="perms-matrix-table">
+        <thead>
+          <tr>
+            <th>Módulo Clínico</th>
+            <th style="text-align: center;">Lectura</th>
+            <th style="text-align: center;">Escritura</th>
+            <th style="text-align: center;">Eliminación</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let mod of permModules">
+            <td><strong>{{ mod.name }}</strong></td>
+            <td style="text-align: center;">
+              <input type="checkbox" [checked]="mod.read" (change)="mod.read = !mod.read" class="custom-checkbox">
+            </td>
+            <td style="text-align: center;">
+              <input type="checkbox" [checked]="mod.write" (change)="mod.write = !mod.write" class="custom-checkbox">
+            </td>
+            <td style="text-align: center;">
+              <input type="checkbox" [checked]="mod.delete" (change)="mod.delete = !mod.delete" class="custom-checkbox">
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary-dark" (click)="closePermissions()">Cancelar</button>
+      <button type="button" class="btn btn-primary-emerald" (click)="savePermissions()">Guardar Permisos</button>
+    </div>
   </div>
 </div>

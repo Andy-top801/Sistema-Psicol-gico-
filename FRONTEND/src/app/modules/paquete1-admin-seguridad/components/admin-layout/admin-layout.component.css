@@ -1,214 +1,375 @@
-/* ============================================================
-   AdminLayoutComponent — Layout base para rutas autenticadas
-   Estética: Salud Mental (Calma, Elegancia Premium)
-   ============================================================ */
-
-.admin-layout {
+/* Shell Container */
+.sigepsi-app-shell {
   display: flex;
   min-height: 100vh;
+  width: 100vw;
+  background-color: #081614;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  overflow-x: hidden;
 }
 
-/* --- Sidebar --- */
-.sidebar {
-  width: 260px; /* Un poco más ancha para respirar */
-  min-width: 260px;
-  background: var(--color-sidebar);
-  color: white;
+/* Sidebar */
+.shell-sidebar {
+  width: 255px;
+  flex-shrink: 0;
+  background: #091a17;
+  border-right: 1px solid #142e28;
   display: flex;
   flex-direction: column;
-  padding: var(--space-6) 0;
-  box-shadow: var(--shadow-lg);
-  z-index: 10;
+  justify-content: space-between;
+  padding: 24px 16px 16px 16px;
+  color: #ffffff;
 }
 
-.sidebar__brand {
+/* Brand */
+.sidebar-brand-box {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  padding: 0 var(--space-8);
-  margin-bottom: var(--space-10);
+  gap: 12px;
+  margin-bottom: 24px;
+  padding-left: 6px;
 }
 
-.sidebar__logo {
-  width: 32px;
-  height: 32px;
-  flex-shrink: 0;
-  color: var(--color-secondary-light); /* Toque cálido en el logo */
+.brand-badge-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  background: rgba(52, 211, 153, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #34d399;
 }
 
-.sidebar__logo path,
-.sidebar__logo circle {
-  fill: currentColor;
+.brand-badge-icon svg {
+  width: 20px;
+  height: 20px;
 }
 
-.sidebar__title {
-  font-family: var(--font-heading);
-  font-size: var(--font-size-lg);
-  font-weight: 600;
+.brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-title {
+  font-size: 17px;
+  font-weight: 800;
   letter-spacing: 0.5px;
-  color: white;
+  color: #ffffff;
 }
 
-.sidebar__nav {
-  flex: 1;
+.brand-sub {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  color: #85b8ad;
+}
+
+/* Center Selector */
+.center-selector-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #0f2723;
+  border: 1px solid #194039;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 24px;
+}
+
+.center-avatar-sm {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: #0d9488;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.center-meta {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.center-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.center-sub {
+  font-size: 10.5px;
+  color: #719b92;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+/* Navigation */
+.sidebar-navigation {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 0 var(--space-4);
+  flex: 1;
 }
 
-.sidebar__section-label {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
+.nav-group-title {
+  font-size: 10px;
+  font-weight: 800;
   letter-spacing: 1px;
-  color: rgba(255, 255, 255, 0.4);
-  padding: var(--space-5) var(--space-4) var(--space-2);
-  margin-top: var(--space-2);
+  color: #557972;
+  padding: 8px 12px;
 }
 
-.sidebar__section-label:first-child {
-  margin-top: 0;
-}
-
-.sidebar__link {
+.nav-item {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  padding: 10px var(--space-4);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.7);
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  color: #94a3b8;
   text-decoration: none;
-  transition: all var(--transition);
+  font-size: 13.5px;
+  font-weight: 600;
+  transition: all 0.2s;
 }
 
-.sidebar__link svg {
+.nav-item:hover {
+  background: #112e29;
+  color: #ffffff;
+}
+
+.nav-item-active {
+  background: #0d9488 !important;
+  color: #ffffff !important;
+}
+
+.nav-icon {
   width: 18px;
   height: 18px;
   flex-shrink: 0;
-  transition: transform var(--transition);
 }
 
-.sidebar__link:hover {
-  color: white;
-  background: var(--color-sidebar-hover);
+.nav-item-badge {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 700;
+  background: #194039;
+  color: #a7f3d0;
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 
-.sidebar__link:hover svg {
-  transform: translateX(2px);
+.live-tag {
+  background: rgba(52, 211, 153, 0.2);
+  color: #34d399;
 }
 
-.sidebar__link--active {
-  color: var(--color-sidebar);
-  background: var(--color-secondary-light); /* Contraste suave cálido */
-  font-weight: 600;
-}
-
-.sidebar__link--active:hover {
-  color: var(--color-sidebar);
-  background: var(--color-secondary);
-}
-
-.sidebar__link--active svg {
-  color: var(--color-sidebar);
-}
-
-/* --- Footer del Sidebar --- */
-.sidebar__footer {
-  padding: var(--space-5) var(--space-4) var(--space-4);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  margin-top: auto;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-.sidebar__user {
+/* User Footer */
+.sidebar-user-footer {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  padding: 0 var(--space-2);
+  justify-content: space-between;
+  padding-top: 14px;
+  border-top: 1px solid #142e28;
 }
 
-.sidebar__avatar {
-  width: 36px;
-  height: 36px;
+.footer-user-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.user-avatar-circle {
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background: var(--color-secondary-light);
-  color: var(--color-sidebar);
+  background: #0d9488;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-heading);
-  font-size: var(--font-size-base);
-  font-weight: 600;
   flex-shrink: 0;
 }
 
-.sidebar__user-info {
+.user-details {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.user-name-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.user-role-label {
+  font-size: 10.5px;
+  color: #719b92;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.btn-sidebar-logout {
+  background: none;
+  border: none;
+  color: #719b92;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.btn-sidebar-logout:hover {
+  background: #194039;
+  color: #f87171;
+}
+
+/* Main Area */
+.shell-main-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-y: auto;
+}
+
+/* Topbar */
+.shell-topbar {
+  height: 60px;
+  background: #091a17;
+  border-bottom: 1px solid #142e28;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  flex-shrink: 0;
+}
+
+.topbar-search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 380px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  width: 16px;
+  height: 16px;
+  color: #557972;
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  height: 36px;
+  padding: 0 14px 0 36px;
+  font-size: 13px;
+  background: #0f2723;
+  border: 1px solid #194039;
+  border-radius: 8px;
+  color: #ffffff;
+  transition: border-color 0.2s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #34d399;
+}
+
+.topbar-right-meta {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.status-production-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #0f2723;
+  border: 1px solid #194039;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #34d399;
+}
+
+.pulsing-green-dot {
+  width: 7px;
+  height: 7px;
+  background-color: #10b981;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #10b981;
+}
+
+.topbar-user-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.topbar-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #194039;
+  color: #a7f3d0;
+  font-weight: 700;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.topbar-user-info {
   display: flex;
   flex-direction: column;
 }
 
-.sidebar__user-name {
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  color: white;
+.topbar-user-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #ffffff;
 }
 
-.sidebar__user-role {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.5);
+.topbar-user-sub {
+  font-size: 10.5px;
+  color: #719b92;
 }
 
-.sidebar__logout {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  width: 100%;
-  padding: 10px;
-  border-radius: var(--radius-sm);
-  font-family: var(--font-family);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.6);
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  cursor: pointer;
-  transition: all var(--transition);
-}
-
-.sidebar__logout svg {
-  width: 16px;
-  height: 16px;
-}
-
-.sidebar__logout:hover {
-  color: white;
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-/* --- Main Content Area --- */
-.main-content {
+/* View Container */
+.shell-view-container {
   flex: 1;
-  background: var(--color-bg);
-  overflow-y: auto;
-  position: relative;
+  padding: 24px 28px;
+  background-color: #081614;
 }
 
-/* --- Responsive --- */
 @media (max-width: 900px) {
-  .sidebar {
-    position: fixed;
-    height: 100vh;
-    transform: translateX(-100%);
-    transition: transform var(--transition);
+  .shell-sidebar {
+    width: 200px;
   }
-  
-  /* Aquí se agregaría la lógica para mostrar el sidebar en móvil 
-     añadiendo una clase .sidebar--open, pero por ahora lo ocultamos */
+  .topbar-search-box {
+    width: 240px;
+  }
 }

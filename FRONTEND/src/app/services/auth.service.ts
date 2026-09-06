@@ -1,32 +1,48 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, catchError, throwError } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://sanamente.localhost:8000/api/users/auth';
   private tokenKey = 'sigepsi_token';
+  private userKey = 'sigepsi_user';
 
   constructor(private http: HttpClient) { }
 
+  private getApiUrl(): string {
+    const host = window.location.hostname;
+    if (host === '127.0.0.1') {
+      return 'http://127.0.0.1:8000/api/users/auth';
+    }
+    return 'http://localhost:8000/api/users/auth';
+  }
+
   login(email: string, password: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/login/`, { email, password }).pipe(
+    const url = this.getApiUrl();
+    return this.http.post(`${url}/login/`, { email, password }).pipe(
       tap((res: any) => {
         if (res.access) {
           localStorage.setItem(this.tokenKey, res.access);
         }
+        localStorage.setItem(this.userKey, JSON.stringify({ email }));
       })
     );
   }
 
   logout(): void {
     localStorage.removeItem(this.tokenKey);
+    localStorage.removeItem(this.userKey);
   }
 
   getToken(): string | null {
     return localStorage.getItem(this.tokenKey);
+  }
+
+  getUser(): any {
+    const raw = localStorage.getItem(this.userKey);
+    return raw ? JSON.parse(raw) : null;
   }
 
   isLoggedIn(): boolean {
@@ -34,18 +50,21 @@ export class AuthService {
   }
 
   requestPasswordReset(email: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/password-reset/request/`, { email });
+    const url = this.getApiUrl();
+    return this.http.post(`${url}/password-reset/request/`, { email });
   }
 
   confirmPasswordReset(token: string, newPassword: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/password-reset/confirm/`, {
+    const url = this.getApiUrl();
+    return this.http.post(`${url}/password-reset/confirm/`, {
       token,
       new_password: newPassword
     });
   }
 
   verifyPasswordResetCode(code: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/password-reset-verify/`, { code });
+    const url = this.getApiUrl();
+    return this.http.post(`${url}/password-reset-verify/`, { code });
   }
 
   getAuthHeaders(): HttpHeaders {

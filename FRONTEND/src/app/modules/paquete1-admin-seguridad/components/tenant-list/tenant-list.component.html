@@ -1,0 +1,176 @@
+<div class="tenants-page">
+  <!-- Sub-Navbar de pestañas de nivel superior -->
+  <div class="top-subnav">
+    <div class="subnav-tabs">
+      <button class="subnav-tab active">Centros & Tenants</button>
+      <button class="subnav-tab">Planes & Suscripciones</button>
+      <button class="subnav-tab">Auditoría RLS</button>
+      <button class="subnav-tab">Métricas Globales</button>
+    </div>
+    <div class="rls-secure-badge">
+      Multi-Tenant Isolation: <span class="badge-accent">RLS SECURE 100%</span>
+    </div>
+  </div>
+
+  <!-- Header de Sección -->
+  <div class="section-header-row">
+    <div>
+      <h1 class="page-title">Gestión de Centros Psicológicos</h1>
+      <p class="page-subtitle">
+        Administre los esquemas aislados (tenants), planes de suscripción y accesos de las clínicas activas en la infraestructura.
+      </p>
+    </div>
+    <div class="header-buttons">
+      <button type="button" class="btn btn-secondary-dark">Desconectar DB</button>
+      <button type="button" class="btn btn-primary-emerald" (click)="navigateNew()">
+        <svg viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px;margin-right:6px;"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+        + Registrar Nuevo Centro
+      </button>
+    </div>
+  </div>
+
+  <!-- Tarjetas de Estadísticas (KPIs) -->
+  <div class="stats-cards-grid">
+    <!-- Card 1: TOTAL CENTROS -->
+    <div class="kpi-card">
+      <div class="kpi-label">TOTAL CENTROS</div>
+      <div class="kpi-main-val">
+        <span class="kpi-number">{{ totalCentros }}</span>
+        <span class="kpi-diff-badge positive">+4 este mes</span>
+      </div>
+      <div class="kpi-footer-text">Aislamiento a nivel de esquema</div>
+    </div>
+
+    <!-- Card 2: CENTROS ACTIVOS -->
+    <div class="kpi-card">
+      <div class="kpi-label">CENTROS ACTIVOS</div>
+      <div class="kpi-main-val">
+        <span class="kpi-number">{{ centrosActivos }}</span>
+        <span class="kpi-diff-badge info">92.1% Operativos</span>
+      </div>
+      <div class="kpi-footer-text">{{ centrosInactivos }} suspendidos voluntariamente</div>
+    </div>
+
+    <!-- Card 3: SUSCRIPCIONES VENCIDAS -->
+    <div class="kpi-card">
+      <div class="kpi-label">SUSCRIPCIONES VENCIDAS</div>
+      <div class="kpi-main-val">
+        <span class="kpi-number text-warning">3</span>
+        <span class="kpi-diff-badge warning">Requiere atención</span>
+      </div>
+      <div class="kpi-footer-text">Acceso limitado en modo lectura</div>
+    </div>
+
+    <!-- Card 4: MRR ESTIMADO -->
+    <div class="kpi-card">
+      <div class="kpi-label">MRR ESTIMADO</div>
+      <div class="kpi-main-val">
+        <span class="kpi-number text-emerald">${{ mrrEstimado | number }}</span>
+        <span class="kpi-diff-badge positive">+12.9% Acum.</span>
+      </div>
+      <div class="kpi-footer-text">Ticket promedio: $375 USD/centro</div>
+    </div>
+  </div>
+
+  <!-- Barra de Filtros y Búsqueda -->
+  <div class="filters-bar-row">
+    <div class="filters-left">
+      <div class="filter-pill-group">
+        <span class="filter-label-inline">Estado:</span>
+        <select [(ngModel)]="statusFilter" (change)="applyFilter()" class="filter-select">
+          <option value="all">Todos ({{ totalCentros }})</option>
+          <option value="active">Activos ({{ centrosActivos }})</option>
+          <option value="inactive">Suspendidos ({{ centrosInactivos }})</option>
+        </select>
+      </div>
+
+      <div class="filter-pill-group">
+        <span class="filter-label-inline">Plan:</span>
+        <select [(ngModel)]="planFilter" (change)="applyFilter()" class="filter-select">
+          <option value="all">Todos los Planes</option>
+          <option value="enterprise">Anual - Enterprise</option>
+          <option value="professional">Mensual - Professional</option>
+          <option value="starter">Mensual - Starter</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="search-input-box">
+      <svg viewBox="0 0 20 20" fill="currentColor" class="search-icon"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/></svg>
+      <input 
+        type="text" 
+        [(ngModel)]="searchTerm" 
+        (input)="applyFilter()" 
+        placeholder="Buscar centro..." 
+        class="search-field">
+    </div>
+  </div>
+
+  <!-- Tabla de Tenants -->
+  <div class="table-card-container">
+    <table class="modern-data-table">
+      <thead>
+        <tr>
+          <th>LOGO & CENTRO</th>
+          <th>ADMINISTRADOR RESPONSABLE</th>
+          <th>PLAN CONTRATADO</th>
+          <th>FECHA INICIO</th>
+          <th>ESTADO TENANT</th>
+          <th style="text-align: right;">ACCIONES</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="filteredTenants.length === 0">
+          <td colspan="6" class="empty-state">No se encontraron centros psicológicos.</td>
+        </tr>
+        <tr *ngFor="let t of filteredTenants">
+          <td>
+            <div class="center-info-cell">
+              <div class="center-avatar-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="center-icon">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                  <path d="M17 21v-8H7v8"/>
+                  <path d="M7 3v5h8"/>
+                </svg>
+              </div>
+              <div class="center-text">
+                <span class="center-name">{{ t.name }}</span>
+                <span class="center-meta">
+                  <span class="domain-text">{{ t.domain_url }}</span>
+                  <span class="separator">|</span>
+                  <span class="schema-code">schema: {{ t.schema_name }}</span>
+                </span>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="admin-cell">
+              <span class="admin-name">{{ t.admin_name }}</span>
+              <span class="admin-email">{{ t.admin_email }}</span>
+            </div>
+          </td>
+          <td>
+            <span class="plan-badge">{{ t.plan }}</span>
+          </td>
+          <td>
+            <span class="date-text">{{ t.created_at }}</span>
+          </td>
+          <td>
+            <div class="status-indicator-cell" (click)="toggleTenantStatus(t)" style="cursor: pointer;" title="Haga clic para alternar estado">
+              <span class="status-dot" [class.dot-active]="t.is_active" [class.dot-inactive]="!t.is_active"></span>
+              <span class="status-text" [class.text-active]="t.is_active" [class.text-inactive]="!t.is_active">
+                {{ t.is_active ? 'Activo' : 'Suspendido' }}
+              </span>
+            </div>
+          </td>
+          <td style="text-align: right;">
+            <div class="actions-group">
+              <a [routerLink]="['/centro-config']" class="action-btn-link">Editar</a>
+              <a href="javascript:void(0)" class="action-btn-link">Plan</a>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -1,10 +1,12 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { LoginComponent } from './modules/paquete1-admin-seguridad/components/login/login.component';
 
 const routes: Routes = [
-  { path: 'login', component: LoginComponent },
-  { path: '', redirectTo: '/login', pathMatch: 'full' },
+  {
+    path: '',
+    loadChildren: () => import('./modules/paquete1-admin-seguridad/paquete1-admin-seguridad.module').then(m => m.Paquete1AdminSeguridadModule)
+  },
+  { path: '**', redirectTo: '/login' }
 ];
 
 @NgModule({

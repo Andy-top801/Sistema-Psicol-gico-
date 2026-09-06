@@ -27,6 +27,10 @@ export class UserService {
     return this.http.put<any>(`${this.apiUrl}${id}/`, user, { headers: this.authService.getAuthHeaders() });
   }
 
+  patchUser(id: number, data: any): Observable<any> {
+    return this.http.patch<any>(`${this.apiUrl}${id}/`, data, { headers: this.authService.getAuthHeaders() });
+  }
+
   deleteUser(id: number): Observable<any> {
     return this.http.delete<any>(`${this.apiUrl}${id}/`, { headers: this.authService.getAuthHeaders() });
   }
