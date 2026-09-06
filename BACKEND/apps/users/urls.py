@@ -22,6 +22,7 @@ from .views import (
     PasswordResetConfirmView,
     AlertaPriorizacionViewSet,
     TeleconsultaViewSet,
+    ConfiguracionCentroView,
 )
 
 router = DefaultRouter()
@@ -56,5 +57,6 @@ urlpatterns = [
     ),
     path('dashboard/', DashboardView.as_view(), name='dashboard'),
     path('me/', MeView.as_view(), name='me'),
+    path('centro-config/', ConfiguracionCentroView.as_view(), name='centro-config'),
     path('', include(router.urls)),
 ]

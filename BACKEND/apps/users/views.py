@@ -10,12 +10,13 @@ import uuid
 from django.conf import settings
 from django.core.mail import send_mail
 
-from .models import Usuario, Rol, Permiso, TokenRecuperacion, Especialidad, Psicologo, DisponibilidadPsicologo, Paciente, Cita, AlertaPriorizacion, Teleconsulta
+from .models import Usuario, Rol, Permiso, TokenRecuperacion, Especialidad, Psicologo, DisponibilidadPsicologo, Paciente, Cita, AlertaPriorizacion, Teleconsulta, ConfiguracionCentro
 from .serializers import (
     UsuarioSerializer, RolSerializer, PermisoSerializer,
     PasswordResetRequestSerializer, PasswordResetConfirmSerializer,
     MobilePasswordResetConfirmSerializer, PasswordResetVerifySerializer,
     RegisterSerializer, UserProfileSerializer, EspecialidadSerializer,
+    ConfiguracionCentroSerializer,
     PsicologoSerializer, DisponibilidadPsicologoSerializer, PacienteSerializer,
     DashboardResumenSerializer, CitaSerializer,
     AlertaPriorizacionSerializer, TeleconsultaSerializer,
@@ -26,19 +27,27 @@ from .permissions import HasAnyRole, IsSelfPacienteOrStaff, user_roles, STAFF_RO
 # --- ViewSets for Web ---
 
 class PermisoViewSet(viewsets.ReadOnlyModelViewSet):
+    """CU4 – catálogo de permisos (solo lectura, staff)."""
     queryset = Permiso.objects.all()
     serializer_class = PermisoSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasAnyRole]
+    read_roles = STAFF_ROLES
 
 class RolViewSet(viewsets.ModelViewSet):
+    """CU4 – gestión de roles y permisos del centro."""
     queryset = Rol.objects.all()
     serializer_class = RolSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasAnyRole]
+    read_roles = STAFF_ROLES
+    write_roles = {'superadmin', 'admincentro'}
 
 class UsuarioViewSet(viewsets.ModelViewSet):
-    queryset = Usuario.objects.all()
+    """CU3 – gestión de usuarios del centro (alta/edición/estado)."""
+    queryset = Usuario.objects.all().prefetch_related('roles')
     serializer_class = UsuarioSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasAnyRole]
+    read_roles = STAFF_ROLES
+    write_roles = {'superadmin', 'admincentro'}
 
 
 class EspecialidadViewSet(viewsets.ModelViewSet):
@@ -272,8 +281,12 @@ class PasswordResetViewSet(viewsets.ViewSet):
                     fecha_expiracion=timezone.now() + timedelta(minutes=5)
                 )
                 
-                reset_url = f"http://localhost:4200/password-reset/confirm?token={token_obj.token}"
-                
+                # Enlace al frontend: mismo host que la petición pero puerto 4200
+                # (dev). En producción se resuelve al dominio real del centro.
+                host = request.get_host().split(':')[0]
+                frontend = getattr(settings, 'FRONTEND_URL', None) or f"http://{host}:4200"
+                reset_url = f"{frontend}/password-reset/confirm?token={token_obj.token}"
+
                 send_mail(
                     subject='Restablecer Contraseña (SIGEPSI)',
                     message=f'Hola,\n\nHaz clic en el siguiente enlace para crear tu nueva contraseña:\n{reset_url}\n\nSi no fuiste tú, ignora este mensaje.',
@@ -408,3 +421,21 @@ class MeView(generics.RetrieveAPIView):
 
     def get_object(self):
         return self.request.user
+
+
+class ConfiguracionCentroView(generics.RetrieveUpdateAPIView):
+    """CU1 / HU-04 — datos institucionales del centro (singleton por schema).
+
+    Lectura: cualquier personal del centro. Escritura: superadmin / admincentro.
+    """
+
+    serializer_class = ConfiguracionCentroSerializer
+    permission_classes = [permissions.IsAuthenticated, HasAnyRole]
+    read_roles = STAFF_ROLES
+    write_roles = {'superadmin', 'admincentro'}
+
+    def get_object(self):
+        obj = ConfiguracionCentro.objects.first()
+        if obj is None:
+            obj = ConfiguracionCentro.objects.create()
+        return obj

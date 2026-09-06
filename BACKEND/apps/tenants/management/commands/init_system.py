@@ -9,6 +9,7 @@ from apps.tenants.models import Centro, Dominio
 from apps.users.models import (
     Rol, Permiso, Paciente, Psicologo, Especialidad,
     DisponibilidadPsicologo, Cita, AlertaPriorizacion, Teleconsulta,
+    ConfiguracionCentro,
 )
 from apps.users.serializers import TeleconsultaSerializer
 
@@ -39,13 +40,18 @@ class Command(BaseCommand):
         if created:
             Dominio.objects.get_or_create(domain='localhost', tenant=public, is_primary=True)
         with schema_context('public'):
-            if not User.objects.filter(email='admin@sigepsi.com').exists():
-                User.objects.create_superuser(
+            sa = User.objects.filter(email='admin@sigepsi.com').first()
+            if sa is None:
+                sa = User.objects.create_superuser(
                     username='admin@sigepsi.com',
                     email='admin@sigepsi.com',
                     password='admin123',
                 )
-                self.stdout.write(self.style.SUCCESS('  superadmin: admin@sigepsi.com / admin123'))
+            else:
+                sa.set_password('admin123')
+                sa.is_active = sa.is_superuser = sa.is_staff = True
+                sa.save()
+            self.stdout.write(self.style.SUCCESS('  superadmin: admin@sigepsi.com / admin123'))
 
         # ── 2. Centro demo "Sanamente" ───────────────────────────
         self._seed_centro(
@@ -77,6 +83,18 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS(f'Centro "{name}" ({domain})'))
 
         with schema_context(schema):
+            # Configuración institucional del centro (CU1 / HU-04)
+            ConfiguracionCentro.objects.get_or_create(
+                defaults={
+                    'nombre': name,
+                    'modalidad': 'Híbrida (Presencial + Telepsicología)',
+                    'email': f'contacto@{prefix}.com',
+                    'telefono': '+591 700 00000',
+                    'horarios_atencion': {'lunes_viernes': '08:00 - 18:00', 'sabado': '08:00 - 13:00'},
+                    'especialidades': ['Terapia Cognitivo-Conductual', 'Ansiedad y estrés'],
+                }
+            )
+
             # Roles
             roles = {}
             for key, (rn, desc, is_staff) in ROLES.items():

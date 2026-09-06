@@ -34,12 +34,26 @@ class Usuario(AbstractUser):
         return self.email
 
 class ConfiguracionCentro(models.Model):
+    """CU1 / HU-04 — datos institucionales del centro (uno por schema)."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    nombre = models.CharField(max_length=150, blank=True, default='')
+    nif_rif = models.CharField(max_length=50, blank=True, default='')
+    registro_sanitario = models.CharField(max_length=100, blank=True, default='')
+    direccion = models.CharField(max_length=255, blank=True, default='')
+    telefono = models.CharField(max_length=30, blank=True, default='')
+    email = models.EmailField(max_length=255, blank=True, default='')
+    modalidad = models.CharField(max_length=60, blank=True, default='Presencial')
+    linea_crisis = models.CharField(max_length=60, blank=True, default='')
+    horarios_atencion = models.JSONField(default=dict, blank=True)
+    especialidades = models.JSONField(default=list, blank=True)
+    logo_url = models.CharField(max_length=255, blank=True, null=True)
+    primary_color = models.CharField(max_length=7, default='#235d55')
+    updated_at = models.DateTimeField(auto_now=True)
+
+    # Campos legacy (se mantienen para no romper migraciones previas)
     address = models.CharField(max_length=255, blank=True, null=True)
     contact_email = models.EmailField(max_length=255, blank=True, null=True)
     contact_phone = models.CharField(max_length=20, blank=True, null=True)
-    logo_url = models.CharField(max_length=255, blank=True, null=True)
-    primary_color = models.CharField(max_length=7, default='#FFFFFF')
 
 class TokenRecuperacion(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

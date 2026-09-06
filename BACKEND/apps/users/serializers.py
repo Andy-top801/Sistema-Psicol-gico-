@@ -3,7 +3,7 @@ from rest_framework import serializers
 from datetime import timedelta
 from django.utils import timezone
 
-from .models import Usuario, Rol, Permiso, Especialidad, Psicologo, DisponibilidadPsicologo, Paciente, Cita, AlertaPriorizacion, Teleconsulta
+from .models import Usuario, Rol, Permiso, Especialidad, Psicologo, DisponibilidadPsicologo, Paciente, Cita, AlertaPriorizacion, Teleconsulta, ConfiguracionCentro
 from django.contrib.auth.hashers import make_password
 
 def validate_secure_password(value):
@@ -492,3 +492,19 @@ class TeleconsultaSerializer(serializers.ModelSerializer):
             '&userInfo.displayName=%22Paciente%22'
         )
         return super().create(validated_data)
+
+
+# ─────────────────────────────────────────────
+# CU1 / HU-04 – Configuración del centro
+# ─────────────────────────────────────────────
+
+class ConfiguracionCentroSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConfiguracionCentro
+        fields = [
+            'id', 'nombre', 'nif_rif', 'registro_sanitario', 'direccion',
+            'telefono', 'email', 'modalidad', 'linea_crisis',
+            'horarios_atencion', 'especialidades', 'logo_url', 'primary_color',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'updated_at']
