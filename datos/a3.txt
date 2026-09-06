@@ -1,0 +1,69 @@
+(Transcrito por TurboScribe. Actualizar a Ilimitado para eliminar este mensaje.)
+
+Entonces, ahí interactúa lo que dice. Entonces le dice, si usted busca esto, ahí esto, ahí esto. Recomendación se llama eso.
+
+Entonces, tengo tal prenda, esto, esto. Entonces, la persona en vez de estar mirando el catálogo, que a veces es muy grande, por la recomendación ya sectorizo. Miro lo que yo estoy buscando porque me da la visualización de poder hacer este tipo de rapidez y no estar buscando y mirando el catálogo por todos los que ustedes quisieran.
+
+Entonces, por eso es que dice, en vez de estar navegando y viendo cada una de ellas, ya iría directamente a sectorizar. Como comentamos, para las herramientas de desarrollo, en la parte de backend, Python con Apache. En la parte del front, de la web, lo que es Angular.
+
+La aplicación móvil, Fluxer, Dart. La base de datos, Postgres. Los modelos de IA, pueden leer chatbot.
+
+Reporte generativo a través del comando de voz. En vez que yo esté dentro del dispositivo móvil, no es cierto, escribiendo. A veces la gente no tiene tiempo.
+
+Yo digo, quiero blusas que sean de hilo, de color amarillo. En ese momento, ese reporte generativo me crea la consulta y me da. Y con la parte de la IA que tengo como recomendación me van a salir todo lo que yo estoy buscando, lo aproximado.
+
+Para que yo directamente vaya y mire y no navegue hoja por hoja lo que tiene el contenido del catálogo. Eso es más o menos la razón característica en la cual se debe. Entonces la inteligencia artificial es un IA integrado mediante API que deben utilizar justamente para hacer este tipo de características.
+
+La red aumentada debe ser una tecnología compatible con su dispositivo móvil. ¿Dónde va la red aumentada? En el móvil, no en la parte de la web. Los pagos están integrados a pasarela de pago pero también pueden tener puntos de caja como lo hemos escrito.
+
+La metodología para el desarrollo, hacemos el seguimiento del proceso unificado de desarrollo de software. Pero, fíjense. Deben usar esta versión de WebM.
+
+2.5 más. 2.5 más para hacer su modelo. No se olviden que ustedes no son programadores.
+
+Ustedes van a ser ingenieros. Significa entonces que si su aplicación corre y tenemos una mala documentación, no hay defensa por el error. Aquí el documento es demasiado importante.
+
+Es el plano para poder ver las diferentes listas y poder saber cómo está. Entonces, ¿qué dice? Como sugerencia, el proyecto tiene una duración de cuatro semanas, como ven aquí, bien remarcadito, cuatro semanas. Por lo que los estudiantes deben priorizar las funcionalidades esenciales.
+
+Las funcionalidades esenciales. Y desarrollar un MVP. ¿Qué significa un MVP? Producto mínimo viable.
+
+Todo lo que hemos hablado debe tener viabilidad en cada uno de los módulos que ustedes deben identificar para poder hacer la funcionalidad integrada. Eso es lo que quiere decir. El objetivo general es bastante extenso, pero lo que quería abarcar era todo lo que quiero que se logre.
+
+¿Bien? Para que ustedes entiendan qué es lo que queremos lograr. Vamos a desarrollar una plataforma inteligente de comercio electrónico para una cadena de tiendas de ropa. ¿Ya? Que nuestro general sea nuestra frontera en línea.
+
+Que integre el comercio electrónico, que va a estar en la web y también está en la parte móvil. ¿Cuáles son los procesos más importantes? Es por eso que cuando revisamos los proyectos de ustedes, ese título debe estar clarito. Con leerle un título de un proyecto, yo sé qué se trata el contenido del trabajo.
+
+O sea, la idea es esa. Lo mismo cuando se empieza a trabajar en varios proyectos, debe estar clarito lo que ustedes deben hacer. Bien.
+
+Debo gestionar sucursales, inventario, punto de venta, pagos electrónicos, vestidores virtuales, media atrevida aumentada, a inteligencia artificial, lo que hablamos. ¿Qué deben utilizar? El proceso unificado de desarrollo y los modelos de comercio. Entonces, de todo lo que hablamos, usted se lee el objetivo general.
+
+Está el tamaño de funcionalidad de proceso que queremos trabajar. Bien. Si yo quiero lograr esto, aquí también le dicen varios objetivos específicos para que usted lo pueda cumplir.
+
+Primero, analizar y especificar los requisitos funcionales y no funcionales del sistema. A veces, ustedes no saben cuáles son los no funcionales y no saben cuáles son los funcionales. Entonces, para evitar que no lo sepan, le hice una lista de funcionales y una lista de no funcionales para que quede clarito.
+
+Y no digamos que ustedes lo investiguen a ver hasta dónde llega. Estamos estableciendo la frontera. Gestionar clientes, usuarios, empleados, proveedores y sucursales.
+
+Entonces, si yo quiero lograr el objetivo general, eso es lo que debo hacer. Deben administrar un catálogo de prendas, categorías, tallas, colores, temporadas y colecciones. Bien.
+
+Deben consultar la disponibilidad de prendas por sucursal. Eso es lo bonito, ¿no? Si yo, por ejemplo, digo, a ver, bueno, en la sucursal 1 no está, pero está en la sucursal 2. Es más o menos como una recomendación para poder saber exactamente cómo se lo va haciendo. ¿Continuamos? ¿Qué más queremos? Permitir al cliente reservar varias prendas a través de su móvil, obviamente no está aquí, pero a través de su móvil, para que yo pueda ir a la tienda física y probarme todas aquellas que fueron elegidas.
+
+Gestionar el proceso de recepción y atención de reserva. Si tengo un registro de reserva, ¿cómo es posible que yo el sábado a 10 de la mañana visite la tienda y no esté seleccionado la prenda? Entonces, arreglo eso, la reserva ya debería estar totalmente hecha. Los vestidores rituales, realidad aumentada, ya lo hemos visto.
+
+Permitir comprar en la plataforma web y aplicación móvil. Usted puede comprar en mi móvil o puedo comprar, no se olviden que algunas funcionalidades también, la cosita, pueden hacerle web responsive. Es verdad que las compras lo hacen en la web.
+
+Entonces, de manera responsiva, lo pueden hacer sin problema. Pero en la reserva y los vestidores rituales es obligatorio que sí o sí esté en su teléfono. Ya esto de la compra, un web responsive, igual es.
+
+¿Por qué no lo hacen así? Porque sucede que no estoy pidiendo necesariamente que sea híbrido. Que la misma funcionalidad lo hagan ustedes en la web y la misma en la parte del móvil. Puede ser responsiva, varias funcionalidades.
+
+Permitir pago presencial en mi punto de caja. Entonces, si yo me voy a ir a ensayar y yo quiero pagar en ese punto de caja, que me permita, que me lo diga. Y la pasarela de pago que ya lo hablábamos, cualquiera.
+
+Si ustedes en el sistema uno han hecho ya pasarelas de pago, yo les dije que lo hagan, han hecho Paypal, han hecho Stripe, entonces ya saben cómo manejarlo, el proceso no tiene ningún problema. Debe actualizar el inventario automáticamente, debe mencionarse en los productos, debe incorporar funcionalidades, debe generar reportes y debe aplicar web. ¿Lo ven, entonces? Dieciséis características de una empresa que tiene un blog que me permite desarrollar esta plataforma y la alimentación.
+
+Entonces no hay aquí donde perderse y decir hasta dónde lo voy a hacer. Quiénes serán sus actores principales, quiénes van a interactuar con esta plataforma. Entonces ustedes pueden ver aquí que uno de los actores que bastante va a poder interactuar con esta plataforma inteligente es el cliente.
+
+Entonces el cliente, si yo le coloco nada más, ustedes van a decir, ¿pero qué hace el cliente? Hay una lista aquí, miren, ¿qué es lo que puede hacer el cliente? ¿Lo ven? Hay una lista. ¿Qué hace el cliente? Otro de los actores, porque ahí él va a poder trabajar en la web, con sobre lo que es el inventario y las compras, es el administrador. ¿Quién es el administrador? Aparte de que va a poder dar, lo que siempre ustedes saben, administración de usuario, rol, evitar, correcciones de sesión y todo lo demás, va a poder administrar nueva sucursal, nuevos productos, nueva categoría y todo lo demás.
+
+Va a haber un encargado de sucursal. Tienen otras cosas que se llaman encargado de sucursal. ¿Qué hace? Alguna funcionalidad es el que va a decirle, si los reservos para ese día, o de repente, ese día la tienda está cerrada, porque pueden cerrar también.
+
+El cliente no va a ir para. Todo esto es lo que se sonó aquí en cuenta. Va a haber un cajero, si yo voy a la tienda presencial, va a haber un cajero que se va a encargar de hacer los cobros.
+
+(Transcrito por TurboScribe. Actualizar a Ilimitado para eliminar este mensaje.)

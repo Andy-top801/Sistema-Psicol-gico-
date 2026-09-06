@@ -1,0 +1,85 @@
+(Transcrito por TurboScribe. Actualizar a Ilimitado para eliminar este mensaje.)
+
+¿Para qué? Para poder comprar los sistemas de pago mediante características electrónicas. Aquí bien, servicio de inteligencia artificial, preferencia, recomendación de productos. Si ustedes quieren, esto es opcional, no obligatorio.
+
+Si ustedes quieren, pueden implementar muchas cosas, pero si no, no es obligatorio. Lo que pasa es que a veces la gente personaliza, yo quiero este y lo hace, por chatbot, mucho más personalizado, pero lo dejo de manera opcional. Lo obligatorio es que tenga el análisis de preferencia, la recomendación del producto y los reportes.
+
+Guía, comando de voz, los reportes generativos que usted le dice, yo le quiero prenda que tenga este modelo o esta característica y me salga solamente lo que nosotros buscamos, lo que nosotros solicitamos. Como les dije, para que no queden en vano los requisitos funcionales y no funcionales, lo mínimo que debería tener esta plataforma son estos requisitos funcionales. Los requisitos funcionales número uno, permitir registrar clientes, edicionar usuarios, administrar varias usadas, permitir edicionar productos, plan pagamento, lo mínimo que debe tener son 25.
+
+Pero no son 10. Que cada grupo personaliza, puede hacer más, puede hacer como mejor lo entiendan el modelo de negocio. Pero aquí está explícitamente cada una de las características para que no haya dudas.
+
+¿Cuáles son los requisitos no funcionales? Una lista, miren. Cada vez que usted hace una plataforma, tiene que tener seguridad. ¿Qué significa seguridad? Contraseñas y datos deben protegerse adecuadamente.
+
+Por eso es que las contraseñas no se guardan en tablas de la CEA, no son cifradas. ¿Qué debe tener? Rendimiento. Un requisito no funcional número dos, rendimiento.
+
+Las consultas del catálogo deben responder en tiempos adecuados, no en tiempo donde se demore o no se les deja justo las características necesarias. Un requisito no funcional, disponibilidad. ¿Qué significa disponibilidad? Que el sistema deberá estar disponible para usuario web y móvil sin importar si es iPhone o Android.
+
+Por eso es que Clouder interactúa en multitataformas, no tiene manera ni frontera ni problema. Hoy en día, todo el software que se desarrolla debe tener escalabilidad. A veces no saben en qué instalar.
+
+Aquí dice, la arquitectura deberá permitir incorporar nuevas subcursales visuales. Voy a buscar una subcursal y ya puedo incorporar más subcursales después. Porque no es que ahí se detiene, puedo seguir mejorando, sacando mejores versiones, liberando a medida que se va actualizando las nuevas funcionalidades.
+
+Un requisito no funcional, usabilidad. Las interfaces deben ser intuitivas y adaptables a diferentes dispositivos. Están haciendo con desktop, tablet y celulares de cualquier tipo.
+
+Sin ninguna barrera, obligatorio, servidor en la nube, no localhost, ya saben. Debe tener la mantenibilidad, el mantenimiento para poder hacerlo después, la integración. Estamos utilizando Appy, que deberá proporcionar servicio mediante Appy REST.
+
+Compatibilidad. La aplicación móvil deberá desarrollarse utilizando Echo para tener la compatibilidad. Aquí no tengo barrera.
+
+Seguridad transaccional. Todas las operaciones de pago se utilizan. Mecanismo seguro.
+
+A veces dicen que se entran a su cuenta y todo lo demás. Eso es lo que más se cuida dentro de las características. Esos son requisitos no funcionales de esta plataforma internet.
+
+Siempre que uno hace un software, debe tener requisitos funcionales que usted hace y no funcionales que estarán dentro de las características. ¿Qué va a tomar en cuenta? No está permitido utilizar frameworks de tipo e-commerce como ZERC, RecaShop, Shopify, Magneto, Google Commerce o similar. No está permitido.
+
+Usted está facilitando, usted lo personaliza y ya está. Si alguien utiliza eso, no hay defensa. Por eso miren aquí como robo tomar en cuenta.
+
+Todo, cuando usted llegue, no es de que sabe que mi servidor no sirve, está como loco al juicio. No hay defensa. Por eso dice tomar en cuenta.
+
+El favor debe estar entregado en la luz. ¿Cómo será su documentación? No se olviden que ustedes no son programadores. El documento es la parte de la fortaleza del trabajo.
+
+Esta es la fortaleza. ¿Qué documentación van a tener ustedes? Van a hacer un perfil, pero este perfil tiene un punto mínimo. No tiene un perfil como están haciendo para un proyecto que dura demasiado tiempo.
+
+¿Este perfil qué va a tener? Una introducción, el objetivo general, el objetivo específico, la definición del problema y el alcance. En este alcance están los requisitos funcionales y los requisitos no funcionales. En este alcance están los módulos que ustedes necesitan desarrollar.
+
+Cada uno de ustedes debe decir qué módulo lo va a incorporar. El documento tiene dos partes. Primer parte del documento.
+
+Este es un trabajo que debe investigarse. Necesita una fundamentación teórica. La primera parte tiene una fundamentación teórica donde está dividido en dos partes.
+
+Este inciso A que dice conversión electrónica que deben profundizarse para que ustedes puedan adquirir el conocimiento como usuario, detallando cada una de las funcionalidades de la experiencia. Cómo funciona Amazon, cómo funciona Alibaba, cómo funciona Shopify, qué características tiene. Porque a veces mirando el escenario, se dan más cuenta para hacer el desarrollo que de repente imaginando.
+
+Para editar esto, primero trabajar sobre este tipo de documentación. Y cómo desarrollador. Esto es como usuario.
+
+Es como cuando usted sale un pedido por Amazon y trae toda la trayectoria hasta que llega el seguro que usted compró al domicilio o al lugar donde usted lo hizo. Ahora, cómo desarrollador. Esto es como usuario.
+
+Cómo desarrollador. Conocer para qué sirve, qué beneficio y cómo se utiliza para crear sitios web. Implementando tiendas online.
+
+Eso puede ser Magneto, PrestaShop, Google. Para verlo, para utilizarlo y hacerlo dentro de su proyecto. El segundo inciso B, la pasarela de pago.
+
+Entonces, me gustaría que lo vean por favor. La funcionalidad es diferente que va a estar en el documento. La forma de pago online que se hace por tarjeta de débito, por tarjeta de crédito, por QR o por transferencia.
+
+Es como cuando usted ve un punto de venda. ¿En qué va a pagar? No lo voy a hacer con pasarela de pago, pero voy a hacer un QR. La gente a veces no tiene efectivo.
+
+Por más que visite de manera presencial el lugar. La parte ya digital o virtual. Cualquiera de ellos, Paypal, Stripe o cualquiera de los que ustedes quisieran.
+
+Porque estos son los internacionales. Sin embargo, Libertura es una pasarela que integra con frecuencia en nuestro medio. La mayoría de lo que cobra de manera digital en Bolivia utiliza Libertura.
+
+En Bolivia. Pero ya para hacerlo de manera internacional. La mayoría usa Paypal en el más frecuente o Paypal en Stripe.
+
+Pero Paypal es el más que utilizan para poder hacer compra en el exterior. Igual que en ocasiones vienen hasta delivery. Utilizan para, como yo lo pedí en la tienda, entonces contratan un delivery que lleva a su casa.
+
+Entonces vean un poquito de esto. La funcionalidad de los delivery, cualquiera de los que ustedes quisieran. Pueden hacer todo esto en un minuto nada más.
+
+Y cómo se calculan los pagos para la entrega. Normalmente la gente cómo cobra un delivery. Vean la manera cómo lo hacen.
+
+A veces lo hacen por instancia. No es lo mismo llevar el primer anillo al décimo anillo. Que llevar el primer anillo al segundo anillo.
+
+Entonces a veces los anillos tienen ya un precio vivo. Entonces el primero o el cuarto cuesta tanto. Se aumenta robo liviano o traigo liviano por anillo.
+
+Ellos tienen una tarifa definida. Cómo se lo hacen entonces. A veces tienen también no solamente algo.
+
+Pero de repente es grande el encargo que tuvieron y todo lo demás. Entonces la segunda parte. La segunda parte.
+
+Proceso de desarrollo. Como ustedes lo saben. Vienen aquí.
+
+Les puse el ejercicio A. Sigan los pasos que ustedes utilizaron en el proceso unificado. ¿Qué han hecho en el proceso unificado? Utilizar captura de requisitos, análisis, diseño, implementación y prueba. ¿Cuántas iteraciones va a tener? ¿Cuántos incrementos precios?
+
+(Transcrito por TurboScribe. Actualizar a Ilimitado para eliminar este mensaje.)

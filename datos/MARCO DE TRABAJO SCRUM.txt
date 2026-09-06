@@ -1,0 +1,211 @@
+================================================================================
+MARCO DE TRABAJO SCRUM
+================================================================================
+
+Es heurístico. Se basa en el aprendizaje continuo y en la adaptación a los factores
+fluctuantes. Reconoce que el equipo no lo sabe todo al inicio de un proyecto y
+evolucionará a través de la experiencia. Scrum está estructurado para ayudar a los
+equipos a adaptarse de forma natural a las condiciones cambiantes y a los requisitos
+de los usuarios, con el cambio de prioridades integrado en el proceso y ciclos de
+lanzamiento breves para que tu equipo pueda aprender y mejorar constantemente.
+
+--------------------------------------------------------------------------------
+CICLO DE SPRINT (representación gráfica)
+--------------------------------------------------------------------------------
+2-4 Weeks  ->  Testing  ->  Deployment  ->  Potentially Shippable
+                                            (working increment of) Software
+
+--------------------------------------------------------------------------------
+PRODUCT BACKLOG
+--------------------------------------------------------------------------------
+El Backlog del producto es la lista principal del trabajo que debe realizar el
+propietario del producto o el gestor de productos. Se trata de una lista dinámica
+de funciones, requisitos, mejoras y correcciones que actúa como la entrada para el
+backlog de sprint. Básicamente, se trata de la lista de "cosas por hacer" del equipo.
+El propietario del producto está constantemente revisando, cambiando las prioridades
+y realizando el mantenimiento del backlog del producto, ya que, a medida que sabemos
+más o que cambia el mercado, es posible que los elementos ya no sean relevantes o
+que los problemas se solucionen de otras maneras.
+
+--------------------------------------------------------------------------------
+EJEMPLO DE FORMATO DE PRODUCT BACKLOG
+--------------------------------------------------------------------------------
+Product Backlog
+Proyecto: _____________
+Product Owner: ________
+IdVersión: ________
+Rol: ________
+
+--------------------------------------------------------------------------------
+EJEMPLO DE FORMATO DE HISTORIA DE USUARIO
+--------------------------------------------------------------------------------
+Título: <d> <Descripción> <Prioridad/valor> <Estimación PHU>
+Criterios de aceptación:
+  Ca1...
+  Ca2...
+Desarrolladora a cargo: _______
+
+EJEMPLO PRÁCTICO:
+Título: Retirar dinero
+Nº: 10
+Como cliente del banco quiero retirar dinero de mi cuenta para hacer pagos en efectivo.
+Prioridad: Alta
+PHU: 13
+Criterios de aceptación:
+  a) Dado que tengo $600 en mi cuenta cuando voy a retirar $100 entonces mi saldo
+     queda en $500 y el sistema me entrega $100.
+Desarrolladora a cargo: Dayana
+
+--------------------------------------------------------------------------------
+EVENTOS DE SCRUM
+--------------------------------------------------------------------------------
+
+1. PLANEACIÓN DEL SPRINT / SPRINT PLANNING
+   Todos los involucrados en el equipo se reúnen para planificar el Sprint. Durante
+   este evento se decide qué requerimientos o tareas se le asignará a cada uno de
+   los elementos del equipo. Cada integrante deberá asignar el tiempo que crea
+   prudente para llevar a cabo sus requerimientos. De esta manera se define el
+   tiempo de duración del Sprint.
+
+2. REUNIÓN DE EQUIPO DE SCRUM / SCRUM TEAM MEETING (Daily Scrum)
+   A estas reuniones se les deberían dedicar máximo 15 minutos diarios, y deberían
+   ser siempre en el mismo horario y lugar. En ellas, cada miembro del equipo deberá
+   responder tres simples preguntas:
+   • ¿Qué hiciste ayer?
+   • ¿Qué tienes planeado hacer hoy?
+   • ¿Qué obstáculos encontraste en el camino?
+   Estas reuniones sirven para que todos los miembros del equipo se apoyen entre ellos.
+   Si alguno de ellos tiene algún inconveniente que obligue a extender el encuentro,
+   este debe tratarse más a fondo en una reunión enfocada en buscar la mejor solución
+   para ello.
+
+3. REFINAMIENTO DEL BACKLOG / BACKLOG REFINEMENT
+   El Product Owner revisa cada uno de los elementos dentro del Product Backlog con
+   el fin de esclarecer cualquier duda que pueda surgir por parte del equipo de
+   desarrolladores. También sirve para volver a estimar el tiempo y esfuerzo dedicado
+   a cada uno de los requerimientos.
+
+4. REVISIÓN DEL SPRINT / SPRINT REVIEW
+   (Ver detalle más adelante)
+
+5. RETROSPECTIVA DEL SPRINT / RETROSPECTIVE
+   En este evento el Product Owner se reúne con todo su equipo de trabajo y su
+   Scrum Master para hablar sobre lo ocurrido durante el Sprint. Los puntos
+   principales a tratar en esta reunión son:
+   • Qué se hizo mal durante el Sprint para poder mejorar el próximo.
+   • Qué se hizo bien para seguir en la misma senda del éxito.
+   • Qué inconvenientes se encontraron y no permitieron poder avanzar como se
+     tenía planificado.
+
+--------------------------------------------------------------------------------
+HERRAMIENTAS SCRUM
+--------------------------------------------------------------------------------
+
+- BACKLOG DE PRODUCTO / PRODUCT BACKLOG
+  Esto puede referirse a todo elemento que sea parte del proyecto: puede ser un bug,
+  una referencia o parte de un requerimiento. Brindan información muy general del
+  proyecto y muchas veces no son tomados como requerimientos oficiales.
+
+- HISTORIAS DE USUARIO / USER STORIES
+  Es un elemento especial del Product Backlog. Se llaman historias porque en ellas
+  se proporciona información sobre cómo debe ser el comportamiento del requerimiento
+  que se está trabajando. Su función es proporcionar información directa del cliente
+  en caso de existir algún cambio. Generalmente estos sí son tomados como
+  requerimientos oficiales.
+
+- BACKLOG DEL SPRINT / SPRINT BACKLOG
+  Es el conjunto de elementos tomados del Product Backlog que fueron priorizados,
+  medidos y aceptados en las reuniones de Sprint Planning. Estos, en conjunto con
+  sus respectivos User Stories, forman oficialmente los requerimientos a elaborar
+  en cada uno de los Sprints que tendrá el proyecto.
+
+- EL PANEL DE TAREAS / THE TASKBOARD
+  Este panel muestra las tareas que tienen asignadas los miembros del equipo. Esta
+  tabla se divide en tres columnas que representan el estado de la actividad:
+    a. Por hacer.
+    b. Haciendo.
+    c. Terminado.
+  Al inicio del Sprint todas están en la primer columna. Cuando una tarea pasa a la
+  segunda columna, el Scrum Master y el Product Owner son notificados respecto a qué
+  está haciendo cada miembro del equipo y cuánto tiempo lleva trabajando en dicha
+  tarea. Al finalizarla, esta debe cambiarse a la última columna. Esto quiere decir
+  que está listo para que QA haga las pruebas necesarias.
+
+- DEFINICIÓN DE "LISTO" / DEFINITION OF DONE
+  Todo equipo eficaz y ágil tiene ciertos acuerdos que deben cumplirse antes de dar
+  por finalizado un proyecto. Estos son:
+    • Todas las tareas están completas.
+    • Revisión de Código / Code Reviewed.
+    • Pruebas realizadas a cada elemento desarrollado.
+    • Revisión por parte de los clientes (que cumpla sus necesidades).
+    • La revisión de las condiciones de Aceptación por parte del Product Owner.
+  Estas herramientas son útiles, no sólo durante un Sprint, sino también a lo largo
+  del proyecto, pues ayudan al equipo a entender el porqué de cada actividad.
+  Además, son visibles para el equipo y para los externos.
+
+--------------------------------------------------------------------------------
+REVISIÓN DE SPRINT (SPRINT REVIEW) - DETALLE
+--------------------------------------------------------------------------------
+Reunión de trabajo al final del Sprint, el equipo Scrum, interesados claves para
+inspeccionar el incremento y adaptar la lista de producto si fuera necesario
+(Validación).
+
+• Determinar el cumplimiento con el objetivo definido para el sprint.
+• El Dueño de Producto explica qué elementos de la Lista de Producto se han
+  terminado "done" y el cumplimiento del objetivo del Sprint.
+• El Equipo de Desarrollo presenta el incremento para facilitar la retroalimentación,
+  expone problemas y soluciones encontradas.
+• Recoger feedback de todos los invitados a la review.
+• Revisión del product backlog entre todos y colaborar para determinar qué podría
+  ser lo siguiente a desarrollar.
+• Revisión de cuál podría ser el valor en el siguiente incremento, según los
+  cambios del mercado.
+
+Resultado: Al finalizar el Sprint Review, el equipo Scrum tendrá un Product Backlog
+revisado y actualizado en el que se definen los elementos del Product Backlog (PBI)
+posibles para el siguiente Sprint.
+
+EJEMPLO DE FORMATO DE REVISIÓN DE SPRINT
+--------------------------------------------------
+Revisión de Sprint [nro/nombre]
+Objetivos del Sprint:
+  [Incluir los objetivos establecidos para el sprint durante la planificación del
+  sprint y evaluar el progreso como equipo]
+  •
+  •
+Participantes:
+  Nombre  |  Rol
+Presentación del incremento:
+  Función presentada: [Elemento de trabajo a presentar]
+  Retroalimentación: [Preguntas y comentarios]
+
+--------------------------------------------------------------------------------
+RETROSPECTIVA DE SPRINT (SPRINT RETROSPECTIVE) - DETALLE
+--------------------------------------------------------------------------------
+El equipo Scrum se inspecciona a sí mismo, reflexiona sobre forma de trabajo para
+crear plan de mejoras para siguiente Sprint (Verificación). Inspeccionar cómo fue
+el Sprint en cuanto a personas, relaciones, procesos y herramientas.
+
+¿Qué ha fallado y qué se puede mejorar?
+• Recolectar información: Construir una imagen de lo que ha sido el Sprint,
+  resultando una imagen conjunta de equipo.
+• Generación de ideas: Identificar acciones que ayuden a mejorar el rendimiento
+  del equipo durante el siguiente Sprint.
+• Decidir qué hacer: Se proponen acciones que el equipo pueda implementar en el
+  próximo Sprint.
+
+EJEMPLO DE FORMATO DE RETROSPECTIVA SPRINT
+--------------------------------------------------
+Retrospectiva de Sprint [nro/nombre]
+Fecha: _________
+Facilitador: _________
+Objetivo: _________
+Nombres de asistentes:
+  •
+  •
+
+Discusión:
+  ¿Qué salió bien?
+  ¿Qué no salió bien?
+  ¿Qué haremos de manera diferente?
+================================================================================
