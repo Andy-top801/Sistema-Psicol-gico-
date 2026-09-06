@@ -1,0 +1,159 @@
+<div class="alertas-page">
+  <!-- Header -->
+  <div class="page-header-row">
+    <div>
+      <div class="badge-pill-header">
+        <span class="badge-dot-live pulse-red"></span>
+        <span>MONITOREO CLÍNICO & PREVENCIÓN (CU10)</span>
+      </div>
+      <h1 class="page-title">Alertas de Priorización & Seguimiento</h1>
+      <p class="page-subtitle">
+        Detección temprana de señales de riesgo, inasistencias reiteradas, riesgo de abandono y estancamiento terapéutico.
+      </p>
+    </div>
+  </div>
+
+  <!-- KPI Cards Grid -->
+  <div class="kpi-grid-row">
+    <div class="kpi-card danger-card">
+      <span class="kpi-label">ALERTAS PENDIENTES</span>
+      <div class="kpi-val text-red">{{ pendientesCount }}</div>
+      <span class="kpi-desc">Requieren atención y contacto inmediato</span>
+    </div>
+    <div class="kpi-card warning-card">
+      <span class="kpi-label">EN REVISIÓN CLÍNICA</span>
+      <div class="kpi-val text-amber">{{ enRevisionCount }}</div>
+      <span class="kpi-desc">En seguimiento o evaluación con terapeuta</span>
+    </div>
+    <div class="kpi-card success-card">
+      <span class="kpi-label">ALERTAS RESUELTAS</span>
+      <div class="kpi-val text-emerald">{{ resueltasCount }}</div>
+      <span class="kpi-desc">Intervenciones completadas con registro</span>
+    </div>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <div class="filter-groups">
+      <div class="f-group">
+        <label class="f-label">Estado:</label>
+        <select [(ngModel)]="filtroEstado" class="f-select">
+          <option value="all">Todos los Estados</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="en_revision">En Revisión</option>
+          <option value="resuelta">Resuelta</option>
+        </select>
+      </div>
+
+      <div class="f-group">
+        <label class="f-label">Tipo de Alerta:</label>
+        <select [(ngModel)]="filtroTipo" class="f-select">
+          <option value="all">Todos los Tipos</option>
+          <option value="inasistencia">Inasistencia Consecutiva</option>
+          <option value="senal_riesgo">Señal de Riesgo Clínico</option>
+          <option value="riesgo_abandono">Riesgo de Abandono</option>
+          <option value="estancamiento">Estancamiento Terapéutico</option>
+        </select>
+      </div>
+    </div>
+    <div class="filter-count">
+      Mostrando {{ filteredAlertas.length }} alertas clínicas
+    </div>
+  </div>
+
+  <!-- Alerts List Grid -->
+  <div class="alerts-grid">
+    <div 
+      class="alert-card" 
+      *ngFor="let a of filteredAlertas"
+      [class.card-pendiente]="a.estado === 'pendiente'"
+      [class.card-revision]="a.estado === 'en_revision'"
+      [class.card-resuelta]="a.estado === 'resuelta'">
+      
+      <div class="alert-top">
+        <div class="patient-pill">
+          <span class="pat-avatar">{{ a.paciente_details?.first_name?.charAt(0) || 'P' }}</span>
+          <span class="pat-name">{{ a.paciente_details?.first_name }} {{ a.paciente_details?.last_name }}</span>
+        </div>
+
+        <div class="alert-tags">
+          <!-- Tipo Tag -->
+          <span 
+            class="tag-tipo"
+            [class.tag-inasistencia]="a.tipo === 'inasistencia'"
+            [class.tag-riesgo]="a.tipo === 'senal_riesgo'"
+            [class.tag-abandono]="a.tipo === 'riesgo_abandono'"
+            [class.tag-estancamiento]="a.tipo === 'estancamiento'">
+            {{ a.tipo_display || a.tipo }}
+          </span>
+
+          <!-- Estado Tag -->
+          <span 
+            class="tag-estado"
+            [class.est-pendiente]="a.estado === 'pendiente'"
+            [class.est-revision]="a.estado === 'en_revision'"
+            [class.est-resuelta]="a.estado === 'resuelta'">
+            {{ a.estado_display || a.estado }}
+          </span>
+        </div>
+      </div>
+
+      <p class="alert-desc">{{ a.descripcion }}</p>
+
+      <!-- Acción tomada si está resuelta -->
+      <div *ngIf="a.accion_tomada" class="action-log-box">
+        <span class="log-title">Acción Clínica Registrada:</span>
+        <p class="log-text">{{ a.accion_tomada }}</p>
+      </div>
+
+      <div class="alert-footer">
+        <span class="alert-date">{{ a.created_at | date:'short' }}</span>
+        <button 
+          type="button" 
+          class="btn-resolve" 
+          *ngIf="a.estado !== 'resuelta'"
+          (click)="openResolve(a)">
+          Registrar Intervención
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Registrar Intervención (CU10) -->
+<div *ngIf="showResolveModal" class="modal-backdrop">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <div>
+        <h3 class="modal-title">Registrar Intervención & Resolver Alerta</h3>
+        <p class="modal-subtitle">
+          Paciente: <strong>{{ selectedAlerta?.paciente_details?.first_name }} {{ selectedAlerta?.paciente_details?.last_name }}</strong>
+        </p>
+      </div>
+      <button class="btn-close-modal" (click)="closeResolve()">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <div *ngIf="resolveError" class="alert-box alert-danger mb-3">{{ resolveError }}</div>
+
+      <div class="info-alert-callout">
+        <strong>{{ selectedAlerta?.tipo_display }}</strong>
+        <p>{{ selectedAlerta?.descripcion }}</p>
+      </div>
+
+      <div class="input-grp">
+        <label class="lbl">Detalle de la Acción Tomada / Protocolo Activado <span class="text-danger">*</span></label>
+        <textarea 
+          [(ngModel)]="accionTomada" 
+          rows="4" 
+          class="modal-textarea"
+          placeholder="Ej: Se estableció contacto telefónico con el paciente y familiar. Se acordó sesión extraordinaria de contención para mañana a las 10:00 AM..."></textarea>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary-dark" (click)="closeResolve()">Cancelar</button>
+      <button type="button" class="btn btn-primary-emerald" (click)="saveResolution()">Marcar como Resuelta</button>
+    </div>
+  </div>
+</div>

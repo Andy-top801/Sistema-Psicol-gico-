@@ -1,0 +1,290 @@
+<div class="agenda-page">
+  <!-- Header -->
+  <div class="page-header-row">
+    <div>
+      <div class="badge-pill-header">
+        <span class="badge-dot-live"></span>
+        <span>AGENDA & TURNOS CLÍNICOS (CU11)</span>
+      </div>
+      <h1 class="page-title">Agenda & Gestión de Citas</h1>
+      <p class="page-subtitle">
+        Control integral de consultas psicológicas, confirmación de asistencia, reprogramación inmediata y reservas.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <button type="button" class="btn btn-primary-emerald" (click)="openCreate()">
+        <svg viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px;margin-right:6px;"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+        + Agendar Nueva Cita
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Cards Grid -->
+  <div class="kpi-grid-row">
+    <div class="kpi-card">
+      <span class="kpi-label">CITAS PROGRAMADAS HOY</span>
+      <div class="kpi-val text-teal">{{ citasHoy }}</div>
+      <span class="kpi-desc">Atención del día en curso</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-label">CONFIRMADAS</span>
+      <div class="kpi-val text-emerald">{{ citasConfirmadas }}</div>
+      <span class="kpi-desc">Pacientes con asistencia ratificada</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-label">POR CONFIRMAR / RESERVADAS</span>
+      <div class="kpi-val text-amber">{{ citasPendientes }}</div>
+      <span class="kpi-desc">Pendientes de confirmación previa</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-label">INASISTENCIAS</span>
+      <div class="kpi-val text-red">{{ inasistencias }}</div>
+      <span class="kpi-desc">Pacientes que no asistieron</span>
+    </div>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <div class="filter-groups">
+      <div class="f-group">
+        <label class="f-label">Estado:</label>
+        <select [(ngModel)]="filtroEstado" class="f-select">
+          <option value="all">Todas las Citas</option>
+          <option value="reservada">Reservada</option>
+          <option value="confirmada">Confirmada</option>
+          <option value="reprogramada">Reprogramada</option>
+          <option value="cancelada">Cancelada</option>
+          <option value="inasistencia">Inasistencia</option>
+        </select>
+      </div>
+
+      <div class="f-group">
+        <label class="f-label">Fecha:</label>
+        <input type="date" [(ngModel)]="filtroFecha" class="f-select">
+      </div>
+    </div>
+    <div class="filter-count">
+      Mostrando {{ filteredCitas.length }} citas
+    </div>
+  </div>
+
+  <!-- Table Container -->
+  <div class="table-card-container">
+    <table class="modern-data-table">
+      <thead>
+        <tr>
+          <th>HORA & FECHA</th>
+          <th>PACIENTE</th>
+          <th>TERAPEUTA / PSICÓLOGO</th>
+          <th>DURACIÓN</th>
+          <th>ESTADO</th>
+          <th>MOTIVO / NOTAS</th>
+          <th style="text-align: right;">ACCIONES</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="isLoading">
+          <td colspan="7" class="loading-state">Cargando agenda de citas...</td>
+        </tr>
+        <tr *ngFor="let c of filteredCitas">
+          <td>
+            <div class="date-cell">
+              <span class="date-main">{{ c.fecha_hora | date:'shortTime' }}</span>
+              <span class="date-sub">{{ c.fecha_hora | date:'mediumDate' }}</span>
+            </div>
+          </td>
+          <td>
+            <div class="person-cell">
+              <span class="person-name">{{ c.paciente_details?.first_name }} {{ c.paciente_details?.last_name }}</span>
+              <span class="person-sub">{{ c.paciente_details?.phone || c.paciente_details?.email }}</span>
+            </div>
+          </td>
+          <td>
+            <div class="person-cell">
+              <span class="person-name">{{ c.psicologo_details?.first_name }} {{ c.psicologo_details?.last_name }}</span>
+              <span class="person-sub">{{ c.psicologo_details?.email }}</span>
+            </div>
+          </td>
+          <td>
+            <span class="duration-badge">{{ c.duracion_minutos }} min</span>
+          </td>
+          <td>
+            <span 
+              class="badge-estado-cita"
+              [class.est-confirmada]="c.estado === 'confirmada'"
+              [class.est-reservada]="c.estado === 'reservada'"
+              [class.est-reprogramada]="c.estado === 'reprogramada'"
+              [class.est-cancelada]="c.estado === 'cancelada'"
+              [class.est-inasistencia]="c.estado === 'inasistencia'">
+              {{ c.estado | uppercase }}
+            </span>
+          </td>
+          <td>
+            <span class="motivo-text">{{ c.motivo || 'Consulta terapéutica estándar' }}</span>
+          </td>
+          <td style="text-align: right;">
+            <div class="actions-flex">
+              <!-- Confirmar -->
+              <button 
+                type="button" 
+                class="btn-act btn-confirm"
+                *ngIf="c.estado !== 'confirmada' && c.estado !== 'cancelada'"
+                (click)="cambiarEstado(c, 'confirmada')"
+                title="Confirmar Cita">
+                ✓
+              </button>
+
+              <!-- Reprogramar -->
+              <button 
+                type="button" 
+                class="btn-act btn-resched"
+                *ngIf="c.estado !== 'cancelada'"
+                (click)="openReprogramar(c)"
+                title="Reprogramar">
+                ↺
+              </button>
+
+              <!-- Cancelar -->
+              <button 
+                type="button" 
+                class="btn-act btn-cancel"
+                *ngIf="c.estado !== 'cancelada'"
+                (click)="cambiarEstado(c, 'cancelada')"
+                title="Cancelar">
+                ✕
+              </button>
+
+              <!-- Inasistencia -->
+              <button 
+                type="button" 
+                class="btn-act btn-absent"
+                *ngIf="c.estado !== 'cancelada' && c.estado !== 'inasistencia'"
+                (click)="cambiarEstado(c, 'inasistencia')"
+                title="Marcar Inasistencia">
+                !
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal Agendar Cita (CU11) -->
+<div *ngIf="showCreateModal" class="modal-backdrop">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <div>
+        <h3 class="modal-title">Agendar Nueva Consulta</h3>
+        <p class="modal-subtitle">Reserva de turno clínico con validación de disponibilidad</p>
+      </div>
+      <button class="btn-close-modal" (click)="closeCreate()">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <div *ngIf="createError" class="alert-box alert-danger mb-3">{{ createError }}</div>
+      <div *ngIf="createSuccess" class="alert-box alert-success mb-3">{{ createSuccess }}</div>
+
+      <div class="input-grp">
+        <label class="lbl">Paciente <span class="text-danger">*</span></label>
+        <select [(ngModel)]="newPacienteId" class="modal-input">
+          <option value="" disabled selected>Seleccione paciente...</option>
+          <option *ngFor="let p of pacientes" [value]="p.id">
+            {{ p.usuario.first_name }} {{ p.usuario.last_name }} ({{ p.documento_identidad }})
+          </option>
+        </select>
+      </div>
+
+      <div class="input-grp">
+        <label class="lbl">Psicólogo / Terapeuta <span class="text-danger">*</span></label>
+        <select [(ngModel)]="newPsicologoId" class="modal-input">
+          <option [value]="null" disabled selected>Seleccione terapeuta...</option>
+          <option *ngFor="let psi of psicologos" [value]="psi.id">
+            {{ psi.usuario.first_name }} {{ psi.usuario.last_name }} ({{ psi.numero_colegiado }})
+          </option>
+        </select>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="input-grp">
+          <label class="lbl">Fecha <span class="text-danger">*</span></label>
+          <input type="date" [(ngModel)]="newFecha" class="modal-input">
+        </div>
+        <div class="input-grp">
+          <label class="lbl">Hora de Inicio <span class="text-danger">*</span></label>
+          <input type="time" [(ngModel)]="newHora" class="modal-input">
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="input-grp">
+          <label class="lbl">Duración (Minutos)</label>
+          <select [(ngModel)]="newDuracion" class="modal-input">
+            <option [value]="45">45 minutos</option>
+            <option [value]="50">50 minutos</option>
+            <option [value]="60">60 minutos (Estándar)</option>
+            <option [value]="90">90 minutos (Evaluación)</option>
+          </select>
+        </div>
+        <div class="input-grp">
+          <label class="lbl">Modalidad</label>
+          <select class="modal-input">
+            <option value="presencial">Presencial en consultorio</option>
+            <option value="online">Teleconsulta (Online)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="input-grp">
+        <label class="lbl">Motivo de la Sesión / Enfoque Clínico</label>
+        <textarea 
+          [(ngModel)]="newMotivo" 
+          rows="2" 
+          class="modal-input" 
+          placeholder="Ej: Sesión 3: Regulación emocional y manejo de contingencias..."></textarea>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary-dark" (click)="closeCreate()">Cancelar</button>
+      <button type="button" class="btn btn-primary-emerald" (click)="saveCita()">Reservar Turno</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Reprogramar Cita -->
+<div *ngIf="showReprogramarModal" class="modal-backdrop">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <div>
+        <h3 class="modal-title">Reprogramar Consulta</h3>
+        <p class="modal-subtitle">
+          Paciente: <strong>{{ selectedCita?.paciente_details?.first_name }} {{ selectedCita?.paciente_details?.last_name }}</strong>
+        </p>
+      </div>
+      <button class="btn-close-modal" (click)="closeReprogramar()">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <div *ngIf="reprogramarError" class="alert-box alert-danger mb-3">{{ reprogramarError }}</div>
+
+      <div class="form-grid-2">
+        <div class="input-grp">
+          <label class="lbl">Nueva Fecha <span class="text-danger">*</span></label>
+          <input type="date" [(ngModel)]="reprogramarFecha" class="modal-input">
+        </div>
+        <div class="input-grp">
+          <label class="lbl">Nueva Hora <span class="text-danger">*</span></label>
+          <input type="time" [(ngModel)]="reprogramarHora" class="modal-input">
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary-dark" (click)="closeReprogramar()">Cancelar</button>
+      <button type="button" class="btn btn-primary-emerald" (click)="confirmarReprogramacion()">Confirmar Cambio</button>
+    </div>
+  </div>
+</div>

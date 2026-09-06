@@ -31,7 +31,15 @@ const routes: Routes = [
       { path: 'users', component: UserListComponent },
       { path: 'users/new', component: UserFormComponent },
       { path: 'roles', component: RoleListComponent },
-      { path: 'roles/new', component: RoleFormComponent }
+      { path: 'roles/new', component: RoleFormComponent },
+      { 
+        path: '', 
+        loadChildren: () => import('../paquete2-gestion-clinica/paquete2-gestion-clinica.module').then(m => m.Paquete2GestionClinicaModule) 
+      },
+      { 
+        path: '', 
+        loadChildren: () => import('../paquete3-agenda-comunicacion/paquete3-agenda-comunicacion.module').then(m => m.Paquete3AgendaComunicacionModule) 
+      }
     ]
   }
 ];

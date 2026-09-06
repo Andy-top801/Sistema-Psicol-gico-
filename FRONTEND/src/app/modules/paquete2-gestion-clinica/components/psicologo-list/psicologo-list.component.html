@@ -1,0 +1,194 @@
+<div class="psicologos-page">
+  <!-- Header -->
+  <div class="page-header-row">
+    <div>
+      <div class="badge-pill-header">
+        <span class="badge-dot-live"></span>
+        <span>EQUIPO MÉDICO & TERAPÉUTICO (CU6 / CU8)</span>
+      </div>
+      <h1 class="page-title">Directorio de Psicólogos & Carga de Trabajo</h1>
+      <p class="page-subtitle">
+        Administre los perfiles clínicos, licencias sanitarias, especialidades y los horarios de disponibilidad semanal.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <button type="button" class="btn btn-primary-emerald" (click)="showCreateModal = true">
+        <svg viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px;margin-right:6px;"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+        + Registrar Psicólogo
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid-row">
+    <div class="kpi-card">
+      <span class="kpi-label">TOTAL PROFESIONALES</span>
+      <div class="kpi-val">{{ totalPsicologos }}</div>
+      <span class="kpi-desc">Equipo multidisciplinario habilitado</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-label">PSICÓLOGOS ACTIVOS</span>
+      <div class="kpi-val text-emerald">{{ activosCount }}</div>
+      <span class="kpi-desc">Disponibles para atención y turnos</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-label">OCUPACIÓN PROMEDIO</span>
+      <div class="kpi-val text-teal">{{ disponibilidadMedia }}</div>
+      <span class="kpi-desc">Balance y distribución de citas</span>
+    </div>
+  </div>
+
+  <!-- Search and Filter Bar -->
+  <div class="filter-bar">
+    <div class="search-box">
+      <svg class="search-icon" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+      </svg>
+      <input 
+        type="text" 
+        [(ngModel)]="searchTerm" 
+        placeholder="Buscar por nombre, correo o número de colegiado..." 
+        class="search-input">
+    </div>
+    <div class="filter-count">
+      Mostrando {{ filteredPsicologos.length }} terapeutas
+    </div>
+  </div>
+
+  <!-- Cards Grid de Psicólogos -->
+  <div class="cards-grid">
+    <div class="psicologo-card" *ngFor="let p of filteredPsicologos">
+      <div class="card-top">
+        <div class="avatar-box">
+          {{ p.usuario.first_name.charAt(0) }}{{ p.usuario.last_name.charAt(0) }}
+        </div>
+        <div class="card-identity">
+          <h3 class="name">{{ p.usuario.first_name }} {{ p.usuario.last_name }}</h3>
+          <span class="colegiado">Colegiatura: {{ p.numero_colegiado }}</span>
+        </div>
+        <div class="status-toggle-box">
+          <label class="switch-toggle" title="Habilitar / Deshabilitar terapeuta">
+            <input type="checkbox" [checked]="p.activo" (change)="toggleActivo(p)">
+            <span class="slider-round"></span>
+          </label>
+        </div>
+      </div>
+
+      <p class="bio-text">{{ p.biografia || 'Sin descripción clínica registrada.' }}</p>
+
+      <!-- Especialidades Chips -->
+      <div class="specialties-row">
+        <span class="spec-tag" *ngFor="let esp of p.especialidades">
+          {{ esp.nombre }}
+        </span>
+      </div>
+
+      <!-- Carga de Trabajo Visual (CU8) -->
+      <div class="workload-section">
+        <div class="workload-labels">
+          <span class="workload-title">Carga de Trabajo Semanal</span>
+          <span class="workload-pct">{{ p.cargas_trabajo || 70 }}%</span>
+        </div>
+        <div class="progress-track">
+          <div 
+            class="progress-fill" 
+            [style.width.%]="p.cargas_trabajo || 70"
+            [class.high-load]="(p.cargas_trabajo || 70) > 80">
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Footer Actions -->
+      <div class="card-footer">
+        <div class="contact-info">
+          <span>{{ p.usuario.email }}</span>
+        </div>
+        <button type="button" class="btn-slots" (click)="openDisponibilidad(p)">
+          <svg viewBox="0 0 20 20" fill="currentColor" style="width:15px;height:15px;margin-right:5px;"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>
+          Gestionar Horarios
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Disponibilidad (CU8) -->
+<div *ngIf="showDisponibilidadModal" class="modal-backdrop">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <div>
+        <h3 class="modal-title">Horarios y Disponibilidad Semanal (CU8)</h3>
+        <p class="modal-subtitle">
+          Terapeuta: <strong>{{ selectedPsicologo?.usuario?.first_name }} {{ selectedPsicologo?.usuario?.last_name }}</strong>
+        </p>
+      </div>
+      <button class="btn-close-modal" (click)="closeDisponibilidad()">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Añadir nuevo slot -->
+      <div class="add-slot-panel">
+        <span class="panel-label">Añadir Franja Horaria de Atención</span>
+        <div class="slot-inputs-row">
+          <div class="input-field">
+            <label class="field-lbl">Día</label>
+            <select [(ngModel)]="newDiaSemana" class="slot-select">
+              <option [value]="1">Lunes</option>
+              <option [value]="2">Martes</option>
+              <option [value]="3">Miércoles</option>
+              <option [value]="4">Jueves</option>
+              <option [value]="5">Viernes</option>
+              <option [value]="6">Sábado</option>
+              <option [value]="7">Domingo</option>
+            </select>
+          </div>
+          <div class="input-field">
+            <label class="field-lbl">Hora Inicio</label>
+            <input type="time" [(ngModel)]="newHoraInicio" class="slot-input">
+          </div>
+          <div class="input-field">
+            <label class="field-lbl">Hora Fin</label>
+            <input type="time" [(ngModel)]="newHoraFin" class="slot-input">
+          </div>
+          <button type="button" class="btn btn-primary-emerald" (click)="addSlot()" style="margin-top: 20px;">
+            + Asignar
+          </button>
+        </div>
+      </div>
+
+      <!-- Lista de slots actuales -->
+      <div class="slots-list-table">
+        <table class="slots-table">
+          <thead>
+            <tr>
+              <th>DÍA</th>
+              <th>HORA INICIO</th>
+              <th>HORA FIN</th>
+              <th>ESTADO</th>
+              <th style="text-align: right;">ACCIÓN</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="selectedSlots.length === 0">
+              <td colspan="5" style="text-align:center; padding: 16px; color:#64748b;">No hay horarios asignados aún.</td>
+            </tr>
+            <tr *ngFor="let s of selectedSlots; let i = index">
+              <td><strong>{{ getDiaLabel(s.dia_semana) }}</strong></td>
+              <td>{{ s.hora_inicio }}</td>
+              <td>{{ s.hora_fin }}</td>
+              <td><span class="badge-slot-active">Disponible</span></td>
+              <td style="text-align: right;">
+                <button type="button" class="btn-del-slot" (click)="deleteSlot(s, i)">&times; Eliminar</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary-dark" (click)="closeDisponibilidad()">Cerrar</button>
+    </div>
+  </div>
+</div>

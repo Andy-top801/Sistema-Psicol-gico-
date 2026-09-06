@@ -1,0 +1,219 @@
+<div class="teleconsulta-page">
+  <!-- Header -->
+  <div class="page-header-row">
+    <div>
+      <div class="badge-pill-header">
+        <span class="badge-dot-live"></span>
+        <span>VIDEOCONFERENCIAS & TELEMEDICINA (CU13)</span>
+      </div>
+      <h1 class="page-title">Teleconsultas & Salas Virtuales</h1>
+      <p class="page-subtitle">
+        Salas encriptadas de videoconferencia integradas con Jitsi Meet para terapia remota segura y confidencial.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <button type="button" class="btn btn-primary-emerald" (click)="openCreateModal()">
+        <svg viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px;margin-right:6px;"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+        + Generar Sala Virtual
+      </button>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div *ngIf="successMessage" class="alert-box alert-success">
+    {{ successMessage }}
+  </div>
+  <div *ngIf="errorMessage" class="alert-box alert-danger">
+    {{ errorMessage }}
+  </div>
+
+  <!-- KPI Cards Grid -->
+  <div class="kpi-grid-row">
+    <div class="kpi-card">
+      <span class="kpi-label">TOTAL SESIONES</span>
+      <div class="kpi-val text-teal">{{ totalSesiones }}</div>
+      <span class="kpi-desc">Salas generadas en el sistema</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-label">EN CURSO AHORA</span>
+      <div class="kpi-val text-emerald">{{ sesionesEnCurso }}</div>
+      <span class="kpi-desc">Videoconsultas activas</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-label">PROGRAMADAS</span>
+      <div class="kpi-val text-blue">{{ sesionesProgramadas }}</div>
+      <span class="kpi-desc">En espera de horario pactado</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-label">FINALIZADAS</span>
+      <div class="kpi-val text-gray">{{ sesionesFinalizadas }}</div>
+      <span class="kpi-desc">Sesiones concluidas con éxito</span>
+    </div>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <div class="filter-groups">
+      <div class="f-group">
+        <label class="f-label">Filtrar por Estado:</label>
+        <select [(ngModel)]="filtroEstado" class="f-select">
+          <option value="all">Todas las Sesiones</option>
+          <option value="programada">Programadas</option>
+          <option value="en_curso">En Curso (Activas)</option>
+          <option value="finalizada">Finalizadas</option>
+          <option value="cancelada">Canceladas</option>
+        </select>
+      </div>
+    </div>
+    <div class="filter-count">
+      Mostrando {{ filteredTeleconsultas.length }} salas
+    </div>
+  </div>
+
+  <!-- Teleconsultas Table -->
+  <div class="table-card-container">
+    <table class="modern-data-table">
+      <thead>
+        <tr>
+          <th>SALA / CÓDIGO SEGURO</th>
+          <th>CITA ASOCIADA</th>
+          <th>ESTADO</th>
+          <th>ENLACE PACIENTE</th>
+          <th>REGISTRO / INICIO</th>
+          <th style="text-align: right;">ACCIONES TERAPÉUTICAS</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="isLoading">
+          <td colspan="6" class="loading-state">Cargando salas de teleconsulta...</td>
+        </tr>
+        <tr *ngIf="!isLoading && filteredTeleconsultas.length === 0">
+          <td colspan="6" class="empty-state">No se encontraron sesiones de teleconsulta en esta vista.</td>
+        </tr>
+        <tr *ngFor="let t of filteredTeleconsultas">
+          <td>
+            <div class="room-cell">
+              <div class="room-indicator" [ngClass]="'status-dot-' + t.estado"></div>
+              <div>
+                <span class="room-title">{{ t.room_name }}</span>
+                <span class="room-sub">Jitsi Meet WebRTC</span>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span class="cita-info-tag">{{ getCitaInfo(t.cita) }}</span>
+          </td>
+          <td>
+            <span class="status-badge" [ngClass]="'badge-' + t.estado">
+              {{ t.estado_display || t.estado | uppercase }}
+            </span>
+          </td>
+          <td>
+            <button type="button" class="btn-copy-link" (click)="copiarEnlace(t)">
+              <svg viewBox="0 0 20 20" fill="currentColor" style="width:14px;height:14px;margin-right:5px;">
+                <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"/>
+                <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"/>
+              </svg>
+              <span>{{ copiedId === t.id ? '¡Enlace Copiado!' : 'Copiar Link Paciente' }}</span>
+            </button>
+          </td>
+          <td>
+            <div class="time-cell">
+              <span *ngIf="t.iniciada_at" class="time-main">Iniciada: {{ t.iniciada_at | date:'shortTime' }}</span>
+              <span *ngIf="!t.iniciada_at" class="time-main">Creada: {{ t.created_at | date:'shortTime' }}</span>
+              <span class="time-sub">{{ t.created_at | date:'mediumDate' }}</span>
+            </div>
+          </td>
+          <td>
+            <div class="action-buttons">
+              <button *ngIf="t.estado === 'programada'" class="btn-action btn-start" (click)="iniciar(t)" title="Iniciar Videoconsulta">
+                ▶ Iniciar Sala
+              </button>
+
+              <button *ngIf="t.estado === 'en_curso'" class="btn-action btn-enter" (click)="abrirSalaVirtual(t)" title="Entrar a Sala Embebida">
+                🎥 Entrar a Sala
+              </button>
+
+              <button *ngIf="t.estado === 'en_curso'" class="btn-action btn-external" (click)="abrirEnNuevaPestana(t.enlace_psicologo)" title="Abrir en pestaña completa">
+                ↗ Pestaña
+              </button>
+
+              <button *ngIf="t.estado === 'en_curso'" class="btn-action btn-finish" (click)="finalizar(t)" title="Concluir Consulta">
+                ✓ Concluir
+              </button>
+
+              <button *ngIf="t.estado === 'finalizada'" class="btn-action btn-secondary" (click)="abrirEnNuevaPestana(t.enlace_psicologo)">
+                Ver Registro
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Modal Generar Sala Virtual -->
+  <div *ngIf="showCreateModal" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Generar Nueva Sala de Teleconsulta (CU13)</h3>
+        <button type="button" class="btn-close" (click)="closeCreateModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-description">
+          Seleccione la cita agendada para la cual desea habilitar la sesión virtual encriptada de Jitsi Meet:
+        </p>
+
+        <div class="form-group">
+          <label class="form-label">Cita Psicológica Pendiente *</label>
+          <select [(ngModel)]="selectedCitaId" class="form-select">
+            <option value="" disabled selected>-- Seleccione una cita --</option>
+            <option *ngFor="let c of citasDisponibles" [value]="c.id">
+              {{ c.fecha_hora | date:'medium' }} | Paciente: {{ c.paciente_details?.first_name }} {{ c.paciente_details?.last_name }} ({{ c.estado }})
+            </option>
+          </select>
+          <span class="form-hint">El sistema generará dos enlaces diferenciados (uno de control clínico y otro para el paciente).</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" (click)="closeCreateModal()">Cancelar</button>
+        <button type="button" class="btn btn-primary-emerald" [disabled]="isSubmitting || !selectedCitaId" (click)="crearTeleconsulta()">
+          {{ isSubmitting ? 'Generando Sala...' : 'Generar Sala y Enlaces' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Sala Virtual Embebida (Jitsi Meet Viewport) -->
+  <div *ngIf="showVirtualRoomModal" class="modal-overlay room-overlay">
+    <div class="room-modal-container">
+      <div class="room-modal-header">
+        <div class="room-header-title">
+          <span class="live-blink">● EN VIVO</span>
+          <span class="room-name-display">{{ activeRoomTeleconsulta?.room_name }}</span>
+        </div>
+        <div class="room-header-controls">
+          <button type="button" class="btn-header-action" (click)="abrirEnNuevaPestana(activeRoomTeleconsulta?.enlace_psicologo!)">
+            ↗ Abrir Pantalla Completa
+          </button>
+          <button *ngIf="activeRoomTeleconsulta?.estado === 'en_curso'" type="button" class="btn-header-finish" (click)="finalizar(activeRoomTeleconsulta!)">
+            Concluir Consulta
+          </button>
+          <button type="button" class="btn-close-room" (click)="cerrarSalaVirtual()">
+            Cerrar Visor ✕
+          </button>
+        </div>
+      </div>
+
+      <div class="room-viewport">
+        <iframe
+          *ngIf="safeRoomUrl"
+          [src]="safeRoomUrl"
+          allow="camera; microphone; fullscreen; display-capture; autoplay"
+          class="jitsi-iframe"
+        ></iframe>
+      </div>
+    </div>
+  </div>
+</div>

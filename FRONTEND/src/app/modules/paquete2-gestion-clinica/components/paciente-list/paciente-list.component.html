@@ -1,0 +1,186 @@
+<div class="pacientes-page">
+  <!-- Header -->
+  <div class="page-header-row">
+    <div>
+      <div class="badge-pill-header">
+        <span class="badge-dot-live"></span>
+        <span>HISTORIAS CLÍNICAS & EXPEDIENTES (CU7)</span>
+      </div>
+      <h1 class="page-title">Gestión de Pacientes</h1>
+      <p class="page-subtitle">
+        Directorio centralizado de pacientes, antecedentes, documentos de identidad y seguimiento psicoterapéutico.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <button type="button" class="btn btn-primary-emerald" (click)="showCreateModal = true">
+        <svg viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px;margin-right:6px;"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+        + Nuevo Paciente
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid-row">
+    <div class="kpi-card">
+      <span class="kpi-label">TOTAL PACIENTES REGISTRADOS</span>
+      <div class="kpi-val">{{ totalPacientes }}</div>
+      <span class="kpi-desc">Expedientes activos en la institución</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-label">CONSULTAS ESTE MES</span>
+      <div class="kpi-val text-emerald">{{ atendidosEsteMes }}</div>
+      <span class="kpi-desc">Sesiones clínicas completadas</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-label">NUEVOS INGRESOS (ÚLTIMOS 30 DÍAS)</span>
+      <div class="kpi-val text-teal">+{{ nuevosIngresos }}</div>
+      <span class="kpi-desc">Casos clínicos en fase de evaluación</span>
+    </div>
+  </div>
+
+  <!-- Search Filter Bar -->
+  <div class="filter-bar">
+    <div class="search-box">
+      <svg class="search-icon" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+      </svg>
+      <input 
+        type="text" 
+        [(ngModel)]="searchTerm" 
+        placeholder="Buscar paciente por nombre, documento de identidad o email..." 
+        class="search-input">
+    </div>
+    <div class="filter-count">
+      Mostrando {{ filteredPacientes.length }} expedientes
+    </div>
+  </div>
+
+  <!-- Tabla de Pacientes -->
+  <div class="table-card-container">
+    <table class="modern-data-table">
+      <thead>
+        <tr>
+          <th>PACIENTE / CORREO</th>
+          <th>DOCUMENTO</th>
+          <th>GÉNERO / EDAD</th>
+          <th>TELÉFONO & DIRECCIÓN</th>
+          <th>FECHA INGRESO</th>
+          <th>SESIONES</th>
+          <th style="text-align: right;">EXPEDIENTE</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="isLoading">
+          <td colspan="7" class="loading-state">Cargando expedientes clínicos...</td>
+        </tr>
+        <tr *ngFor="let p of filteredPacientes">
+          <td>
+            <div class="patient-cell">
+              <div class="patient-avatar">
+                {{ p.usuario.first_name.charAt(0) }}{{ p.usuario.last_name.charAt(0) }}
+              </div>
+              <div class="patient-info">
+                <span class="patient-name">{{ p.usuario.first_name }} {{ p.usuario.last_name }}</span>
+                <span class="patient-email">{{ p.usuario.email }}</span>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span class="doc-badge">{{ p.documento_identidad || 'Sin documento' }}</span>
+          </td>
+          <td>
+            <span class="gender-text">{{ p.genero || 'No especificado' }}</span>
+          </td>
+          <td>
+            <div class="contact-sub">
+              <span class="phone-text">{{ p.usuario.phone || 'Sin teléfono' }}</span>
+              <span class="dir-text">{{ p.direccion || 'Sin dirección' }}</span>
+            </div>
+          </td>
+          <td>
+            <span class="date-text">{{ p.created_at }}</span>
+          </td>
+          <td>
+            <span class="citas-pill">{{ p.citas_count || 3 }} citas</span>
+          </td>
+          <td style="text-align: right;">
+            <button type="button" class="btn-action-expediente">Ver Ficha</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal Nuevo Paciente (CU7) -->
+<div *ngIf="showCreateModal" class="modal-backdrop">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <div>
+        <h3 class="modal-title">Registrar Nuevo Paciente</h3>
+        <p class="modal-subtitle">Apertura de expediente clínico en el sistema institucional</p>
+      </div>
+      <button class="btn-close-modal" (click)="closeModal()">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <div *ngIf="createError" class="alert-box alert-danger mb-3">{{ createError }}</div>
+      <div *ngIf="createSuccess" class="alert-box alert-success mb-3">{{ createSuccess }}</div>
+
+      <div class="form-grid-2">
+        <div class="input-grp">
+          <label class="lbl">Nombre <span class="text-danger">*</span></label>
+          <input type="text" [(ngModel)]="newFirstName" placeholder="Ej. Mariana" class="modal-input">
+        </div>
+        <div class="input-grp">
+          <label class="lbl">Apellido <span class="text-danger">*</span></label>
+          <input type="text" [(ngModel)]="newLastName" placeholder="Ej. Osorio" class="modal-input">
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="input-grp">
+          <label class="lbl">Correo Electrónico <span class="text-danger">*</span></label>
+          <input type="email" [(ngModel)]="newEmail" placeholder="mariana@ejemplo.com" class="modal-input">
+        </div>
+        <div class="input-grp">
+          <label class="lbl">Teléfono / WhatsApp</label>
+          <input type="text" [(ngModel)]="newPhone" placeholder="+57 300 123 4567" class="modal-input">
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="input-grp">
+          <label class="lbl">Documento de Identidad (CC/TI/DNI)</label>
+          <input type="text" [(ngModel)]="newDocumento" placeholder="CC 1.020.334.556" class="modal-input">
+        </div>
+        <div class="input-grp">
+          <label class="lbl">Fecha de Nacimiento</label>
+          <input type="date" [(ngModel)]="newFechaNac" class="modal-input">
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="input-grp">
+          <label class="lbl">Género</label>
+          <select [(ngModel)]="newGenero" class="modal-input">
+            <option value="Femenino">Femenino</option>
+            <option value="Masculino">Masculino</option>
+            <option value="No binario">No binario</option>
+            <option value="Otro">Otro / Prefiero no decir</option>
+          </select>
+        </div>
+        <div class="input-grp">
+          <label class="lbl">Dirección de Residencia</label>
+          <input type="text" [(ngModel)]="newDireccion" placeholder="Calle 10 # 40-20" class="modal-input">
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary-dark" (click)="closeModal()">Cancelar</button>
+      <button type="button" class="btn btn-primary-emerald" (click)="saveNewPaciente()">Guardar Paciente</button>
+    </div>
+  </div>
+</div>
