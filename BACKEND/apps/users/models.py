@@ -109,3 +109,50 @@ class DisponibilidadPsicologo(models.Model):
 
     def __str__(self):
         return f'{self.psicologo.usuario.email} - {self.get_dia_semana_display()}'
+
+
+class Paciente(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    usuario = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='paciente',
+    )
+    fecha_nacimiento = models.DateField(blank=True, null=True)
+    direccion = models.CharField(max_length=255, blank=True, null=True)
+    documento_identidad = models.CharField(max_length=50, blank=True, null=True)
+    genero = models.CharField(max_length=30, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.usuario.email
+
+
+class Cita(models.Model):
+    class Estado(models.TextChoices):
+        RESERVADA = 'reservada', 'Reservada'
+        CONFIRMADA = 'confirmada', 'Confirmada'
+        CANCELADA = 'cancelada', 'Cancelada'
+        REPROGRAMADA = 'reprogramada', 'Reprogramada'
+        INASISTENCIA = 'inasistencia', 'Inasistencia'
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE, related_name='citas')
+    psicologo = models.ForeignKey(Psicologo, on_delete=models.CASCADE, related_name='citas')
+    fecha_hora = models.DateTimeField()
+    duracion_minutos = models.PositiveIntegerField(default=60)
+    estado = models.CharField(max_length=20, choices=Estado.choices, default=Estado.RESERVADA)
+    motivo = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-fecha_hora']
+        indexes = [
+            models.Index(fields=['psicologo', 'fecha_hora']),
+            models.Index(fields=['paciente', 'fecha_hora']),
+        ]
+
+    def __str__(self):
+        return f'{self.paciente.usuario.email} - {self.psicologo.usuario.email} - {self.fecha_hora}'

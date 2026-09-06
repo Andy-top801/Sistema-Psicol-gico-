@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from apps.tenants.models import Centro, Dominio
-from apps.users.models import Rol, Permiso
+from apps.users.models import Rol, Permiso, Paciente
 from django.contrib.auth import get_user_model
 from django_tenants.utils import schema_context
 
@@ -77,6 +77,7 @@ class Command(BaseCommand):
                     last_name='Martínez'
                 )
                 user_pac.roles.add(rol_paciente)
+                Paciente.objects.get_or_create(usuario=user_pac)
                 self.stdout.write(self.style.SUCCESS('Paciente demo creado: paciente@sanamente.com / password123'))
 
         self.stdout.write(self.style.SUCCESS('¡Población de datos semilla (Seed) completada con éxito!'))

@@ -11,6 +11,9 @@ from .views import (
     EspecialidadViewSet,
     PsicologoViewSet,
     DisponibilidadPsicologoViewSet,
+    PacienteViewSet,
+    CitaViewSet,
+    DashboardView,
     PasswordResetViewSet,
     MeView,
     RegisterView,
@@ -26,6 +29,8 @@ router.register(r'permisos', PermisoViewSet)
 router.register(r'especialidades', EspecialidadViewSet)
 router.register(r'psicologos', PsicologoViewSet)
 router.register(r'disponibilidades-psicologo', DisponibilidadPsicologoViewSet)
+router.register(r'pacientes', PacienteViewSet)
+router.register(r'citas', CitaViewSet)
 router.register(r'auth/password-reset', PasswordResetViewSet, basename='password-reset')
 
 app_name = 'users'
@@ -45,6 +50,7 @@ urlpatterns = [
         PasswordResetConfirmView.as_view(),
         name='password_reset_confirm',
     ),
+    path('dashboard/', DashboardView.as_view(), name='dashboard'),
     path('me/', MeView.as_view(), name='me'),
     path('', include(router.urls)),
 ]

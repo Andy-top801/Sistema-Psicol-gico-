@@ -1,6 +1,9 @@
 import re
 from rest_framework import serializers
-from .models import Usuario, Rol, Permiso, Especialidad, Psicologo, DisponibilidadPsicologo
+from datetime import timedelta
+from django.utils import timezone
+
+from .models import Usuario, Rol, Permiso, Especialidad, Psicologo, DisponibilidadPsicologo, Paciente, Cita
 from django.contrib.auth.hashers import make_password
 
 def validate_secure_password(value):
@@ -130,6 +133,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             defaults={'description': 'Paciente registrado desde la aplicación móvil'},
         )
         user.roles.add(rol_paciente)
+        Paciente.objects.create(usuario=user)
         return user
 
 class PasswordResetVerifySerializer(serializers.Serializer):
@@ -278,3 +282,129 @@ class PsicologoSerializer(serializers.ModelSerializer):
             user.roles.add(rol_psicologo)
 
         return instance
+
+
+class PacienteSerializer(serializers.ModelSerializer):
+    usuario = UserProfileSerializer(read_only=True)
+    email = serializers.EmailField(write_only=True, required=False)
+    username = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    password = serializers.CharField(write_only=True, required=False, allow_blank=False, validators=[validate_secure_password])
+    first_name = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    last_name = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    phone = serializers.CharField(write_only=True, required=False, allow_blank=True)
+
+    class Meta:
+        model = Paciente
+        fields = [
+            'id', 'usuario', 'email', 'username', 'password', 'first_name',
+            'last_name', 'phone', 'fecha_nacimiento', 'direccion',
+            'documento_identidad', 'genero', 'created_at', 'updated_at',
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def create(self, validated_data):
+        email = validated_data.pop('email')
+        password = validated_data.pop('password', None)
+        username = validated_data.pop('username', '') or email
+        user = Usuario.objects.create_user(
+            username=username,
+            email=email,
+            password=password or Usuario.objects.make_random_password(),
+            first_name=validated_data.pop('first_name', ''),
+            last_name=validated_data.pop('last_name', ''),
+            phone=validated_data.pop('phone', ''),
+        )
+        rol_paciente, _ = Rol.objects.get_or_create(
+            name=PACIENTE_ROLE_NAME,
+            defaults={'description': 'Paciente registrado desde la aplicación móvil'},
+        )
+        user.roles.add(rol_paciente)
+        return Paciente.objects.create(usuario=user, **validated_data)
+
+    def update(self, instance, validated_data):
+        user = instance.usuario
+
+        for attr in ['email', 'username', 'first_name', 'last_name', 'phone']:
+            if attr in validated_data:
+                value = validated_data.pop(attr)
+                if attr == 'email':
+                    user.email = value.strip().lower()
+                elif attr == 'username':
+                    if value:
+                        user.username = value
+                else:
+                    setattr(user, attr, value)
+
+        if 'password' in validated_data:
+            user.set_password(validated_data.pop('password'))
+
+        user.save()
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
+
+
+class DashboardResumenSerializer(serializers.Serializer):
+    citas_totales = serializers.IntegerField()
+    pacientes_totales = serializers.IntegerField()
+    inasistencias = serializers.IntegerField()
+    carga_profesional = serializers.IntegerField()
+
+
+class CitaSerializer(serializers.ModelSerializer):
+    paciente_details = UserProfileSerializer(source='paciente.usuario', read_only=True)
+    psicologo_details = UserProfileSerializer(source='psicologo.usuario', read_only=True)
+
+    class Meta:
+        model = Cita
+        fields = [
+            'id', 'paciente', 'paciente_details', 'psicologo', 'psicologo_details',
+            'fecha_hora', 'duracion_minutos', 'estado', 'motivo', 'created_at', 'updated_at',
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def validate(self, attrs):
+        instance = getattr(self, 'instance', None)
+        paciente = attrs.get('paciente', getattr(instance, 'paciente', None))
+        psicologo = attrs.get('psicologo', getattr(instance, 'psicologo', None))
+        fecha_hora = attrs.get('fecha_hora', getattr(instance, 'fecha_hora', None))
+        duracion = attrs.get('duracion_minutos', getattr(instance, 'duracion_minutos', 60))
+
+        if not paciente or not psicologo or not fecha_hora:
+            return attrs
+
+        if not psicologo.activo:
+            raise serializers.ValidationError({'psicologo': 'El psicólogo está inactivo.'})
+
+        fecha_fin = fecha_hora + timedelta(minutes=duracion)
+        if fecha_hora.date() != fecha_fin.date():
+            raise serializers.ValidationError({'fecha_hora': 'La cita no puede cruzar de día.'})
+
+        dia_semana = fecha_hora.isoweekday()
+        hora_inicio = fecha_hora.time()
+        hora_fin = fecha_fin.time()
+        disponible = psicologo.disponibilidades.filter(
+            activo=True,
+            dia_semana=dia_semana,
+            hora_inicio__lte=hora_inicio,
+            hora_fin__gte=hora_fin,
+        ).exists()
+        if not disponible:
+            raise serializers.ValidationError({'fecha_hora': 'La cita no cae dentro de la disponibilidad del psicólogo.'})
+
+        active_states = [Cita.Estado.RESERVADA, Cita.Estado.CONFIRMADA, Cita.Estado.REPROGRAMADA]
+        overlap = Cita.objects.filter(
+            psicologo=psicologo,
+            estado__in=active_states,
+            fecha_hora__lt=fecha_fin,
+        )
+        if instance is not None:
+            overlap = overlap.exclude(pk=instance.pk)
+        for cita in overlap:
+            cita_fin = cita.fecha_hora + timedelta(minutes=cita.duracion_minutos)
+            if cita_fin > fecha_hora:
+                raise serializers.ValidationError({'fecha_hora': 'El psicólogo ya tiene una cita en ese horario.'})
+
+        return attrs

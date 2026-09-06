@@ -10,13 +10,14 @@ import uuid
 from django.conf import settings
 from django.core.mail import send_mail
 
-from .models import Usuario, Rol, Permiso, TokenRecuperacion, Especialidad, Psicologo, DisponibilidadPsicologo
+from .models import Usuario, Rol, Permiso, TokenRecuperacion, Especialidad, Psicologo, DisponibilidadPsicologo, Paciente, Cita
 from .serializers import (
     UsuarioSerializer, RolSerializer, PermisoSerializer,
     PasswordResetRequestSerializer, PasswordResetConfirmSerializer,
     MobilePasswordResetConfirmSerializer, PasswordResetVerifySerializer,
     RegisterSerializer, UserProfileSerializer, EspecialidadSerializer,
-    PsicologoSerializer, DisponibilidadPsicologoSerializer
+    PsicologoSerializer, DisponibilidadPsicologoSerializer, PacienteSerializer,
+    DashboardResumenSerializer, CitaSerializer
 )
 from .tokens import make_reset_code
 
@@ -54,6 +55,54 @@ class DisponibilidadPsicologoViewSet(viewsets.ModelViewSet):
     queryset = DisponibilidadPsicologo.objects.select_related('psicologo', 'psicologo__usuario')
     serializer_class = DisponibilidadPsicologoSerializer
     permission_classes = [IsAuthenticated, permissions.IsAdminUser]
+
+
+class PacienteViewSet(viewsets.ModelViewSet):
+    queryset = Paciente.objects.select_related('usuario')
+    serializer_class = PacienteSerializer
+    permission_classes = [IsAuthenticated, permissions.IsAdminUser]
+
+
+class CitaViewSet(viewsets.ModelViewSet):
+    queryset = Cita.objects.select_related('paciente__usuario', 'psicologo__usuario').all()
+    serializer_class = CitaSerializer
+    permission_classes = [IsAuthenticated, permissions.IsAdminUser]
+
+    @action(detail=True, methods=['post'])
+    def confirmar(self, request, pk=None):
+        cita = self.get_object()
+        cita.estado = Cita.Estado.CONFIRMADA
+        cita.save(update_fields=['estado', 'updated_at'])
+        return Response(self.get_serializer(cita).data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'])
+    def cancelar(self, request, pk=None):
+        cita = self.get_object()
+        cita.estado = Cita.Estado.CANCELADA
+        cita.save(update_fields=['estado', 'updated_at'])
+        return Response(self.get_serializer(cita).data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'])
+    def reprogramar(self, request, pk=None):
+        cita = self.get_object()
+        serializer = self.get_serializer(cita, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(estado=Cita.Estado.REPROGRAMADA)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class DashboardView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        data = {
+            'citas_totales': Cita.objects.count(),
+            'pacientes_totales': Paciente.objects.count(),
+            'inasistencias': Cita.objects.filter(estado=Cita.Estado.INASISTENCIA).count(),
+            'carga_profesional': Psicologo.objects.filter(activo=True).count(),
+        }
+        serializer = DashboardResumenSerializer(data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class PasswordResetViewSet(viewsets.ViewSet):
     permission_classes = [AllowAny]
