@@ -10,14 +10,15 @@ import uuid
 from django.conf import settings
 from django.core.mail import send_mail
 
-from .models import Usuario, Rol, Permiso, TokenRecuperacion, Especialidad, Psicologo, DisponibilidadPsicologo, Paciente, Cita
+from .models import Usuario, Rol, Permiso, TokenRecuperacion, Especialidad, Psicologo, DisponibilidadPsicologo, Paciente, Cita, AlertaPriorizacion, Teleconsulta
 from .serializers import (
     UsuarioSerializer, RolSerializer, PermisoSerializer,
     PasswordResetRequestSerializer, PasswordResetConfirmSerializer,
     MobilePasswordResetConfirmSerializer, PasswordResetVerifySerializer,
     RegisterSerializer, UserProfileSerializer, EspecialidadSerializer,
     PsicologoSerializer, DisponibilidadPsicologoSerializer, PacienteSerializer,
-    DashboardResumenSerializer, CitaSerializer
+    DashboardResumenSerializer, CitaSerializer,
+    AlertaPriorizacionSerializer, TeleconsultaSerializer,
 )
 from .tokens import make_reset_code
 
@@ -103,6 +104,87 @@ class DashboardView(APIView):
         }
         serializer = DashboardResumenSerializer(data)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+# ─────────────────────────────────────────────
+# CU10 – Alertas de priorización
+# ─────────────────────────────────────────────
+
+class AlertaPriorizacionViewSet(viewsets.ModelViewSet):
+    """CU10 – CRUD de alertas + acciones para cambiar su estado."""
+    queryset = AlertaPriorizacion.objects.select_related('paciente__usuario').all()
+    serializer_class = AlertaPriorizacionSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        # Filtros opcionales por query param
+        estado = self.request.query_params.get('estado')
+        tipo = self.request.query_params.get('tipo')
+        paciente = self.request.query_params.get('paciente')
+        if estado:
+            qs = qs.filter(estado=estado)
+        if tipo:
+            qs = qs.filter(tipo=tipo)
+        if paciente:
+            qs = qs.filter(paciente=paciente)
+        return qs
+
+    @action(detail=True, methods=['post'], url_path='revisar')
+    def revisar(self, request, pk=None):
+        """Pasa la alerta a estado EN_REVISION."""
+        alerta = self.get_object()
+        alerta.estado = AlertaPriorizacion.Estado.EN_REVISION
+        alerta.save(update_fields=['estado', 'updated_at'])
+        return Response(self.get_serializer(alerta).data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'], url_path='resolver')
+    def resolver(self, request, pk=None):
+        """Marca la alerta como RESUELTA y registra la acción tomada."""
+        alerta = self.get_object()
+        accion = request.data.get('accion_tomada', '')
+        alerta.estado = AlertaPriorizacion.Estado.RESUELTA
+        alerta.accion_tomada = accion
+        alerta.save(update_fields=['estado', 'accion_tomada', 'updated_at'])
+        return Response(self.get_serializer(alerta).data, status=status.HTTP_200_OK)
+
+
+# ─────────────────────────────────────────────
+# CU13 – Teleconsultas / Videoconferencias
+# ─────────────────────────────────────────────
+
+class TeleconsultaViewSet(viewsets.ModelViewSet):
+    """CU13 – Crear sala Jitsi vinculada a una cita y gestionar su ciclo de vida."""
+    queryset = Teleconsulta.objects.select_related('cita__paciente__usuario', 'cita__psicologo__usuario').all()
+    serializer_class = TeleconsultaSerializer
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=True, methods=['post'], url_path='iniciar')
+    def iniciar(self, request, pk=None):
+        """Cambia el estado a EN_CURSO y registra la hora de inicio."""
+        tc = self.get_object()
+        tc.estado = Teleconsulta.Estado.EN_CURSO
+        tc.iniciada_at = timezone.now()
+        tc.save(update_fields=['estado', 'iniciada_at', 'updated_at'])
+        return Response(self.get_serializer(tc).data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'], url_path='finalizar')
+    def finalizar(self, request, pk=None):
+        """Cambia el estado a FINALIZADA y registra la hora de fin."""
+        tc = self.get_object()
+        tc.estado = Teleconsulta.Estado.FINALIZADA
+        tc.finalizada_at = timezone.now()
+        tc.save(update_fields=['estado', 'finalizada_at', 'updated_at'])
+        return Response(self.get_serializer(tc).data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'], url_path='cancelar')
+    def cancelar(self, request, pk=None):
+        """Cancela la teleconsulta."""
+        tc = self.get_object()
+        tc.estado = Teleconsulta.Estado.CANCELADA
+        tc.save(update_fields=['estado', 'updated_at'])
+        return Response(self.get_serializer(tc).data, status=status.HTTP_200_OK)
+
 
 class PasswordResetViewSet(viewsets.ViewSet):
     permission_classes = [AllowAny]

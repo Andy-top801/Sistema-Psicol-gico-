@@ -156,3 +156,73 @@ class Cita(models.Model):
 
     def __str__(self):
         return f'{self.paciente.usuario.email} - {self.psicologo.usuario.email} - {self.fecha_hora}'
+
+
+# ─────────────────────────────────────────────
+# CU10 – Alertas de priorización y seguimiento
+# ─────────────────────────────────────────────
+
+class AlertaPriorizacion(models.Model):
+    class Tipo(models.TextChoices):
+        INASISTENCIA = 'inasistencia', 'Inasistencia consecutiva'
+        RIESGO_ABANDONO = 'riesgo_abandono', 'Riesgo de abandono'
+        SENAL_RIESGO = 'senal_riesgo', 'Señal de riesgo clínico'
+        ESTANCAMIENTO = 'estancamiento', 'Estancamiento terapéutico'
+
+    class Estado(models.TextChoices):
+        PENDIENTE = 'pendiente', 'Pendiente'
+        EN_REVISION = 'en_revision', 'En revisión'
+        RESUELTA = 'resuelta', 'Resuelta'
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    paciente = models.ForeignKey(
+        Paciente, on_delete=models.CASCADE, related_name='alertas'
+    )
+    tipo = models.CharField(max_length=30, choices=Tipo.choices)
+    descripcion = models.TextField()
+    estado = models.CharField(
+        max_length=20, choices=Estado.choices, default=Estado.PENDIENTE
+    )
+    accion_tomada = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'[{self.get_tipo_display()}] {self.paciente.usuario.email} - {self.get_estado_display()}'
+
+
+# ─────────────────────────────────────────────
+# CU13 – Teleconsultas y videoconferencias
+# ─────────────────────────────────────────────
+
+class Teleconsulta(models.Model):
+    class Estado(models.TextChoices):
+        PROGRAMADA = 'programada', 'Programada'
+        EN_CURSO = 'en_curso', 'En curso'
+        FINALIZADA = 'finalizada', 'Finalizada'
+        CANCELADA = 'cancelada', 'Cancelada'
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    cita = models.OneToOneField(
+        Cita, on_delete=models.CASCADE, related_name='teleconsulta'
+    )
+    # Sala generada automáticamente (p.ej. Jitsi: meet.jit.si/<room_name>)
+    room_name = models.CharField(max_length=255, unique=True)
+    enlace_psicologo = models.URLField(max_length=500)
+    enlace_paciente = models.URLField(max_length=500)
+    estado = models.CharField(
+        max_length=20, choices=Estado.choices, default=Estado.PROGRAMADA
+    )
+    iniciada_at = models.DateTimeField(blank=True, null=True)
+    finalizada_at = models.DateTimeField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'Teleconsulta [{self.room_name}] - {self.get_estado_display()}'

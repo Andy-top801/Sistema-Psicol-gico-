@@ -20,6 +20,8 @@ from .views import (
     PasswordResetRequestView,
     PasswordResetVerifyView,
     PasswordResetConfirmView,
+    AlertaPriorizacionViewSet,
+    TeleconsultaViewSet,
 )
 
 router = DefaultRouter()
@@ -31,6 +33,8 @@ router.register(r'psicologos', PsicologoViewSet)
 router.register(r'disponibilidades-psicologo', DisponibilidadPsicologoViewSet)
 router.register(r'pacientes', PacienteViewSet)
 router.register(r'citas', CitaViewSet)
+router.register(r'alertas', AlertaPriorizacionViewSet)          # CU10
+router.register(r'teleconsultas', TeleconsultaViewSet)          # CU13
 router.register(r'auth/password-reset', PasswordResetViewSet, basename='password-reset')
 
 app_name = 'users'

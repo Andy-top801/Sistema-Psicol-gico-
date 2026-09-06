@@ -3,7 +3,7 @@ from rest_framework import serializers
 from datetime import timedelta
 from django.utils import timezone
 
-from .models import Usuario, Rol, Permiso, Especialidad, Psicologo, DisponibilidadPsicologo, Paciente, Cita
+from .models import Usuario, Rol, Permiso, Especialidad, Psicologo, DisponibilidadPsicologo, Paciente, Cita, AlertaPriorizacion, Teleconsulta
 from django.contrib.auth.hashers import make_password
 
 def validate_secure_password(value):
@@ -408,3 +408,60 @@ class CitaSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({'fecha_hora': 'El psicólogo ya tiene una cita en ese horario.'})
 
         return attrs
+
+
+# ─────────────────────────────────────────────
+# CU10 – Alertas de priorización
+# ─────────────────────────────────────────────
+
+class AlertaPriorizacionSerializer(serializers.ModelSerializer):
+    paciente_details = UserProfileSerializer(source='paciente.usuario', read_only=True)
+    tipo_display = serializers.CharField(source='get_tipo_display', read_only=True)
+    estado_display = serializers.CharField(source='get_estado_display', read_only=True)
+
+    class Meta:
+        model = AlertaPriorizacion
+        fields = [
+            'id', 'paciente', 'paciente_details',
+            'tipo', 'tipo_display',
+            'descripcion',
+            'estado', 'estado_display',
+            'accion_tomada',
+            'created_at', 'updated_at',
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+
+# ─────────────────────────────────────────────
+# CU13 – Teleconsultas / Videoconferencias
+# ─────────────────────────────────────────────
+
+JITSI_BASE_URL = 'https://meet.jit.si'
+
+class TeleconsultaSerializer(serializers.ModelSerializer):
+    estado_display = serializers.CharField(source='get_estado_display', read_only=True)
+
+    class Meta:
+        model = Teleconsulta
+        fields = [
+            'id', 'cita',
+            'room_name',
+            'enlace_psicologo', 'enlace_paciente',
+            'estado', 'estado_display',
+            'iniciada_at', 'finalizada_at',
+            'created_at', 'updated_at',
+        ]
+        read_only_fields = [
+            'id', 'room_name',
+            'enlace_psicologo', 'enlace_paciente',
+            'created_at', 'updated_at',
+        ]
+
+    def create(self, validated_data):
+        import uuid as _uuid
+        room_name = f'sigepsi-{_uuid.uuid4().hex[:12]}'
+        enlace = f'{JITSI_BASE_URL}/{room_name}'
+        validated_data['room_name'] = room_name
+        validated_data['enlace_psicologo'] = enlace
+        validated_data['enlace_paciente'] = enlace
+        return super().create(validated_data)
