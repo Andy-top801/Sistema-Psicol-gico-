@@ -25,9 +25,14 @@ ENV PORT=80 \
 # Copiar bundle compilado de Angular a la raíz web de Nginx
 COPY --from=build /app/dist/sigepsi-web/browser /usr/share/nginx/html
 
-# Copiar plantilla Nginx (envsubst la compila automáticamente al arrancar el contenedor)
-COPY nginx.conf.template /etc/nginx/templates/default.conf.template
+# Copiar plantilla Nginx (se compilará de forma segura por el entrypoint)
+COPY nginx.conf.template /etc/nginx/nginx.conf.template
+
+# Copiar script de arranque seguro y normalizar finales de línea (CRLF -> LF)
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN sed -i 's/\r$//' /docker-entrypoint.sh && chmod +x /docker-entrypoint.sh
 
 EXPOSE 80 10000
 
+ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"]
