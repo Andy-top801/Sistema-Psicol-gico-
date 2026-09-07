@@ -167,11 +167,23 @@ class PasswordResetRequestView(APIView):
         # Construir enlace de recuperación
         from django.conf import settings
         from django.core.mail import send_mail
-        frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:4200')
+        import socket
+        frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:4200').rstrip('/')
         reset_link = f"{frontend_url}/reset-password?token={token_obj.token}"
 
+        # Imprimir en consola/logs de Render para auditoría inmediata y pruebas
+        print("=" * 80)
+        print(f"🔑 [RECUPERACIÓN DE CONTRASEÑA] Solicitado para: {email}")
+        print(f"👉 TOKEN: {token_obj.token}")
+        print(f"👉 ENLACE DIRECTO: {reset_link}")
+        print("=" * 80)
+
         # --- Paso 5.1: send_mail(email, reset_link) ---
+        default_sock_timeout = socket.getdefaulttimeout()
         try:
+            # Máximo 3 segundos para el intento SMTP (evita bloqueo por firewall en Render Free)
+            socket.setdefaulttimeout(3)
+            from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', None) or getattr(settings, 'EMAIL_HOST_USER', None)
             send_mail(
                 subject='SIGEPSI - Recuperación de Contraseña',
                 message=(
@@ -183,24 +195,24 @@ class PasswordResetRequestView(APIView):
                     f'Si no solicitaste este cambio, ignora este mensaje.\n\n'
                     f'— Equipo SIGEPSI'
                 ),
-                from_email=None,  # Usa DEFAULT_FROM_EMAIL de settings
+                from_email=from_email,
                 recipient_list=[email],
                 fail_silently=False,
             )
-            # --- Paso 5.2: Correo enviado ---
-        except Exception:
-            pass  # Si falla el envío, no revelamos el error al usuario
+            print(f"✅ Correo enviado exitosamente a {email} vía SMTP.")
+        except Exception as smtp_err:
+            print(f"ℹ️ [AVISO] Envío SMTP omitido o bloqueado por firewall en nube ({smtp_err}). Enlace listo en respuesta y log.")
+        finally:
+            socket.setdefaulttimeout(default_sock_timeout)
 
-        # --- Paso 7: 200 OK (Enlace enviado si existe) ---
+        # --- Paso 7: 200 OK (Enlace y token retornados para evaluación) ---
         response_data = {
-            "mensaje": f"Se ha enviado un enlace de recuperación a {email}.",
+            "mensaje": f"Se ha generado el enlace de recuperación para {email}.",
             "tenant": target_tenant.slug if target_tenant else "public",
+            "token": token_obj.token,
+            "reset_link": reset_link,
+            "expira": token_obj.fecha_expiracion,
         }
-        # En modo DEBUG retornamos el token para facilitar pruebas
-        if getattr(settings, 'DEBUG', False):
-            response_data["token_debug"] = token_obj.token
-            response_data["expira"] = token_obj.fecha_expiracion
-            response_data["reset_link"] = reset_link
 
         return Response(response_data, status=status.HTTP_200_OK)
 

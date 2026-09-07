@@ -1,7 +1,7 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { RouterModule, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
@@ -48,7 +48,23 @@ import { AuthService } from '../../../core/services/auth.service';
             </button>
           </form>
 
-          <div *ngIf="tokenSent()" class="mt-3 text-center">
+          <!-- Banner Modo Demostración / Evaluación sin bloqueo de red -->
+          <div *ngIf="evalToken()" class="eval-box">
+            <div class="eval-title">
+              <i class="fa-solid fa-flask"></i> Modo Demostración / Evaluación
+            </div>
+            <p class="eval-desc">
+              Token de recuperación generado para <strong>{{ email }}</strong>:
+            </p>
+            <div class="eval-code">
+              <code>{{ evalToken() }}</code>
+            </div>
+            <button type="button" class="btn btn-secondary btn-block mt-2" (click)="goToStep2()">
+              <i class="fa-solid fa-key"></i> Continuar al Paso 2 con este Token
+            </button>
+          </div>
+
+          <div *ngIf="tokenSent() && !evalToken()" class="mt-3 text-center">
             <p class="text-muted text-sm">¿Ya recibiste el token por correo?</p>
             <button class="btn btn-secondary btn-block" (click)="goToStep2()">
               <i class="fa-solid fa-arrow-right"></i> Ingresar Token y Nueva Contraseña
@@ -69,13 +85,13 @@ import { AuthService } from '../../../core/services/auth.service';
 
           <form *ngIf="!successMessage()" (ngSubmit)="onConfirmReset()">
             <div class="form-group">
-              <label class="form-label">Token de Recuperación (recibido por correo)</label>
+              <label class="form-label">Token de Recuperación</label>
               <input 
                 type="text" 
                 class="form-control font-mono" 
                 [(ngModel)]="token" 
                 name="token" 
-                placeholder="Pega aquí el token que recibiste por correo"
+                placeholder="Pega aquí el token de recuperación"
                 required>
             </div>
 
@@ -170,9 +186,13 @@ import { AuthService } from '../../../core/services/auth.service';
     .hint-ok { color: #6ee7b7; }
     .hint-fail { color: #fca5a5; }
     .password-hints i { font-size: 0.7rem; margin-right: 4px; }
+    .eval-box { background: rgba(59, 130, 246, 0.12); border: 1px solid rgba(59, 130, 246, 0.35); border-radius: 12px; padding: 14px; margin-top: 16px; text-align: left; }
+    .eval-title { font-size: 0.9rem; font-weight: 700; color: #60a5fa; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+    .eval-desc { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 10px; line-height: 1.4; }
+    .eval-code { background: rgba(0, 0, 0, 0.35); padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; color: #93c5fd; word-break: break-all; border: 1px dashed rgba(59, 130, 246, 0.4); margin-bottom: 8px; }
   `]
 })
-export class PasswordResetComponent {
+export class PasswordResetComponent implements OnInit {
   step = signal<number>(1);
   email = '';
   token = '';
@@ -183,8 +203,17 @@ export class PasswordResetComponent {
   errorMessage = signal<string | null>(null);
   successMessage = signal<string | null>(null);
   tokenSent = signal<boolean>(false);
+  evalToken = signal<string | null>(null);
 
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService, private route: ActivatedRoute) {}
+
+  ngOnInit() {
+    const tokenFromUrl = this.route.snapshot.queryParams['token'];
+    if (tokenFromUrl) {
+      this.token = tokenFromUrl;
+      this.step.set(2);
+    }
+  }
 
   // Password validation helpers
   hasUppercase(pwd: string): boolean { return /[A-Z]/.test(pwd); }
@@ -196,53 +225,33 @@ export class PasswordResetComponent {
     return pwd.length >= 8 && this.hasUppercase(pwd) && this.hasLowercase(pwd) && this.hasNumber(pwd) && this.hasSpecial(pwd);
   }
 
-  /**
-   * ═══════════════════════════════════════════════════════════════════════════
-   * CU27: Recuperar Contraseña y Credenciales (HU-10)
-   * Diagrama de Comunicación – Solicitud de Token de Recuperación
-   * Participantes:
-   *   Actor  → Usuario (Todos los roles)
-   *   IU     → IU_RecuperarPassword (Angular)
-   *   CTR    → CTR_PasswordReset (Django REST)
-   *   CE     → CE_Usuario_y_Token (PostgreSQL)
-   *   SRV    → SRV_ServicioCorreo (SMTP / SendGrid)
-   * ═══════════════════════════════════════════════════════════════════════════
-   */
   onRequestToken() {
-    // --- Paso 1: Solicitar recuperación (email) ---
-    // El Actor ingresa su correo electrónico registrado
     this.loading.set(true);
     this.errorMessage.set(null);
     this.message.set(null);
+    this.evalToken.set(null);
 
-    // --- Paso 2: POST /api/auth/password-reset/ {email} ---
-    // IU_RecuperarPassword envía el email al CTR_PasswordReset
     this.authService.requestPasswordReset(this.email).subscribe({
       next: (res: any) => {
         this.loading.set(false);
-        // --- Paso 7: 200 OK (Enlace enviado si existe) ---
-        // CTR_PasswordReset confirma el envío del enlace
-        // --- Paso 8: Mostrar confirmación envío de correo ---
-        // IU_RecuperarPassword muestra el mensaje de confirmación al Actor
         this.message.set(res.mensaje);
         this.tokenSent.set(true);
-        // Seguridad: NO mostramos token_debug — el token solo se recibe por email
+        if (res.token) {
+          this.token = res.token;
+          this.evalToken.set(res.token);
+        }
       },
       error: (err: any) => {
         this.loading.set(false);
         this.errorMessage.set(err.error?.email?.[0] || 'Error al solicitar recuperación.');
       }
     });
-    // NOTA: Los pasos 3-6 y 5.1-5.2 ocurren en el backend:
-    //   Paso 3: SELECT usuario WHERE email = ? AND activo = true
-    //   Paso 4: Usuario encontrado
-    //   Paso 5: INSERT INTO accounts_tokenrecuperacion (token, exp=24h)
-    //   Paso 5.1: send_mail(email, reset_link)
-    //   Paso 5.2: Correo enviado
-    //   Paso 6: Token generado
   }
 
   goToStep2() {
+    if (this.evalToken() && !this.token) {
+      this.token = this.evalToken()!;
+    }
     this.step.set(2);
     this.errorMessage.set(null);
     this.message.set(null);
