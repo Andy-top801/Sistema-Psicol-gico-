@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../core/services/auth.service';
@@ -9,8 +9,16 @@ import { AuthService } from '../core/services/auth.service';
   imports: [CommonModule, RouterModule],
   template: `
     <div class="app-layout">
+      <!-- Backdrop for mobile sidebar drawer -->
+      <div 
+        class="sidebar-backdrop" 
+        *ngIf="isSidebarOpen()" 
+        (click)="closeSidebar()"
+        aria-hidden="true">
+      </div>
+
       <!-- Sidebar -->
-      <aside class="app-sidebar">
+      <aside class="app-sidebar" [class.open]="isSidebarOpen()">
         <!-- Brand Header -->
         <div class="sidebar-brand">
           <div class="brand-badge">
@@ -19,13 +27,20 @@ import { AuthService } from '../core/services/auth.service';
           <div class="brand-info">
             <h2 class="brand-name">SIGEPSI</h2>
           </div>
+          <button 
+            type="button" 
+            class="btn-sidebar-close" 
+            (click)="closeSidebar()" 
+            aria-label="Cerrar menú">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
         </div>
 
         <!-- Navigation Links -->
         <nav class="sidebar-nav">
           <div class="nav-section-title">PRINCIPAL</div>
           
-          <a routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-link">
+          <a routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="closeSidebar()" class="nav-link">
             <i class="fa-solid fa-house nav-icon"></i>
             <span>Inicio</span>
           </a>
@@ -34,19 +49,19 @@ import { AuthService } from '../core/services/auth.service';
           <div class="nav-section-title">GESTIÓN ADMINISTRATIVA</div>
 
           <!-- Centros Psicológicos (SuperAdmin) -->
-          <a *ngIf="authService.isSuperAdmin()" routerLink="/tenants" routerLinkActive="active" class="nav-link">
+          <a *ngIf="authService.isSuperAdmin()" routerLink="/tenants" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
             <i class="fa-solid fa-building nav-icon"></i>
             <span>Centros Psicológicos</span>
           </a>
 
           <!-- Usuarios -->
-          <a routerLink="/users" routerLinkActive="active" class="nav-link">
+          <a routerLink="/users" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
             <i class="fa-solid fa-users nav-icon"></i>
             <span>Usuarios</span>
           </a>
 
           <!-- Roles y Permisos -->
-          <a routerLink="/roles" routerLinkActive="active" class="nav-link">
+          <a routerLink="/roles" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
             <i class="fa-solid fa-shield-halved nav-icon"></i>
             <span>Roles y Permisos</span>
           </a>
@@ -54,26 +69,26 @@ import { AuthService } from '../core/services/auth.service';
           <!-- MÓDULO CLÍNICO & AGENDA (Sprint 1) -->
           <ng-container *ngIf="!authService.isSuperAdmin() || authService.isInTenantContext()">
             <div class="nav-section-title">CLÍNICA Y CONSULTAS</div>
-            <a routerLink="/agenda" routerLinkActive="active" class="nav-link">
+            <a routerLink="/agenda" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
               <i class="fa-solid fa-calendar-check nav-icon"></i>
               <span>Agenda y Citas</span>
             </a>
-            <a routerLink="/psicologos" routerLinkActive="active" class="nav-link">
+            <a routerLink="/psicologos" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
               <i class="fa-solid fa-user-doctor nav-icon"></i>
               <span>Directorio Psicólogos</span>
             </a>
-            <a routerLink="/pacientes" routerLinkActive="active" class="nav-link">
+            <a routerLink="/pacientes" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
               <i class="fa-solid fa-folder-open nav-icon"></i>
               <span>Expedientes Pacientes</span>
             </a>
-            <a routerLink="/centro" routerLinkActive="active" class="nav-link">
+            <a routerLink="/centro" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
               <i class="fa-solid fa-sliders nav-icon"></i>
               <span>Configuración del Centro</span>
             </a>
           </ng-container>
         </nav>
 
-        <!-- User Footer Profile (Exact to reference screenshot) -->
+        <!-- User Footer Profile -->
         <div class="sidebar-footer">
           <div class="user-profile-row">
             <div class="user-avatar-beige">
@@ -97,6 +112,16 @@ import { AuthService } from '../core/services/auth.service';
         <!-- Sleek Top Navbar -->
         <header class="app-header">
           <div class="header-left">
+            <!-- Mobile Hamburger Toggle -->
+            <button 
+              type="button" 
+              class="btn-hamburger" 
+              (click)="toggleSidebar()" 
+              aria-label="Abrir menú de navegación"
+              title="Abrir menú">
+              <i class="fa-solid fa-bars"></i>
+            </button>
+
             <!-- Context Indicator -->
             <div *ngIf="authService.isInTenantContext()" class="tenant-context-pill">
               <i class="fa-solid fa-building text-primary"></i>
@@ -365,10 +390,129 @@ import { AuthService } from '../core/services/auth.service';
       padding: 28px 32px;
       flex: 1;
     }
+
+    /* Mobile Hamburger & Controls */
+    .btn-hamburger {
+      display: none;
+      background: #ffffff;
+      border: 1px solid var(--border-light);
+      border-radius: 10px;
+      width: 38px;
+      height: 38px;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.15rem;
+      color: #12271f;
+      cursor: pointer;
+      margin-right: 12px;
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition);
+      flex-shrink: 0;
+    }
+    .btn-hamburger:hover {
+      background: #f4f7f5;
+      border-color: var(--primary);
+    }
+    .btn-sidebar-close {
+      display: none;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      color: #9cbab0;
+      width: 32px;
+      height: 32px;
+      cursor: pointer;
+      margin-left: auto;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      transition: var(--transition);
+    }
+    .btn-sidebar-close:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.16);
+    }
+    .sidebar-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 41, 34, 0.55);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 95;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    /* Responsive Breakpoints */
+    @media (max-width: 992px) {
+      .btn-hamburger {
+        display: inline-flex;
+      }
+      .btn-sidebar-close {
+        display: inline-flex;
+      }
+      .app-sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 100;
+        box-shadow: 0 0 40px rgba(0, 0, 0, 0.35);
+      }
+      .app-sidebar.open {
+        transform: translateX(0);
+      }
+      .app-main {
+        margin-left: 0 !important;
+      }
+      .app-header {
+        padding: 12px 18px;
+      }
+      .content-body {
+        padding: 20px 16px;
+      }
+      .schema-indicator {
+        display: none;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .app-header {
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 10px 14px;
+      }
+      .header-left {
+        display: flex;
+        align-items: center;
+        flex: 1;
+        min-width: 0;
+      }
+      .tenant-context-pill {
+        font-size: 0.78rem;
+        padding: 4px 10px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .header-right {
+        margin-left: auto;
+      }
+    }
   `]
 })
 export class MainLayoutComponent {
+  isSidebarOpen = signal<boolean>(false);
+
   constructor(public authService: AuthService, private router: Router) {}
+
+  toggleSidebar() {
+    this.isSidebarOpen.update(v => !v);
+  }
+
+  closeSidebar() {
+    this.isSidebarOpen.set(false);
+  }
 
   exitTenantContext() {
     this.authService.clearTenant();

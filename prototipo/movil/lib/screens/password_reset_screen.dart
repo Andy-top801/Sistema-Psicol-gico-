@@ -1,9 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import '../services/auth_service.dart';
 import '../core/theme/app_theme.dart';
-import '../core/constants/api_constants.dart';
 
 class PasswordResetScreen extends StatefulWidget {
   final AuthService authService;

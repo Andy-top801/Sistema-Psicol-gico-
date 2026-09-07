@@ -72,7 +72,7 @@ import { Especialidad, Psicologo, Disponibilidad, CrearPsicologoDTO } from '../.
           <!-- Card Top -->
           <div class="card-header-flex">
             <div class="avatar-box">
-              {{ (p.usuario.nombre?.charAt(0) || 'P') }}{{ (p.usuario.apellido?.charAt(0) || '') }}
+              {{ (p.usuario.nombre.charAt(0) || 'P') }}{{ (p.usuario.apellido ? p.usuario.apellido.charAt(0) : '') }}
             </div>
             <div class="status-indicator">
               <span class="badge" [ngClass]="p.activo ? 'badge-success' : 'badge-danger'">
@@ -379,7 +379,7 @@ import { Especialidad, Psicologo, Disponibilidad, CrearPsicologoDTO } from '../.
     }
     .psicologos-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
       gap: 20px;
     }
     .psicologo-card {
@@ -546,6 +546,37 @@ import { Especialidad, Psicologo, Disponibilidad, CrearPsicologoDTO } from '../.
       margin-top: 20px;
       padding-top: 16px;
       border-top: 1px solid var(--border-glass);
+    }
+
+    @media (max-width: 768px) {
+      .page-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 14px;
+        padding: 18px;
+      }
+      .header-actions .btn {
+        width: 100%;
+        justify-content: center;
+      }
+      .page-title {
+        font-size: 1.25rem;
+      }
+      .filters-bar {
+        flex-direction: column;
+        gap: 12px;
+      }
+      .select-group {
+        flex-direction: column;
+        gap: 10px;
+      }
+      .modal-footer {
+        flex-direction: column-reverse;
+      }
+      .modal-footer .btn {
+        width: 100%;
+        justify-content: center;
+      }
     }
   `]
 })

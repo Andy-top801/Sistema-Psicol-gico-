@@ -690,6 +690,64 @@ interface DiaCalendario {
     .align-center { align-items: center; }
     .d-flex { display: flex; }
     .gap-2 { gap: 8px; }
+
+    @media (max-width: 768px) {
+      .page-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 14px;
+        padding: 18px;
+      }
+      .header-actions .btn {
+        width: 100%;
+        justify-content: center;
+      }
+      .page-title {
+        font-size: 1.25rem;
+      }
+      .calendar-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        padding: 14px;
+      }
+      .nav-date-group {
+        justify-content: space-between;
+      }
+      .mes-titulo {
+        font-size: 1.05rem;
+        min-width: auto;
+      }
+      .filters-group {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+      .calendar-grid-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      .weekdays-grid, .month-cells-grid {
+        min-width: 620px;
+      }
+      .form-row {
+        flex-direction: column;
+        gap: 10px;
+      }
+      .cita-detail-grid {
+        grid-template-columns: 1fr;
+      }
+      .detail-item.full-width {
+        grid-column: span 1;
+      }
+      .modal-footer {
+        flex-direction: column-reverse;
+      }
+      .modal-footer .btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
   `]
 })
 export class CalendarioAgendaComponent implements OnInit {

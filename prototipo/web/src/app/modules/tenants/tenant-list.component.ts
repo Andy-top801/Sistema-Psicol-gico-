@@ -206,6 +206,20 @@ import { Tenant } from '../../core/models';
     .hint-ok { color: #16a34a; }
     .hint-fail { color: #dc2626; }
     .password-hints i { font-size: 0.7rem; margin-right: 4px; }
+
+    @media (max-width: 640px) {
+      .page-header {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 14px;
+      }
+      .page-header .btn {
+        width: 100%;
+        justify-content: center;
+      }
+      .page-title { font-size: 1.3rem; }
+      .p-4 { padding: 16px; }
+    }
   `]
 })
 export class TenantListComponent implements OnInit {

@@ -400,3 +400,81 @@ h1, h2, h3, h4, h5, h6 {
   opacity: 1;
 }
 
+/* ==========================================================================
+   RESPONSIVE DESIGN SYSTEM UTILITIES
+   ========================================================================== */
+
+/* Touch-friendly Horizontal Table Scrolling */
+.table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+
+.table-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.table-container::-webkit-scrollbar-track {
+  background: #f1f5f2;
+  border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+  background: #c3d6cc;
+  border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+  background: #9bb5a7;
+}
+
+/* Modal Responsive Adaptations */
+@media (max-width: 640px) {
+  .modal-overlay {
+    padding: 12px;
+    align-items: flex-end;
+  }
+
+  .modal-content {
+    padding: 22px 18px;
+    max-height: 88vh;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    width: 100%;
+  }
+}
+
+/* Responsive Visibility Helpers */
+.d-hide-mobile {
+  display: block;
+}
+
+.d-show-mobile {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .d-hide-mobile {
+    display: none !important;
+  }
+
+  .d-show-mobile {
+    display: block !important;
+  }
+
+  .d-show-mobile-flex {
+    display: flex !important;
+  }
+
+  .btn-block-mobile {
+    width: 100% !important;
+    justify-content: center;
+  }
+
+  .flex-column-mobile {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+}
+

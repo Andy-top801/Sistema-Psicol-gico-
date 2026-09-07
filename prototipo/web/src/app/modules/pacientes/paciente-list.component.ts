@@ -79,7 +79,7 @@ import { Paciente, CrearPacienteDTO } from '../../core/models';
               <td>
                 <div class="paciente-cell">
                   <div class="avatar-sm">
-                    {{ (p.usuario.nombre?.charAt(0) || 'P') }}
+                    {{ (p.usuario.nombre.charAt(0) || 'P') }}
                   </div>
                   <div>
                     <strong>{{ p.usuario.nombre }} {{ p.usuario.apellido }}</strong>
@@ -423,6 +423,33 @@ import { Paciente, CrearPacienteDTO } from '../../core/models';
       margin-top: 20px;
       padding-top: 16px;
       border-top: 1px solid var(--border-glass);
+    }
+
+    @media (max-width: 768px) {
+      .page-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 14px;
+        padding: 18px;
+      }
+      .header-actions .btn {
+        width: 100%;
+        justify-content: center;
+      }
+      .page-title {
+        font-size: 1.25rem;
+      }
+      .form-row {
+        flex-direction: column;
+        gap: 12px;
+      }
+      .modal-footer {
+        flex-direction: column-reverse;
+      }
+      .modal-footer .btn {
+        width: 100%;
+        justify-content: center;
+      }
     }
   `]
 })

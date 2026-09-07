@@ -6,6 +6,9 @@ import 'users_screen.dart';
 import 'roles_screen.dart';
 import 'centro_config_screen.dart';
 import 'tenants_screen.dart';
+import 'mis_citas_screen.dart';
+import 'reservar_cita_screen.dart';
+import 'paciente_perfil_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   final AuthService authService;
@@ -241,7 +244,7 @@ class DashboardScreen extends StatelessWidget {
                           AppTheme.primaryLight,
                         ),
                         const SizedBox(width: 10),
-                        _buildQuickKpi('SPRINT', 'Fase 0', Icons.flag_outlined, AppTheme.warning),
+                        _buildQuickKpi('SPRINT', 'Sprint 1', Icons.flag_outlined, AppTheme.success),
                       ],
                     ),
                   ],
@@ -274,7 +277,7 @@ class DashboardScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      authService.isSuperAdmin ? '1 Módulo' : '3 Módulos',
+                      authService.isSuperAdmin ? '1 Módulo' : '6 Módulos',
                       style: const TextStyle(fontSize: 10, color: AppTheme.primaryLight, fontWeight: FontWeight.w700),
                     ),
                   ),
@@ -302,15 +305,63 @@ class DashboardScreen extends StatelessWidget {
                 ),
               ],
 
-              // Admin Centro Modules
+              // Patient & Clinic Modules (Sprint 1: HU-14, HU-15, HU-16, HU-18, HU-19)
               if (!authService.isSuperAdmin) ...[
+                _buildMenuCard(
+                  context,
+                  title: 'Mis Citas y Teleconsulta',
+                  subtitle: 'Próximas sesiones, historial y sala virtual Jitsi Meet',
+                  tag: 'Agenda & Teleconsulta',
+                  icon: Icons.calendar_month_rounded,
+                  color: AppTheme.primary,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MisCitasScreen(authService: authService),
+                      ),
+                    );
+                  },
+                ),
+                _buildMenuCard(
+                  context,
+                  title: 'Reservar Cita Médica',
+                  subtitle: 'Selección de terapeuta, modalidad y slots en tiempo real',
+                  tag: 'Reserva HU-16',
+                  icon: Icons.add_circle_outline_rounded,
+                  color: AppTheme.secondary,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ReservarCitaScreen(authService: authService),
+                      ),
+                    );
+                  },
+                ),
+                _buildMenuCard(
+                  context,
+                  title: 'Mi Expediente y Perfil',
+                  subtitle: 'Ficha del paciente, contacto de emergencia y tutor legal',
+                  tag: 'Expediente HU-14',
+                  icon: Icons.contact_page_outlined,
+                  color: AppTheme.accent,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PacientePerfilScreen(authService: authService),
+                      ),
+                    );
+                  },
+                ),
                 _buildMenuCard(
                   context,
                   title: 'Personal y Terapeutas',
                   subtitle: 'Gestión de psicólogos, recepcionistas y accesos',
                   tag: 'Gestión de Usuarios',
                   icon: Icons.badge_outlined,
-                  color: AppTheme.primary,
+                  color: AppTheme.info,
                   onTap: () {
                     Navigator.push(
                       context,
@@ -326,7 +377,7 @@ class DashboardScreen extends StatelessWidget {
                   subtitle: 'Seguridad granular por perfiles clínicos',
                   tag: 'Seguridad & Acceso',
                   icon: Icons.shield_outlined,
-                  color: AppTheme.secondary,
+                  color: const Color(0xFF6366F1),
                   onTap: () {
                     Navigator.push(
                       context,
@@ -342,7 +393,7 @@ class DashboardScreen extends StatelessWidget {
                   subtitle: 'Nombre, teléfono, dirección y datos del centro',
                   tag: 'Identidad del Centro',
                   icon: Icons.settings_suggest_outlined,
-                  color: AppTheme.accent,
+                  color: const Color(0xFFF59E0B),
                   onTap: () {
                     Navigator.push(
                       context,

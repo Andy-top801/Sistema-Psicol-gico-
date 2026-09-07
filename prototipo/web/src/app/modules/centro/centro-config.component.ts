@@ -112,6 +112,11 @@ import { CentroConfig } from '../../core/models';
     .alert-close { background: none; border: none; color: inherit; font-size: 1.2rem; cursor: pointer; margin-left: auto; }
     .d-flex { display: flex; }
     .justify-content-end { justify-content: flex-end; }
+    @media (max-width: 640px) {
+      .page-title { font-size: 1.3rem; }
+      .p-4 { padding: 16px; }
+      .btn-primary { width: 100%; justify-content: center; }
+    }
   `]
 })
 export class CentroConfigComponent implements OnInit {

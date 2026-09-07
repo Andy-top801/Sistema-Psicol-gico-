@@ -509,7 +509,7 @@ import { DashboardKPIs, AlertaClinica } from '../../core/models';
     /* Clinical Analytics */
     .analytics-row {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 20px;
     }
     .card-subtitle {
@@ -518,21 +518,26 @@ import { DashboardKPIs, AlertaClinica } from '../../core/models';
       color: #12271f;
     }
     .progress-stack { display: flex; flex-direction: column; gap: 12px; }
-    .status-bar-item { display: flex; flex-direction: column; gap: 6px; }
-    .bar-header { display: flex; justify-content: space-between; font-size: 0.82rem; color: #557164; font-weight: 600; }
-    .progress-track { height: 8px; background: #eef3f0; border-radius: 4px; overflow: hidden; }
-    .progress-fill { height: 100%; border-radius: 4px; transition: width 0.4s ease-out; }
-    .fill-cyan { background: #0ea5e9; }
-    .fill-emerald { background: #16a34a; }
-    .fill-blue { background: #2563eb; }
-    .fill-amber { background: #d97706; }
-    .fill-red { background: #dc2626; }
+    .status-bar-item { display: flex; flex-direction: column; gap: 4px; }
+    .bar-header { display: flex; justify-content: space-between; font-size: 0.84rem; color: #557164; }
+    .progress-track { height: 8px; border-radius: 4px; background: #e8f0eb; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 4px; }
+    .fill-cyan { background: #06b6d4; }
+    .fill-emerald { background: #10b981; }
+    .fill-blue { background: #3b82f6; }
+    .fill-amber { background: #f59e0b; }
+    .fill-red { background: #ef4444; }
+
+    /* Table Compact */
+    .table-compact th, .table-compact td { padding: 10px 14px; font-size: 0.85rem; }
+
+    /* Early Warning Alerts */
     .alerts-panel { padding: 20px; border-radius: 16px; border: 1px solid #fde68a; background: #fffdf5; }
-    .alerts-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .alerts-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
     .alerts-title { font-size: 1.05rem; font-weight: 700; margin: 0; color: #92400e; }
     .alerts-list { display: flex; flex-direction: column; gap: 10px; }
-    .alert-item { display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 12px 16px; border-radius: 10px; border: 1px solid #fde68a; gap: 12px; }
-    .alert-item-info { display: flex; align-items: center; gap: 12px; }
+    .alert-item { display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 12px 16px; border-radius: 10px; border: 1px solid #fde68a; gap: 12px; flex-wrap: wrap; }
+    .alert-item-info { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 220px; }
     .alert-text { font-size: 0.88rem; }
     .section-header-flex { display: flex; justify-content: space-between; align-items: center; }
     .p-4 { padding: 22px; }
@@ -546,6 +551,14 @@ import { DashboardKPIs, AlertaClinica } from '../../core/models';
     .gap-2 { gap: 8px; }
     .font-mono { font-family: var(--font-mono); }
     .text-center { text-align: center; }
+
+    @media (max-width: 640px) {
+      .p-4 { padding: 16px; }
+      .stat-card { padding: 16px 18px; }
+      .stat-number { font-size: 1.6rem; }
+      .dash-title { font-size: 1.5rem; }
+      .alert-item { flex-direction: column; align-items: stretch; }
+    }
   `]
 })
 export class DashboardComponent implements OnInit {

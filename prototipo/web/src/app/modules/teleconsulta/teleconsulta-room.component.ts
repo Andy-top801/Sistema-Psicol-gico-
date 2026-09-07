@@ -160,6 +160,21 @@ declare const JitsiMeetExternalAPI: any;
     }
     .ms-2 { margin-left: 8px; }
     .mt-3 { margin-top: 14px; }
+
+    @media (max-width: 640px) {
+      .teleconsulta-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        padding: 12px;
+      }
+      .header-controls {
+        justify-content: space-between;
+      }
+      .room-title {
+        font-size: 1.1rem;
+      }
+    }
   `]
 })
 export class TeleconsultaRoomComponent implements OnInit, OnDestroy {

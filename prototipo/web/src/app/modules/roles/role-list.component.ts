@@ -74,7 +74,7 @@ import { Rol, Permiso } from '../../core/models';
   styles: [`
     .page-title { font-size: 1.5rem; font-weight: 800; }
     .page-subtitle { font-size: 0.88rem; color: var(--text-muted); }
-    .roles-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; }
+    .roles-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
     .role-card { padding: 24px; display: flex; flex-direction: column; }
     .role-header { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 18px; border-bottom: 1px solid var(--border-glass); padding-bottom: 16px; }
     .role-icon { width: 44px; height: 44px; border-radius: 12px; background: #e6f5ed; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; color: #19734e; }
@@ -98,6 +98,11 @@ import { Rol, Permiso } from '../../core/models';
     .alert-danger { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
     .alert-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
     .alert-close { background: none; border: none; color: inherit; font-size: 1.2rem; cursor: pointer; margin-left: auto; }
+
+    @media (max-width: 640px) {
+      .page-title { font-size: 1.3rem; }
+      .role-card { padding: 18px; }
+    }
   `]
 })
 export class RoleListComponent implements OnInit {
