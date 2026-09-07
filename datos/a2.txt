@@ -1,0 +1,39 @@
+(Transcrito por TurboScribe. Actualizar a Ilimitado para eliminar este mensaje.)
+
+Les hice un enunciado, como ustedes pueden ver, el caso de estudio es una plataforma inteligente de comercio electrónico, llamamos e-commerce, nosotros en e-commerce, Ravizo y todo lo demás, pasarelas de paro y todo lo que conlleva un comercio electrónico. Está dedicado a las tiendas de ropa, ya les dije que ustedes deciden si quieren hacer ropa de niño, ropa un sex, ropa solo para hombres, solo para mujeres, como ustedes quisieran, para los ejemplos y para todo lo que ustedes deben introducir como información. La novedad es que sí o sí debe tener vestidor virtual, sí o sí debe incorporarse en un vestidor virtual a través de realidad mental. 
+
+Entonces aquí hay una pequeña reseña histórica acerca de todas las tiendas que hacen. Vamos a suponer que es una cadena de tiendas, ¿por qué es una cadena de tiendas? Porque esto es una plataforma, no es nada más una aplicación para una sola tienda, es una plataforma. Entonces, una reconocida cadena de tiendas de ropa, cualquier tipo de ropa, como ustedes quisieran, desea desarrollar una plataforma, le colocan un nombre, por ejemplo, este dice Fashion Ecstasy, no le cambian de nota, no hay ningún problema, esto es solo para enunciarlo.
+
+¿Qué le debe permitir hacer? Impionar de manera integrada sus diferentes usados, no tiene como todo, puede tener en varios lugares. Entonces, eso es como cuando usted está en una ciudad, se va a la otra ciudad y si tiene obviamente se podría medir. Entonces de esta manera que esta plataforma debe estar en un entorno web y entorno mobile, ¿qué debe permitir? Que los clientes puedan consultar, los clientes deben en realidad consultar el catálogo que la tienda va a poder publicar cada cierto tiempo. 
+
+Así como les dije, por ejemplo, se está terminando lo que es invierno, entonces nadie busca ropa de invierno, lo que ahora van a buscar más bien es, ya no ropa de invierno, ropa dedicada a lo que es la primavera, donde hace calor, entonces ya no quieren abrigo y todo lo demás. Entonces, bajo esa característica, nosotros podemos observar que en ese catálogo, ustedes seleccionan las prendas, como les decía, hay personas que compran, pagan, se lo traen a su casa y no pasó nada. Pero hay otras personas que dicen, a ver, por el medio del probador virtual, que va a permitir por su móvil que usted pueda medirse viendo esta ropa de color blanco, de color amarillo o con este modelo, entonces elegimos un conjunto de prendas y le decimos tal día, a tal hora vamos a estar en el lugar.
+
+Entonces, de pronto llega ese día y va la persona a medirse, pero ya no va a buscar y a recorrer, de repente es el comercial, o recorrer todo donde hay el área de ropa. Está justamente ya para querer comprar, ir a medirse lo que mejor le quedó. Entonces, en ese momento, si la persona llegó a la tienda, no necesariamente yo voy a pagar por pasarela de pago, pueden haber habilitado un punto de caja, así como una tienda.
+
+Cuando usted llega a una tienda física, existen puntos de caja que usted puede pagar. Pues se me debe permitir pagar a través de una pasarela, pero también si yo voy al lugar de la tienda, puedo pagar en ese punto de caja que existe. Eso, por favor, comprenderlo para poder ver hasta dónde es el alcance.
+
+Es por eso que aquí le dicen, miren, como una redacción para ver que ustedes lo puedan comprender. Entonces, el elemento innovador de esta plataforma es poder incorporar un vestido virtual que tenga realidad aumentada, donde permita visualizar a través de un móvil la prenda que quiere comprar, de tal forma de que lo pueda adquirir. Pero en otra circunstancia, como le dije, el cliente puede hacer una reserva de varias prendas, pero va a haber el día y la fecha que debe ir presencialmente al lugar de la tienda.
+
+Al lugar de la tienda, porque si no, ¿cómo es posible? Porque a veces varía en tamaño y todas las características. No es lo mismo que todas las coleras que se anhelen o las camisas o las blusas, como ustedes quieran verlas. Entonces, eso sucede.
+
+Entonces, fíjense, las compras, ya recibiendo aquí, se pueden realizar de dos formas. Las compras, yo puedo hacerlo de dos formas. Uno, lo puedo hacer de manera presencial porque tiene tienda física, no es que no tenga tienda virtual.
+
+Ese es el escenario del trabajo. Si lo hago de manera presencial, el cliente selecciona las prendas por medio de lo que tenía el locador virtual y luego va a ir a probársela de manera física a la tienda más cercana que tenga, a la secundar o donde quiera. La segunda forma es que usted lo puede comprar de manera virtual, de manera digital.
+
+No va a ir nunca a la tienda física. Por eso aquí me dice un poquito explicado que el cliente va a realizar las compras desde su aplicación móvil. No se olviden que ustedes deben decirme cuáles son las funcionalidades para móvil y cuáles son las funcionalidades para la web.
+
+Por ejemplo, si yo me quiero comprar una prenda, no lo voy a hacer desde una desktop, lo voy a hacer desde un móvil. Entonces, esa es una funcionalidad para la parte móvil. Entonces, podemos aquí observar que si la compra es digital, usan alguna pasarela de pago electrónica, Paypal, Stripe, Liberula, 2% para poder justamente hacer este tipo de transacción.
+
+En ambos casos, el sistema debe actualizar automáticamente el inventario. Si yo quiero vender, debo tener un módulo de inventario. Si no es posible que yo pueda vender el módulo de inventario, no se olviden que hay que actualizarlo.
+
+Para que yo pueda actualizar, debo hacer compras. ¿A quiénes debo comprar? A uno o más proveedores. No todos los proveedores de repente venden la prenda que estamos buscando.
+
+Hay algunos proveedores que lo que yo busco, por ejemplo, de este estilo, lo vende el proveedor 1, el otro estilo lo vende el proveedor 2, y así sucesivamente. Entonces, cuando vemos que alguna de estas prendas es lo que más necesita el cliente, es lo que debemos tener siempre actualizado. En un inventario, por lo general, hay un stock mínimo y un stock máximo.
+
+Porque si yo tengo, por ejemplo, 100 unidades de una prenda 1, y no lo estoy vendiendo, y justo viene un proveedor y me dice, tengo tal prenda y ahora está demasiado barato, tiene un descuento del 30%, lo quiere comprar. Entonces parece que fuera bueno, pero si miramos el escenario de que no se está vendiendo, no hay ninguna pérdida. Porque ni lo que yo tengo lo estoy vendiendo, así me lo vendan el 50% barato, sería una inversión estancada.
+
+Ahí adentro del inventario, pero no se va a poder mover. Entonces, en ese escenario, esa situación es lo que maneja los inventarios, siempre de manera actualizada, con productos que tengan promedio ponderado para poder saber la inversión de la empresa. Entonces, dentro de esta característica, aquí hay un poquito más de explicación, para diferentes temporadas, primavera, verano, otoño, invierno, tal como lo hemos ido relajando hasta ahora.
+
+Además, los módulos que debe identificar para poder hacer la comercialización de ropa vía virtual o vía presencial, deben incorporar guía para poder proporcionar algunas funcionalidades, dado que existen muchas funcionalidades que deben ser inteligentes. Entonces, dentro de esta característica, acá hay alguna característica donde se empieza a ver de que la asistencia virtual se puede recomendar para ellas.
+
+(Transcrito por TurboScribe. Actualizar a Ilimitado para eliminar este mensaje.)

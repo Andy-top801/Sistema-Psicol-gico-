@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  # ----------------------------------------------------------------------------
+  # BASE DE DATOS: PostgreSQL 16 (Multi-Tenant Schemas)
+  # ----------------------------------------------------------------------------
+  db:
+    image: postgres:16-alpine
+    container_name: sigepsi_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: sigepsi_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - sigepsi_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d sigepsi_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - sigepsi_net
+
+  # ----------------------------------------------------------------------------
+  # BACKEND: Django REST Framework + django-tenants + Gunicorn
+  # ----------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sigepsi_backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/sigepsi_db
+      DJANGO_SECRET_KEY: sigepsi-docker-compose-secret-key-2026
+      DJANGO_DEBUG: "True"
+      DJANGO_ALLOWED_HOSTS: "*"
+      PORT: "8000"
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - sigepsi_net
+
+  # ----------------------------------------------------------------------------
+  # FRONTEND: Angular 17 SPA + Nginx Alpine (Reverse Proxy /api/ -> Backend)
+  # ----------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: sigepsi_frontend
+    restart: unless-stopped
+    environment:
+      PORT: "80"
+      BACKEND_URL: http://backend:8000
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
+    networks:
+      - sigepsi_net
+
+volumes:
+  sigepsi_pgdata:
+    driver: local
+
+networks:
+  sigepsi_net:
+    driver: bridge

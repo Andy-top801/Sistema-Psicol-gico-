@@ -1,0 +1,53 @@
+(Transcrito por TurboScribe. Actualizar a Ilimitado para eliminar este mensaje.)
+
+¿Cuál de estas funcionalidades lo van a hacer en la parte móvil y cuál en la parte web? Déjenme decirles jóvenes, que no es nada más agarrar y programar. Si ustedes no tienen un documento adecuado, no llegan a la defensa, ¿entienden? Es por eso que esta clase la estoy dando así. Porque no estoy yo revisando cómo ustedes saben programar, ¿entienden? Aquí estamos revisando la integración de una formación que ustedes tienen en el ámbito de la programación, de ser analista, de ser diseñador, ya para ser ingeniero de software.
+
+O sea, la idea es ser un ingeniero de software, mirar todos los escenarios, no solamente ocuparme de la programación o decirle a la IA, ¿sabés qué? Hacémelo esto y ya está mi proyecto. No. Si su documento no cuadra con lo que ustedes hicieron, simplemente tienen uno en la defensa, ¿ya? ¿Por qué? Porque sucede que no le estamos calificando a la IA, estamos calificándolo a ustedes.
+
+Porque ¿saben qué hacen ustedes con los modelos de UML? Potingo se los hace a la IA y ustedes no hacen absolutamente nada. Pueden tenerlo como herramienta a la IA, pero usted es personalista, como ustedes quieren que vos representen, no es como la IA lo dice. Peor a veces ustedes utilizan PROM que no le dan adecuadamente lo que quieren que le digan.
+
+Entonces la IA lo que sea le va a permitir, ¿entienden? Entonces he visto modelos que no tienen nada que ver con su programación y siempre, a la hora de la defensa, cuadramos el código con los modelos de UML. Si no cuadra, no hay nada más que hacer, ¿entienden? Y a veces es lo peor. Ustedes ni cuentan serán antes que su modelo está mal hecho, ¿entienden? Entonces, ¿qué significa eso? Que su código tampoco va a poder estar bien.
+
+Entonces, miren, ahí han elegido, para la primera iteración, los casos de uso que ustedes lo van a desarrollar. No es que me van a entregar, a ver, ¿qué es el primero? Solo un perfil. No.
+
+Ya es funcionando. En las tres presentaciones me presentan su QR porque yo tengo que ver qué tipo de código ustedes ya tienen en la nube. ¿Qué tipo de código tiene? No solamente es el perfil.
+
+Entonces, una vez que han priorizado los casos de uso, que son toditos los casos de uso que ustedes dicen, bajo, medio, alto, o si quieren estado, prioridad, riesgo, donde hemos colocado aprobado, se pone aprobado, se pone un estado propuesto, o de repente un estado donde se puede hacer un tipo transaccional. Pero si quieren bajo, medio, medio, que es lo más práctico para poder hacerlo. Entonces, ustedes hacen esto que dice, detallar caso de uso.
+
+Cuando ustedes dicen detallar caso de uso, no hacen de todito. Hacen lo que va a pertenecer a mi primera iteración. Entonces, imagínense que ustedes tengan, no sé, 30 casos de uso.
+
+Los 30 casos de uso que ustedes consideran que va a tener su trabajo del parcial. Dicen, a ver, en esta primera iteración voy a hacer 7. 7 casos de uso. Entonces, los 7 deberían elaborar la tablita, la tabla del detalle.
+
+Y deben diseñar su caso de uso. Entonces, ¿cuál es el diseño del caso de uso? Nosotros sabemos que interviene el actor 1 con el caso de uso. Está el actor 2 con su caso de uso.
+
+Existen algunos casos de uso que necesariamente tienen estereotipos. ¿Se acuerdan cuántos estereotipos tienen los casos de uso? ¿Cuántos estereotipos tienen los casos de uso? ¿Cuántos? ¿Tres? ¿O dos? ¿Cuántos estereotipos tienen los casos de uso? ¿O no saben qué estereotipos? ¿No saben? ¿Cuándo un caso de uso se comunica con otro caso de uso? ¿Qué le llaman eso a ustedes? ¿Cuándo relacionan dos casos de uso? ¿Relaciona el caso de uso? ¿Relaciona con el caso de uso? Dos. Al relacionar esos dos casos de uso, yo lo puedo hacer por precondición.
+
+¿Qué es la precondición? Incluir, utilizar, incluir, como quiera llamar. Cuando se crea UMN en la versión 0 hasta la 1.3, se empezaba a decir use, utilizar, uses. No sé si alguna vez han visto.
+
+Decía uses, de un caso de uso 1 a un caso de uso 2, uses. Pero a partir de la versión 1.5 ya se puso include, incluir. ¿Han visto? Include.
+
+Entonces, del caso de uso 1 hacia el caso de uso 2 tengo un include. ¿Qué significa cuando hacemos este diseño? Significa que el caso de uso 1 utiliza de forma obligatoria el trabajo que hizo el caso de uso 2. Si este caso de uso 2 no hizo su trabajo, lamentablemente el caso de uso 1 no puede hacer su trabajo. El ejemplito que yo le doy siempre es cuando ustedes revistan materia.
+
+Significa que cuando ustedes ven un cupo lleno, por ejemplo, ustedes hacen bonito su inscripción, se los llega y le dicen, ¿saben qué? En este grupo ya no hay cupo. Entonces, ¿qué significa eso? Ustedes deben decidir en ese momento si tienen un plan B o un plan C, qué es lo que deben decidir en ese instante. O inscriben lo que sí le acerca y lo dejan pendiente para poder adicionar después, ¿me entienden? O la opción tienen para elegir otro grupo en ese momento porque ya en el grupo que ustedes habían elegido está lleno.
+
+Entonces, eso implica, yo no puedo registrar la materia que ya tiene cupo. Yo no puedo vender un producto si mi existencia dice cero, mi existencia dice cero y alguien me quiere comprar uno de cinco, no me va a permitir registrar. Me va a salir un mensajecito que diga, insuficiente, stop, cero.
+
+Yo veo en pantalla, no, no tengo, no tengo para vender, se agotó. O cuando ustedes eligen su carrito, no le debe permitir arrastrar un ítem que tiene cero, debe deshabilitarse automáticamente. Todos los productos que yo no tengo en existencia, no me debe permitir cargar el carrito, pero si ustedes no lo controlan, lo va a cargar y le va a dejar un stop negativo, y eso no puede ser.
+
+No puedo yo tener un negativo porque no está dentro de la expectativa que nosotros hacemos. Entonces, todos los ceros no me permiten al carrito. Todo lo que me va a dar como mensaje me dirá, insuficiente, stop, no tengo, así de simple.
+
+Eso son, por eso es que aquí es muy importante definirlo, ¿no? Los casos de uso es genocidio importante. Entonces, ustedes van a decir lo siguiente, a ver, este caso de uso sí necesita un incluso porque obligatoriamente, cuando yo quiero cargar estos productos a mi carrito, sí o sí debe haber existencia para que yo los pueda vender. En algunas ocasiones, incluso la gente hace una especie de cotización cuánto cuesta.
+
+Incluso para dar una cotización, fíjense, yo debo tener productos en inventario. Fíjense que estamos viviendo en una época muy vulnerable en la parte de la economía, donde es inestable cada día. O sea, cada día la gente que vende, lo vende en un precio que ellos consideran hasta ese momento porque lo compraron así, pero sucede que no saben qué sucede el día siguiente.
+
+A veces, esas mercaderías no se compran a nivel local o a nivel, de repente, nacional. De repente, son ropas que traen de Brasil, de Argentina, de otro lugar. Entonces, a veces las compras no se hacen en monedas bolivianas, se hacen en dólares.
+
+Fíjense el dólar cómo ha subido en un ratito, ¿no es cierto? Han visto que ahorita sobrepasa de 12. Imagínense que a la gente justo hoy día le toque comprar y no le vende al público en dólares, le va a vender en boliviano. Entonces, lo que costaba 90 bolivianos, de repente, no sé, una camisa, ahora ya no puedo venderlo en 90.
+
+O sea, yo coticé de verdad que era en 90 bolivianos, pero hace una semana atrás, pero ahora ya cuesta 120 bolivianos. Entonces, la gente dice, pero ¿por qué sube tanto si recién costaba así? Porque las mercaderías que ellos compran cambian, eso ellos lo manejan manualmente, pero cuando yo tengo un software, automáticamente, en función al costo, el precio se debe actualizar. Acuérdense ustedes que yo le hablo de dos costos siempre.
+
+Le hablo de un costo promedio y le hablo de un costo unitario, que hay que tomarlo en cuenta eso muchísimo. ¿Qué significa un costo unitario? Hoy esta mesa, o mejor digo, la anterior semana esta mesa me costó 10, pero ahora cuando compré la misma mesa ya me cuesta 13. Yo esta mesa la estaba vendiendo en 14 bolivianos con factura.
+
+Tengo que facturar, entregar a impuestos internos el 16% por cada mesa que yo vendo, ¿no? Es así. Cada vez que usted vende una mesa con impuesto interno, paga el 16% y el resto.
+
+(Transcrito por TurboScribe. Actualizar a Ilimitado para eliminar este mensaje.)
