@@ -1,3 +1,11 @@
+// ==============================================================================
+// MÓDULO: login_screen.dart
+// CAPA BCE: BOUNDARY (Interfaz de Usuario Móvil) — IU_Login
+// CASOS DE USO: CU2: Gestionar Inicio de Sesión y Autenticación (HU-01, HU-02)
+// DESCRIPCIÓN: Pantalla móvil Flutter para autenticación de usuarios de cualquier rol
+//              con selector dinámico de centro psicológico (tenant) y conmutación de esquema.
+//              Implementa los pasos 1, 2, 9 y 10 del Diagrama de Comunicación BCE.
+// ==============================================================================
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../models/tenant_model.dart';
@@ -187,7 +195,16 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  /// ═══════════════════════════════════════════════════════════════════════════
+  /// CU2: Gestionar Inicio de Sesión y Autenticación (HU-01, HU-02)
+  /// Diagrama de Comunicación – Pasos del Flujo:
+  ///   Actor  → Usuario (Cualquier rol)
+  ///   IU     → IU_Login (LoginScreen)
+  ///   CTR    → CTR_AuthService (Django REST - POST /api/auth/login/)
+  ///   CE     → CE_Usuario_y_Tenant (PostgreSQL)
+  /// ═══════════════════════════════════════════════════════════════════════════
   Future<void> _submitLogin() async {
+    // --- Paso 1: Ingresar credenciales (email, password, tenant) en IU_Login > ---
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -200,6 +217,8 @@ class _LoginScreenState extends State<LoginScreen> {
       widget.authService.setTenant(null);
     }
 
+    // --- Paso 2: POST /api/auth/login/ > ---
+    // IU_Login envía credenciales al CTR_AuthService
     final success = await widget.authService.login(
       _emailController.text.trim(),
       _passwordController.text.trim(),
@@ -210,7 +229,10 @@ class _LoginScreenState extends State<LoginScreen> {
       _isLoading = false;
     });
 
+    // --- Paso 9: 200 OK (access_token, refresh_token, usuario, rol) < ---
+    // CTR_AuthService autentica y retorna tokens JWT
     if (success && mounted) {
+      // --- Paso 10: Redirigir a Dashboard según rol en IU_Login < ---
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(

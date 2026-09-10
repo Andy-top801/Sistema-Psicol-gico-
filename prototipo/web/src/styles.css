@@ -362,7 +362,7 @@ h1, h2, h3, h4, h5, h6 {
   gap: 12px;
 }
 
-.alert-danger {
+.alert-danger, .alert-error {
   background: #fef2f2;
   border: 1px solid #fecaca;
   color: #991b1b;

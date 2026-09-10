@@ -290,12 +290,20 @@ class Sprint1Verifier:
             # TP-42: Paciente no puede cancelar cita que está a menos de 2 horas
             ahora = timezone.localtime()
             en_30_min = ahora + timedelta(minutes=30)
+            h_ini = en_30_min.time()
+            # Asegurar que hora_fin > hora_inicio y no cruce medianoche (restricción chk_cita_rango_horario)
+            if en_30_min.hour >= 23 and en_30_min.minute > 5:
+                h_ini = time(23, 0)
+                h_fin = time(23, 50)
+            else:
+                h_fin = (en_30_min + timedelta(minutes=50)).time()
+
             cita_inminente = Cita.objects.create(
                 paciente=pac_juan,
                 psicologo=psico_carlos,
                 fecha=en_30_min.date(),
-                hora_inicio=en_30_min.time(),
-                hora_fin=(en_30_min + timedelta(minutes=50)).time(),
+                hora_inicio=h_ini,
+                hora_fin=h_fin,
                 modalidad="PRESENCIAL",
                 estado="PROGRAMADA"
             )

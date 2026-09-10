@@ -1,3 +1,12 @@
+# ==============================================================================
+# MÓDULO: agenda/serializers.py
+# CAPA BCE: CONTROL (Controller) — Subcomponente de validación y persistencia de
+#           CTR_CitaService, CTR_AlertaService
+# CASOS DE USO: CU11 (Gestión de Citas), CU10 (Alertas), HU-17 (Cancelación)
+# DESCRIPCIÓN: Serializers DRF que implementan los pasos 2-7 de los Diagramas
+#              de Comunicación BCE para la reserva/cancelación de citas y la
+#              evaluación automática de alertas por inasistencia.
+# ==============================================================================
 from datetime import datetime, date, time, timedelta
 from rest_framework import serializers
 from django.utils import timezone
@@ -17,6 +26,13 @@ class TeleconsultaSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'sala_id', 'jwt_room_token']
 
 
+# ──────────────────────────────────────────────────────────────────────────────
+# SERIALIZER: CitaSerializer — Validación y Persistencia CU11 Pasos 2-7
+# DIAGRAMA DE COMUNICACIÓN CU11:
+#   Paso 2: Recibe los datos de la cita del IU_AgendaCitas
+#   Pasos 3-6: Delega a ConflictResolutionService para bloqueo pesimista
+#   Paso 7: Retorna la cita serializada al controlador
+# ──────────────────────────────────────────────────────────────────────────────
 class CitaSerializer(serializers.ModelSerializer):
     paciente_datos = serializers.SerializerMethodField(read_only=True)
     psicologo_datos = serializers.SerializerMethodField(read_only=True)
@@ -68,7 +84,12 @@ class CitaSerializer(serializers.ModelSerializer):
 
 
     def create(self, validated_data):
-        # Utilizar el servicio de concurrencia y bloqueo pesimista
+        """
+        CU11 Pasos 3-6: Delegar la creación de la cita al servicio de concurrencia.
+        ConflictResolutionService realiza SELECT FOR UPDATE (Paso 3), verifica
+        ausencia de colisiones (Paso 4), e INSERT INTO agenda_cita (Paso 5).
+        Retorna la cita creada (Paso 6).
+        """
         return ConflictResolutionService.reservar_cita(
             paciente=validated_data['paciente'],
             psicologo=validated_data['psicologo'],
@@ -81,6 +102,11 @@ class CitaSerializer(serializers.ModelSerializer):
         )
 
     def update(self, instance, validated_data):
+        """
+        CU11 Paso 5 (actualización de estado):
+        Si el estado cambia a 'INASISTENCIA', dispara CU10 Paso 3
+        evaluando alertas de ausentismo automáticamente.
+        """
         antiguo_estado = instance.estado
         nuevo_estado = validated_data.get('estado', antiguo_estado)
 
@@ -88,17 +114,25 @@ class CitaSerializer(serializers.ModelSerializer):
             setattr(instance, attr, value)
         instance.save()
 
-        # Si cambió a INASISTENCIA, evaluar alertas automáticas de ausentismo (HU-21)
+        # CU10 Paso 3: Si cambió a INASISTENCIA, evaluar alertas automáticas
+        # Esto dispara el flujo CU10 (Alertas de Priorización) automáticamente
         if nuevo_estado == 'INASISTENCIA' and antiguo_estado != 'INASISTENCIA':
             AlertService.evaluar_inasistencias_paciente(instance.paciente)
 
         return instance
 
 
+# ──────────────────────────────────────────────────────────────────────────────
+# SERIALIZER: CancelarCitaSerializer — HU-17 Cancelación de Citas
+# DIAGRAMA DE COMUNICACIÓN CU11 (variante cancelación):
+#   Paso 3: Validar motivo (mínimo 5 caracteres) y anticipación (2h mínimo)
+#   Regla HU-17: Pacientes deben cancelar con al menos 2 horas de anticipación
+# ──────────────────────────────────────────────────────────────────────────────
 class CancelarCitaSerializer(serializers.Serializer):
     motivo = serializers.CharField(required=True, min_length=5, max_length=500)
 
     def validate(self, attrs):
+        """HU-17 Paso 3: Validar estado de la cita y anticipación mínima."""
         cita = self.context.get('cita')
         request = self.context.get('request')
 
@@ -108,11 +142,10 @@ class CancelarCitaSerializer(serializers.Serializer):
         if cita.estado in ['CANCELADA', 'REALIZADA']:
             raise serializers.ValidationError(f"No es posible cancelar una cita con estado '{cita.estado}'.")
 
-        # Regla HU-17: Si es el paciente quien cancela, verificar anticipación mínima de 2 horas
+        # HU-17: Si es el paciente quien cancela, verificar anticipación mínima de 2 horas
         if request and request.user and hasattr(request.user, 'rol') and request.user.rol:
             if request.user.rol.nombre == "Paciente":
                 ahora = timezone.localtime()
-                # Combinar fecha y hora_inicio con la zona horaria del centro
                 cita_dt = timezone.make_aware(
                     datetime.combine(cita.fecha, cita.hora_inicio),
                     timezone.get_current_timezone()

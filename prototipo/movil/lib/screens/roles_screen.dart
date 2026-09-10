@@ -1,3 +1,11 @@
+// ==============================================================================
+// MÓDULO: roles_screen.dart
+// CAPA BCE: BOUNDARY (Interfaz de Usuario Móvil) — IU_GestionRoles
+// CASOS DE USO: CU4: Gestionar Roles y Permisos (HU-06)
+// DESCRIPCIÓN: Pantalla móvil Flutter para administración de la matriz de roles y capacidades
+//              RBAC del centro, asignando o revocando permisos por cada perfil de usuario.
+//              Implementa los pasos 1, 2, 11 y 12 del Diagrama de Comunicación BCE.
+// ==============================================================================
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -25,6 +33,7 @@ class RolesScreen extends StatefulWidget {
 /// ═════════════════════════════════════════════════════════════════════════
 class _RolesScreenState extends State<RolesScreen> {
   List<dynamic> _roles = [];
+  List<dynamic> _allPermisos = [];
   bool _isLoading = true;
   String _searchQuery = '';
 
@@ -32,6 +41,7 @@ class _RolesScreenState extends State<RolesScreen> {
   void initState() {
     super.initState();
     _loadRoles();
+    _loadPermisos();
   }
 
   Future<void> _loadRoles() async {
@@ -46,6 +56,190 @@ class _RolesScreenState extends State<RolesScreen> {
       }
     } catch (_) {}
     setState(() => _isLoading = false);
+  }
+
+  Future<void> _loadPermisos() async {
+    try {
+      final url = Uri.parse('${widget.authService.baseUrl}${ApiConstants.permisos}');
+      final response = await http.get(url, headers: widget.authService.getHeaders());
+      if (response.statusCode == 200) {
+        setState(() {
+          _allPermisos = jsonDecode(response.body);
+        });
+      }
+    } catch (_) {}
+  }
+
+  void _showEditPermissionsDialog(Map<String, dynamic> rol) {
+    final List currentPerms = rol['permisos'] as List? ?? [];
+    final selectedIds = <int>{};
+    for (var p in currentPerms) {
+      if (p is Map && p['id'] != null) {
+        selectedIds.add(p['id'] as int);
+      }
+    }
+
+    bool isSaving = false;
+    String? errorMsg;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (dialogCtx, setDialogState) {
+            return AlertDialog(
+              backgroundColor: AppTheme.cardBg,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      gradient: AppTheme.accentGradient,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.security_rounded, color: Colors.white, size: 20),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Permisos: ${rol['nombre']}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        const Text('Marca o desmarca capacidades del rol', style: TextStyle(fontSize: 11, color: AppTheme.textMuted)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              content: SizedBox(
+                width: double.maxFinite,
+                height: 380,
+                child: Column(
+                  children: [
+                    if (errorMsg != null)
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        margin: const EdgeInsets.only(bottom: 10),
+                        decoration: BoxDecoration(
+                          color: AppTheme.danger.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: AppTheme.danger.withOpacity(0.3)),
+                        ),
+                        child: Text(errorMsg!, style: const TextStyle(fontSize: 11, color: AppTheme.danger)),
+                      ),
+                    Expanded(
+                      child: _allPermisos.isEmpty
+                          ? const Center(child: CircularProgressIndicator())
+                          : ListView.builder(
+                              itemCount: _allPermisos.length,
+                              itemBuilder: (context, idx) {
+                                final p = _allPermisos[idx];
+                                final int pId = p['id'];
+                                final bool isChecked = selectedIds.contains(pId);
+
+                                return CheckboxListTile(
+                                  value: isChecked,
+                                  dense: true,
+                                  activeColor: AppTheme.secondary,
+                                  checkColor: Colors.white,
+                                  title: Text(
+                                    p['nombre'] ?? '',
+                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textMain),
+                                  ),
+                                  subtitle: Text(
+                                    '${p['modulo'] ?? ''} • ${p['codigo'] ?? ''}',
+                                    style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                                  ),
+                                  onChanged: (val) {
+                                    setDialogState(() {
+                                      if (val == true) {
+                                        selectedIds.add(pId);
+                                      } else {
+                                        selectedIds.remove(pId);
+                                      }
+                                    });
+                                  },
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSaving ? null : () => Navigator.pop(dialogCtx),
+                  child: const Text('Cancelar', style: TextStyle(color: AppTheme.textMuted)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.secondary,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: isSaving
+                      ? null
+                      : () async {
+                          // --- Paso 1: Seleccionar permisos para el rol en IU_GestionRoles > ---
+                          setDialogState(() {
+                            isSaving = true;
+                            errorMsg = null;
+                          });
+
+                          try {
+                            final url = Uri.parse('${widget.authService.baseUrl}${ApiConstants.roles}${rol['id']}/');
+                            // --- Paso 2: PUT /api/roles/{id}/ {permisos: [ids]} + JWT > ---
+                            // IU_GestionRoles envía los IDs seleccionados al CTR_RolService
+                            final response = await http.put(
+                              url,
+                              headers: widget.authService.getHeaders(),
+                              body: jsonEncode({
+                                'nombre': rol['nombre'],
+                                'descripcion': rol['descripcion'],
+                                'permiso_ids': selectedIds.toList(),
+                              }),
+                            );
+
+                            // --- Paso 11: 200 OK {rol_actualizado} < ---
+                            // CTR_RolService confirma persistencia en CE_Rol_y_Permiso
+                            if (response.statusCode == 200) {
+                              if (dialogCtx.mounted) Navigator.pop(dialogCtx);
+                              _loadRoles();
+                              await widget.authService.refreshProfile();
+                              if (mounted) {
+                                // --- Paso 12: Mostrar confirmación 'Permisos actualizados' en IU_GestionRoles < ---
+                                ScaffoldMessenger.of(this.context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Permisos de "${rol['nombre']}" actualizados correctamente.'),
+                                    backgroundColor: AppTheme.success,
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            } else {
+                              setDialogState(() {
+                                isSaving = false;
+                                errorMsg = 'Error al guardar: código ${response.statusCode}';
+                              });
+                            }
+                          } catch (e) {
+                            setDialogState(() {
+                              isSaving = false;
+                              errorMsg = 'Error de conexión al servidor.';
+                            });
+                          }
+                        },
+                  child: isSaving
+                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Text('Guardar Permisos'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   List<dynamic> get _filteredRoles {
@@ -272,6 +466,23 @@ class _RolesScreenState extends State<RolesScreen> {
                                         );
                                       }).toList(),
                                     ),
+                                  if (widget.authService.isAdminCentro || widget.authService.isSuperAdmin) ...[
+                                    const SizedBox(height: 12),
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: OutlinedButton.icon(
+                                        style: OutlinedButton.styleFrom(
+                                          side: const BorderSide(color: AppTheme.borderSubtle),
+                                          foregroundColor: AppTheme.secondary,
+                                          padding: const EdgeInsets.symmetric(vertical: 8),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                        ),
+                                        icon: const Icon(Icons.tune_rounded, size: 16),
+                                        label: const Text('Modificar Permisos / Funciones', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                        onPressed: () => _showEditPermissionsDialog(r),
+                                      ),
+                                    ),
+                                  ],
                                 ],
                               ),
                             ),

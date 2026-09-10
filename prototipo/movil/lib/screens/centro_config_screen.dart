@@ -1,3 +1,12 @@
+// ==============================================================================
+// MÓDULO: centro_config_screen.dart
+// CAPA BCE: BOUNDARY (Interfaz de Usuario Móvil) — IU_ConfiguracionCentro
+// CASOS DE USO: CU1: Gestionar Centros Psicológicos y Configuración Multi-Tenant
+//                    (HU-03, HU-04, HU-07, HU-08)
+// DESCRIPCIÓN: Pantalla móvil Flutter para administración institucional del centro,
+//              datos de contacto, políticas clínicas y aranceles por tenant.
+//              Implementa los pasos 1, 2, 9 y 10 del Diagrama de Comunicación BCE.
+// ==============================================================================
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -69,12 +78,27 @@ class _CentroConfigScreenState extends State<CentroConfigScreen> {
     setState(() => _isLoading = false);
   }
 
+  /// ═════════════════════════════════════════════════════════════════════════
+  /// CU1: Gestionar Centros Psicológicos y Configuración Multi-Tenant
+  /// Diagrama de Comunicación – Configuración Institucional del Centro
+  /// Participantes:
+  ///   Actor  → Administrador del Centro
+  ///   IU     → IU_ConfiguracionCentro (Móvil)  ← ESTE ARCHIVO
+  ///   CTR    → CTR_CentroConfig (Django REST: ClinicaConfigView)
+  ///   CE     → CE_ConfiguracionClinica (PostgreSQL: clinica_configuracion)
+  /// ═════════════════════════════════════════════════════════════════════════
   Future<void> _saveConfig() async {
+    // -----------------------------------------------------------------------
+    // CU1 Paso 1: Administrador ingresa/modifica datos institucionales en IU_ConfiguracionCentro
+    // -----------------------------------------------------------------------
     setState(() {
       _isSaving = true;
       _successMessage = null;
     });
     try {
+      // ---------------------------------------------------------------------
+      // CU1 Paso 2: IU_ConfiguracionCentro envía solicitud PUT a CTR_CentroConfig
+      // ---------------------------------------------------------------------
       final url = Uri.parse('${widget.authService.baseUrl}${ApiConstants.centroConfig}');
       final response = await http.put(
         url,
@@ -88,6 +112,10 @@ class _CentroConfigScreenState extends State<CentroConfigScreen> {
       );
 
       if (response.statusCode == 200) {
+        // -------------------------------------------------------------------
+        // CU1 Paso 9: CTR_CentroConfig retorna 200 OK con configuración actualizada
+        // CU1 Paso 10: IU_ConfiguracionCentro muestra confirmación visual al Administrador
+        // -------------------------------------------------------------------
         setState(() {
           _successMessage = '¡Configuración institucional guardada exitosamente!';
         });

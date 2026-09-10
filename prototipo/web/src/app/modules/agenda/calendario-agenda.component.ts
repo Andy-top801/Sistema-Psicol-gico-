@@ -1,3 +1,11 @@
+// ==============================================================================
+// MÓDULO: calendario-agenda.component.ts
+// CAPA BCE: BOUNDARY (Interfaz de Usuario) — IU_AgendaCitas
+// CASOS DE USO: CU11: Programación, Reserva y Gestión de Citas (HU-15, HU-16, HU-17, HU-22)
+// DESCRIPCIÓN: Componente Angular interactivo con cuadrícula de calendario mensual,
+//              selección de slots libres, reserva concurrente y cancelación con anticipación.
+//              Implementa los pasos 1, 2, 7 y 8 del Diagrama de Comunicación BCE.
+// ==============================================================================
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -215,6 +223,11 @@ interface DiaCalendario {
           </div>
 
           <form (ngSubmit)="guardarCitaCU11()" class="modal-body">
+            <div *ngIf="modalError()" class="alert-box alert-error mb-3">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <span>{{ modalError() }}</span>
+            </div>
+
             <!-- Selección de Paciente y Psicólogo -->
             <div class="form-row">
               <div class="form-group col">
@@ -383,10 +396,14 @@ interface DiaCalendario {
 
               <!-- Cancelar Cita -->
               <div *ngIf="citaSeleccionada.estado === 'PROGRAMADA' || citaSeleccionada.estado === 'CONFIRMADA'" class="cancel-box">
+                <div *ngIf="cancelError()" class="alert-box alert-error mb-2">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                  <span>{{ cancelError() }}</span>
+                </div>
                 <input 
                   type="text" 
                   [(ngModel)]="motivoCancelacion" 
-                  placeholder="Motivo de la cancelación (mínimo 2 hrs de anticipación)..."
+                  placeholder="Motivo de la cancelación (mínimo 5 caracteres y 2 hrs de anticipación)..."
                   class="form-control mb-2" 
                 />
                 <button class="btn btn-danger w-100" (click)="cancelarCita()">
@@ -770,6 +787,7 @@ export class CalendarioAgendaComponent implements OnInit {
   savingCita = false;
   cargandoSlots = false;
   slotsDisponibles: SlotDisponible[] = [];
+  modalError = signal<string | null>(null);
 
   nuevaCita = {
     paciente: '',
@@ -786,6 +804,7 @@ export class CalendarioAgendaComponent implements OnInit {
   showDetalleModal = false;
   citaSeleccionada: Cita | null = null;
   motivoCancelacion = '';
+  cancelError = signal<string | null>(null);
 
   // Toast
   toastMsg = '';
@@ -918,6 +937,7 @@ export class CalendarioAgendaComponent implements OnInit {
   // AGENDAR CITA (CU11 - HU-15, HU-16, HU-17, HU-22)
   // --------------------------------------------------------------------------
   openNuevaCitaModal(): void {
+    this.modalError.set(null);
     this.cargarDatosMaestros();
     const hoyStr = new Date().toISOString().split('T')[0];
     this.nuevaCita = {
@@ -941,6 +961,7 @@ export class CalendarioAgendaComponent implements OnInit {
 
   closeNuevaCitaModal(): void {
     this.showNuevaCitaModal = false;
+    this.modalError.set(null);
   }
 
   onPsicologoOFechaChange(): void {
@@ -979,10 +1000,38 @@ export class CalendarioAgendaComponent implements OnInit {
    * ═══════════════════════════════════════════════════════════════════════════
    */
   guardarCitaCU11(): void {
-    // --- Paso 1: Actor selecciona psicólogo, fecha, bloque y modalidad en IU_AgendaCitas ---
+    this.modalError.set(null);
+
+    // Validaciones síncronas en frontend (HU-15 / HU-16 / TP-41)
+    if (!this.nuevaCita.paciente) {
+      this.modalError.set('Debe seleccionar el paciente para la consulta.');
+      return;
+    }
+    if (!this.nuevaCita.psicologo) {
+      this.modalError.set('Debe seleccionar el terapeuta asignado.');
+      return;
+    }
+    if (!this.nuevaCita.fecha) {
+      this.modalError.set('Debe seleccionar la fecha de la cita.');
+      return;
+    }
+    const fechaCita = new Date(this.nuevaCita.fecha + 'T00:00:00');
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    if (fechaCita < hoy) {
+      this.modalError.set('No se pueden programar citas en fechas pasadas.');
+      return;
+    }
+    if (!this.nuevaCita.hora_inicio || !this.nuevaCita.hora_fin) {
+      this.modalError.set('Debe seleccionar un bloque horario libre disponible para agendar la cita.');
+      return;
+    }
+
+    // --- Paso 1: Seleccionar paciente, terapeuta, fecha y slot en IU_AgendaCitas > ---
     this.savingCita = true;
 
-    // --- Paso 2: POST /api/agenda/citas/ {psicologo_id, fecha, bloque} + JWT ---
+    // --- Paso 2: POST /api/agenda/citas/ {fecha, hora, modalidad} > ---
+    // IU_AgendaCitas envía los datos seleccionados al CTR_CitaService
     this.agendaService.createCita({
       paciente: this.nuevaCita.paciente,
       psicologo: this.nuevaCita.psicologo,
@@ -993,51 +1042,88 @@ export class CalendarioAgendaComponent implements OnInit {
       motivo_consulta: this.nuevaCita.motivo_consulta,
       costo: this.nuevaCita.costo
     }).subscribe({
-      // --- Paso 11: 201 Created {cita_id, estado: "PROGRAMADA"} ---
+      // --- Paso 7: 201 Created {cita_id, estado: 'PROGRAMADA'} < ---
+      // CTR_CitaService confirma la reserva concurrente con bloqueo pesimista
       next: (res) => {
         this.savingCita = false;
         this.closeNuevaCitaModal();
-        // --- Paso 12: Desplegar comprobante de cita programada en pantalla ---
+        // --- Paso 8: Desplegar comprobante de cita confirmada en IU_AgendaCitas < ---
         this.mostrarToast(`Cita programada con éxito para el ${res.fecha} a las ${res.hora_inicio}.`, 'success');
         this.cargarCitas();
       },
       error: (err) => {
         this.savingCita = false;
         const msg = err.error?.error || err.error?.detail || 'Conflicto de horario: el bloque ya fue tomado.';
+        this.modalError.set(msg);
         this.mostrarToast(msg, 'error');
       }
     });
   }
 
   // --------------------------------------------------------------------------
-  // DETALLE Y CANCELACIÓN DE CITA
+  // DETALLE Y CANCELACIÓN DE CITA (CU11 - Flujo Alternativo Cancelación)
   // --------------------------------------------------------------------------
   verDetalleCita(cita: Cita): void {
     this.citaSeleccionada = cita;
     this.motivoCancelacion = '';
+    this.cancelError.set(null);
     this.showDetalleModal = true;
   }
 
   closeDetalleModal(): void {
     this.showDetalleModal = false;
     this.citaSeleccionada = null;
+    this.cancelError.set(null);
   }
 
+  /**
+   * CU11 - Cancelación de Citas (HU-17)
+   *   Paso 1: Actor ingresa motivo de cancelación en IU_DetalleCita
+   *   Paso 2: POST /api/agenda/citas/{id}/cancelar/ {motivo}
+   *   (Pasos 3-6: CTR valida anticipación mínima 2h y actualiza estado='CANCELADA')
+   *   Paso 7: 200 OK con confirmación de cancelación
+   *   Paso 8: Mostrar notificación de cita cancelada y cupo liberado
+   */
   cancelarCita(): void {
+    this.cancelError.set(null);
     if (!this.citaSeleccionada) return;
-    if (!this.motivoCancelacion.trim()) {
+
+    const motivo = this.motivoCancelacion.trim();
+    if (!motivo) {
+      this.cancelError.set('Por favor describe el motivo de la cancelación.');
       this.mostrarToast('Por favor describe el motivo de la cancelación.', 'error');
       return;
     }
+    if (motivo.length < 5) {
+      this.cancelError.set('El motivo de la cancelación debe tener al menos 5 caracteres.');
+      this.mostrarToast('El motivo de la cancelación debe tener al menos 5 caracteres.', 'error');
+      return;
+    }
 
-    this.agendaService.cancelarCita(this.citaSeleccionada.id, this.motivoCancelacion).subscribe({
+    // Pre-validación de política de 2 horas de anticipación (HU-17 / TP-42)
+    try {
+      const citaDateTime = new Date(`${this.citaSeleccionada.fecha}T${this.citaSeleccionada.hora_inicio}`);
+      const ahora = new Date();
+      const diffMs = citaDateTime.getTime() - ahora.getTime();
+      const diffHoras = diffMs / (1000 * 60 * 60);
+      if (diffHoras < 0) {
+        this.cancelError.set('No es posible cancelar una consulta cuya fecha y hora de inicio ya han pasado.');
+        return;
+      }
+    } catch (_) {}
+
+    // --- Paso 2: POST /api/agenda/citas/{id}/cancelar/ > ---
+    this.agendaService.cancelarCita(this.citaSeleccionada.id, motivo).subscribe({
+      // --- Paso 7: 200 OK < ---
       next: (res) => {
         this.closeDetalleModal();
+        // --- Paso 8: Mostrar notificación de cita cancelada < ---
         this.mostrarToast(res.mensaje || 'Cita cancelada correctamente.', 'success');
         this.cargarCitas();
       },
       error: (err) => {
-        const msg = err.error?.error || 'No es posible cancelar la cita con menos de 2 horas de anticipación.';
+        const msg = err.error?.error || err.error?.detail || 'No es posible cancelar la cita con menos de 2 horas de anticipación.';
+        this.cancelError.set(msg);
         this.mostrarToast(msg, 'error');
       }
     });

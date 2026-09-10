@@ -12,7 +12,7 @@ class PermisoSerializer(serializers.ModelSerializer):
 
 
 class RolSerializer(serializers.ModelSerializer):
-    permisos = PermisoSerializer(source='permisos_asignados.permiso', many=True, read_only=True)
+    permisos = serializers.SerializerMethodField()
     permiso_ids = serializers.ListField(
         child=serializers.IntegerField(),
         write_only=True,
@@ -23,8 +23,19 @@ class RolSerializer(serializers.ModelSerializer):
         model = Rol
         fields = ['id', 'nombre', 'descripcion', 'permisos', 'permiso_ids']
 
+    def get_permisos(self, obj):
+        perms = [rp.permiso for rp in obj.permisos_asignados.all().select_related('permiso')]
+        return PermisoSerializer(perms, many=True).data
+
     def create(self, validated_data):
-        permiso_ids = validated_data.pop('permiso_ids', [])
+        permiso_ids = validated_data.pop('permiso_ids', None)
+        initial = getattr(self, 'initial_data', None)
+        if permiso_ids is None and isinstance(initial, dict) and 'permisos' in initial:
+            raw_p = initial.get('permisos')
+            if isinstance(raw_p, list):
+                permiso_ids = [p['id'] if isinstance(p, dict) and 'id' in p else int(p) for p in raw_p if p is not None]
+        permiso_ids = permiso_ids or []
+
         rol = Rol.objects.create(**validated_data)
         for p_id in permiso_ids:
             try:
@@ -46,6 +57,12 @@ class RolSerializer(serializers.ModelSerializer):
           Paso 10: Nuevos permisos registrados en esquema
         """
         permiso_ids = validated_data.pop('permiso_ids', None)
+        initial = getattr(self, 'initial_data', None)
+        if permiso_ids is None and isinstance(initial, dict) and 'permisos' in initial:
+            raw_p = initial.get('permisos')
+            if isinstance(raw_p, list):
+                permiso_ids = [p['id'] if isinstance(p, dict) and 'id' in p else int(p) for p in raw_p if p is not None]
+
         instance.nombre = validated_data.get('nombre', instance.nombre)
         instance.descripcion = validated_data.get('descripcion', instance.descripcion)
         instance.save()
@@ -70,16 +87,24 @@ class RolSerializer(serializers.ModelSerializer):
 class UsuarioSerializer(serializers.ModelSerializer):
     rol_detalle = RolSerializer(source='rol', read_only=True)
     rol_id = serializers.IntegerField(write_only=True, required=False, allow_null=True)
+    permisos = serializers.SerializerMethodField()
     password = serializers.CharField(write_only=True, required=False, min_length=8)
 
     class Meta:
         model = Usuario
         fields = [
             'id', 'email', 'nombre', 'apellido', 'telefono',
-            'rol', 'rol_detalle', 'rol_id', 'activo', 'is_staff',
+            'rol', 'rol_detalle', 'rol_id', 'permisos', 'activo', 'is_staff',
             'is_superuser', 'fecha_creacion', 'password'
         ]
-        read_only_fields = ['id', 'fecha_creacion', 'is_staff', 'is_superuser', 'rol']
+        read_only_fields = ['id', 'fecha_creacion', 'is_staff', 'is_superuser', 'rol', 'permisos']
+
+    def get_permisos(self, obj):
+        if obj.rol:
+            return list(obj.rol.permisos_asignados.values_list('permiso__codigo', flat=True))
+        elif obj.is_superuser:
+            return list(Permiso.objects.values_list('codigo', flat=True))
+        return []
 
     def validate_password(self, value):
         if value:

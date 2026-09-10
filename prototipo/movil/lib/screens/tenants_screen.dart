@@ -1,3 +1,12 @@
+// ==============================================================================
+// MÓDULO: tenants_screen.dart
+// CAPA BCE: BOUNDARY (Interfaz de Usuario Móvil) — IU_FormularioCentro, IU_Tenants
+// CASOS DE USO: CU1: Gestionar Centros Psicológicos y Configuración Multi-Tenant
+//                    (HU-03, HU-04, HU-07, HU-08)
+// DESCRIPCIÓN: Pantalla móvil Flutter para visualización, auditoría y suspensión/activación
+//              de centros psicológicos y gabinetes multi-tenant en PostgreSQL.
+//              Implementa los pasos de administración del Diagrama de Comunicación BCE.
+// ==============================================================================
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -15,16 +24,6 @@ class TenantsScreen extends StatefulWidget {
   State<TenantsScreen> createState() => _TenantsScreenState();
 }
 
-/// ═════════════════════════════════════════════════════════════════════════
-/// CU1: Gestionar Centros Psicológicos y Configuración Multi-Tenant
-///      (HU-03, HU-04, HU-07, HU-08)
-/// Diagrama de Comunicación – Centros Psicológicos (Móvil Flutter)
-/// Participantes:
-///   Actor  → SuperAdministrador
-///   IU     → IU_FormularioCentro / IU_Tenants (Móvil)  ← ESTE ARCHIVO
-///   CTR    → CTR_TenantService (Django)
-///   CE     → CE_Tenant_y_Dominio (PostgreSQL)
-/// ═════════════════════════════════════════════════════════════════════════
 class _TenantsScreenState extends State<TenantsScreen> {
   List<TenantModel> _tenants = [];
   bool _isLoading = true;

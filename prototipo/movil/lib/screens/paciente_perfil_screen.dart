@@ -1,3 +1,11 @@
+// ==============================================================================
+// MÓDULO: paciente_perfil_screen.dart
+// CAPA BCE: BOUNDARY (Interfaz de Usuario Móvil) — IU_GestionPacientes
+// CASOS DE USO: CU7: Gestión de Pacientes Web y Móvil (HU-13, HU-14)
+// DESCRIPCIÓN: Pantalla móvil Flutter para visualización y actualización del expediente
+//              clínico del paciente, validación de minoría de edad y tutor legal obligatorio.
+//              Implementa los pasos 1, 2, 7 y 8 del Diagrama de Comunicación BCE.
+// ==============================================================================
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/auth_service.dart';
@@ -131,7 +139,16 @@ class _PacientePerfilScreenState extends State<PacientePerfilScreen> {
     }
   }
 
+  /// ═══════════════════════════════════════════════════════════════════════════
+  /// CU7: Gestión de Pacientes Web y Móvil (HU-13, HU-14)
+  /// Diagrama de Comunicación – Pasos del Flujo:
+  ///   Actor  → Paciente / Usuario Móvil
+  ///   IU     → IU_GestionPacientes (PacientePerfilScreen)
+  ///   CTR    → CTR_PacienteService (Django REST - PATCH /api/clinica/pacientes/{id}/)
+  ///   CE     → CE_Paciente_y_Expediente (PostgreSQL)
+  /// ═══════════════════════════════════════════════════════════════════════════
   Future<void> _guardarPerfil() async {
+    // --- Paso 1: Ingresar datos (CI, fecha nac, tutor si menor) en IU_GestionPacientes > ---
     if (!_formKey.currentState!.validate()) return;
     if (_paciente == null) return;
 
@@ -162,15 +179,20 @@ class _PacientePerfilScreenState extends State<PacientePerfilScreen> {
       'tutor_legal_ci': _tutorCiCtrl.text.trim(),
     };
 
+    // --- Paso 2: PUT/PATCH /api/clinica/pacientes/{id}/ + Header Tenant > ---
+    // IU_GestionPacientes envía datos actualizados al CTR_PacienteService
     final res = await _clinicaService.updateMiPerfil(_paciente!.id, datos);
 
     setState(() => _isSaving = false);
 
     if (mounted) {
+      // --- Paso 7: 200 OK {paciente_id, expediente} < ---
+      // CTR_PacienteService confirma la actualización
       if (res['success'] == true) {
         setState(() {
           _paciente = res['paciente'];
         });
+        // --- Paso 8: Mostrar 'Expediente clínico actualizado' en IU_GestionPacientes < ---
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             backgroundColor: AppTheme.success,

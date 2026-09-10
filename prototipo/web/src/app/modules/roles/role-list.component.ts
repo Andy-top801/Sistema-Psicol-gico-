@@ -1,3 +1,11 @@
+// ==============================================================================
+// MÓDULO: role-list.component.ts
+// CAPA BCE: BOUNDARY (Interfaz de Usuario) — IU_GestionRoles
+// CASOS DE USO: CU4: Gestionar Roles y Permisos (HU-06)
+// DESCRIPCIÓN: Componente Angular interactivo con matriz RBAC para asignación granular de
+//              permisos por rol clínico y administrativo dentro del centro.
+//              Implementa los pasos 1, 2, 11 y 12 del Diagrama de Comunicación BCE.
+// ==============================================================================
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';

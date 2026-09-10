@@ -36,22 +36,49 @@ export interface TeleconsultaAccess {
 
 export interface AlertaClinica {
   id: string;
-  paciente: string;
-  paciente_nombre?: string;
-  codigo_expediente?: string;
-  tipo: 'INASISTENCIA_REITERADA' | 'RIESGO_DESERCION' | 'URGENCIA_CLINICA';
-  severidad: 'BAJA' | 'MEDIA' | 'ALTA' | 'CRITICA';
+  paciente?: string;
+  paciente_nombre: string;
+  codigo_expediente: string;
+  tipo: 'INASISTENCIA_REITERADA' | 'RIESGO_DESERCION' | 'URGENCIA_CLINICA' | string;
+  severidad: 'BAJA' | 'MEDIA' | 'ALTA' | 'CRITICA' | string;
   descripcion: string;
-  resuelta: boolean;
+  resuelta?: boolean;
   fecha_creacion: string;
   fecha_resolucion?: string;
+  centro_nombre?: string;
 }
 
 export interface DashboardKPIs {
-  periodo: string;
-  citas_hoy: number;
+  periodo: {
+    anio: number;
+    mes: number;
+    fecha_actual: string;
+    modo?: string;
+  } | any;
+  citas_hoy?: {
+    total: number;
+    programadas: number;
+    confirmadas: number;
+    realizadas: number;
+    canceladas: number;
+    inasistencias: number;
+  };
+  citas_mes?: {
+    total: number;
+    programadas: number;
+    confirmadas: number;
+    realizadas: number;
+    canceladas: number;
+    inasistencias: number;
+    tasa_ausentismo_pct: number;
+    tasa_asistencia_pct: number;
+    ingresos_mes: number;
+  };
+  total_citas_hoy: number;
   total_citas_mes: number;
   tasa_ausentismo_pct: number;
+  tasa_asistencia_pct?: number;
+  ingresos_mes?: number;
   distribucion_estados: {
     PROGRAMADA: number;
     CONFIRMADA: number;
@@ -62,8 +89,16 @@ export interface DashboardKPIs {
   ocupacion_por_psicologo: Array<{
     psicologo_id: string;
     nombre: string;
+    colegiado?: string;
     total_citas: number;
     horas_atendidas: number;
+    realizadas?: number;
+    inasistencias?: number;
+    ingresos_generados?: number;
   }>;
   alertas_activas: AlertaClinica[];
+  alertas_pendientes?: {
+    total: number;
+    lista: any[];
+  };
 }

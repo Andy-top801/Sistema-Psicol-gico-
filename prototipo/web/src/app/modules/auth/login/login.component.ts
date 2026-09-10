@@ -1,3 +1,11 @@
+// ==============================================================================
+// MÓDULO: login.component.ts
+// CAPA BCE: BOUNDARY (Interfaz de Usuario) — IU_Login
+// CASOS DE USO: CU2: Gestionar Inicio de Sesión y Autenticación (HU-01, HU-02)
+// DESCRIPCIÓN: Componente Angular interactivo para captura de credenciales y selección de centro.
+//              Envía petición de autenticación JWT y conmuta dinámicamente el tenant activo.
+//              Implementa los pasos 1, 2, 9 y 10 del Diagrama de Comunicación BCE.
+// ==============================================================================
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -345,6 +353,24 @@ export class LoginComponent implements OnInit {
    */
   onSubmit() {
     this.errorMessage.set(null);
+
+    // Validaciones síncronas en frontend (HU-01, HU-02)
+    if (!this.isSuperAdminMode() && !this.selectedTenantSlug) {
+      this.errorMessage.set('Debe seleccionar su centro psicológico para iniciar sesión.');
+      return;
+    }
+
+    const emailTrim = this.email?.trim();
+    if (!emailTrim || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrim)) {
+      this.errorMessage.set('Ingrese un correo electrónico válido.');
+      return;
+    }
+
+    if (!this.password) {
+      this.errorMessage.set('Ingrese su contraseña.');
+      return;
+    }
+
     this.loading.set(true);
 
     // --- Paso 1: Ingresar credenciales (email, password, tenant) ---

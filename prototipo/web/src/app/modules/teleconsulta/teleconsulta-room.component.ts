@@ -1,3 +1,11 @@
+// ==============================================================================
+// MÓDULO: teleconsulta-room.component.ts
+// CAPA BCE: BOUNDARY (Interfaz de Usuario) — IU_Teleconsulta
+// CASOS DE USO: CU13: Gestión de Teleconsultas y Videoconferencias Jitsi Meet (HU-18, HU-19)
+// DESCRIPCIÓN: Componente Angular interactivo que embebe la sala WebRTC cifrada de Jitsi Meet,
+//              valida credenciales JWT generadas por el backend y gestiona la sesión clínica.
+//              Implementa los pasos 1, 2, 7 y 8 del Diagrama de Comunicación BCE.
+// ==============================================================================
 import { Component, OnInit, OnDestroy, ElementRef, ViewChild, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';

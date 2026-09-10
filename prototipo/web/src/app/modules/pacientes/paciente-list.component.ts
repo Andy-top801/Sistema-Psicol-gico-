@@ -1,3 +1,11 @@
+// ==============================================================================
+// MÓDULO: paciente-list.component.ts
+// CAPA BCE: BOUNDARY (Interfaz de Usuario) — IU_GestionPacientes
+// CASOS DE USO: CU7: Gestión de Pacientes Web y Móvil (HU-13, HU-14)
+// DESCRIPCIÓN: Componente Angular interactivo para captura de datos demográficos,
+//              cédula de identidad, validación de menores y generación de expediente.
+//              Implementa los pasos 1, 2, 7 y 8 del Diagrama de Comunicación BCE.
+// ==============================================================================
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -147,6 +155,11 @@ import { Paciente, CrearPacienteDTO } from '../../core/models';
           </div>
 
           <form (ngSubmit)="guardarPacienteCU7()" class="modal-body">
+            <div *ngIf="modalError()" class="alert-box alert-error mb-3">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <span>{{ modalError() }}</span>
+            </div>
+
             <!-- Datos Personales -->
             <div class="form-row">
               <div class="form-group col">
@@ -464,6 +477,7 @@ export class PacienteListComponent implements OnInit {
   savingPaciente = false;
   edadCalculada: number | null = null;
   esMenorDeEdad = false;
+  modalError = signal<string | null>(null);
 
   nuevoPaciente: CrearPacienteDTO = {
     nombre: '',
@@ -510,7 +524,7 @@ export class PacienteListComponent implements OnInit {
 
   calcularEdad(fechaNacStr: string): number {
     if (!fechaNacStr) return 0;
-    const dob = new Date(fechaNacStr);
+    const dob = new Date(fechaNacStr + 'T00:00:00');
     const diff = Date.now() - dob.getTime();
     const ageDt = new Date(diff);
     return Math.abs(ageDt.getUTCFullYear() - 1970);
@@ -522,12 +536,26 @@ export class PacienteListComponent implements OnInit {
       this.esMenorDeEdad = false;
       return;
     }
+    const fechaNac = new Date(this.nuevoPaciente.fecha_nacimiento + 'T00:00:00');
+    const hoy = new Date();
+    hoy.setHours(23, 59, 59, 999);
+    if (fechaNac > hoy) {
+      this.modalError.set('La fecha de nacimiento no puede ser una fecha futura.');
+      this.edadCalculada = null;
+      this.esMenorDeEdad = false;
+      return;
+    } else {
+      if (this.modalError()?.includes('nacimiento')) {
+        this.modalError.set(null);
+      }
+    }
     this.edadCalculada = this.calcularEdad(this.nuevoPaciente.fecha_nacimiento);
     this.esMenorDeEdad = this.edadCalculada < 18;
   }
 
   openCreateModal(): void {
     this.editingPacienteId = null;
+    this.modalError.set(null);
     this.nuevoPaciente = {
       nombre: '',
       apellido: '',
@@ -549,6 +577,7 @@ export class PacienteListComponent implements OnInit {
 
   openEditModal(p: Paciente): void {
     this.editingPacienteId = p.id;
+    this.modalError.set(null);
     this.nuevoPaciente = {
       nombre: p.usuario?.nombre || '',
       apellido: p.usuario?.apellido || '',
@@ -570,24 +599,67 @@ export class PacienteListComponent implements OnInit {
   closeCreateModal(): void {
     this.showCreateModal = false;
     this.editingPacienteId = null;
+    this.modalError.set(null);
   }
 
   /**
    * ═══════════════════════════════════════════════════════════════════════════
-   * CU7: Guardar / Editar Expediente de Paciente
+   * CU7: Gestión de Pacientes Web y Móvil (HU-13, HU-14)
    * Diagrama de Comunicación – Pasos del Flujo:
-   *   Actor  → Paciente / Recepcionista / Administrador
-   *   IU     → IU_RegistroPaciente (PacienteListComponent)
-   *   CTR    → CTR_PacienteService (Django REST)
-   *   CE     → CE_Paciente_y_Usuario (PostgreSQL)
+   *   Actor  → Recepcionista / Paciente
+   *   IU     → IU_GestionPacientes (PacienteListComponent)
+   *   CTR    → CTR_PacienteService (Django REST - clinica/views.py)
+   *   CE     → CE_Paciente_y_Expediente (PostgreSQL)
    * ═══════════════════════════════════════════════════════════════════════════
    */
   guardarPacienteCU7(): void {
-    // --- Paso 1: Actor ingresa datos personales en IU_RegistroPaciente ---
-    // Validación síncrona en cliente de tutor legal si es menor de edad
-    if (this.esMenorDeEdad && (!this.nuevoPaciente.tutor_legal_nombre || !this.nuevoPaciente.tutor_legal_ci)) {
-      this.mostrarToast('Por ser menor de edad (<18 años), los datos del Tutor Legal son obligatorios.', 'error');
+    this.modalError.set(null);
+
+    // --- Paso 1: Ingresar datos (CI, fecha nac, tutor si menor) en IU_GestionPacientes > ---
+    // Validaciones síncronas en frontend (HU-13 / HU-14 / TP-33 / TP-34)
+    if (!this.nuevoPaciente.nombre || this.nuevoPaciente.nombre.trim() === '') {
+      this.modalError.set('El nombre del paciente es obligatorio.');
       return;
+    }
+    if (!this.nuevoPaciente.apellido || this.nuevoPaciente.apellido.trim() === '') {
+      this.modalError.set('El apellido del paciente es obligatorio.');
+      return;
+    }
+    if (!this.nuevoPaciente.ci || this.nuevoPaciente.ci.trim() === '') {
+      this.modalError.set('La cédula de identidad (CI) es obligatoria.');
+      return;
+    }
+    if (!this.nuevoPaciente.fecha_nacimiento) {
+      this.modalError.set('La fecha de nacimiento es obligatoria.');
+      return;
+    }
+    const fechaNac = new Date(this.nuevoPaciente.fecha_nacimiento + 'T00:00:00');
+    const hoy = new Date();
+    hoy.setHours(23, 59, 59, 999);
+    if (fechaNac > hoy) {
+      this.modalError.set('La fecha de nacimiento no puede ser una fecha futura.');
+      return;
+    }
+    if (!this.nuevoPaciente.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.nuevoPaciente.email.trim())) {
+      this.modalError.set('Ingrese un correo electrónico válido para el paciente.');
+      return;
+    }
+    if (!this.editingPacienteId) {
+      if (!this.nuevoPaciente.password || this.nuevoPaciente.password.length < 8) {
+        this.modalError.set('La contraseña inicial es obligatoria y debe tener al menos 8 caracteres.');
+        return;
+      }
+    }
+
+    // Validación síncrona en cliente de tutor legal si es menor de edad (HU-13 / TP-34)
+    if (this.esMenorDeEdad) {
+      if (!this.nuevoPaciente.tutor_legal_nombre || this.nuevoPaciente.tutor_legal_nombre.trim() === '' ||
+          !this.nuevoPaciente.tutor_legal_ci || this.nuevoPaciente.tutor_legal_ci.trim() === '') {
+        const errorMsg = 'Por ser menor de edad (<18 años), los datos del Tutor Legal son obligatorios por ley.';
+        this.modalError.set(errorMsg);
+        this.mostrarToast(errorMsg, 'error');
+        return;
+      }
     }
 
     this.savingPaciente = true;
@@ -597,20 +669,22 @@ export class PacienteListComponent implements OnInit {
       delete payload.password;
     }
 
-    // --- Paso 2: POST / PUT /api/clinica/pacientes/ + Header X-Tenant-ID ---
+    // --- Paso 2: POST /api/clinica/pacientes/ + Header Tenant > ---
+    // IU_GestionPacientes envía los datos al CTR_PacienteService
     const action$ = this.editingPacienteId
       ? this.clinicaService.updatePaciente(this.editingPacienteId, payload)
       : this.clinicaService.createPaciente(payload);
 
     action$.subscribe({
-      // --- Paso 9: 201 Created / 200 OK {paciente_id, codigo_expediente} ---
+      // --- Paso 7: 201 Created {paciente_id, expediente} < ---
+      // CTR_PacienteService confirma la creación del expediente y usuario
       next: (res) => {
         this.savingPaciente = false;
         this.closeCreateModal();
-        // --- Paso 10: Confirmar "Expediente de paciente creado" en IU_RegistroPaciente ---
+        // --- Paso 8: Mostrar 'Expediente clínico generado' en IU_GestionPacientes < ---
         const msg = this.editingPacienteId
           ? 'Expediente actualizado exitosamente.'
-          : `Expediente creado exitosamente con código ${res.codigo_expediente}.`;
+          : `Expediente clínico generado con éxito (Código: ${res.codigo_expediente}).`;
         this.mostrarToast(msg, 'success');
         this.cargarPacientes();
       },
@@ -629,6 +703,7 @@ export class PacienteListComponent implements OnInit {
             if (parts.length > 0) msg = parts.join(' | ');
           }
         }
+        this.modalError.set(msg);
         this.mostrarToast(msg, 'error');
       }
     });

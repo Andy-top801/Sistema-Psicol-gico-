@@ -1,3 +1,11 @@
+# ==============================================================================
+# MÓDULO: clinica/serializers.py
+# CAPA BCE: CONTROL (Controller) — Subcomponente de validación de CTR_Psicologo,
+#           CTR_Paciente, CTR_Disponibilidad
+# CASOS DE USO: CU6 (Psicólogos), CU7 (Pacientes), CU8 (Disponibilidad)
+# DESCRIPCIÓN: Serializers DRF que implementan los pasos 3-4 (validación) y
+#              5-6 (persistencia) de los Diagramas de Comunicación BCE.
+# ==============================================================================
 from datetime import date
 from rest_framework import serializers
 from django.db import transaction
@@ -11,6 +19,12 @@ class EspecialidadSerializer(serializers.ModelSerializer):
         fields = ['id', 'nombre', 'descripcion']
 
 
+# ──────────────────────────────────────────────────────────────────────────────
+# SERIALIZER: DisponibilidadSerializer — Validación CU8 Pasos 3-4
+# DIAGRAMA DE COMUNICACIÓN CU8:
+#   Paso 3: "Validar coherencia de horarios (inicio < fin) y no traslape"
+#   Paso 4: CE retorna "Franjas válidas y terapeuta activo"
+# ──────────────────────────────────────────────────────────────────────────────
 class DisponibilidadSerializer(serializers.ModelSerializer):
     dia_semana_texto = serializers.CharField(source='get_dia_semana_display', read_only=True)
 
@@ -23,15 +37,17 @@ class DisponibilidadSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
     def validate(self, attrs):
+        """CU8 Paso 3: Validar coherencia de horarios y no solapamiento."""
         hora_inicio = attrs.get('hora_inicio', getattr(self.instance, 'hora_inicio', None))
         hora_fin = attrs.get('hora_fin', getattr(self.instance, 'hora_fin', None))
         psicologo = attrs.get('psicologo', getattr(self.instance, 'psicologo', None))
         dia_semana = attrs.get('dia_semana', getattr(self.instance, 'dia_semana', None))
 
+        # CU8 Paso 3: Validar que hora_fin > hora_inicio
         if hora_inicio and hora_fin and hora_fin <= hora_inicio:
             raise serializers.ValidationError({"hora_fin": "La hora de finalización debe ser posterior a la hora de inicio."})
 
-        # Validar solapamiento con franjas existentes del mismo psicólogo y mismo día
+        # CU8 Paso 3: Validar no traslape con otras franjas del mismo psicólogo y día
         if psicologo and dia_semana is not None and hora_inicio and hora_fin:
             qs = Disponibilidad.objects.filter(
                 psicologo=psicologo,
@@ -48,6 +64,7 @@ class DisponibilidadSerializer(serializers.ModelSerializer):
             if traslape:
                 raise serializers.ValidationError({"non_field_errors": "Existe un traslape con otro bloque horario configurado para este día."})
 
+        # CU8 Paso 4: Retorna "Franjas válidas" al controlador
         return attrs
 
 
@@ -128,11 +145,17 @@ class PsicologoSerializer(serializers.ModelSerializer):
         return data
 
     def validate_tarifa_base(self, value):
+        """CU6 Paso 3: Validar que la tarifa base no sea negativa."""
         if value < 0:
             raise serializers.ValidationError("La tarifa base no puede ser negativa.")
         return value
 
     def validate(self, attrs):
+        """
+        CU6 Paso 3: Validar datos del psicólogo (email y colegiatura únicos).
+        Implementa la validación BCE donde CTR_Psicologo consulta CE para
+        verificar unicidad antes de crear el registro.
+        """
         import random
         usuario_id = attrs.get('usuario_id')
         email = attrs.get('email')
@@ -165,6 +188,12 @@ class PsicologoSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def create(self, validated_data):
+        """
+        CU6 Pasos 5-6: Crear Usuario y Psicólogo en esquema tenant.
+        Se crea atómicamente: 1) cuenta de usuario con rol 'Psicólogo',
+        2) perfil profesional con número de colegiado, y 3) disponibilidad por defecto.
+        CE retorna "Registros creados exitosamente" (Paso 6).
+        """
         especialidades = validated_data.pop('especialidades', [])
         usuario_id = validated_data.pop('usuario_id', None)
         email = validated_data.pop('email', None)
@@ -176,8 +205,10 @@ class PsicologoSerializer(serializers.ModelSerializer):
         telefono = validated_data.pop('telefono', '')
 
         if usuario_id:
+            # CU6 Paso 5a: Vincular a usuario existente
             usuario = Usuario.objects.get(id=usuario_id)
         else:
+            # CU6 Paso 5b: Crear usuario nuevo con rol Psicólogo
             rol_psico = Rol.objects.filter(nombre__icontains="Psicólogo").first()
             if not rol_psico:
                 rol_psico = Rol.objects.filter(nombre__icontains="Psicologo").first()
@@ -190,10 +221,14 @@ class PsicologoSerializer(serializers.ModelSerializer):
                 rol=rol_psico
             )
 
+        # CU6 Paso 5c: Crear perfil profesional del psicólogo
         psicologo = Psicologo.objects.create(usuario=usuario, **validated_data)
+        # CU6 Paso 5d: Vincular especialidades seleccionadas (relación M:N)
         if especialidades:
             psicologo.especialidades.set(especialidades)
+        # CU6/CU8 Paso 5e: Crear disponibilidad por defecto (L-V, 08-12, 14-18)
         crear_disponibilidad_default(psicologo)
+        # CU6 Paso 6: Retornar psicólogo creado exitosamente
         return psicologo
 
     @transaction.atomic
@@ -266,6 +301,14 @@ class PacienteSerializer(serializers.ModelSerializer):
         return obj.es_menor_de_edad
 
     def validate(self, attrs):
+        """
+        CU7 Paso 3: Validar unicidad de CI en tenant activo.
+        Implementa la validación BCE donde CTR_Paciente consulta CE para
+        verificar no duplicación de CI y código de expediente, y para validar
+        obligatoriedad de tutor legal en menores de 18 años.
+        CE retorna "Documento no duplicado y tutor válido" (Paso 4).
+        """
+        # CU7 Paso 3a: Validar edad y obligatoriedad de tutor legal
         fecha_nac = attrs.get('fecha_nacimiento', getattr(self.instance, 'fecha_nacimiento', None))
         tutor_nombre = attrs.get('tutor_legal_nombre', getattr(self.instance, 'tutor_legal_nombre', ''))
         tutor_ci = attrs.get('tutor_legal_ci', getattr(self.instance, 'tutor_legal_ci', ''))
@@ -275,6 +318,7 @@ class PacienteSerializer(serializers.ModelSerializer):
             edad = hoy.year - fecha_nac.year - ((hoy.month, hoy.day) < (fecha_nac.month, fecha_nac.day))
             if edad < 0:
                 raise serializers.ValidationError({"fecha_nacimiento": "La fecha de nacimiento no puede ser futura."})
+            # CU7 Paso 3b: Si es menor de 18, tutor_legal es obligatorio (HU-13 Criterio c)
             if edad < 18:
                 if not tutor_nombre or not tutor_nombre.strip():
                     raise serializers.ValidationError({
@@ -285,6 +329,7 @@ class PacienteSerializer(serializers.ModelSerializer):
                         "tutor_legal_ci": "El CI del tutor legal es obligatorio para pacientes menores de edad."
                     })
 
+        # CU7 Paso 3c: Validar email y usuario
         usuario_id = attrs.get('usuario_id')
         email = attrs.get('email')
         if email:
@@ -298,6 +343,7 @@ class PacienteSerializer(serializers.ModelSerializer):
         if email and not usuario_id and Usuario.objects.filter(email=email).exists():
             raise serializers.ValidationError({"email": "Ya existe una cuenta de usuario con este correo electrónico."})
 
+        # CU7 Paso 3d: Validar unicidad de CI en el tenant
         ci = attrs.get('ci')
         if ci:
             qs = Paciente.objects.filter(ci__iexact=ci)
@@ -306,6 +352,7 @@ class PacienteSerializer(serializers.ModelSerializer):
             if qs.exists():
                 raise serializers.ValidationError({"ci": "Ya existe un paciente con este CI."})
 
+        # CU7 Paso 3e: Validar unicidad de código de expediente
         codigo_exp = attrs.get('codigo_expediente')
         if codigo_exp:
             qs = Paciente.objects.filter(codigo_expediente__iexact=codigo_exp)
@@ -314,10 +361,17 @@ class PacienteSerializer(serializers.ModelSerializer):
             if qs.exists():
                 raise serializers.ValidationError({"codigo_expediente": "Ya existe un paciente con este código de expediente."})
 
+        # CU7 Paso 4: Retorna "Documento no duplicado y tutor válido"
         return attrs
 
     @transaction.atomic
     def create(self, validated_data):
+        """
+        CU7 Pasos 5-6: INSERT INTO clinica_paciente con código único.
+        Se crea atómicamente: 1) cuenta de usuario con rol 'Paciente',
+        2) expediente clínico con código autogenerado (EXP-YYYYMM-XXXX).
+        CE retorna "Paciente registrado en esquema tenant" (Paso 6).
+        """
         import random
         from django.utils import timezone
 
@@ -330,7 +384,7 @@ class PacienteSerializer(serializers.ModelSerializer):
         apellido = validated_data.pop('apellido', '')
         telefono = validated_data.pop('telefono', '')
 
-        # Generar código de expediente si no fue proporcionado
+        # CU7 Paso 5a: Generar código de expediente automáticamente si no fue proporcionado
         if not validated_data.get('codigo_expediente'):
             prefix = f"EXP-{timezone.localdate().strftime('%Y%m')}"
             rnd = random.randint(1000, 9999)
@@ -339,8 +393,10 @@ class PacienteSerializer(serializers.ModelSerializer):
             validated_data['codigo_expediente'] = f"{prefix}-{rnd}"
 
         if usuario_id:
+            # CU7 Paso 5b: Vincular a usuario existente
             usuario = Usuario.objects.get(id=usuario_id)
         else:
+            # CU7 Paso 5c: Crear usuario nuevo con rol Paciente
             rol_paciente = Rol.objects.filter(nombre__icontains="Paciente").first()
             usuario = Usuario.objects.create_user(
                 email=email,
@@ -351,7 +407,9 @@ class PacienteSerializer(serializers.ModelSerializer):
                 rol=rol_paciente
             )
 
+        # CU7 Paso 5d: Crear expediente clínico del paciente
         paciente = Paciente.objects.create(usuario=usuario, **validated_data)
+        # CU7 Paso 6: Retornar paciente creado exitosamente
         return paciente
 
     @transaction.atomic

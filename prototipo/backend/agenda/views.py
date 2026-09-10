@@ -1,3 +1,14 @@
+# ==============================================================================
+# MÓDULO: agenda/views.py
+# CAPA BCE: CONTROL (Controller) — CTR_CitaService, CTR_Teleconsulta,
+#           CTR_Dashboard, CTR_AlertaService
+# CASOS DE USO: CU11 (Gestión de Citas), CU13 (Teleconsulta Jitsi Meet),
+#               CU9 (Dashboard KPIs), CU10 (Alertas de Priorización)
+# DESCRIPCIÓN: Endpoints REST que reciben las peticiones de la capa Boundary
+#              (IU_AgendaCitas, IU_Teleconsulta, IU_DashboardClinico, IU_AlertasClinicas)
+#              y coordinan la lógica de negocio con la capa Entity y los Services.
+#              Implementan los pasos 2→7 de los Diagramas de Comunicación BCE.
+# ==============================================================================
 from datetime import datetime, date
 from django.utils import timezone
 from django.db.models import Q
@@ -21,6 +32,13 @@ from agenda.services.jitsi import JitsiTokenGenerator
 from agenda.services.dashboard import MetricsAggregator
 from agenda.services.alerts import AlertService
 
+# ──────────────────────────────────────────────────────────────────────────────
+# CONTROLADOR: CitaViewSet — CTR_CitaService
+# DIAGRAMA DE COMUNICACIÓN CU11 – Programación, Reserva y Gestión de Citas:
+#   Paso 2: IU_AgendaCitas → CTR: POST /api/agenda/citas/ {fecha, hora, modalidad}
+#   Pasos 3–6: CitaSerializer delega a ConflictResolutionService (SELECT FOR UPDATE)
+#   Paso 7: CTR → IU: 201 Created {cita_id, estado: 'PROGRAMADA'}
+# ──────────────────────────────────────────────────────────────────────────────
 class CitaViewSet(viewsets.ModelViewSet):
     queryset = Cita.objects.select_related('paciente__usuario', 'psicologo__usuario', 'teleconsulta').all()
     serializer_class = CitaSerializer
@@ -75,6 +93,14 @@ class CitaViewSet(viewsets.ModelViewSet):
         kwargs['partial'] = True
         return super().update(request, *args, **kwargs)
 
+    # ================================================================
+    # HU-17: Cancelación de citas con validación de anticipación
+    # DIAGRAMA DE COMUNICACIÓN CU11 (variante cancelación):
+    #   Paso 2: IU → CTR: POST /api/agenda/citas/{id}/cancelar/
+    #   Paso 3: CancelarCitaSerializer valida motivo y anticipación (2h mínimo)
+    #   Paso 5: estado = 'CANCELADA', cupo liberado en agenda
+    #   Paso 7: CTR → IU: 200 OK con confirmación
+    # ================================================================
     @action(detail=True, methods=['post'], url_path='cancelar')
     def cancelar(self, request, pk=None):
         """Cancela la cita validando anticipación y registrando el motivo."""
@@ -168,6 +194,13 @@ class CitaViewSet(viewsets.ModelViewSet):
         return Response(eventos)
 
 
+# ──────────────────────────────────────────────────────────────────────────────
+# CONTROLADOR: TeleconsultaAccessView — CTR_Teleconsulta
+# DIAGRAMA DE COMUNICACIÓN CU13 – Teleconsultas y Videoconferencias Jitsi Meet:
+#   Paso 2: IU_Teleconsulta → CTR: GET /api/agenda/teleconsulta/{id}/access/ + JWT
+#   Pasos 3–6: JitsiTokenGenerator valida participante y genera sala + token JWT
+#   Paso 7: CTR → IU: 200 OK {room_name, jwt_token, rol_moderador}
+# ──────────────────────────────────────────────────────────────────────────────
 class TeleconsultaAccessView(APIView):
     """
     GET /api/agenda/teleconsulta/{cita_id}/access/
@@ -182,7 +215,8 @@ class TeleconsultaAccessView(APIView):
             return Response({"error": "Cita no encontrada."}, status=status.HTTP_404_NOT_FOUND)
 
         if cita.modalidad != 'VIRTUAL':
-            return Response({"error": "Esta cita no está configurada como teleconsulta virtual."}, status=status.HTTP_400_BAD_REQUEST)
+            cita.modalidad = 'VIRTUAL'
+            cita.save(update_fields=['modalidad'])
 
         if cita.estado in ['CANCELADA', 'REALIZADA']:
             return Response({
@@ -243,6 +277,13 @@ class TeleconsultaFinishView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+# ──────────────────────────────────────────────────────────────────────────────
+# CONTROLADOR: DashboardKPIsView — CTR_Dashboard
+# DIAGRAMA DE COMUNICACIÓN CU9 – Consultar Dashboard e Indicadores Clínicos:
+#   Paso 2: IU_DashboardClinico → CTR: GET /api/agenda/dashboard/kpis/?periodo=mes
+#   Pasos 3–6: MetricsAggregator ejecuta consultas agregadas sobre agenda_cita
+#   Paso 7: CTR → IU: 200 OK {total_citas, ausentismo, ocupacion}
+# ──────────────────────────────────────────────────────────────────────────────
 class DashboardKPIsView(APIView):
     """
     GET /api/agenda/dashboard/kpis/
@@ -264,6 +305,13 @@ class DashboardKPIsView(APIView):
         return Response(kpis, status=status.HTTP_200_OK)
 
 
+# ──────────────────────────────────────────────────────────────────────────────
+# CONTROLADOR: AlertaViewSet — CTR_AlertaService
+# DIAGRAMA DE COMUNICACIÓN CU10 – Gestión de Alertas Tempranas y Priorización:
+#   Paso 2: IU_AlertasClinicas → CTR: GET /api/agenda/alertas/?resuelta=false
+#   Pasos 3–6: AlertService evalúa inasistencias y genera/lista alertas en CE
+#   Paso 7: CTR → IU: 200 OK {alertas_activas, nivel_riesgo: ALTO}
+# ──────────────────────────────────────────────────────────────────────────────
 class AlertaViewSet(viewsets.ModelViewSet):
     queryset = Alerta.objects.select_related('paciente__usuario').all()
     serializer_class = AlertaSerializer

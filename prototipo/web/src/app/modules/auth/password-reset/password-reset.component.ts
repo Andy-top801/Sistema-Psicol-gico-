@@ -1,3 +1,11 @@
+// ==============================================================================
+// MÓDULO: password-reset.component.ts
+// CAPA BCE: BOUNDARY (Interfaz de Usuario) — IU_RecuperarPassword
+// CASOS DE USO: CU27: Recuperar Contraseña y Credenciales (HU-10)
+// DESCRIPCIÓN: Componente Angular interactivo en dos pasos: 1) Solicitud de token vía email,
+//              y 2) Validación de token con establecimiento de nueva clave segura.
+//              Implementa los pasos 1, 2, 7, 8, 9, 10, 15 y 16 del Diagrama de Comunicación BCE.
+// ==============================================================================
 import { Component, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -225,15 +233,32 @@ export class PasswordResetComponent implements OnInit {
     return pwd.length >= 8 && this.hasUppercase(pwd) && this.hasLowercase(pwd) && this.hasNumber(pwd) && this.hasSpecial(pwd);
   }
 
+  /**
+   * CU27: Recuperar Contraseña y Credenciales (HU-10)
+   * Diagrama de Comunicación – Paso 1 a 8: Solicitud de Token de Recuperación
+   */
   onRequestToken() {
-    this.loading.set(true);
     this.errorMessage.set(null);
     this.message.set(null);
     this.evalToken.set(null);
 
+    // --- Paso 1: Solicitar recuperación (email) en IU_RecuperarPassword > ---
+    const emailTrim = this.email?.trim();
+    if (!emailTrim || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrim)) {
+      this.errorMessage.set('Ingrese un correo electrónico válido registrado.');
+      return;
+    }
+
+    this.loading.set(true);
+
+    // --- Paso 2: POST /api/auth/password-reset/ {email} > ---
+    // IU_RecuperarPassword envía el correo al CTR_PasswordReset
     this.authService.requestPasswordReset(this.email).subscribe({
+      // --- Paso 7: 200 OK (Enlace enviado si existe) < ---
+      // CTR_PasswordReset confirma generación y envío del token
       next: (res: any) => {
         this.loading.set(false);
+        // --- Paso 8: Mostrar confirmación envío de correo en IU_RecuperarPassword < ---
         this.message.set(res.mensaje);
         this.tokenSent.set(true);
         if (res.token) {
@@ -246,6 +271,13 @@ export class PasswordResetComponent implements OnInit {
         this.errorMessage.set(err.error?.email?.[0] || 'Error al solicitar recuperación.');
       }
     });
+    // NOTA: Los pasos 3-6 ocurren en el backend (CTR_PasswordReset ↔ CE_Usuario_y_Token y mail):
+    //   Paso 3: SELECT usuario WHERE email = ? AND activo = true
+    //   Paso 4: Usuario encontrado
+    //   Paso 5: INSERT INTO accounts_tokenrecuperacion (token, exp=24h)
+    //   Paso 5.1: send_mail(email, reset_link)
+    //   Paso 5.2: Correo enviado
+    //   Paso 6: Token generado
   }
 
   goToStep2() {

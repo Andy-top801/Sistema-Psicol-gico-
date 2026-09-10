@@ -1,3 +1,11 @@
+// ==============================================================================
+// MÓDULO: reservar_cita_screen.dart
+// CAPA BCE: BOUNDARY (Interfaz de Usuario Móvil) — IU_AgendaCitas
+// CASOS DE USO: CU11: Programación, Reserva y Gestión de Citas (HU-15, HU-16, HU-17, HU-22)
+// DESCRIPCIÓN: Pantalla móvil Flutter para que el paciente seleccione terapeuta, fecha,
+//              modalidad y slot horario disponible, confirmando la reserva concurrente.
+//              Implementa los pasos 1, 2, 7 y 8 del Diagrama de Comunicación BCE.
+// ==============================================================================
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/auth_service.dart';
@@ -113,7 +121,16 @@ class _ReservarCitaScreenState extends State<ReservarCitaScreen> {
     }
   }
 
+  /// ═══════════════════════════════════════════════════════════════════════════
+  /// CU11: Programación, Reserva y Gestión de Citas (HU-15, HU-16, HU-17, HU-22)
+  /// Diagrama de Comunicación – Pasos del Flujo:
+  ///   Actor  → Paciente / Usuario Móvil
+  ///   IU     → IU_AgendaCitas (ReservarCitaScreen)
+  ///   CTR    → CTR_CitaService (Django REST - POST /api/agenda/citas/)
+  ///   CE     → CE_Cita_y_Disponibilidad (PostgreSQL con bloqueo pesimista)
+  /// ═══════════════════════════════════════════════════════════════════════════
   Future<void> _confirmarReserva() async {
+    // --- Paso 1: Seleccionar paciente, terapeuta, fecha y slot en IU_AgendaCitas > ---
     if (_paciente == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -172,6 +189,8 @@ class _ReservarCitaScreenState extends State<ReservarCitaScreen> {
 
     final fechaStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
 
+    // --- Paso 2: POST /api/agenda/citas/ {fecha, hora, modalidad} > ---
+    // IU_AgendaCitas envía los datos seleccionados al CTR_CitaService
     final res = await _agendaService.reservarCita(
       pacienteId: _paciente!.id,
       psicologoId: _selectedPsicologo!.id,
@@ -186,7 +205,10 @@ class _ReservarCitaScreenState extends State<ReservarCitaScreen> {
     setState(() => _isSubmitting = false);
 
     if (mounted) {
+      // --- Paso 7: 201 Created {cita_id, estado: 'PROGRAMADA'} < ---
+      // CTR_CitaService confirma la reserva concurrente con bloqueo pesimista
       if (res['success'] == true) {
+        // --- Paso 8: Desplegar comprobante de cita confirmada en IU_AgendaCitas < ---
         showDialog(
           context: context,
           barrierDismissible: false,
@@ -275,7 +297,12 @@ class _ReservarCitaScreenState extends State<ReservarCitaScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final fechaFormateada = DateFormat('EEEE, d MMMM yyyy', 'es').format(_selectedDate);
+    String fechaFormateada;
+    try {
+      fechaFormateada = DateFormat('EEEE, d MMMM yyyy', 'es').format(_selectedDate);
+    } catch (_) {
+      fechaFormateada = DateFormat('dd/MM/yyyy').format(_selectedDate);
+    }
 
     return Scaffold(
       backgroundColor: AppTheme.background,

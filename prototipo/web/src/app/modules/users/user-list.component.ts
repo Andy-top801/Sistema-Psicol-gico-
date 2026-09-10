@@ -1,3 +1,11 @@
+// ==============================================================================
+// MÓDULO: user-list.component.ts
+// CAPA BCE: BOUNDARY (Interfaz de Usuario) — IU_GestionUsuarios
+// CASOS DE USO: CU3: Gestionar Usuarios (HU-05)
+// DESCRIPCIÓN: Componente Angular interactivo para registro, edición y activación/desactivación
+//              de cuentas de usuarios y asignación de roles dentro del tenant activo.
+//              Implementa los pasos 1, 2, 11 y 12 del Diagrama de Comunicación BCE.
+// ==============================================================================
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -343,13 +351,31 @@ export class UserListComponent implements OnInit {
    * ═══════════════════════════════════════════════════════════════════════════
    */
   onSaveUser() {
+    this.modalError.set(null);
+
     // --- Paso 1: Ingresar datos de nuevo usuario (email, rol, password) ---
-    // El Actor (Admin Centro) completa el formulario con datos del usuario
+    // Validaciones síncronas en frontend (HU-05)
+    if (!this.currentUserData.nombre || this.currentUserData.nombre.trim() === '') {
+      this.modalError.set('El nombre del usuario es obligatorio.');
+      return;
+    }
+
+    if (!this.isEditing()) {
+      if (!this.currentUserData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.currentUserData.email.trim())) {
+        this.modalError.set('Ingrese un correo electrónico válido para el usuario.');
+        return;
+      }
+    }
+
+    if (!this.currentUserData.rol_id) {
+      this.modalError.set('Debe seleccionar un rol clínico o administrativo para el usuario.');
+      return;
+    }
 
     // Validación de contraseña en frontend
     const pwd = this.currentUserData.password;
     if (!this.isEditing() && !pwd) {
-      this.modalError.set('La contraseña es obligatoria.');
+      this.modalError.set('La contraseña es obligatoria para nuevos usuarios.');
       return;
     }
     if (pwd && !this.isPasswordValid(pwd)) {

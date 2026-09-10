@@ -1,3 +1,12 @@
+// ==============================================================================
+// MÓDULO: tenant-list.component.ts
+// CAPA BCE: BOUNDARY (Interfaz de Usuario) — IU_FormularioCentro
+// CASOS DE USO: CU1: Gestionar Centros Psicológicos y Configuración Multi-Tenant
+//                    (HU-03, HU-04, HU-07, HU-08)
+// DESCRIPCIÓN: Componente Angular interactivo para alta, listado y conmutación de centros
+//              psicológicos (tenants) y gestión de esquemas independientes PostgreSQL.
+//              Implementa los pasos 1, 2, 9 y 10 del Diagrama de Comunicación BCE.
+// ==============================================================================
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -110,6 +119,12 @@ import { Tenant } from '../../core/models';
         <div class="modal-content" (click)="$event.stopPropagation()">
           <h2 class="modal-title mb-3">Alta de Centro Psicológico</h2>
           <p class="text-muted text-sm mb-4">Se creará automáticamente el esquema PostgreSQL y el administrador del centro.</p>
+
+          <!-- Error en modal -->
+          <div *ngIf="modalError()" class="alert-box alert-danger mb-3">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>{{ modalError() }}</span>
+          </div>
 
           <form (ngSubmit)="onCreateTenant()">
             <div class="form-group">
@@ -228,6 +243,7 @@ export class TenantListComponent implements OnInit {
   submitting = signal<boolean>(false);
   errorMessage = signal<string | null>(null);
   successMessage = signal<string | null>(null);
+  modalError = signal<string | null>(null);
 
   newTenant = {
     nombre: '',
@@ -259,6 +275,7 @@ export class TenantListComponent implements OnInit {
   }
 
   openCreateModal() {
+    this.modalError.set(null);
     this.newTenant = {
       nombre: '',
       slug: '',
@@ -273,6 +290,7 @@ export class TenantListComponent implements OnInit {
 
   closeModal() {
     this.showModal.set(false);
+    this.modalError.set(null);
   }
 
   autoSlug(name: string) {
@@ -296,14 +314,35 @@ export class TenantListComponent implements OnInit {
    * ═══════════════════════════════════════════════════════════════════════════
    */
   onCreateTenant() {
-    // --- Paso 1: Ingresar datos de Centro ---
-    // El Actor (SuperAdministrador) completa el formulario con los datos del centro
+    this.modalError.set(null);
 
-    // Validación de contraseña del admin
+    // --- Paso 1: Ingresar datos de Centro ---
+    // Validaciones síncronas en frontend (HU-03)
+    const nombre = this.newTenant.nombre?.trim();
+    if (!nombre) {
+      this.modalError.set('El nombre del centro es obligatorio.');
+      return;
+    }
+
+    const slug = this.newTenant.slug?.trim();
+    if (!slug) {
+      this.modalError.set('El identificador slug es obligatorio.');
+      return;
+    }
+    if (!/^[a-z0-9_]+$/.test(slug)) {
+      this.modalError.set('El identificador slug solo puede contener letras minúsculas, números y guiones bajos (sin espacios ni acentos).');
+      return;
+    }
+
+    const email = this.newTenant.admin_email?.trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      this.modalError.set('Ingrese un correo electrónico válido para el administrador del centro.');
+      return;
+    }
+
     const pwd = this.newTenant.admin_password;
-    if (pwd && !this.isPasswordValid(pwd)) {
-      this.errorMessage.set('La contraseña del administrador debe tener al menos 8 caracteres, una mayúscula, un número y un carácter especial.');
-      setTimeout(() => this.errorMessage.set(null), 6000);
+    if (!pwd || !this.isPasswordValid(pwd)) {
+      this.modalError.set('La contraseña del administrador debe tener al menos 8 caracteres, incluir al menos una mayúscula, un número y un carácter especial.');
       return;
     }
 
@@ -326,6 +365,7 @@ export class TenantListComponent implements OnInit {
       error: (err: any) => {
         this.submitting.set(false);
         const msg = this.extractError(err);
+        this.modalError.set(msg);
         this.errorMessage.set(msg);
         setTimeout(() => this.errorMessage.set(null), 6000);
       }

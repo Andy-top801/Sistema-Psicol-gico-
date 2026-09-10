@@ -1,3 +1,11 @@
+// ==============================================================================
+// MÓDULO: psicologo-list.component.ts
+// CAPA BCE: BOUNDARY (Interfaz de Usuario) — IU_GestionPsicologos, IU_PerfilDisponibilidad
+// CASOS DE USO: CU6 (Gestión de Psicólogos y Perfiles), CU8 (Gestión de Disponibilidad)
+// DESCRIPCIÓN: Componente Angular interactivo que captura los datos de alta/edición
+//              de profesionales y la configuración de franjas horarias semanales.
+//              Implementa los pasos 1, 2, 7 y 8 de los Diagramas de Comunicación BCE.
+// ==============================================================================
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -151,6 +159,11 @@ import { Especialidad, Psicologo, Disponibilidad, CrearPsicologoDTO } from '../.
           </div>
 
           <div class="modal-body">
+            <div *ngIf="dispModalError()" class="alert-box alert-error mb-3">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <span>{{ dispModalError() }}</span>
+            </div>
+
             <div class="info-alert mb-3">
               <i class="fa-solid fa-circle-info"></i>
               Configura las franjas de atención por día. Los bloques de consulta se dividen automáticamente en slots de 50 minutos para evitar colisiones.
@@ -235,6 +248,11 @@ import { Especialidad, Psicologo, Disponibilidad, CrearPsicologoDTO } from '../.
           </div>
 
           <form (ngSubmit)="guardarPsicologo()" class="modal-body">
+            <div *ngIf="modalError()" class="alert-box alert-error mb-3">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <span>{{ modalError() }}</span>
+            </div>
+
             <div class="form-row">
               <div class="form-group col">
                 <label class="form-label">Nombre</label>
@@ -596,11 +614,13 @@ export class PsicologoListComponent implements OnInit {
   selectedPsicologo: Psicologo | null = null;
   tempDisponibilidades: Disponibilidad[] = [];
   savingDisponibilidad = false;
+  dispModalError = signal<string | null>(null);
 
   // Modal Registro / Edición
   showCreateModal = false;
   editingPsicologoId: string | null = null;
   savingPsicologo = false;
+  modalError = signal<string | null>(null);
   nuevoPsico: CrearPsicologoDTO = {
     nombre: '',
     apellido: '',
@@ -668,6 +688,7 @@ export class PsicologoListComponent implements OnInit {
   // --------------------------------------------------------------------------
   openDisponibilidadModal(psico: Psicologo): void {
     this.selectedPsicologo = psico;
+    this.dispModalError.set(null);
     this.showDisponibilidadModal = true;
     this.clinicaService.getDisponibilidad(psico.id).subscribe({
       next: (disps) => {
@@ -688,9 +709,11 @@ export class PsicologoListComponent implements OnInit {
     this.showDisponibilidadModal = false;
     this.selectedPsicologo = null;
     this.tempDisponibilidades = [];
+    this.dispModalError.set(null);
   }
 
   agregarFranja(): void {
+    this.dispModalError.set(null);
     this.tempDisponibilidades.push({
       dia_semana: 1,
       hora_inicio: '09:00',
@@ -700,6 +723,7 @@ export class PsicologoListComponent implements OnInit {
   }
 
   removerFranja(index: number): void {
+    this.dispModalError.set(null);
     this.tempDisponibilidades.splice(index, 1);
   }
 
@@ -714,23 +738,63 @@ export class PsicologoListComponent implements OnInit {
    * ═══════════════════════════════════════════════════════════════════════════
    */
   guardarDisponibilidadCU6CU8(): void {
+    this.dispModalError.set(null);
     if (!this.selectedPsicologo) return;
 
-    // --- Paso 1: Actor ingresa franjas horarias en IU_PerfilDisponibilidad ---
+    if (!this.tempDisponibilidades || this.tempDisponibilidades.length === 0) {
+      this.dispModalError.set('Debe configurar al menos una franja horaria para el terapeuta.');
+      return;
+    }
+
+    // Validación de cada franja (HU-12 / TP-30)
+    for (let i = 0; i < this.tempDisponibilidades.length; i++) {
+      const f = this.tempDisponibilidades[i];
+      if (!f.hora_inicio || !f.hora_fin) {
+        this.dispModalError.set(`Franja #${i + 1}: Complete la hora de inicio y fin.`);
+        return;
+      }
+      if (f.hora_fin <= f.hora_inicio) {
+        this.dispModalError.set(`Franja #${i + 1}: Hora de fin debe ser posterior a la de inicio (${f.hora_inicio} - ${f.hora_fin}).`);
+        return;
+      }
+      if (!f.duracion_bloque_min || Number(f.duracion_bloque_min) <= 0) {
+        this.dispModalError.set(`Franja #${i + 1}: La duración de bloque debe ser mayor a 0 minutos.`);
+        return;
+      }
+    }
+
+    // Validación de solapamiento entre franjas del mismo día
+    for (let i = 0; i < this.tempDisponibilidades.length; i++) {
+      for (let j = i + 1; j < this.tempDisponibilidades.length; j++) {
+        const a = this.tempDisponibilidades[i];
+        const b = this.tempDisponibilidades[j];
+        if (Number(a.dia_semana) === Number(b.dia_semana)) {
+          if (a.hora_inicio < b.hora_fin && b.hora_inicio < a.hora_fin) {
+            const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+            const diaNom = dias[Number(a.dia_semana)] || 'Día ' + a.dia_semana;
+            this.dispModalError.set(`Conflicto de horario en ${diaNom}: Las franjas ${a.hora_inicio}-${a.hora_fin} y ${b.hora_inicio}-${b.hora_fin} se solapan.`);
+            return;
+          }
+        }
+      }
+    }
+
+    // --- Paso 1: Configurar franjas semanales y duración bloque en IU_PerfilDisponibilidad > ---
     this.savingDisponibilidad = true;
 
-    // --- Paso 2: POST /api/clinica/psicologos/{id}/disponibilidad/ + JWT ---
+    // --- Paso 2: POST /api/clinica/disponibilidad/ + JWT > ---
     this.clinicaService.guardarDisponibilidad(this.selectedPsicologo.id, this.tempDisponibilidades).subscribe({
-      // --- Paso 11: 200 OK {perfil, horarios_creados} ---
+      // --- Paso 7: 200 OK {franjas_configuradas, slots_generados} < ---
       next: (res) => {
         this.savingDisponibilidad = false;
         this.closeDisponibilidadModal();
-        // --- Paso 12: Notificar "Disponibilidad guardada correctamente" al Actor ---
-        this.mostrarToast(`Disponibilidad guardada correctamente (${res.count || this.tempDisponibilidades.length} franjas).`, 'success');
+        // --- Paso 8: Mostrar 'Horario laboral actualizado' en IU_PerfilDisponibilidad < ---
+        this.mostrarToast(`Horario laboral actualizado correctamente (${res.count || this.tempDisponibilidades.length} franjas).`, 'success');
       },
       error: (err) => {
         this.savingDisponibilidad = false;
-        const msg = err.error?.error || 'Error al guardar la disponibilidad horaria';
+        const msg = err.error?.error || err.error?.detail || 'Error al guardar la disponibilidad horaria';
+        this.dispModalError.set(msg);
         this.mostrarToast(msg, 'error');
       }
     });
@@ -741,6 +805,7 @@ export class PsicologoListComponent implements OnInit {
   // --------------------------------------------------------------------------
   openCreateModal(): void {
     this.editingPsicologoId = null;
+    this.modalError.set(null);
     this.nuevoPsico = {
       nombre: '',
       apellido: '',
@@ -758,6 +823,7 @@ export class PsicologoListComponent implements OnInit {
 
   openEditModal(p: Psicologo): void {
     this.editingPsicologoId = p.id;
+    this.modalError.set(null);
     this.nuevoPsico = {
       nombre: p.usuario?.nombre || '',
       apellido: p.usuario?.apellido || '',
@@ -776,6 +842,7 @@ export class PsicologoListComponent implements OnInit {
   closeCreateModal(): void {
     this.showCreateModal = false;
     this.editingPsicologoId = null;
+    this.modalError.set(null);
   }
 
   isEspecialidadSelected(id: number): boolean {
@@ -791,7 +858,52 @@ export class PsicologoListComponent implements OnInit {
     }
   }
 
+  /**
+   * ═══════════════════════════════════════════════════════════════════════════
+   * CU6: Gestión de Psicólogos y Perfiles Profesionales (HU-11)
+   * Diagrama de Comunicación – Pasos del Flujo:
+   *   Actor  → Administrador del Centro
+   *   IU     → IU_GestionPsicologos (PsicologoListComponent)
+   *   CTR    → CTR_PsicologoService (Django REST - clinica/views.py)
+   *   CE     → CE_Psicologo_y_Especialidad (PostgreSQL)
+   * ═══════════════════════════════════════════════════════════════════════════
+   */
   guardarPsicologo(): void {
+    this.modalError.set(null);
+
+    // --- Paso 1: Ingresar datos de Psicólogo en IU_GestionPsicologos ---
+    // Validaciones frontend de campos obligatorios y formatos (HU-11 / TP-27 / TP-28)
+    if (!this.nuevoPsico.nombre || this.nuevoPsico.nombre.trim() === '') {
+      this.modalError.set('El nombre del psicólogo es obligatorio.');
+      return;
+    }
+    if (!this.nuevoPsico.apellido || this.nuevoPsico.apellido.trim() === '') {
+      this.modalError.set('El apellido del psicólogo es obligatorio.');
+      return;
+    }
+    if (!this.nuevoPsico.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.nuevoPsico.email.trim())) {
+      this.modalError.set('Ingrese un correo electrónico válido para el psicólogo.');
+      return;
+    }
+    if (!this.editingPsicologoId) {
+      if (!this.nuevoPsico.password || this.nuevoPsico.password.length < 8) {
+        this.modalError.set('La contraseña inicial es requerida y debe tener al menos 8 caracteres.');
+        return;
+      }
+    }
+    if (!this.nuevoPsico.numero_colegiado || this.nuevoPsico.numero_colegiado.trim() === '') {
+      this.modalError.set('El número de colegiado profesional es obligatorio.');
+      return;
+    }
+    if (this.nuevoPsico.tarifa_base === null || this.nuevoPsico.tarifa_base === undefined || Number(this.nuevoPsico.tarifa_base) <= 0) {
+      this.modalError.set('La tarifa debe ser mayor a cero.');
+      return;
+    }
+    if (!this.nuevoPsico.especialidad_ids || this.nuevoPsico.especialidad_ids.length === 0) {
+      this.modalError.set('Debe seleccionar al menos una especialidad acreditada.');
+      return;
+    }
+
     this.savingPsicologo = true;
     const payload: any = {
       ...this.nuevoPsico,
@@ -803,13 +915,18 @@ export class PsicologoListComponent implements OnInit {
       delete payload.password;
     }
 
+    // --- Paso 2: POST /api/clinica/psicologos/ > ---
+    // IU_GestionPsicologos envía los datos del terapeuta al CTR_PsicologoService
     const action$ = this.editingPsicologoId
       ? this.clinicaService.updatePsicologo(this.editingPsicologoId, payload)
       : this.clinicaService.createPsicologo(payload);
 
     action$.subscribe({
+      // --- Paso 7: 201 Created < ---
+      // CTR_PsicologoService confirma la creación de usuario, perfil y disponibilidad
       next: () => {
         this.savingPsicologo = false;
+        // --- Paso 8: Mostrar confirmación en IU_GestionPsicologos < ---
         const msg = this.editingPsicologoId
           ? 'Psicólogo actualizado exitosamente.'
           : 'Psicólogo registrado exitosamente en el directorio.';
@@ -832,6 +949,7 @@ export class PsicologoListComponent implements OnInit {
             if (parts.length > 0) msg = parts.join(' | ');
           }
         }
+        this.modalError.set(msg);
         this.mostrarToast(msg, 'error');
       }
     });

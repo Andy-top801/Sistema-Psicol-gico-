@@ -1,3 +1,11 @@
+// ==============================================================================
+// MÓDULO: password_reset_screen.dart
+// CAPA BCE: BOUNDARY (Interfaz de Usuario Móvil) — IU_RecuperarPassword
+// CASOS DE USO: CU27: Recuperar Contraseña y Credenciales (HU-10)
+// DESCRIPCIÓN: Pantalla móvil Flutter para solicitud de token de restablecimiento por correo
+//              y validación con actualización de nueva contraseña segura.
+//              Implementa los pasos 1, 2, 7, 8, 9, 10, 15 y 16 del Diagrama BCE.
+// ==============================================================================
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../core/theme/app_theme.dart';
@@ -27,15 +35,16 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
 
   /// ═════════════════════════════════════════════════════════════════════════
   /// CU27: Recuperar Contraseña y Credenciales (HU-10)
-  /// Diagrama de Comunicación – Solicitud de Token (Móvil Flutter)
+  /// Diagrama de Comunicación – Pasos 1 a 8: Solicitud de Token (Móvil)
   /// Participantes:
   ///   Actor  → Usuario (Todos los roles)
   ///   IU     → IU_RecuperarPassword (Móvil)  ← ESTE ARCHIVO
   ///   CTR    → CTR_PasswordReset (Django REST)
   ///   CE     → CE_Usuario_y_Token (PostgreSQL)
-  ///   SRV    → SRV_ServicioCorreo (SMTP / SendGrid)
+  ///   SRV    → SRV_ServicioCorreo (SMTP)
   /// ═════════════════════════════════════════════════════════════════════════
   Future<void> _requestToken() async {
+    // --- Paso 1: Solicitar recuperación (email) en IU_RecuperarPassword > ---
     final email = _emailController.text.trim();
     if (email.isEmpty) {
       setState(() => _errorMessage = 'Ingresa tu correo electrónico registrado.');
@@ -48,12 +57,16 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
       _message = null;
     });
 
+    // --- Paso 2: POST /api/auth/password-reset/ {email} > ---
+    // IU_RecuperarPassword envía solicitud al CTR_PasswordReset
     final res = await widget.authService.requestPasswordReset(email);
 
     setState(() {
       _isLoading = false;
+      // --- Paso 7: 200 OK (Enlace enviado si existe) < ---
       if (res['success'] == true) {
         final data = res['data'];
+        // --- Paso 8: Mostrar confirmación envío de correo en IU_RecuperarPassword < ---
         _message = data['mensaje'] ?? 'Solicitud procesada.';
         _generatedToken = data['token_debug'];
       } else {
@@ -62,7 +75,11 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
     });
   }
 
+  /// ═════════════════════════════════════════════════════════════════════════
+  /// CU27: Recuperar Contraseña – Pasos 9 a 16: Confirmación de Clave
+  /// ═════════════════════════════════════════════════════════════════════════
   Future<void> _confirmReset() async {
+    // --- Paso 9: Ingresar nueva password con token en IU_RecuperarPassword > ---
     final token = _tokenController.text.trim();
     final pwd = _newPasswordController.text.trim();
     final confirm = _confirmPasswordController.text.trim();
@@ -86,6 +103,8 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
       _message = null;
     });
 
+    // --- Paso 10: POST /api/auth/password-reset-confirm/ {token, password} > ---
+    // IU_RecuperarPassword envía el token y la nueva contraseña al CTR_PasswordReset
     final res = await widget.authService.confirmPasswordReset(
       token: token,
       password: pwd,
@@ -94,7 +113,9 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
 
     setState(() {
       _isLoading = false;
+      // --- Paso 15: 200 OK (Contraseña actualizada) < ---
       if (res['success'] == true) {
+        // --- Paso 16: Notificar éxito y permitir volver a Login < ---
         _message = res['message'] ?? '¡Contraseña restablecida exitosamente!';
       } else {
         _errorMessage = res['error'] ?? 'Error al restablecer contraseña.';

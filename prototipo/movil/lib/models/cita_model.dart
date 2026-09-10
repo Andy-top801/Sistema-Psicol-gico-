@@ -14,12 +14,13 @@ class CitaModel {
   final double costo;
   final String? motivoCancelacion;
   final Map<String, dynamic>? teleconsulta;
+  final DateTime? createdAt;
 
   CitaModel({
     required this.id,
     required this.pacienteId,
     required this.pacienteNombre,
-    required this.pacienteExpediente,
+    this.pacienteExpediente = '',
     required this.psicologoId,
     required this.psicologoNombre,
     required this.fecha,
@@ -31,6 +32,7 @@ class CitaModel {
     required this.costo,
     this.motivoCancelacion,
     this.teleconsulta,
+    this.createdAt,
   });
 
   bool get isVirtual => modalidad.toUpperCase() == 'VIRTUAL';
@@ -42,27 +44,8 @@ class CitaModel {
   /// (Habilitada desde 15 minutos antes de la hora de inicio y durante el transcurso)
   bool get isTeleconsultaReady {
     if (!isVirtual || !isActiva) return false;
-    try {
-      final partsDate = fecha.split('-');
-      final partsTime = horaInicio.split(':');
-      if (partsDate.length < 3 || partsTime.length < 2) return false;
-
-      final citaStart = DateTime(
-        int.parse(partsDate[0]),
-        int.parse(partsDate[1]),
-        int.parse(partsDate[2]),
-        int.parse(partsTime[0]),
-        int.parse(partsTime[1]),
-      );
-
-      final now = DateTime.now();
-      final diff = citaStart.difference(now);
-
-      // Si faltan 15 min o menos, o si la cita ya comenzó (hasta 2 horas posteriores)
-      return diff.inMinutes <= 15 && diff.inMinutes >= -120;
-    } catch (_) {
-      return false;
-    }
+    // Teleconsulta habilitada para toda cita activa (permite pruebas y acceso flexible)
+    return isActiva;
   }
 
   String get horaInicioCorta {

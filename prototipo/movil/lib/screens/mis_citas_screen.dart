@@ -1,3 +1,11 @@
+// ==============================================================================
+// MÓDULO: mis_citas_screen.dart
+// CAPA BCE: BOUNDARY (Interfaz de Usuario Móvil) — IU_AgendaCitas
+// CASOS DE USO: CU11: Programación, Reserva y Gestión de Citas (HU-15, HU-16, HU-17)
+// DESCRIPCIÓN: Pantalla móvil Flutter para visualización de citas activas e historial,
+//              acceso directo a teleconsultas virtuales y cancelación con anticipación.
+//              Implementa los pasos del flujo principal y alternativo del Diagrama BCE.
+// ==============================================================================
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../services/agenda_service.dart';
@@ -82,6 +90,25 @@ class _MisCitasScreenState extends State<MisCitasScreen> with SingleTickerProvid
     }
   }
 
+  void _abrirTeleconsultaDemo() {
+    final demoCita = CitaModel(
+      id: 'demo-teleconsulta',
+      pacienteId: widget.authService.currentUser?.id ?? '1',
+      pacienteNombre: widget.authService.currentUser?.nombre ?? 'Paciente',
+      psicologoId: '1',
+      psicologoNombre: 'Dra. Elena Ramos (Psicóloga)',
+      fecha: DateTime.now().toIso8601String().substring(0, 10),
+      horaInicio: '15:00:00',
+      horaFin: '15:50:00',
+      modalidad: 'VIRTUAL',
+      estado: 'CONFIRMADA',
+      motivoConsulta: 'Teleconsulta Psicológica - Sesión Virtual WebRTC (HU-19)',
+      costo: 180.0,
+      createdAt: DateTime.now(),
+    );
+    _abrirTeleconsulta(demoCita);
+  }
+
   void _confirmarCancelarCita(CitaModel cita) {
     final motivoCtrl = TextEditingController();
 
@@ -143,10 +170,19 @@ class _MisCitasScreenState extends State<MisCitasScreen> with SingleTickerProvid
     );
   }
 
+  /// CU11 – Cancelación de Cita con Anticipación (HU-17)
+  ///   Paso 1: Actor ingresa motivo en diálogo de cancelación
+  ///   Paso 2: POST /api/agenda/citas/{id}/cancelar/
+  ///   (Pasos 3-6: CTR valida 2h mínimas de anticipación y libera slot en base de datos)
+  ///   Paso 7: 200 OK con confirmación de cita cancelada
+  ///   Paso 8: Mostrar notificación de éxito y refrescar listado
   Future<void> _cancelarCita(String citaId, String motivo) async {
+    // --- Paso 2: POST /api/agenda/citas/{id}/cancelar/ > ---
     final res = await _agendaService.cancelarCita(citaId, motivo);
     if (mounted) {
+      // --- Paso 7: 200 OK < ---
       if (res['success'] == true) {
+        // --- Paso 8: Notificar confirmación de cancelación en pantalla móvil < ---
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             backgroundColor: AppTheme.success,
@@ -273,6 +309,16 @@ class _MisCitasScreenState extends State<MisCitasScreen> with SingleTickerProvid
                     onPressed: _abrirReservaCita,
                     icon: const Icon(Icons.calendar_month_rounded),
                     label: const Text('Reservar Ahora'),
+                  ),
+                  const SizedBox(height: 10),
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.secondary,
+                      side: const BorderSide(color: AppTheme.secondary),
+                    ),
+                    onPressed: _abrirTeleconsultaDemo,
+                    icon: const Icon(Icons.videocam_rounded),
+                    label: const Text('Probar Videollamada / Teleconsulta'),
                   ),
                 ],
               ],
@@ -489,38 +535,27 @@ class _MisCitasScreenState extends State<MisCitasScreen> with SingleTickerProvid
               const SizedBox(height: 14),
               Row(
                 children: [
-                  // Botón Unirse a Teleconsulta (HU-19)
-                  if (cita.isVirtual) ...[
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: isTeleconsultaHabilitada ? AppTheme.secondary : AppTheme.cardBgElevated,
-                          foregroundColor: isTeleconsultaHabilitada ? Colors.white : AppTheme.textSubtle,
-                          padding: const EdgeInsets.symmetric(vertical: 11),
-                        ),
-                        onPressed: isTeleconsultaHabilitada
-                            ? () => _abrirTeleconsulta(cita)
-                            : () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('La sala de teleconsulta se habilitará 15 minutos antes de la hora.'),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              },
-                        icon: Icon(
-                          Icons.videocam_rounded,
-                          size: 18,
-                          color: isTeleconsultaHabilitada ? Colors.white : AppTheme.textSubtle,
-                        ),
-                        label: Text(
-                          isTeleconsultaHabilitada ? 'UNIRSE A SALA' : 'SALA VIRTUAL',
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                        ),
+                  // Botón Unirse a Teleconsulta / Videollamada (HU-19)
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: cita.isVirtual ? AppTheme.secondary : const Color(0xFF6366F1),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 11),
+                      ),
+                      onPressed: () => _abrirTeleconsulta(cita),
+                      icon: const Icon(
+                        Icons.videocam_rounded,
+                        size: 18,
+                        color: Colors.white,
+                      ),
+                      label: Text(
+                        cita.isVirtual ? 'UNIRSE A TELECONSULTA' : 'VIDEOCONSULTA EN VIVO',
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                       ),
                     ),
-                    const SizedBox(width: 10),
-                  ],
+                  ),
+                  const SizedBox(width: 10),
 
                   // Botón Cancelar Cita
                   OutlinedButton.icon(

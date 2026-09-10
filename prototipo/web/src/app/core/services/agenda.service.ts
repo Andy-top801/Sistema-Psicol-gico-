@@ -156,33 +156,23 @@ export class AgendaService {
    *   CE     → CE_Metricas_y_Alertas (PostgreSQL)
    * ═══════════════════════════════════════════════════════════════════════════
    */
-  getDashboardKPIs(periodo: string = 'mes'): Observable<DashboardKPIs> {
+  getDashboardKPIs(anio?: number, mes?: number): Observable<DashboardKPIs> {
     // --- Paso 1: Actor accede al Dashboard Principal en IU_DashboardClinico ---
-
-    // --- Paso 2: GET /api/agenda/dashboard/kpis/?periodo=mes + Bearer JWT + X-Tenant-ID ---
-    // IU_DashboardClinico solicita agregaciones analíticas de la clínica
-    const params = new HttpParams().set('periodo', periodo);
+    // --- Paso 2: GET /api/agenda/dashboard/kpis/?anio=...&mes=... + Bearer JWT + X-Tenant-ID ---
+    let params = new HttpParams();
+    if (anio) params = params.set('anio', anio.toString());
+    if (mes) params = params.set('mes', mes.toString());
     return this.http.get<DashboardKPIs>(`${this.apiUrl}/dashboard/kpis/`, { params });
-
-    // NOTA: Pasos 3 a 8 ocurren en el backend (CTR_DashboardService ↔ CE_Metricas_y_Alertas):
-    //   Paso 3: Validar permisos de Coordinador / Administrador en tenant activo
-    //   Paso 4: Acceso administrativo autorizado
-    //   Paso 5: SELECT COUNT(citas), AVG(ocupacion) GROUP BY psicologo, estado
-    //   Paso 6: Agregaciones estadísticas y cálculo de tasa de ausentismo calculadas
-    //   Paso 7: SELECT * FROM agenda_alerta WHERE resuelta = false
-    //   Paso 8: Listado de pacientes con 2+ inasistencias o riesgo de abandono
-    // --- Paso 9: 200 OK {total_citas, ausentismo_pct, alertas_activas} retornado a Angular ---
-    // --- Paso 10: Renderizar KPIs, gráficos de distribución y tabla de alertas en IU ---
   }
 
   getAlertas(): Observable<AlertaClinica[]> {
     return this.http.get<AlertaClinica[]>(`${this.apiUrl}/alertas/`);
   }
 
-  resolverAlerta(alertaId: string): Observable<{ mensaje: string; id: string; resuelta: boolean }> {
+  resolverAlerta(alertaId: string, notaResolucion?: string): Observable<{ mensaje: string; id: string; resuelta: boolean }> {
     return this.http.post<{ mensaje: string; id: string; resuelta: boolean }>(
       `${this.apiUrl}/alertas/${alertaId}/resolver/`,
-      {}
+      { nota_resolucion: notaResolucion || 'Alerta atendida por equipo clínico y registrada en expediente.' }
     );
   }
 }

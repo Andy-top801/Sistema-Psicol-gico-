@@ -1,3 +1,11 @@
+// ==============================================================================
+// MÓDULO: users_screen.dart
+// CAPA BCE: BOUNDARY (Interfaz de Usuario Móvil) — IU_GestionUsuarios
+// CASOS DE USO: CU3: Gestionar Usuarios (HU-05)
+// DESCRIPCIÓN: Pantalla móvil Flutter para administración de personal del centro
+//              psicológico, terapeutas, psicólogos y recepcionistas.
+//              Implementa los pasos 1, 2, 11 y 12 del Diagrama de Comunicación BCE.
+// ==============================================================================
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -57,6 +65,12 @@ class _UsersScreenState extends State<UsersScreen> {
     } catch (_) {}
   }
 
+  /// -----------------------------------------------------------------------
+  /// CU3: Alternar estado de activación de usuario
+  /// Paso 1: Administrador pulsa alternar estado en IU_GestionUsuarios
+  /// Paso 2: Solicitud POST a CTR_UsuarioService (alternar_estado)
+  /// Paso 11/12: Retorno 200 OK y actualización visual del estado en UI
+  /// -----------------------------------------------------------------------
   Future<void> _toggleStatus(UserModel user) async {
     try {
       final url = Uri.parse('${widget.authService.baseUrl}${ApiConstants.users}${user.id}/alternar_estado/');
@@ -431,9 +445,12 @@ class _UsersScreenState extends State<UsersScreen> {
                     /// Participantes:
                     ///   Actor  → Administrador del Centro
                     ///   IU     → IU_GestionUsuarios (Móvil)  ← ESTE ARCHIVO
-                    ///   CTR    → CTR_UsuarioService (Django REST)
-                    ///   CE     → CE_Usuario_y_Rol (PostgreSQL)
+                    ///   CTR    → CTR_UsuarioService (Django REST: UsuarioViewSet)
+                    ///   CE     → CE_Usuario_y_Rol (PostgreSQL: accounts_usuario)
                     /// ═════════════════════════════════════════════════════════════════════════
+                    // -----------------------------------------------------------------------
+                    // CU3 Paso 1: Administrador ingresa datos del usuario/personal en IU_GestionUsuarios
+                    // -----------------------------------------------------------------------
                     if (nombreCtrl.text.trim().isEmpty) {
                       setDialogState(() => errorMsg = 'El nombre es obligatorio.');
                       return;
@@ -456,6 +473,9 @@ class _UsersScreenState extends State<UsersScreen> {
                     }
 
                     try {
+                      // ---------------------------------------------------------------------
+                      // CU3 Paso 2: IU_GestionUsuarios envía solicitud POST/PUT a CTR_UsuarioService
+                      // ---------------------------------------------------------------------
                       http.Response response;
                       if (isEditing) {
                         final url = Uri.parse('${widget.authService.baseUrl}${ApiConstants.users}${user.id}/');
@@ -491,6 +511,10 @@ class _UsersScreenState extends State<UsersScreen> {
                       }
 
                       if (response.statusCode == 200 || response.statusCode == 201) {
+                        // -------------------------------------------------------------------
+                        // CU3 Paso 11: CTR_UsuarioService retorna 201 Created / 200 OK con usuario registrado
+                        // CU3 Paso 12: IU_GestionUsuarios muestra confirmación visual y refresca listado
+                        // -------------------------------------------------------------------
                         if (ctx.mounted) Navigator.pop(ctx);
                         _loadUsers();
                         if (mounted) {

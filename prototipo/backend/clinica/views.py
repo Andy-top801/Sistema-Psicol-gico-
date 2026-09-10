@@ -1,3 +1,13 @@
+# ==============================================================================
+# MÓDULO: clinica/views.py
+# CAPA BCE: CONTROL (Controller) — CTR_Psicologo, CTR_Paciente, CTR_Disponibilidad
+# CASOS DE USO: CU6 (Gestión de Psicólogos), CU7 (Gestión de Pacientes),
+#               CU8 (Gestión de Disponibilidad Horaria)
+# DESCRIPCIÓN: Endpoints REST que reciben las peticiones de la capa Boundary
+#              (IU_GestionPsicologos, IU_RegistroPacientes, IU_DisponibilidadHoraria)
+#              y coordinan la lógica de negocio con la capa Entity (CE_).
+#              Implementan los pasos 2→7 de los Diagramas de Comunicación BCE.
+# ==============================================================================
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -22,6 +32,13 @@ class EspecialidadViewSet(viewsets.ModelViewSet):
         return [IsAuthenticated()]
 
 
+# ──────────────────────────────────────────────────────────────────────────────
+# CONTROLADOR: PsicologoViewSet — CTR_Psicologo
+# DIAGRAMA DE COMUNICACIÓN CU6 – Gestión de Psicólogos:
+#   Paso 2: IU_GestionPsicologos → CTR_Psicologo: POST /api/clinica/psicologos/
+#   Pasos 3–6: PsicologoSerializer valida y crea usuario + psicólogo en CE
+#   Paso 7: CTR_Psicologo → IU: 201 Created
+# ──────────────────────────────────────────────────────────────────────────────
 class PsicologoViewSet(viewsets.ModelViewSet):
     queryset = Psicologo.objects.select_related('usuario').prefetch_related('especialidades', 'disponibilidades').all()
     serializer_class = PsicologoSerializer
@@ -68,11 +85,19 @@ class PsicologoViewSet(viewsets.ModelViewSet):
         kwargs['partial'] = True
         return super().update(request, *args, **kwargs)
 
+    # ================================================================
+    # CU8: Endpoint de disponibilidad horaria del psicólogo
+    # DIAGRAMA DE COMUNICACIÓN CU8:
+    #   Paso 2: IU_DisponibilidadHoraria → CTR: POST /api/clinica/psicologos/{id}/disponibilidad/
+    #   Pasos 3–6: DisponibilidadSerializer valida y persiste franjas en CE
+    #   Paso 7: CTR → IU: 200 OK {franjas_configuradas, slots_generados}
+    # ================================================================
     @action(detail=True, methods=['get', 'post'], url_path='disponibilidad')
     def disponibilidad(self, request, pk=None):
         psicologo = self.get_object()
 
         if request.method == 'GET':
+            # CU8 Paso 2 (lectura): Retorna las franjas activas del psicólogo
             disps = psicologo.disponibilidades.filter(activo=True).order_by('dia_semana', 'hora_inicio')
             serializer = DisponibilidadSerializer(disps, many=True)
             return Response(serializer.data)
@@ -83,7 +108,8 @@ class PsicologoViewSet(viewsets.ModelViewSet):
                 data = data['franjas']
 
             if isinstance(data, list):
-                # Al guardar el horario semanal completo, reemplazar las franjas anteriores
+                # CU8 Paso 5: Reemplazar todas las franjas anteriores y guardar las nuevas
+                # Implementa "Guardar franjas y particionar bloques en DB"
                 psicologo.disponibilidades.all().delete()
                 creados = []
                 for item in data:
@@ -115,6 +141,13 @@ class DisponibilidadViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
 
+# ──────────────────────────────────────────────────────────────────────────────
+# CONTROLADOR: PacienteViewSet — CTR_Paciente
+# DIAGRAMA DE COMUNICACIÓN CU7 – Gestión de Pacientes Web y Móvil:
+#   Paso 2: IU_RegistroPacientes → CTR: POST /api/clinica/pacientes/ + Header Tenant
+#   Pasos 3–6: PacienteSerializer valida CI, tutor legal y crea expediente en CE
+#   Paso 7: CTR → IU: 201 Created {paciente_id, expediente}
+# ──────────────────────────────────────────────────────────────────────────────
 class PacienteViewSet(viewsets.ModelViewSet):
     queryset = Paciente.objects.select_related('usuario').all()
     serializer_class = PacienteSerializer

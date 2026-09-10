@@ -1,3 +1,12 @@
+// ==============================================================================
+// MÓDULO: centro-config.component.ts
+// CAPA BCE: BOUNDARY (Interfaz de Usuario) — IU_ConfiguracionCentro
+// CASOS DE USO: CU1: Gestionar Centros Psicológicos y Configuración Multi-Tenant
+//                    (HU-03, HU-04, HU-07, HU-08)
+// DESCRIPCIÓN: Componente Angular interactivo para administración de datos institucionales,
+//              políticas de atención clínica y parámetros de configuración por centro (tenant).
+//              Implementa los pasos 1, 2, 9 y 10 del Diagrama de Comunicación BCE.
+// ==============================================================================
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -150,13 +159,48 @@ export class CentroConfigComponent implements OnInit {
     });
   }
 
+  /**
+   * CU1: Configuración Institucional Multi-Tenant (HU-04, HU-07, HU-08)
+   * Diagrama de Comunicación – Actualización de Parámetros de Centro
+   */
   onSaveConfig() {
-    this.saving.set(true);
+    this.errorMessage.set(null);
     this.successMessage.set(null);
 
+    // --- Paso 1: Ingresar datos y parámetros del centro en IU_ConfiguracionCentro > ---
+    const nombre = this.centro.nombre?.trim();
+    if (!nombre) {
+      this.errorMessage.set('El nombre oficial del centro es obligatorio.');
+      return;
+    }
+
+    const email = this.centro.email?.trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      this.errorMessage.set('El correo electrónico institucional no es válido.');
+      return;
+    }
+
+    const duracion = Number(this.centro.configuracion?.duracion_sesion_minutos);
+    if (isNaN(duracion) || duracion < 15 || duracion > 240) {
+      this.errorMessage.set('La duración de sesión debe ser un valor entre 15 y 240 minutos.');
+      return;
+    }
+
+    const anticipacion = Number(this.centro.configuracion?.cancelacion_horas_anticipacion);
+    if (isNaN(anticipacion) || anticipacion < 0) {
+      this.errorMessage.set('Las horas de anticipación para cancelación deben ser 0 o superior.');
+      return;
+    }
+
+    this.saving.set(true);
+
+    // --- Paso 2: PUT /api/centro/config/ + Header Tenant > ---
+    // IU_ConfiguracionCentro envía los parámetros actualizados al CTR_TenantService
     this.centroService.updateConfig(this.centro).subscribe({
+      // --- Paso 9: 200 OK (Configuración actualizada) < ---
       next: () => {
         this.saving.set(false);
+        // --- Paso 10: Mostrar confirmación en IU_ConfiguracionCentro < ---
         this.successMessage.set('¡Configuración institucional actualizada correctamente!');
         setTimeout(() => this.successMessage.set(null), 4000);
       },

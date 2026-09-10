@@ -456,14 +456,20 @@ Para ejecutar la aplicación en tu **celular físico (Samsung, Xiaomi, Motorola,
 #### Paso 2: Redirigir el puerto del Backend (Reverse Port Forwarding)
 Para que las peticiones a `http://localhost:8000/api` que haga el celular viajen directamente por el cable USB hasta tu servidor Django en la PC (sin configurar IPs manuales ni depender del Wi-Fi):
 
+> ⚠️ **IMPORTANTE**: Si te sale el mensaje de error: *"No se pudo conectar al servidor localhost:8000. Si estás por USB ejecuta..."*, es porque falta activar este puente.
+
+Copia y pega este comando en PowerShell:
 ```powershell
-# Ejecutar adb reverse (usando la ruta del SDK de Android en Windows):
+# Ejecutar adb reverse con la ruta directa del SDK de Android en Windows:
 & "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" reverse tcp:8000 tcp:8000
+
+# O si tienes varios dispositivos conectados, especifica el ID (ej. R5CY620NJLA):
+& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" -s R5CY620NJLA reverse tcp:8000 tcp:8000
 
 # O directamente si adb está en tus Variables de Entorno PATH:
 adb reverse tcp:8000 tcp:8000
 ```
-> Si la consola responde `8000`, el puente está activo exitosamente.
+> Si la consola responde `8000`, el puente está activo exitosamente. Si desconectas y vuelves a conectar el cable USB, debes volver a ejecutarlo.
 
 #### Paso 3: Configurar URL del Backend en la App
 Verificar que en `lib/core/constants/api_constants.dart` la URL base esté apuntando a:
@@ -755,8 +761,10 @@ flutter run
 | Problema | Causa | Solución |
 |----------|-------|----------|
 | `Gradle requires JVM 17 or later to run. Your build is currently configured to use JVM 8` | PATH de Windows tiene Java 8 antes de Android Studio JBR | Agregar `org.gradle.java.home=C:/Program Files/Android/Android Studio/jbr` en `C:\Users\User\.gradle\gradle.properties` |
+| `No se pudo conectar al servidor localhost:8000` / `Connection refused` en celular físico USB | Falta redirección de puerto USB (tu PC no es el localhost del móvil) | Ejecutar en PowerShell: `& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" reverse tcp:8000 tcp:8000` (debe retornar `8000`). Luego presionar el botón **"USB (adb reverse)"** en la pantalla de Login |
+| `adb : El término 'adb' no se reconoce...` en PowerShell | ADB no está registrado en las variables de entorno PATH | Usar la ruta completa del SDK: `& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" ...` |
+| `adb.exe: failed to install ... exit code 1` al hacer `flutter run` | Pantalla del celular apagada/bloqueada o confirmación pendiente | Desbloquear la pantalla del móvil, aceptar el diálogo de confirmación emergente ("Permitir depuración / instalación por USB") y volver a lanzar |
 | `Connection refused` en emulador | URL incorrecta | Usar `10.0.2.2` en vez de `localhost` para emulador Android |
-| `Connection refused` en celular físico | Falta redirección de puerto | Ejecutar `adb reverse tcp:8000 tcp:8000` con cable USB conectado |
 | `Cleartext HTTP not permitted` (Android) | Seguridad Android | `android:usesCleartextTraffic="true"` ya configurado en `AndroidManifest.xml` |
 
 ---
@@ -786,6 +794,8 @@ npm run build                                  # Build producción (0 errores)
 # ═══════════════════ MÓVIL ═════════════════════
 cd prototipo\movil
 flutter pub get                                # Instalar paquetes Dart
+# Si pruebas en celular físico por USB, ejecutar antes para conectar a localhost:8000:
+& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" reverse tcp:8000 tcp:8000
 flutter run                                    # Ejecutar en emulador / celular USB
 flutter run -d chrome                          # Ejecutar como Web
 flutter build apk --release                    # Compilar APK producción
