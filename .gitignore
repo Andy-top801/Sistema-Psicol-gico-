@@ -36,6 +36,9 @@ venv.bak/
 *.sqlite3
 db.sqlite3
 
+# Encrypted audit logs (never commit confidential records)
+prototipo/backend/logs/
+
 # Enterprise Architect Lock Files
 *.ldb
 

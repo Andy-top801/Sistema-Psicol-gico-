@@ -13,4 +13,5 @@ urlpatterns = [
     path('api/clinica/', include('clinica.urls')),
     # Endpoints de agenda (citas, teleconsulta, dashboard, alertas) - Sprint 1
     path('api/agenda/', include('agenda.urls')),
+    path('api/', include('audit.urls')),
 ]
