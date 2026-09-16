@@ -13,6 +13,9 @@ import { PacienteListComponent } from './modules/pacientes/paciente-list.compone
 import { CalendarioAgendaComponent } from './modules/agenda/calendario-agenda.component';
 import { TeleconsultaRoomComponent } from './modules/teleconsulta/teleconsulta-room.component';
 import { AuditLogComponent } from './modules/audit/audit-log.component';
+import { ReportesHubComponent } from './modules/reportes/reportes-hub.component';
+import { ReporteVisorComponent } from './modules/reportes/reporte-visor.component';
+import { ReportePersonalizadoComponent } from './modules/reportes/reporte-personalizado.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -34,6 +37,10 @@ export const routes: Routes = [
       { path: 'psicologos', component: PsicologoListComponent },
       { path: 'pacientes', component: PacienteListComponent },
       { path: 'teleconsulta/:id', component: TeleconsultaRoomComponent },
+      // Módulo de Reportes Personalizables (Punto 5)
+      { path: 'reportes', component: ReportesHubComponent, canActivate: [adminCentroGuard] },
+      { path: 'reportes/personalizado', component: ReportePersonalizadoComponent, canActivate: [adminCentroGuard] },
+      { path: 'reportes/:fuente', component: ReporteVisorComponent, canActivate: [adminCentroGuard] },
     ]
   },
   { path: '**', redirectTo: 'login' }

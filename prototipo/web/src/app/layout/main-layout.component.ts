@@ -71,6 +71,13 @@ import { AuthService } from '../core/services/auth.service';
             <span>Roles y Permisos</span>
           </a>
 
+          <!-- Reportes Clínicos y Personalizables (Punto 5) -->
+          <a *ngIf="authService.isSuperAdmin() || authService.isAdminCentro()" 
+             routerLink="/reportes" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
+            <i class="fa-solid fa-chart-pie nav-icon"></i>
+            <span>Reportes Clínicos</span>
+          </a>
+
           <!-- MÓDULO CLÍNICO & AGENDA (Sprint 1) -->
           <ng-container *ngIf="!authService.isSuperAdmin() || authService.isInTenantContext()">
             <div class="nav-section-title">CLÍNICA Y CONSULTAS</div>
