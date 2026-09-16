@@ -83,7 +83,10 @@ class _ReservarCitaScreenState extends State<ReservarCitaScreen> {
     });
 
     final fechaStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
-    final slots = await _clinicaService.getSlotsDisponibles(_selectedPsicologo!.id, fechaStr);
+    final slots = await _clinicaService.getSlotsDisponibles(
+      _selectedPsicologo!.id,
+      fechaStr,
+    );
 
     setState(() {
       _slotsDisponibles = slots;
@@ -135,7 +138,9 @@ class _ReservarCitaScreenState extends State<ReservarCitaScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           backgroundColor: AppTheme.danger,
-          content: Text('No cuentas con un perfil de paciente activo para agendar citas.'),
+          content: Text(
+            'No cuentas con un perfil de paciente activo para agendar citas.',
+          ),
         ),
       );
       return;
@@ -161,29 +166,15 @@ class _ReservarCitaScreenState extends State<ReservarCitaScreen> {
       return;
     }
 
-    // Calcular hora inicio y fin a partir del slot
-    // Formatos comunes de slot: "08:00 - 08:50" o "08:00"
-    String horaInicio = '08:00:00';
-    String horaFin = '08:50:00';
-
-    if (_selectedSlot!.contains('-')) {
-      final parts = _selectedSlot!.split('-');
-      horaInicio = '${parts[0].trim()}:00';
-      horaFin = '${parts[1].trim()}:00';
-    } else {
-      horaInicio = '${_selectedSlot!.trim()}:00';
-      // calcular +50 minutos
-      try {
-        final timeParts = _selectedSlot!.split(':');
-        int h = int.parse(timeParts[0]);
-        int m = int.parse(timeParts[1]) + 50;
-        if (m >= 60) {
-          h += 1;
-          m -= 60;
-        }
-        horaFin = '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:00';
-      } catch (_) {}
-    }
+    // Convertir el horario visible al formato TimeField que espera Django.
+    final partesHorario = _selectedSlot!
+        .split('-')
+        .map((parte) => parte.trim())
+        .toList();
+    final horaInicio = _horaParaApi(partesHorario.first);
+    final horaFin = partesHorario.length > 1
+        ? _horaParaApi(partesHorario[1])
+        : _horaParaApi(_sumarMinutos(partesHorario.first, 50));
 
     setState(() => _isSubmitting = true);
 
@@ -198,7 +189,9 @@ class _ReservarCitaScreenState extends State<ReservarCitaScreen> {
       horaInicio: horaInicio,
       horaFin: horaFin,
       modalidad: _modalidad,
-      motivoConsulta: _motivoCtrl.text.trim().isNotEmpty ? _motivoCtrl.text.trim() : 'Consulta general de psicología',
+      motivoConsulta: _motivoCtrl.text.trim().isNotEmpty
+          ? _motivoCtrl.text.trim()
+          : 'Consulta general de psicología',
       costo: _selectedPsicologo!.tarifaBase,
     );
 
@@ -214,12 +207,21 @@ class _ReservarCitaScreenState extends State<ReservarCitaScreen> {
           barrierDismissible: false,
           builder: (ctx) => AlertDialog(
             backgroundColor: AppTheme.cardBg,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
             title: const Row(
               children: [
-                Icon(Icons.check_circle_rounded, color: AppTheme.success, size: 28),
+                Icon(
+                  Icons.check_circle_rounded,
+                  color: AppTheme.success,
+                  size: 28,
+                ),
                 SizedBox(width: 10),
-                Text('¡Cita Confirmada!', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(
+                  '¡Cita Confirmada!',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
               ],
             ),
             content: Column(
@@ -231,11 +233,20 @@ class _ReservarCitaScreenState extends State<ReservarCitaScreen> {
                   style: TextStyle(color: AppTheme.textMuted, fontSize: 13),
                 ),
                 const SizedBox(height: 14),
-                _buildModalDetail('Terapeuta', _selectedPsicologo!.nombreCompleto),
-                _buildModalDetail('Fecha', DateFormat('dd/MM/yyyy').format(_selectedDate)),
+                _buildModalDetail(
+                  'Terapeuta',
+                  _selectedPsicologo!.nombreCompleto,
+                ),
+                _buildModalDetail(
+                  'Fecha',
+                  DateFormat('dd/MM/yyyy').format(_selectedDate),
+                ),
                 _buildModalDetail('Horario', _selectedSlot!),
                 _buildModalDetail('Modalidad', _modalidad),
-                _buildModalDetail('Tarifa', 'Bs. ${_selectedPsicologo!.tarifaBase.toStringAsFixed(2)}'),
+                _buildModalDetail(
+                  'Tarifa',
+                  'Bs. ${_selectedPsicologo!.tarifaBase.toStringAsFixed(2)}',
+                ),
                 if (_modalidad == 'VIRTUAL') ...[
                   const SizedBox(height: 10),
                   Container(
@@ -246,12 +257,19 @@ class _ReservarCitaScreenState extends State<ReservarCitaScreen> {
                     ),
                     child: const Row(
                       children: [
-                        Icon(Icons.videocam_outlined, size: 18, color: AppTheme.primaryLight),
+                        Icon(
+                          Icons.videocam_outlined,
+                          size: 18,
+                          color: AppTheme.primaryLight,
+                        ),
                         SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             'La sala de teleconsulta se habilitará 15 minutos antes de la hora acordada.',
-                            style: TextStyle(fontSize: 11, color: AppTheme.primaryLight),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppTheme.primaryLight,
+                            ),
                           ),
                         ),
                       ],
@@ -264,7 +282,10 @@ class _ReservarCitaScreenState extends State<ReservarCitaScreen> {
               ElevatedButton(
                 onPressed: () {
                   Navigator.pop(ctx);
-                  Navigator.pop(context, true); // Retorna indicando que se creó cita
+                  Navigator.pop(
+                    context,
+                    true,
+                  ); // Retorna indicando que se creó cita
                 },
                 child: const Text('Ver Mis Citas'),
               ),
@@ -275,11 +296,30 @@ class _ReservarCitaScreenState extends State<ReservarCitaScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: AppTheme.danger,
-            content: Text(res['error'] ?? 'Error al agendar la cita. Es posible que el horario ya esté reservado.'),
+            content: Text(
+              res['error'] ??
+                  'Error al agendar la cita. Es posible que el horario ya esté reservado.',
+            ),
           ),
         );
       }
     }
+  }
+
+  String _horaParaApi(String hora) {
+    final match = RegExp(
+      r'^(\d{1,2}):(\d{2})(?::(\d{2})(?:\.\d{1,6})?)?$',
+    ).firstMatch(hora.trim());
+    if (match == null) return hora.trim();
+    return '${match.group(1)!.padLeft(2, '0')}:${match.group(2)}:${match.group(3) ?? '00'}';
+  }
+
+  String _sumarMinutos(String hora, int minutos) {
+    final partes = hora.split(':');
+    final total = (int.parse(partes[0]) * 60) + int.parse(partes[1]) + minutos;
+    final horas = (total ~/ 60) % 24;
+    final mins = total % 60;
+    return '${horas.toString().padLeft(2, '0')}:${mins.toString().padLeft(2, '0')}';
   }
 
   Widget _buildModalDetail(String label, String value) {
@@ -288,8 +328,18 @@ class _ReservarCitaScreenState extends State<ReservarCitaScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: AppTheme.textSubtle, fontSize: 12)),
-          Text(value, style: const TextStyle(color: AppTheme.textMain, fontSize: 12, fontWeight: FontWeight.bold)),
+          Text(
+            label,
+            style: const TextStyle(color: AppTheme.textSubtle, fontSize: 12),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              color: AppTheme.textMain,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ],
       ),
     );
@@ -299,7 +349,10 @@ class _ReservarCitaScreenState extends State<ReservarCitaScreen> {
   Widget build(BuildContext context) {
     String fechaFormateada;
     try {
-      fechaFormateada = DateFormat('EEEE, d MMMM yyyy', 'es').format(_selectedDate);
+      fechaFormateada = DateFormat(
+        'EEEE, d MMMM yyyy',
+        'es',
+      ).format(_selectedDate);
     } catch (_) {
       fechaFormateada = DateFormat('dd/MM/yyyy').format(_selectedDate);
     }
@@ -307,7 +360,10 @@ class _ReservarCitaScreenState extends State<ReservarCitaScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text('Reservar Cita', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+        title: const Text(
+          'Reservar Cita',
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+        ),
       ),
       body: _isLoadingInitial
           ? const Center(child: CircularProgressIndicator())
@@ -318,7 +374,10 @@ class _ReservarCitaScreenState extends State<ReservarCitaScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     // Paso 1: Seleccionar Terapeuta
-                    _buildStepHeader('1', 'SELECCIONA TU PSICÓLOGO / TERAPEUTA'),
+                    _buildStepHeader(
+                      '1',
+                      'SELECCIONA TU PSICÓLOGO / TERAPEUTA',
+                    ),
                     const SizedBox(height: 10),
                     _buildPsicologoSelector(),
                     const SizedBox(height: 20),
@@ -348,7 +407,8 @@ class _ReservarCitaScreenState extends State<ReservarCitaScreen> {
                       controller: _motivoCtrl,
                       maxLines: 2,
                       decoration: const InputDecoration(
-                        hintText: 'Ej: Consulta por ansiedad, seguimiento terapéutico...',
+                        hintText:
+                            'Ej: Consulta por ansiedad, seguimiento terapéutico...',
                         prefixIcon: Icon(Icons.notes_rounded),
                       ),
                     ),
@@ -361,10 +421,17 @@ class _ReservarCitaScreenState extends State<ReservarCitaScreen> {
                           ? const SizedBox(
                               width: 18,
                               height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
                             )
                           : const Icon(Icons.calendar_month_rounded),
-                      label: Text(_isSubmitting ? 'CONFIRMANDO RESERVA...' : 'CONFIRMAR Y AGENDAR CITA'),
+                      label: Text(
+                        _isSubmitting
+                            ? 'CONFIRMANDO RESERVA...'
+                            : 'CONFIRMAR Y AGENDAR CITA',
+                      ),
                     ),
                     const SizedBox(height: 20),
                   ],
@@ -387,13 +454,22 @@ class _ReservarCitaScreenState extends State<ReservarCitaScreen> {
           alignment: Alignment.center,
           child: Text(
             stepNum,
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
         ),
         const SizedBox(width: 8),
         Text(
           title,
-          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.4, color: AppTheme.textMuted),
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.4,
+            color: AppTheme.textMuted,
+          ),
         ),
       ],
     );
@@ -437,7 +513,11 @@ class _ReservarCitaScreenState extends State<ReservarCitaScreen> {
                     backgroundColor: AppTheme.primary.withOpacity(0.2),
                     child: Text(
                       psi.nombre.isNotEmpty ? psi.nombre[0].toUpperCase() : 'T',
-                      style: const TextStyle(fontSize: 12, color: AppTheme.primaryLight, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.primaryLight,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -448,12 +528,19 @@ class _ReservarCitaScreenState extends State<ReservarCitaScreen> {
                       children: [
                         Text(
                           psi.nombreCompleto,
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textMain),
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textMain,
+                          ),
                           overflow: TextOverflow.ellipsis,
                         ),
                         Text(
                           '${psi.especialidades.isNotEmpty ? psi.especialidades.join(", ") : "Psicología General"} • Bs. ${psi.tarifaBase.toStringAsFixed(0)}',
-                          style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppTheme.textMuted,
+                          ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ],
@@ -484,10 +571,14 @@ class _ReservarCitaScreenState extends State<ReservarCitaScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
               decoration: BoxDecoration(
-                color: _modalidad == 'PRESENCIAL' ? AppTheme.primary.withOpacity(0.2) : AppTheme.cardBg,
+                color: _modalidad == 'PRESENCIAL'
+                    ? AppTheme.primary.withOpacity(0.2)
+                    : AppTheme.cardBg,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: _modalidad == 'PRESENCIAL' ? AppTheme.primary : AppTheme.borderSubtle,
+                  color: _modalidad == 'PRESENCIAL'
+                      ? AppTheme.primary
+                      : AppTheme.borderSubtle,
                   width: _modalidad == 'PRESENCIAL' ? 1.8 : 1,
                 ),
               ),
@@ -497,7 +588,9 @@ class _ReservarCitaScreenState extends State<ReservarCitaScreen> {
                   Icon(
                     Icons.location_on_outlined,
                     size: 18,
-                    color: _modalidad == 'PRESENCIAL' ? AppTheme.primaryLight : AppTheme.textMuted,
+                    color: _modalidad == 'PRESENCIAL'
+                        ? AppTheme.primaryLight
+                        : AppTheme.textMuted,
                   ),
                   const SizedBox(width: 8),
                   Text(
@@ -505,7 +598,9 @@ class _ReservarCitaScreenState extends State<ReservarCitaScreen> {
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
-                      color: _modalidad == 'PRESENCIAL' ? AppTheme.textMain : AppTheme.textMuted,
+                      color: _modalidad == 'PRESENCIAL'
+                          ? AppTheme.textMain
+                          : AppTheme.textMuted,
                     ),
                   ),
                 ],
@@ -521,10 +616,14 @@ class _ReservarCitaScreenState extends State<ReservarCitaScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
               decoration: BoxDecoration(
-                color: _modalidad == 'VIRTUAL' ? AppTheme.secondary.withOpacity(0.2) : AppTheme.cardBg,
+                color: _modalidad == 'VIRTUAL'
+                    ? AppTheme.secondary.withOpacity(0.2)
+                    : AppTheme.cardBg,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: _modalidad == 'VIRTUAL' ? AppTheme.secondary : AppTheme.borderSubtle,
+                  color: _modalidad == 'VIRTUAL'
+                      ? AppTheme.secondary
+                      : AppTheme.borderSubtle,
                   width: _modalidad == 'VIRTUAL' ? 1.8 : 1,
                 ),
               ),
@@ -534,7 +633,9 @@ class _ReservarCitaScreenState extends State<ReservarCitaScreen> {
                   Icon(
                     Icons.videocam_outlined,
                     size: 18,
-                    color: _modalidad == 'VIRTUAL' ? const Color(0xFFA5B4FC) : AppTheme.textMuted,
+                    color: _modalidad == 'VIRTUAL'
+                        ? const Color(0xFFA5B4FC)
+                        : AppTheme.textMuted,
                   ),
                   const SizedBox(width: 8),
                   Text(
@@ -542,7 +643,9 @@ class _ReservarCitaScreenState extends State<ReservarCitaScreen> {
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
-                      color: _modalidad == 'VIRTUAL' ? AppTheme.textMain : AppTheme.textMuted,
+                      color: _modalidad == 'VIRTUAL'
+                          ? AppTheme.textMain
+                          : AppTheme.textMuted,
                     ),
                   ),
                 ],
@@ -573,18 +676,29 @@ class _ReservarCitaScreenState extends State<ReservarCitaScreen> {
                 color: AppTheme.primary.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.calendar_today_rounded, color: AppTheme.primaryLight, size: 20),
+              child: const Icon(
+                Icons.calendar_today_rounded,
+                color: AppTheme.primaryLight,
+                size: 20,
+              ),
             ),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Fecha seleccionada', style: TextStyle(fontSize: 11, color: AppTheme.textSubtle)),
+                  const Text(
+                    'Fecha seleccionada',
+                    style: TextStyle(fontSize: 11, color: AppTheme.textSubtle),
+                  ),
                   const SizedBox(height: 2),
                   Text(
                     DateFormat('dd/MM/yyyy').format(_selectedDate),
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.textMain),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textMain,
+                    ),
                   ),
                 ],
               ),
@@ -596,7 +710,14 @@ class _ReservarCitaScreenState extends State<ReservarCitaScreen> {
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: AppTheme.borderSubtle),
               ),
-              child: const Text('Cambiar', style: TextStyle(fontSize: 11, color: AppTheme.primaryLight, fontWeight: FontWeight.bold)),
+              child: const Text(
+                'Cambiar',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: AppTheme.primaryLight,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         ),
@@ -613,7 +734,10 @@ class _ReservarCitaScreenState extends State<ReservarCitaScreen> {
           children: [
             CircularProgressIndicator(strokeWidth: 2),
             SizedBox(height: 8),
-            Text('Consultando disponibilidad en tiempo real...', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+            Text(
+              'Consultando disponibilidad en tiempo real...',
+              style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
+            ),
           ],
         ),
       );
@@ -660,11 +784,19 @@ class _ReservarCitaScreenState extends State<ReservarCitaScreen> {
               color: isSelected ? AppTheme.primary : AppTheme.cardBg,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isSelected ? AppTheme.primaryLight : AppTheme.borderSubtle,
+                color: isSelected
+                    ? AppTheme.primaryLight
+                    : AppTheme.borderSubtle,
                 width: isSelected ? 1.5 : 1,
               ),
               boxShadow: isSelected
-                  ? [BoxShadow(color: AppTheme.primary.withOpacity(0.4), blurRadius: 8, offset: const Offset(0, 3))]
+                  ? [
+                      BoxShadow(
+                        color: AppTheme.primary.withOpacity(0.4),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ]
                   : null,
             ),
             child: Row(

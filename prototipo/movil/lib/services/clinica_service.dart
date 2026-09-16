@@ -24,9 +24,14 @@ class ClinicaService {
   }
 
   /// HU-14: Actualizar datos personales, contacto de emergencia y tutor legal
-  Future<Map<String, dynamic>> updateMiPerfil(String pacienteId, Map<String, dynamic> datos) async {
+  Future<Map<String, dynamic>> updateMiPerfil(
+    String pacienteId,
+    Map<String, dynamic> datos,
+  ) async {
     try {
-      final url = Uri.parse('${authService.baseUrl}${ApiConstants.pacientes}$pacienteId/');
+      final url = Uri.parse(
+        '${authService.baseUrl}${ApiConstants.pacientes}$pacienteId/',
+      );
       final response = await http.patch(
         url,
         headers: authService.getHeaders(),
@@ -67,7 +72,10 @@ class ClinicaService {
   }
 
   /// HU-15 / HU-16: Obtener slots horarios libres para un psicólogo en una fecha
-  Future<List<String>> getSlotsDisponibles(String psicologoId, String fecha) async {
+  Future<List<String>> getSlotsDisponibles(
+    String psicologoId,
+    String fecha,
+  ) async {
     try {
       final url = Uri.parse(
         '${authService.baseUrl}${ApiConstants.citasSlotsDisponibles}?psicologo_id=$psicologoId&fecha=$fecha',
@@ -75,11 +83,32 @@ class ClinicaService {
       final response = await http.get(url, headers: authService.getHeaders());
       if (response.statusCode == 200) {
         final data = jsonDecode(utf8.decode(response.bodyBytes));
-        if (data['slots'] is List) {
-          return (data['slots'] as List).map((s) => s.toString()).toList();
+        final rawSlots = data is Map ? data['slots'] : data;
+        if (rawSlots is List) {
+          return rawSlots
+              .where((slot) => slot is Map && slot['disponible'] != false)
+              .map((slot) {
+                if (slot is Map) {
+                  final inicio = _horaParaPantalla(slot['hora_inicio']);
+                  final fin = _horaParaPantalla(slot['hora_fin']);
+                  return '$inicio - $fin';
+                }
+                return _horaParaPantalla(slot);
+              })
+              .where((slot) => slot.isNotEmpty)
+              .toList();
         }
       }
     } catch (_) {}
     return [];
+  }
+
+  String _horaParaPantalla(dynamic value) {
+    final raw = value?.toString().trim() ?? '';
+    final match = RegExp(
+      r'^(\d{1,2}):(\d{2})(?::\d{2}(?:\.\d{1,6})?)?$',
+    ).firstMatch(raw);
+    if (match == null) return raw;
+    return '${match.group(1)!.padLeft(2, '0')}:${match.group(2)}';
   }
 }
