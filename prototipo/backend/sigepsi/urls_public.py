@@ -15,5 +15,5 @@ urlpatterns = [
     path('api/', include('core.urls')),
     path('api/clinica/', include('clinica.urls')),
     path('api/agenda/', include('agenda.urls')),
+    path('api/', include('audit.urls')),
 ]
-

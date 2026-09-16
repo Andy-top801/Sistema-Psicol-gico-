@@ -54,6 +54,11 @@ import { AuthService } from '../core/services/auth.service';
             <span>Centros Psicológicos</span>
           </a>
 
+          <a *ngIf="authService.isSuperAdmin()" routerLink="/audit" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
+            <i class="fa-solid fa-clipboard-list nav-icon"></i>
+            <span>Bitácora de auditoría</span>
+          </a>
+
           <!-- Usuarios -->
           <a routerLink="/users" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
             <i class="fa-solid fa-users nav-icon"></i>

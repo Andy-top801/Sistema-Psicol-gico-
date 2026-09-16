@@ -12,6 +12,7 @@ import { PsicologoListComponent } from './modules/psicologos/psicologo-list.comp
 import { PacienteListComponent } from './modules/pacientes/paciente-list.component';
 import { CalendarioAgendaComponent } from './modules/agenda/calendario-agenda.component';
 import { TeleconsultaRoomComponent } from './modules/teleconsulta/teleconsulta-room.component';
+import { AuditLogComponent } from './modules/audit/audit-log.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -24,6 +25,7 @@ export const routes: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: DashboardComponent },
       { path: 'tenants', component: TenantListComponent, canActivate: [superAdminGuard] },
+      { path: 'audit', component: AuditLogComponent, canActivate: [superAdminGuard] },
       { path: 'users', component: UserListComponent, canActivate: [adminCentroGuard] },
       { path: 'roles', component: RoleListComponent, canActivate: [adminCentroGuard] },
       { path: 'centro', component: CentroConfigComponent, canActivate: [adminCentroGuard] },
@@ -36,4 +38,3 @@ export const routes: Routes = [
   },
   { path: '**', redirectTo: 'login' }
 ];
-

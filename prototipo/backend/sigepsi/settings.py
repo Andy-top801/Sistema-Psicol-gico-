@@ -36,6 +36,7 @@ SHARED_APPS = [
     'accounts',
     'clinica',
     'agenda',
+    'audit',
 ]
 
 TENANT_APPS = [
@@ -61,6 +62,7 @@ DATABASE_ROUTERS = (
 
 MIDDLEWARE = [
     'tenants.middleware.SigepsiTenantMiddleware',
+    'audit.middleware.AuditLogMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -191,6 +193,7 @@ LANGUAGE_CODE = 'es-bo'
 TIME_ZONE = 'America/La_Paz'
 USE_I18N = True
 USE_TZ = True
+AUDIT_LOG_KEY = os.environ.get('AUDIT_LOG_KEY', '')
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
@@ -220,4 +223,3 @@ JITSI_DOMAIN = os.environ.get('JITSI_DOMAIN', 'meet.jit.si')
 JITSI_APP_ID = os.environ.get('JITSI_APP_ID', 'sigepsi_app')
 JITSI_APP_SECRET = os.environ.get('JITSI_APP_SECRET', 'sigepsi_jitsi_jwt_secret_key_2026')
 JITSI_USE_JWT = os.environ.get('JITSI_USE_JWT', 'False').lower() in ('true', '1', 'yes')
-

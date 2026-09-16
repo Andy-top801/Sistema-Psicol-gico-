@@ -35,6 +35,8 @@ services:
         generateValue: true
       - key: DJANGO_DEBUG
         value: "False"
+      - key: AUDIT_LOG_KEY
+        generateValue: true
       - key: DJANGO_ALLOWED_HOSTS
         value: "*"
       - key: PORT
