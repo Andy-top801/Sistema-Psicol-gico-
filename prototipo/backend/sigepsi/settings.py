@@ -38,6 +38,7 @@ SHARED_APPS = [
     'agenda',
     'audit',
     'reportes',
+    'subscriptions',
 ]
 
 TENANT_APPS = [
@@ -225,3 +226,10 @@ JITSI_DOMAIN = os.environ.get('JITSI_DOMAIN', 'meet.jit.si')
 JITSI_APP_ID = os.environ.get('JITSI_APP_ID', 'sigepsi_app')
 JITSI_APP_SECRET = os.environ.get('JITSI_APP_SECRET', 'sigepsi_jitsi_jwt_secret_key_2026')
 JITSI_USE_JWT = os.environ.get('JITSI_USE_JWT', 'False').lower() in ('true', '1', 'yes')
+
+# -----------------------------------------------------------------------------
+# STRIPE CONFIGURATION (Pasarela de Pagos - Punto 7+8)
+# -----------------------------------------------------------------------------
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
+STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', '')
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')

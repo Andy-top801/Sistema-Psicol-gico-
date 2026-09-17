@@ -78,6 +78,10 @@
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   font-family: var(--font-main);
   background-color: var(--bg-main);
@@ -86,6 +90,37 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbars limpios e invisibles (permite scroll completo con mouse/touch sin barras toscas) */
+.hide-scrollbar,
+.sidebar-nav,
+.landing-body {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+.hide-scrollbar::-webkit-scrollbar,
+.sidebar-nav::-webkit-scrollbar,
+.landing-body::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Scrollbar global estilizado sutil para el resto de elementos si se requiere */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(25, 115, 78, 0.22);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(25, 115, 78, 0.45);
 }
 
 /* Base Cards & Panels */

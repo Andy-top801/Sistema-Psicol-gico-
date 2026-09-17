@@ -67,6 +67,34 @@ export interface AuthResponse {
   rol: string;
   usuario: Usuario;
   tenant?: Tenant;
+  must_change_password?: boolean;
+}
+
+export interface Plan {
+  id: string;
+  nombre: string;
+  precio_mensual: number;
+  moneda: string;
+  max_psicologos: number;
+  max_pacientes: number;
+  recomendado?: boolean;
+  features: string[];
+}
+
+export interface CheckoutResponse {
+  checkout_url: string;
+  session_id: string;
+}
+
+export interface VerifyResponse {
+  success: boolean;
+  centro_nombre: string;
+  email: string;
+  mensaje: string;
+  password_temporal?: string;
+  tenant_slug?: string;
+  login_url?: string;
+  ya_procesado?: boolean;
 }
 
 export * from './clinica.model';

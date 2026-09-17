@@ -243,6 +243,13 @@ import { AuthService } from '../core/services/auth.service';
       flex: 1;
       padding: 10px 14px 20px;
       overflow-y: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .sidebar-nav::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
     }
     .nav-section-title {
       font-size: 0.72rem;

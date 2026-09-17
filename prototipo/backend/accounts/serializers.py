@@ -336,7 +336,8 @@ class LoginSerializer(serializers.Serializer):
             'refresh': str(refresh),
             'rol': rol_nombre,
             'usuario': UsuarioSerializer(user).data,
-            'tenant': tenant_data
+            'tenant': tenant_data,
+            'must_change_password': getattr(user, 'must_change_password', False),
         }
 
 

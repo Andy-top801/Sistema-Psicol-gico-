@@ -3,7 +3,8 @@ from rest_framework.routers import DefaultRouter
 from accounts.views import (
     RegistroView, LoginView, LogoutView,
     PasswordResetRequestView, PasswordResetConfirmView,
-    UsuarioViewSet, RolViewSet, PermisoListView, MeView
+    UsuarioViewSet, RolViewSet, PermisoListView, MeView,
+    ForceChangePasswordView,
 )
 
 router = DefaultRouter()
@@ -18,6 +19,7 @@ urlpatterns = [
     path('auth/password-reset/', PasswordResetRequestView.as_view(), name='password-reset-request'),
     path('auth/password-reset-confirm/', PasswordResetConfirmView.as_view(), name='password-reset-confirm'),
     path('auth/me/', MeView.as_view(), name='auth-me'),
+    path('auth/force-change-password/', ForceChangePasswordView.as_view(), name='force-change-password'),
     
     # Permisos
     path('permisos/', PermisoListView.as_view(), name='permisos-list'),

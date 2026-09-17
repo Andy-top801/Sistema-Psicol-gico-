@@ -81,6 +81,7 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     rol = models.ForeignKey(Rol, on_delete=models.SET_NULL, null=True, blank=True, related_name="usuarios")
     activo = models.BooleanField(default=True, verbose_name="Activo")
     is_staff = models.BooleanField(default=False)
+    must_change_password = models.BooleanField(default=False, verbose_name="Debe cambiar contraseña")
     fecha_creacion = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Registro")
 
     objects = UsuarioManager()

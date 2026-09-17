@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { authGuard, superAdminGuard, adminCentroGuard } from './core/guards/auth.guard';
 import { LoginComponent } from './modules/auth/login/login.component';
 import { PasswordResetComponent } from './modules/auth/password-reset/password-reset.component';
+import { ForcePasswordChangeComponent } from './modules/auth/force-password-change/force-password-change.component';
 import { MainLayoutComponent } from './layout/main-layout.component';
 import { DashboardComponent } from './modules/dashboard/dashboard.component';
 import { TenantListComponent } from './modules/tenants/tenant-list.component';
@@ -24,10 +25,17 @@ import { NotaSoapEditorComponent } from './modules/notas-soap/nota-soap-editor.c
 import { TareasGestorComponent } from './modules/tareas/tareas-gestor.component';
 import { ConsentimientosHubComponent } from './modules/consentimientos/consentimientos-hub.component';
 import { DerivacionFormComponent } from './modules/derivaciones/derivacion-form.component';
+// Punto 7+8: Landing Page SaaS con Stripe
+import { LandingPageComponent } from './modules/landing/landing-page.component';
+import { CheckoutSuccessComponent } from './modules/landing/checkout-success.component';
 
 export const routes: Routes = [
+  // Rutas públicas — Landing Page y Suscripción (Punto 7+8)
+  { path: 'landing', component: LandingPageComponent },
+  { path: 'checkout-success', component: CheckoutSuccessComponent },
   { path: 'login', component: LoginComponent },
   { path: 'password-reset', component: PasswordResetComponent },
+  { path: 'force-password-change', component: ForcePasswordChangeComponent, canActivate: [authGuard] },
   {
     path: '',
     component: MainLayoutComponent,
@@ -61,5 +69,5 @@ export const routes: Routes = [
       { path: 'derivaciones/nueva', component: DerivacionFormComponent },
     ]
   },
-  { path: '**', redirectTo: 'login' }
+  { path: '**', redirectTo: 'landing' }
 ];

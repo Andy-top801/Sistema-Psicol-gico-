@@ -363,3 +363,60 @@ class MeView(APIView):
             "permisos": permisos,
             "tenant": request.tenant.nombre if request.tenant else "Public / Plataforma Global"
         })
+
+
+class ForceChangePasswordView(APIView):
+    """
+    ═══════════════════════════════════════════════════════════════════════════
+    Punto 7+8: Cambio Obligatorio de Contraseña (Post-Suscripción)
+    POST /api/auth/force-change-password/
+    Permite al usuario cambiar su contraseña temporal tras la creación
+    automática de cuenta vía suscripción Stripe.
+    ═══════════════════════════════════════════════════════════════════════════
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        current_password = request.data.get('current_password', '')
+        new_password = request.data.get('new_password', '')
+        new_password_confirm = request.data.get('new_password_confirm', '')
+
+        if not current_password or not new_password or not new_password_confirm:
+            return Response(
+                {"error": "Todos los campos son obligatorios: current_password, new_password, new_password_confirm"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if new_password != new_password_confirm:
+            return Response(
+                {"error": "Las contraseñas nuevas no coinciden."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if len(new_password) < 8:
+            return Response(
+                {"error": "La nueva contraseña debe tener al menos 8 caracteres."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = request.user
+        if not user.check_password(current_password):
+            return Response(
+                {"error": "La contraseña actual es incorrecta."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if current_password == new_password:
+            return Response(
+                {"error": "La nueva contraseña no puede ser igual a la actual."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user.set_password(new_password)
+        user.must_change_password = False
+        user.save()
+
+        return Response(
+            {"mensaje": "Contraseña actualizada exitosamente. Ya puede usar la plataforma con normalidad."},
+            status=status.HTTP_200_OK,
+        )
