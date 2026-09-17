@@ -1,0 +1,141 @@
+================================================================================
+TRANSCRIPCIÓN DETALLADA Y COMPLETA DEL AUDIO
+Materia: Arquitectura de Software / Soluciones Universales y Multi-Tenant SaaS
+Fuente: Voz 260915_075653.m4a (Duración aprox. 40 min - 100% de pasajes transcritos)
+================================================================================
+
+[00:00 - 01:30] 1. Solución Universal e Historias de Usuario
+Física para que vayan avanzando. Tal vez hasta el día miércoles cuando ustedes presenten de repente no han terminado todas, por eso dice avance, no, no significa que de las ocho características ustedes tienen avance. Puede ser que alguien diga, he trabajado con todo lo que historias de lo que son los usuarios y todas las historias de lasoras que lo tienen todos ustedes. Entonces, me imagino que lo deben tener el 100% completado porque es lo primero que han hecho de la parte de solución universal. De repente lo están trabajando todavía. ¿Qué significa solución universal? Estamos haciendo exclusivamente para una sola empresa. Todo lo que ustedes están desarrollando ahora es para un rubro.
+
+[01:30 - 03:00] 2. Aplicación por Rubro (Salud, Educación, Oftalmología)
+Por ejemplo, si ustedes dijeran que yo estoy trabajando para los tipos de educación, por decir, de colegio o la parte de salud, como decir este odontólogo tal vez este había oftalmología. La lista significa de que no solamente ustedes van a encontrar un solo oftalmólogo en Santa Cruz, van a encontrar ustedes muchas clínicas, muchos consultorios dedicados a este rubro. Entonces, lo primero que hace un oftalmólogo, a lo mejor es hacerle algunas características básicas del paciente, como ver su medición, tal vez verle qué tipo de letra puede identificar de cerca, de lejos y todo lo demás, que eso lo hace a todos los pacientes. Pero hay pacientes que vienen con otro tipo de necesidad, es decir, necesita otro tipo de tratamiento, de repente necesita una cirugía, necesita tal cosa. ¿Entonces qué significa?
+
+[03:00 - 04:30] 3. Plataforma Multitenant / SaaS para Múltiples Escenarios
+Que ustedes el software que están haciendo debe ser válido tanto para un consultorio, para una clínica, para varios médicos de repente que se han asociado y abren un consultorio y los médicos saben ustedes que tienen muchas especialidades. Entonces, dependiendo qué especialidad nosotros buscamos, es lo que hay. Entonces, si yo desarrollara esto para oftalmólogo, significa de que este mismo software, por eso se llama plataforma, ¿no es cierto?, le debe servir a cualquiera de los oftalmólogos que están en diferentes tipos de escenarios, ya sea consultorio, ya sea clínica. Es por eso que estamos manejando del tipo tenant. Imagino que ya lo han leído, qué es un tenant. Y si no lo han leído tienen que hacerlo porque este es el cumplimiento que debería tener porque dice de modo SAS. Entonces es así que dice: Solución Universal.
+
+[04:30 - 06:00] 4. Estandarización Regulada (Ejemplo Colegios Fiscales y Particulares)
+El sistema debe ser desarrollado para permitir ser colocado en cualquier empresa o negocio donde requiera la aplicación. Entonces no hay el pretexto aquí, por ejemplo, que digan "es que el dueño no lo maneja así". No hay más que un dueño, no hay más que el propietario como cuando hacían el sistema uno, no, aquí no. Solución universal le sirve a cualquiera en cualquier rubro. Lo mismo si yo hiciera para colegio debería servirle tanto a un colegio fiscal, particular o de convenio, a cualquiera. ¿Cuál es la diferencia? Que de repente el fiscal no se lleva el módulo de pago porque los fiscales no pagan, pero los particulares sí pagan. Pero la parte académica, no importa si es fiscal o particular, hay un Ministerio de Educación que le dice y regula que todos los colegios deben ser trimestrales. Entonces, el colegio no va a decir: "nosotros decidimos que sea semestral para que aprovechen mejor los alumnos". No puede decidir eso.
+
+[06:00 - 07:30] 5. Módulos del Sistema y Registro RUDE
+El Ministerio de Educación regula y dice: "Ustedes están con los conocimientos ser, saber, hacer y decidir y quitar uno". Entonces, si quitó uno, todos deben sujetárselo a la misma regla. No es de que yo sigo con los cuatro, no. Si sigue con los cuatro está fuera de la exigencia y estandarización que pide el ministerio. Entonces, yo hago colegio, pero tengo varios módulos. Tengo el académico, tengo el de pago, tengo el de contabilidad, tengo todo. ¿Qué significa? Que si este es un colegio fiscal, no tendrá el módulo de pago, pero sí tiene toda la parte académica, la administración. Colegios de convenio o fiscales siempre le van a pedir el RUDE porque es el registro único que llena todos los estudiantes que solo maneja Seduca. ¿Me entienden? Entonces, no estamos haciendo nada más para una determinada empresa. El que no demuestra que es universal, no hay nada más que hacerle en su trabajo. Debe ser universal y trabajar con infraestructura SAS.
+
+[07:30 - 09:00] 6. Autenticación, Autorización y Bitácora
+En cuanto a usuario y bitácora, en esto no hay problema porque lo han trabajado bien. Han trabajado inclusive con autorización y autenticación como le denominamos para que puedan visualizar los perfiles por grupo, por nivel, como ustedes quisieran asignar los privilegios. Desde el comienzo han trabajado sin ninguna dificultad. En la bitácora tienen la captura del IP, de las acciones que hace cada usuario, la hora y la fecha, tal vez la configuración del servidor (no tomarlo si está en Canadá o Europa; la configuración siempre es la nuestra). Hasta ahí vamos. Vamos con la parte número cuatro: Facilidad de Uso.
+
+[09:00 - 10:30] 7. Facilidad de Uso y Barras de Herramientas (Toolbar)
+Sucede que el software que se realiza es para un conjunto de negocios y en cada negocio hay un conjunto de personas con diferentes perfiles para ingresar. Tal como ustedes cuando ingresan a cualquier software, empiezan a visualizar y miran todas las funcionalidades que se les presenta. En la mayoría de los casos, si miran procesadores de texto como Microsoft Office, observan que no importa cualquiera de las versiones que manejen, tienen un conjunto de opciones y las opciones más usadas por los usuarios las colocan en un toolbar (barra de herramientas). ¿Qué colocan ahí? Lo más usado: copiar, cortar, pegar, imprimir.
+
+[10:30 - 12:00] 8. Atajos de Teclado, Mouse y Búsqueda Ágil
+En vez de abrir una de las opciones y capturar lo que quieren copiar, lo manejan con las herramientas que están ahí. Si le queremos dar mayor facilidad al usuario, manejando bien las teclas saben cómo copiar y cortar sin ir a la barra de herramientas. En el teclado están configuradas las operaciones más necesarias y el mouse no solo sirve para deslizar, también para funcionalidades más usadas. Cuando estoy dentro de un software y busco algo y no me acuerdo, hay una búsqueda donde anoto el nombre y me sale todo lo que coincide.
+
+[12:00 - 13:30] 9. Optimización de Tiempos y Estandarización de Prototipos
+Todas las mejoras que yo le pueda brindar como facilidad de uso son para que el usuario pueda trabajar en tiempos más optimizados, que no le demore hacer tres clics para recién encontrar lo que busca. Todo debería estar directamente en sus manos. Incluso los prototipos que se van haciendo tienen el mismo formato en la mayoría, para que el usuario o médico que recién ingresa se familiarice rápido al ver que todas las características tienen el mismo estilo de presentación. Eso deben buscar en facilidad de uso.
+
+[13:30 - 15:00] 10. Reportes Personalizados y Búsqueda por Voz (IA Móvil)
+Punto 5: Reportes Personalizados. Los reportes son la parte más importante de una empresa porque me dan la característica exacta de cómo anda mi negocio. Cuando tengo un software en el servidor en la nube, el dueño puede estar en otro país y ver en línea lo que pasa. Debe permitir emitir reportes en varios formatos: Excel, HTML, PDF o el que quieran agregar. Pero también debe permitir hacer búsquedas por comando de voz (recurso de IA) para solicitar consultas. Esto se trabaja en la parte móvil, porque ahí es donde más se necesita.
+
+[15:00 - 16:30] 11. Casos de Uso de Consultas por Voz en Dispositivos Móviles
+Es como el dueño que pregunta por voz: "¿Cuáles son los productos con stock mínimo que debo comprar?". Y el sistema le responde: "Producto 1 tiene 5, producto 10 tiene 4, producto 20 tiene 7". El dueño dice: "Elabórame un pedido y coloca 100 unidades a cada uno". Se construye la orden hablando en vez de escribir. O consultar: "Quiero ver el reporte del día viernes, qué horarios del oftalmólogo están disponibles", y el reporte indica: 9:00 AM, 11:00 AM y 3:00 PM. Cada grupo debe buscar en su proyecto lo más importante para consultas y reportes por voz.
+
+[16:30 - 18:00] 12. Backup y Restauración (Copia de Seguridad)
+Punto 6: Backup y Restauración. La información dentro de la base de datos requiere copias de seguridad. Tal como configuran su celular para respaldar en la nube a las 3:00 AM y poder recuperar su información si cambian de dispositivo. En una empresa la información es lo más valioso. Puede haber un incendio o una catástrofe, pero si está en un servidor en la nube con protección y seguridad, la información se preserva. Si roban la computadora se compra otra, pero la información perdida no se compra con toda la plata del mundo.
+
+[18:00 - 19:30] 13. Backups Manuales, Automáticos y Políticas de Almacenamiento
+El backup me lo van a hacer de dos formas:
+1. De manera manual: en el momento que el usuario decida hacer la copia.
+2. De manera automática: programado (por ejemplo, todos los días a la 1:00 AM).
+Tengan cuidado con las cuotas de almacenamiento en servidores gratuitos para no agotar el espacio permitido. La información debe poder resguardarse de manera limpia y controlada.
+
+[19:30 - 21:00] 14. Restauración de Datos e Históricos de Gestiones Pasadas
+Restauración: Si cierra agosto y empieza septiembre, o si finaliza la gestión 2025 (del 1 de enero al 31 de diciembre), se hace un cierre de gestión. Si más adelante se quiere analizar el comportamiento de ventas o mercadería de septiembre de 2025 frente a la gestión actual, la persona recupera la copia de la gestión 2025. No puede modificar nada (solo lectura), pero puede consultar toda la información, emitir reportes y analizar qué ocurrió. Se pueden tener varias gestiones abiertas para consulta.
+
+[21:00 - 22:30] 15. Enfoque Web y Móvil Obligatorio en Modelo SaaS
+Punto 7: Enfoque Web y Móvil. Es obligatorio en el modelo SaaS tanto para el proyecto como para el examen. No se permite que solo un integrante programe en móvil y cuatro en web con la excusa de "no conocer la herramienta". En esta carrera la tecnología cambia exponencialmente (a diferencia de carreras lineales como Derecho donde las leyes cambian lentamente). En informática hay que aprender herramientas nuevas todos los días.
+
+[22:30 - 24:00] 16. Uso Crítico de la IA y Arquitectura de 3 Capas en UML
+No permitan que la IA los maneje a ustedes; ustedes deben dominar la IA. Por ejemplo, en los diagramas de secuencia UML, la IA suele colocar únicamente la Base de Datos arriba. Eso no sirve en la documentación de esta materia. Exijo que en el diagrama de secuencia se visualicen claramente las 3 capas:
+- Clase Interfaz
+- Clase Control
+- Clase Entidad
+Si la IA genera solo la base de datos, deben personalizarlo y corregirlo.
+
+[24:00 - 25:30] 17. Los 3 Escenarios Fundamentales del Desarrollo de Software
+Existen tres escenarios indispensables para el desarrollo de software:
+1. Modelo de Clases (Diagrama de clases / App).
+2. Requisitos, Casos de Uso y Modelo de Negocio (definición funcional).
+3. Arquitectura del Software.
+Para el examen y proyecto, en las transacciones (ventas, compras, intercambio/cambio de prendas por talla) se exige diseñar: Diagramas de Secuencia, Diagramas de Tiempo y Diagramas de Estado.
+
+[25:30 - 27:00] 18. Medición de Tiempos en Transacciones e Intercambio de Productos
+Las transacciones deben contemplar casos reales como el cambio de prenda si la talla no fue la adecuada. Se debe medir el tiempo del proceso: compromisos de entrega (ej. viernes a las 10:00 AM) o transacciones presenciales en tienda medidas en minutos/segundos. En el sistema web y móvil deben verse reflejados estos modelos.
+
+[27:00 - 28:30] 19. Modelo SaaS y Multi-tenant (Poblado masivo de datos)
+Punto 8: Modelo SaaS y Multi-tenant. Cada grupo debe simular una plataforma multi-tenant con múltiples empresas (10, 15 o más empresas/tenants). Cada empresa debe tener su propio conjunto de datos cargado (usando Data Generators o scripts) con historial de 6 meses o 1 año. No se aceptan bases de datos en blanco. El Administrador SaaS es el único que gestiona las empresas registradas.
+
+[28:30 - 30:00] 20. Práctico Teórico: Conceptos de SaaS e IaaS
+Revisión del práctico sobre SaaS e IaaS.
+- SaaS (Software as a Service): Software como servicio accesible 24/7 vía navegador web o app móvil con conexión a Internet.
+- IaaS (Infrastructure as a Service): Infraestructura de hardware/servidores en la nube sobre la cual corre el SaaS.
+- Tenant: Cliente, empresa u organización que contrata el servicio. Cada tenant tiene sus propios usuarios, datos, configuraciones y permisos separados.
+
+[30:00 - 31:30] 21. Ejemplo Práctico: Colegios bajo Plataforma SaaS
+Ejemplo de SaaS para colegios:
+- Colegio 1: Alumnos, profesores, notas, pagos, inventario académico.
+- Colegio 2: Mismo sistema, pero datos aislados.
+Ambos colegios utilizan exactamente el mismo software e infraestructura en la nube, pero la información está 100% separada y no se mezcla en ningún momento.
+
+[31:30 - 33:00] 22. Definición y Tabla Comparativa: Single-Tenant vs Multi-Tenant
+Arquitectura Multi-tenant: Una única aplicación e infraestructura sirve a múltiples clientes (tenants) al mismo tiempo compartiendo recursos (servidores, base de datos, código).
+Comparativa Single-Tenant vs Multi-Tenant:
+- Costos: Muy altos en Single-Tenant; significativamente más bajos en Multi-Tenant.
+- Mantenimiento y Actualizaciones: Complejo e individual en Single-Tenant; centralizado, ágil y automático para todos los clientes en Multi-Tenant.
+- Eficiencia de recursos: Optimizada al máximo en Multi-Tenant.
+
+[33:00 - 34:30] 23. Caso de Estudio: SaaS para Universidades y Microservicios
+Caso de universidades reguladas por el CEUB / Mercosur: Universidad A, B y C comparten el mismo software académico (inscripciones, pagos, actas de notas, boletines, mesas de examen).
+Arquitectura por Microservicios: Descomposición del sistema en servicios independientes integrados (Servicio Académico, Servicio de Pagos, Servicio de Postulantes), cada uno con su almacenamiento especializado.
+
+[34:30 - 36:00] 24. Plataforma SaaS vs Aplicación Tradicional y Tech Stack
+Diferencia técnica:
+- Plataforma SaaS: Se consume directamente vía web/navegador sin necesidad de instalación local.
+- Aplicación Móvil / Nativa: Requiere descarga e instalación en el dispositivo.
+Stack tecnológico permitido en la materia:
+- Backend: Python (FastAPI, Django, Flask).
+- Frontend: Libre elección (Angular, React, etc.).
+- Base de datos: PostgreSQL, MongoDB, etc.
+
+[36:00 - 37:30] 25. Seguridad y Vulnerabilidades en Entornos Multi-Tenant
+Seguridad crítica en Multi-Tenant: Aislamiento estricto de datos entre tenants para evitar filtraciones. Vulnerabilidades comunes en la nube y la necesidad constante de actualizar credenciales y políticas de acceso. Caso real citado de ciberdelincuencia/clonación de cuentas y estafas bancarias.
+
+[37:30 - 39:00] 26. Trazabilidad, Autenticación y Cifrado
+Mecanismos de seguridad indispensables: Autenticación multifactor, Autorización basada en roles (RBAC), Cifrado de datos en tránsito y en reposo, Audit Trail (Bitácora) registrando IP, usuario, fecha, hora y ubicación geográfica de las transacciones bancarias o del sistema.
+
+[39:00 - 40:30] 27. La Analogía del Edificio de Departamentos (Multi-Tenant)
+Analogía explicativa central:
+- El Edificio completo = La Arquitectura Multi-Tenant (Infraestructura compartida).
+- Cada Departamento = Un Tenant (Cliente / Empresa).
+- Servicios Privados: Cada departamento paga su propia agua, luz y teléfono (datos y usuarios privados).
+- Gastos Comunes / Áreas Sociales: Piscina, churrasquera, club house, seguridad y limpieza compartidos mediante expensas / cuotas comunes (servidores y código compartido).
+
+[40:30 - 42:00] 28. Aplicación de Inteligencia Artificial y Machine Learning en SaaS
+Requisitos para integrar IA/Machine Learning en el proyecto SaaS:
+- Datasets con un mínimo de 6 meses de datos históricos para entrenamiento de modelos (Machine Learning).
+- Analogía del aprendizaje en niños: la IA aprende mediante repetición constante y volumen de datos.
+
+[42:00 - 43:30] 29. Tipos de Modelos de IA: Recomendación, Predicción y Voz
+Modelos de IA requeridos según el rubro del proyecto:
+1. Reconocimiento de Voz: Consultas y comandos por voz en la aplicación móvil.
+2. Modelos Predictivos: Predicción de ventas futuras o estimación de notas académicas.
+3. Sistemas de Recomendación: Sugerencia de prendas/productos en tiendas virtuales.
+
+[43:30 - 45:00] 30. Preguntas de Cierre y Evaluación en Clase
+Preguntas de repaso realizadas por la docente a los estudiantes:
+1. ¿Qué es SaaS?: Software como Servicio (Software as a Service).
+2. Diferencia entre SaaS y Software Tradicional: Instalación local y licencias fijas vs. Plataforma en la nube por suscripción.
+3. ¿Qué es un Tenant?: Una empresa, organización o cliente del servicio.
+4. ¿Qué es Multi-tenant?: Múltiples organizaciones compartiendo la misma aplicación manteniendo aislamiento total de datos.
+Instrucción final: Presentación obligatoria del avance de las 8 características el día miércoles/jueves.
+
+================================================================================
+FIN DE LA TRANSCRIPCIÓN VERBATIM Y ESTRUCTURADA (Versión v2)
+================================================================================

@@ -72,3 +72,4 @@ export interface AuthResponse {
 export * from './clinica.model';
 export * from './agenda.model';
 export * from './audit.model';
+export * from './clinica-sprint2.model';

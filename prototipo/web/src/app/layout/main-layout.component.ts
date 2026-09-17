@@ -97,6 +97,29 @@ import { AuthService } from '../core/services/auth.service';
               <i class="fa-solid fa-sliders nav-icon"></i>
               <span>Configuración del Centro</span>
             </a>
+
+            <!-- MÓDULO EXPEDIENTES & ATENCIÓN CLÍNICA (Sprint 2) -->
+            <div class="nav-section-title">EXPEDIENTES & CLÍNICA (S2)</div>
+            <a routerLink="/historias-clinicas" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
+              <i class="fa-solid fa-notes-medical nav-icon"></i>
+              <span>Historias Clínicas (EHR)</span>
+            </a>
+            <a routerLink="/intake" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
+              <i class="fa-solid fa-clipboard-question nav-icon"></i>
+              <span>Intake Digital & IA</span>
+            </a>
+            <a routerLink="/tareas-terapeuticas" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
+              <i class="fa-solid fa-list-check nav-icon"></i>
+              <span>Tareas Terapéuticas</span>
+            </a>
+            <a routerLink="/consentimientos" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
+              <i class="fa-solid fa-file-signature nav-icon"></i>
+              <span>Consentimientos Digitales</span>
+            </a>
+            <a routerLink="/derivaciones" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
+              <i class="fa-solid fa-share-from-square nav-icon"></i>
+              <span>Cierre y Derivaciones</span>
+            </a>
           </ng-container>
         </nav>
 

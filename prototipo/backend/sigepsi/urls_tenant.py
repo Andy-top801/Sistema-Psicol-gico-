@@ -9,8 +9,9 @@ urlpatterns = [
     path('api/', include('core.urls')),
     # Endpoints de centros (para selector público)
     path('api/', include('tenants.urls')),
-    # Endpoints de clínica (psicólogos, especialidades, disponibilidad, pacientes) - Sprint 1
+    # Endpoints de clínica (Sprint 1 y Sprint 2)
     path('api/clinica/', include('clinica.urls')),
+    path('api/v1/', include('clinica.urls')),
     # Endpoints de agenda (citas, teleconsulta, dashboard, alertas) - Sprint 1
     path('api/agenda/', include('agenda.urls')),
     path('api/', include('audit.urls')),

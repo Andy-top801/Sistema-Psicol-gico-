@@ -11,6 +11,10 @@ import 'reservar_cita_screen.dart';
 import 'paciente_perfil_screen.dart';
 import 'teleconsulta_jitsi_screen.dart';
 import '../models/cita_model.dart';
+// Sprint 2 - Módulos Clínicos Móviles (CU14, CU17, CU18)
+import 'intake_form_screen.dart';
+import 'mis_tareas_screen.dart';
+import 'consentimiento_firma_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final AuthService authService;
@@ -236,14 +240,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final bool isRecep = widget.authService.isRecepcionista;
     final bool isPaciente = widget.authService.isPaciente || (!isSuperAdmin && !isAdmin && !isPsico && !isRecep);
 
-    // Conteo dinámico de módulos por rol (SuperAdmin accede a TODO: 8 módulos)
+    // Conteo dinámico de módulos por rol (SuperAdmin accede a TODO: 11 módulos)
     int moduleCount = 0;
     if (isSuperAdmin) {
-      moduleCount = 8;
+      moduleCount = 11;
     } else if (isAdmin) {
       moduleCount = 6;
     } else if (isPaciente) {
-      moduleCount = 4;
+      moduleCount = 7;
     } else if (isPsico) {
       moduleCount = 3;
     } else if (isRecep) {
@@ -429,7 +433,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             AppTheme.primaryLight,
                           ),
                           const SizedBox(width: 10),
-                          _buildQuickKpi('SPRINT', 'Sprint 1', Icons.flag_outlined, AppTheme.accent),
+                          _buildQuickKpi('SPRINT', 'Sprint 2', Icons.flag_outlined, AppTheme.accent),
                         ],
                       ),
                     ],
@@ -678,10 +682,59 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       );
                     },
                   ),
+                  // Sprint 2: Módulos Clínicos Móviles (CU14, CU17, CU18)
+                  _buildMenuCard(
+                    context,
+                    title: 'Formulario Previo a Consulta',
+                    subtitle: 'Intake digital: motivo, síntomas y malestar',
+                    tag: 'Intake Digital • CU14 • Sprint 2',
+                    icon: Icons.assignment_rounded,
+                    color: const Color(0xFF10B981),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => IntakeFormScreen(authService: widget.authService),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildMenuCard(
+                    context,
+                    title: 'Tareas Terapéuticas',
+                    subtitle: 'Ejercicios inter-sesiones y reporte de cumplimiento',
+                    tag: 'Tareas Paciente • CU17 • Sprint 2',
+                    icon: Icons.checklist_rounded,
+                    color: const Color(0xFF8B5CF6),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MisTareasScreen(authService: widget.authService),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildMenuCard(
+                    context,
+                    title: 'Consentimientos Informados',
+                    subtitle: 'Lectura, firma digital y sello SHA-256',
+                    tag: 'Firma Legal • CU18 • Sprint 2',
+                    icon: Icons.verified_user_rounded,
+                    color: const Color(0xFFF59E0B),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ConsentimientoFirmaScreen(authService: widget.authService),
+                        ),
+                      );
+                    },
+                  ),
                 ],
 
                 // ═════════════════════════════════════════════════════════════
-                // ROL 2: PACIENTE (CU7, CU11, CU13 - Enfoque Principal Móvil)
+                // ROL 2: PACIENTE (CU7, CU11, CU13, CU14, CU17, CU18 - Sprint 1+2)
                 // ═════════════════════════════════════════════════════════════
                 if (isPaciente) ...[
                   _buildMenuCard(
@@ -737,6 +790,55 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => PacientePerfilScreen(authService: widget.authService),
+                        ),
+                      );
+                    },
+                  ),
+                  // Sprint 2: Módulos Clínicos Móviles para Pacientes (CU14, CU17, CU18)
+                  _buildMenuCard(
+                    context,
+                    title: 'Formulario Previo a Consulta',
+                    subtitle: 'Intake digital: motivo, síntomas y malestar',
+                    tag: 'Intake Digital • CU14 • Sprint 2',
+                    icon: Icons.assignment_rounded,
+                    color: const Color(0xFF10B981),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => IntakeFormScreen(authService: widget.authService),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildMenuCard(
+                    context,
+                    title: 'Mis Tareas Terapéuticas',
+                    subtitle: 'Ejercicios inter-sesiones y reporte de avance',
+                    tag: 'Seguimiento • CU17 • Sprint 2',
+                    icon: Icons.checklist_rounded,
+                    color: const Color(0xFF8B5CF6),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MisTareasScreen(authService: widget.authService),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildMenuCard(
+                    context,
+                    title: 'Consentimientos Informados',
+                    subtitle: 'Firma digital con canvas táctil y SHA-256',
+                    tag: 'Consentimiento Legal • CU18 • Sprint 2',
+                    icon: Icons.verified_user_rounded,
+                    color: const Color(0xFFF59E0B),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ConsentimientoFirmaScreen(authService: widget.authService),
                         ),
                       );
                     },

@@ -152,6 +152,9 @@ class Sprint1Verifier:
             print("\n--- Módulo 3: Expedientes Clínicos y Validación de Tutor (HU-13, HU-14) ---")
 
             # TP-33: Registrar paciente adulto válido
+            from clinica.models import HistoriaClinica
+            Cita.objects.filter(paciente__ci="99887766-LP").delete()
+            HistoriaClinica.objects.filter(paciente__ci="99887766-LP").delete()
             Paciente.objects.filter(ci="99887766-LP").delete()
             Usuario.objects.filter(email="paciente.adulto@test.com").delete()
             res = self.client.post('/api/clinica/pacientes/', {
@@ -168,6 +171,8 @@ class Sprint1Verifier:
             self.log_result("TP-33", "HU-13", "Registrar paciente mayor de edad sin requerir tutor legal", res.status_code == 201)
 
             # TP-34: Rechazo de paciente menor de 18 años SIN tutor legal
+            Cita.objects.filter(paciente__ci="11223344-SC").delete()
+            HistoriaClinica.objects.filter(paciente__ci="11223344-SC").delete()
             Paciente.objects.filter(ci="11223344-SC").delete()
             Usuario.objects.filter(email="menor.sintutor@test.com").delete()
             res = self.client.post('/api/clinica/pacientes/', {
@@ -187,6 +192,8 @@ class Sprint1Verifier:
             self.log_result("TP-34", "HU-13", "Exigir obligatoriamente tutor legal para pacientes menores de edad", tiene_error_tutor)
 
             # TP-35: Aceptación de paciente menor de 18 años CON tutor legal
+            Cita.objects.filter(paciente__ci="11223344-SC").delete()
+            HistoriaClinica.objects.filter(paciente__ci="11223344-SC").delete()
             Paciente.objects.filter(ci="11223344-SC").delete()
             Usuario.objects.filter(email="menor.contutor@test.com").delete()
             res = self.client.post('/api/clinica/pacientes/', {

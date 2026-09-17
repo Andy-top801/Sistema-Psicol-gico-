@@ -434,3 +434,269 @@ class PacienteSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
+
+# ==============================================================================
+# SERIALIZADORES SPRINT 2 (CU14 - CU19 & HU-35)
+# ==============================================================================
+from clinica.models import (
+    FormularioPreConsulta, RespuestaPreConsulta,
+    HistoriaClinica, DiagnosticoCIE,
+    NotaSesion, EvolucionClinica,
+    TareaTerapeutica, EvidenciaTarea,
+    ConsentimientoInformado, FirmaConsentimiento,
+    DerivacionCaso, AuditoriaIA
+)
+
+# ──────────────────────────────────────────────────────────────────────────────
+# CU14: Formulario Pre-Consulta e Intake Digital
+# ──────────────────────────────────────────────────────────────────────────────
+class FormularioPreConsultaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FormularioPreConsulta
+        fields = ['id', 'titulo', 'version', 'descripcion', 'preguntas_schema', 'activo', 'fecha_creacion', 'fecha_actualizacion']
+        read_only_fields = ['id', 'fecha_creacion', 'fecha_actualizacion']
+
+    def validate_preguntas_schema(self, value):
+        if not isinstance(value, list):
+            raise serializers.ValidationError("El esquema de preguntas debe ser una lista de campos JSON.")
+        return value
+
+
+class RespuestaPreConsultaSerializer(serializers.ModelSerializer):
+    paciente_nombre = serializers.SerializerMethodField()
+    tiene_urgencia_alta = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = RespuestaPreConsulta
+        fields = [
+            'id', 'formulario', 'paciente', 'paciente_nombre', 'cita',
+            'motivo_consulta', 'sintomas_principales', 'nivel_urgencia_percibido',
+            'antecedentes_medicos', 'antecedentes_psiquiatricos', 'medicacion_actual',
+            'respuestas_detalle', 'estado', 'tiene_urgencia_alta', 'fecha_envio'
+        ]
+        read_only_fields = ['id', 'fecha_envio', 'tiene_urgencia_alta']
+
+    def get_paciente_nombre(self, obj):
+        if obj.paciente and obj.paciente.usuario:
+            return f"{obj.paciente.usuario.nombre} {obj.paciente.usuario.apellido}"
+        return "Paciente"
+
+    def validate_nivel_urgencia_percibido(self, value):
+        if value < 1 or value > 5:
+            raise serializers.ValidationError("La escala de malestar/urgencia debe estar comprendida entre 1 y 5.")
+        return value
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# CU15: Historia Clínica Psicológica y Diagnóstico CIE
+# ──────────────────────────────────────────────────────────────────────────────
+class DiagnosticoCIESerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DiagnosticoCIE
+        fields = ['id', 'historia_clinica', 'codigo_cie', 'descripcion', 'tipo', 'observaciones', 'fecha_diagnostico']
+        read_only_fields = ['id']
+
+
+class HistoriaClinicaSerializer(serializers.ModelSerializer):
+    diagnosticos = DiagnosticoCIESerializer(many=True, read_only=True)
+    paciente_nombre = serializers.SerializerMethodField()
+    paciente_ci = serializers.SerializerMethodField()
+    psicologo_nombre = serializers.SerializerMethodField()
+
+    class Meta:
+        model = HistoriaClinica
+        fields = [
+            'id', 'paciente', 'paciente_nombre', 'paciente_ci',
+            'psicologo_apertura', 'psicologo_nombre',
+            'codigo_historia', 'motivo_consulta_inicial',
+            'antecedentes_personales', 'antecedentes_familiares',
+            'historia_evolutiva', 'examen_mental_inicial', 'plan_tratamiento',
+            'cerrada', 'fecha_apertura', 'fecha_cierre', 'fecha_actualizacion',
+            'diagnosticos'
+        ]
+        read_only_fields = ['id', 'codigo_historia', 'fecha_apertura', 'fecha_actualizacion']
+
+    def get_paciente_nombre(self, obj):
+        if obj.paciente and obj.paciente.usuario:
+            return f"{obj.paciente.usuario.nombre} {obj.paciente.usuario.apellido}"
+        return ""
+
+    def get_paciente_ci(self, obj):
+        return obj.paciente.ci if obj.paciente else ""
+
+    def get_psicologo_nombre(self, obj):
+        if obj.psicologo_apertura and obj.psicologo_apertura.usuario:
+            return f"Lic. {obj.psicologo_apertura.usuario.nombre} {obj.psicologo_apertura.usuario.apellido}"
+        return ""
+
+    def create(self, validated_data):
+        import datetime
+        # Generar código único correlativo HC-YYYY-XXXX
+        anio = datetime.date.today().year
+        total = HistoriaClinica.objects.count() + 1
+        codigo = f"HC-{anio}-{total:04d}"
+        while HistoriaClinica.objects.filter(codigo_historia=codigo).exists():
+            total += 1
+            codigo = f"HC-{anio}-{total:04d}"
+        validated_data['codigo_historia'] = codigo
+        return super().create(validated_data)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# CU16: Notas de Sesión Clínicas (Modelo SOAP)
+# ──────────────────────────────────────────────────────────────────────────────
+class NotaSesionSerializer(serializers.ModelSerializer):
+    psicologo_nombre = serializers.SerializerMethodField()
+
+    class Meta:
+        model = NotaSesion
+        fields = [
+            'id', 'historia_clinica', 'cita', 'psicologo', 'psicologo_nombre',
+            'numero_sesion', 'fecha_sesion',
+            'subjetivo', 'objetivo', 'analisis', 'plan',
+            'tecnicas_aplicadas', 'conducta_observada',
+            'estado_guardado', 'fecha_creacion', 'fecha_firma'
+        ]
+        read_only_fields = ['id', 'fecha_creacion']
+
+    def get_psicologo_nombre(self, obj):
+        if obj.psicologo and obj.psicologo.usuario:
+            return f"Lic. {obj.psicologo.usuario.nombre} {obj.psicologo.usuario.apellido}"
+        return ""
+
+    def validate_numero_sesion(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("El número correlativo de sesión debe ser mayor a 0.")
+        return value
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# CU17: Evolución Longitudinal y Tareas Inter-Sesiones
+# ──────────────────────────────────────────────────────────────────────────────
+class EvolucionClinicaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EvolucionClinica
+        fields = ['id', 'historia_clinica', 'nota_sesion', 'estado_avance', 'justificacion', 'acuerdos_pactados', 'fecha_registro']
+        read_only_fields = ['id', 'fecha_registro']
+
+    def validate_justificacion(self, value):
+        if not value or len(value.strip()) < 5:
+            raise serializers.ValidationError("La justificación cualitativa del estado de avance es obligatoria.")
+        return value
+
+
+class EvidenciaTareaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EvidenciaTarea
+        fields = ['id', 'tarea', 'texto_reflexion', 'dificultad_percibida', 'archivo_evidencia_url', 'fecha_cumplimiento']
+        read_only_fields = ['id', 'fecha_cumplimiento']
+
+    def validate_dificultad_percibida(self, value):
+        if value < 1 or value > 5:
+            raise serializers.ValidationError("La dificultad percibida debe valorarse en la escala de 1 a 5.")
+        return value
+
+
+class TareaTerapeuticaSerializer(serializers.ModelSerializer):
+    evidencia = EvidenciaTareaSerializer(read_only=True)
+    psicologo_nombre = serializers.SerializerMethodField()
+    paciente_nombre = serializers.SerializerMethodField()
+
+    class Meta:
+        model = TareaTerapeutica
+        fields = [
+            'id', 'historia_clinica', 'psicologo', 'psicologo_nombre',
+            'paciente', 'paciente_nombre', 'titulo', 'descripcion',
+            'categoria', 'fecha_limite', 'estado', 'archivo_adjunto_url',
+            'fecha_creacion', 'evidencia'
+        ]
+        read_only_fields = ['id', 'fecha_creacion']
+
+    def get_psicologo_nombre(self, obj):
+        if obj.psicologo and obj.psicologo.usuario:
+            return f"Lic. {obj.psicologo.usuario.nombre} {obj.psicologo.usuario.apellido}"
+        return ""
+
+    def get_paciente_nombre(self, obj):
+        if obj.paciente and obj.paciente.usuario:
+            return f"{obj.paciente.usuario.nombre} {obj.paciente.usuario.apellido}"
+        return ""
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# CU18: Consentimiento Informado y Firma Digital Criptográfica
+# ──────────────────────────────────────────────────────────────────────────────
+class ConsentimientoInformadoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConsentimientoInformado
+        fields = ['id', 'titulo', 'tipo', 'contenido_legal', 'version', 'activo', 'fecha_creacion']
+        read_only_fields = ['id', 'fecha_creacion']
+
+
+class FirmaConsentimientoSerializer(serializers.ModelSerializer):
+    consentimiento_titulo = serializers.SerializerMethodField()
+    consentimiento_tipo = serializers.SerializerMethodField()
+
+    class Meta:
+        model = FirmaConsentimiento
+        fields = [
+            'id', 'consentimiento', 'consentimiento_titulo', 'consentimiento_tipo',
+            'paciente', 'firmado_por', 'es_menor_edad', 'tutor_nombre', 'tutor_ci',
+            'hash_sha256', 'ip_origen', 'user_agent', 'firma_canvas_url', 'fecha_firma'
+        ]
+        read_only_fields = ['id', 'fecha_firma']
+
+    def get_consentimiento_titulo(self, obj):
+        return obj.consentimiento.titulo if obj.consentimiento else ""
+
+    def get_consentimiento_tipo(self, obj):
+        return obj.consentimiento.tipo if obj.consentimiento else ""
+
+    def validate_hash_sha256(self, value):
+        if not value or len(value) != 64:
+            raise serializers.ValidationError("El hash SHA-256 debe ser una huella hexadecimal válida de 64 caracteres.")
+        return value
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# CU19: Derivación y Cierre de Caso
+# ──────────────────────────────────────────────────────────────────────────────
+class DerivacionCasoSerializer(serializers.ModelSerializer):
+    psicologo_emisor_nombre = serializers.SerializerMethodField()
+    historia_codigo = serializers.SerializerMethodField()
+
+    class Meta:
+        model = DerivacionCaso
+        fields = [
+            'id', 'historia_clinica', 'historia_codigo',
+            'psicologo_emisor', 'psicologo_emisor_nombre',
+            'tipo_derivacion', 'motivo_clinico', 'sintomatologia_relevante',
+            'profesional_destino', 'institucion_destino', 'nivel_riesgo',
+            'fecha_derivacion', 'aceptada', 'documento_pdf_url'
+        ]
+        read_only_fields = ['id', 'fecha_derivacion']
+
+    def get_psicologo_emisor_nombre(self, obj):
+        if obj.psicologo_emisor and obj.psicologo_emisor.usuario:
+            return f"Lic. {obj.psicologo_emisor.usuario.nombre} {obj.psicologo_emisor.usuario.apellido}"
+        return ""
+
+    def get_historia_codigo(self, obj):
+        return obj.historia_clinica.codigo_historia if obj.historia_clinica else ""
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# HU-35: Auditoría de IA Asistiva
+# ──────────────────────────────────────────────────────────────────────────────
+class AuditoriaIASerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AuditoriaIA
+        fields = [
+            'id', 'formulario_respuesta_id', 'psicologo', 'hash_prompt',
+            'resumen_generado', 'prioridad_sugerida', 'reglas_aplicadas',
+            'evaluacion_humana', 'observaciones_profesional',
+            'fecha_analisis', 'fecha_decision', 'ip_origen'
+        ]
+        read_only_fields = ['id', 'fecha_analisis']
+
+

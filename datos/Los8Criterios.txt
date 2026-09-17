@@ -1,0 +1,31 @@
+Características generales de los proyectos de la materia 
+1. Solución  universal:  El  sistema  debe  ser  desarrollado  como  para  permitir  ser  puesto  en 
+marcha en cualquier empresa/negocio donde se requiera la aplicación 
+2. Gestión de usuario:  Se debe poder crear usuarios, grupos de usuarios y asignar privilegios 
+de manera flexible y abierta sobre todo tipo de componente que tenga el sistema (Opciones 
+de menú, formularios, botones. Text, label, etc.). De entrada, no se sabe cuántos usuarios, 
+ni que grupos de usuarios habrá tampoco que privilegios tendrá cada grupo. En el sistema 
+deberá haber un administrador que se encargue de hacer este trabajo  
+3. Log/ Bitácora: Se debe poder registrar en un archivo log todas acciones realizadas por los 
+usuarios, se debe saber: el IP de la máquina, el usuario, la fecha, la hora, la acción realizada. 
+Debe tomar en cuenta que este archivo es confidencial por lo que ni el administrador de BD 
+debe verlo, la única forma de ver este contenido es vía una llave del desarrollador única y 
+solo desde el sistema 
+4. Facilidad de uso: Diseñar el sistema con una interface donde el usuario no invierta tiempo 
+en  aprender  a  usar  el  sistema,  usar  componentes  y  estrategias  para  que  el  usuario  vea 
+facilitada también la entrada de datos, proveer mecanismos de asistencia en línea en caso 
+de dudas sobre el uso del sistema 
+5. Reportes personalizables: A parte de los reportes obvios que debe tener todo sistema, debe 
+existir mecanismos  que  permita al  usuario  construir  sus  propios  reportes, indicando  que 
+columnas, que criterios de selección y orden se debe mostrar. Así mismo todo reporte antes 
+de generar debe haber una interface para posibilitar filtrar la información a obtener. Tomar 
+en cuenta que todo reporte debe tener la facilidad de ser exportado a otros formatos como 
+ser: Excel, HTML, eMail, PDF 
+6. Backup/Restore: Funciones para posibilitar las copias de seguridad y restauración de todo 
+el sistema 
+7. Web/Móvil: Se debe identificar que funcionalidades son convenientes para implementar 
+como app Web y que funcionalidades como App Móvil  
+8. Modelo SaaS en la nube: El sistema deberá ser desarrollado bajo el enfoque del software 
+como servicio (SaaS) donde lo que se venderá a los clientes son suscripciones para usar el 
+sistema y todo esto debe estar desplegado en la nube en servicios como, por ejemplo: AWS 
+de Amazon, Google Coud, Azure

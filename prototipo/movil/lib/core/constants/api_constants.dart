@@ -37,4 +37,12 @@ class ApiConstants {
   static const String teleconsultaAccess = '/agenda/teleconsulta/';
   static const String agendaDashboard = '/agenda/dashboard/kpis/';
   static const String alertas = '/agenda/alertas/';
+
+  // Sprint 2 - Clinica Endpoints (HU-24, HU-30, HU-32, HU-35)
+  static const String formulariosPreconsulta = '/clinica/formularios-preconsulta/';
+  static const String respuestasPreconsulta = '/clinica/respuestas-preconsulta/';
+  static const String tareas = '/clinica/tareas/';
+  static const String consentimientos = '/clinica/consentimientos/';
+  static const String firmasConsentimiento = '/clinica/firmas-consentimiento/';
+  static const String iaPreconsulta = '/clinica/ia/preconsulta/analizar/';
 }

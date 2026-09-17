@@ -16,6 +16,14 @@ import { AuditLogComponent } from './modules/audit/audit-log.component';
 import { ReportesHubComponent } from './modules/reportes/reportes-hub.component';
 import { ReporteVisorComponent } from './modules/reportes/reporte-visor.component';
 import { ReportePersonalizadoComponent } from './modules/reportes/reporte-personalizado.component';
+// Incremento Funcional Sprint 2 (CU14 a CU19 y HU-35)
+import { IntakeConfigComponent } from './modules/intake/intake-config.component';
+import { HistoriaClinicaListComponent } from './modules/historias-clinicas/historia-clinica-list.component';
+import { HistoriaClinicaDetalleComponent } from './modules/historias-clinicas/historia-clinica-detalle.component';
+import { NotaSoapEditorComponent } from './modules/notas-soap/nota-soap-editor.component';
+import { TareasGestorComponent } from './modules/tareas/tareas-gestor.component';
+import { ConsentimientosHubComponent } from './modules/consentimientos/consentimientos-hub.component';
+import { DerivacionFormComponent } from './modules/derivaciones/derivacion-form.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -41,6 +49,16 @@ export const routes: Routes = [
       { path: 'reportes', component: ReportesHubComponent, canActivate: [adminCentroGuard] },
       { path: 'reportes/personalizado', component: ReportePersonalizadoComponent, canActivate: [adminCentroGuard] },
       { path: 'reportes/:fuente', component: ReporteVisorComponent, canActivate: [adminCentroGuard] },
+      // Incremento Funcional Sprint 2
+      { path: 'intake', component: IntakeConfigComponent },
+      { path: 'historias-clinicas', component: HistoriaClinicaListComponent },
+      { path: 'historias-clinicas/:id', component: HistoriaClinicaDetalleComponent },
+      { path: 'notas-soap/nueva', component: NotaSoapEditorComponent },
+      { path: 'notas-soap/:id', component: NotaSoapEditorComponent },
+      { path: 'tareas-terapeuticas', component: TareasGestorComponent },
+      { path: 'consentimientos', component: ConsentimientosHubComponent },
+      { path: 'derivaciones', component: DerivacionFormComponent },
+      { path: 'derivaciones/nueva', component: DerivacionFormComponent },
     ]
   },
   { path: '**', redirectTo: 'login' }
