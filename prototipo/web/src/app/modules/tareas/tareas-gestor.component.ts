@@ -84,6 +84,22 @@ import { TareaTerapeutica, HistoriaClinica } from '../../core/models/clinica-spr
             <span><i class="fa-solid fa-paperclip text-info me-1"></i> {{ t.evidencias.length || 0 }} Evidencias</span>
           </div>
 
+          <!-- Indicador de Cumplimiento (Paso 8 Diagrama CU17) -->
+          <div class="mt-2 mb-1">
+            <div class="d-flex justify-content-between align-items-center small text-muted mb-1">
+              <span><i class="fa-solid fa-bars-progress me-1"></i> Indicador:</span>
+              <strong [class.text-success]="t.estado === 'COMPLETADA' || t.estado === 'REVISADA'" class="indicador-cumplimiento">
+                {{ (t.estado === 'COMPLETADA' || t.estado === 'REVISADA') ? 'Completada 100%' : 'Pendiente 0%' }}
+              </strong>
+            </div>
+            <div class="progress" style="height: 6px; border-radius: 4px; overflow: hidden; background: #e2e8f0;">
+              <div class="progress-bar" 
+                   [class.bg-success]="t.estado === 'COMPLETADA' || t.estado === 'REVISADA'"
+                   [class.bg-warning]="t.estado === 'PENDIENTE'"
+                   [style.width]="(t.estado === 'COMPLETADA' || t.estado === 'REVISADA') ? '100%' : '0%'"></div>
+            </div>
+          </div>
+
           <!-- Feedback del Psicólogo si existe -->
           <div *ngIf="t.feedback_psicologo" class="feedback-box mt-2 p-2 rounded small">
             <i class="fa-solid fa-comment-medical text-primary me-1"></i>
@@ -142,7 +158,10 @@ import { TareaTerapeutica, HistoriaClinica } from '../../core/models/clinica-spr
               </div>
               <div class="col-md-6">
                 <label class="form-label">Fecha Límite *</label>
-                <input type="date" class="form-control" [(ngModel)]="nuevaTarea.fecha_limite" />
+                <input type="date" class="form-control" [min]="fechaMinimaHoy" [(ngModel)]="nuevaTarea.fecha_limite" (change)="validarFechaLimite()" />
+                <div *ngIf="errorFechaLimite" class="text-danger small mt-1" id="error-fecha-limite">
+                  <i class="fa-solid fa-triangle-exclamation me-1"></i>{{ errorFechaLimite }}
+                </div>
               </div>
             </div>
 
@@ -150,10 +169,19 @@ import { TareaTerapeutica, HistoriaClinica } from '../../core/models/clinica-spr
               <label class="form-label">Instrucciones Clínicas *</label>
               <textarea class="form-control" [(ngModel)]="nuevaTarea.instrucciones" rows="3" placeholder="Pautas detalladas para el paciente..."></textarea>
             </div>
+
+            <div class="mb-3">
+              <label class="form-label"><i class="fa-solid fa-file-pdf text-danger me-1"></i>Adjunto Seguro de Guías en PDF (HU-29 BDD)</label>
+              <input type="file" accept="application/pdf" class="form-control" (change)="onArchivoPdfSeleccionado($event)" />
+              <div *ngIf="archivoAdjuntoNombre" class="badge bg-light text-primary border mt-2 p-2 d-flex align-items-center gap-2">
+                <i class="fa-solid fa-file-pdf text-danger"></i>
+                <span>{{ archivoAdjuntoNombre }} (Sincronizado con app móvil)</span>
+              </div>
+            </div>
           </div>
           <div class="modal-footer-custom p-3">
             <button class="btn btn-secondary" (click)="mostrarModalCrear = false">Cancelar</button>
-            <button class="btn btn-primary" [disabled]="!nuevaTarea.historia_clinica || !nuevaTarea.titulo" (click)="guardarNuevaTarea()">
+            <button class="btn btn-primary" [disabled]="!nuevaTarea.historia_clinica || !nuevaTarea.titulo || !!errorFechaLimite" (click)="guardarNuevaTarea()">
               Prescribir Tarea
             </button>
           </div>
@@ -296,12 +324,17 @@ export class TareasGestorComponent implements OnInit {
 
   // Modal Nueva Tarea
   mostrarModalCrear = false;
+  errorFechaLimite = '';
+  fechaMinimaHoy = new Date().toISOString().substring(0, 10);
+  archivoAdjuntoNombre = '';
+  archivoAdjuntoUrl = '';
   nuevaTarea = {
     historia_clinica: '',
     titulo: '',
     instrucciones: '',
     categoria: 'REGISTRO_PENSAMIENTOS',
-    fecha_limite: ''
+    fecha_limite: '',
+    archivo_adjunto_url: ''
   };
 
   // Modal Evidencia
@@ -353,25 +386,74 @@ export class TareasGestorComponent implements OnInit {
     }
   }
 
+  validarFechaLimite(): boolean {
+    if (!this.nuevaTarea.fecha_limite) {
+      this.errorFechaLimite = 'La fecha límite es obligatoria.';
+      return false;
+    }
+    const hoy = new Date().toISOString().substring(0, 10);
+    if (this.nuevaTarea.fecha_limite < hoy) {
+      this.errorFechaLimite = 'La fecha límite debe ser posterior a la fecha de hoy';
+      return false;
+    }
+    this.errorFechaLimite = '';
+    return true;
+  }
+
+  onArchivoPdfSeleccionado(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const file = input.files[0];
+      if (file.type !== 'application/pdf') {
+        this.mostrarAviso('Por favor seleccione un archivo en formato PDF.');
+        input.value = '';
+        return;
+      }
+      this.archivoAdjuntoNombre = file.name;
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.archivoAdjuntoUrl = reader.result as string;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
   abrirModalNuevaTarea(): void {
     const d = new Date();
     d.setDate(d.getDate() + 7);
+    this.errorFechaLimite = '';
+    this.archivoAdjuntoNombre = '';
+    this.archivoAdjuntoUrl = '';
     this.nuevaTarea = {
       historia_clinica: this.historias().length > 0 ? this.historias()[0].id : '',
       titulo: '',
       instrucciones: '',
       categoria: 'REGISTRO_PENSAMIENTOS',
-      fecha_limite: d.toISOString().substring(0, 10)
+      fecha_limite: d.toISOString().substring(0, 10),
+      archivo_adjunto_url: ''
     };
     this.mostrarModalCrear = true;
   }
 
   guardarNuevaTarea(): void {
-    this.clinicaService.crearTarea(this.nuevaTarea).subscribe({
+    if (!this.validarFechaLimite()) {
+      return;
+    }
+
+    const payload = {
+      ...this.nuevaTarea,
+      archivo_adjunto_url: this.archivoAdjuntoUrl || this.nuevaTarea.archivo_adjunto_url || ''
+    };
+
+    this.clinicaService.crearTarea(payload).subscribe({
       next: () => {
         this.mostrarModalCrear = false;
-        this.mostrarAviso('Tarea terapéutica prescrita correctamente');
+        this.mostrarAviso('Tarea terapéutica prescrita correctamente y sincronizada con el paciente');
         this.cargarDatos();
+      },
+      error: (err) => {
+        const msg = err?.error?.fecha_limite?.[0] || err?.error?.detail || 'Error al prescribir tarea';
+        this.errorFechaLimite = msg;
       }
     });
   }
@@ -384,9 +466,9 @@ export class TareasGestorComponent implements OnInit {
   enviarEvidencia(): void {
     if (!this.tareaParaEvidencia) return;
     this.clinicaService.subirEvidenciaTarea(this.tareaParaEvidencia.id, this.evidenciaForm).subscribe({
-      next: () => {
+      next: (res) => {
         this.tareaParaEvidencia = null;
-        this.mostrarAviso('Evidencia de cumplimiento registrada');
+        this.mostrarAviso("Evidencia guardada y tarea completada. Indicador actualizado a 'Completada 100%'.");
         this.cargarDatos();
       }
     });

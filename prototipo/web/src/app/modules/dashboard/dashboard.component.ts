@@ -308,10 +308,16 @@ import { DashboardKPIs, AlertaClinica, Tenant } from '../../core/models';
           </div>
 
           <div class="alerts-list">
-            <div *ngFor="let alerta of kpis()?.alertas_activas" class="alert-card-item">
+            <div *ngFor="let alerta of kpis()?.alertas_activas" 
+                 class="alert-card-item"
+                 [class.border-danger]="alerta.severidad === 'CRITICA' || alerta.tipo === 'CRISIS_RETROCESO'"
+                 [style.border-left]="(alerta.severidad === 'CRITICA' || alerta.tipo === 'CRISIS_RETROCESO') ? '4px solid #ef4444' : ''">
               <div class="alert-card-left">
                 <span class="badge" [ngClass]="getSeveridadBadgeClass(alerta.severidad)">
                   {{ alerta.severidad }}
+                </span>
+                <span *ngIf="alerta.tipo === 'CRISIS_RETROCESO'" class="badge bg-danger text-white fw-bold">
+                  <i class="fa-solid fa-triangle-exclamation me-1"></i>Alerta Roja Prioritaria: Crisis
                 </span>
                 <div class="alert-details">
                   <div class="alert-patient-name">

@@ -146,6 +146,7 @@ class Alerta(models.Model):
         ('INASISTENCIA_REITERADA', 'Inasistencia Reiterada'),
         ('RIESGO_DESERCION', 'Riesgo de Deserción Terapéutica'),
         ('URGENCIA_CLINICA', 'Urgencia Clínica'),
+        ('CRISIS_RETROCESO', 'Retroceso / Factor de Crisis'),
     ]
 
     SEVERIDAD_CHOICES = [

@@ -416,6 +416,27 @@ interface DiaCalendario {
 
             <!-- Acciones según Estado y Modalidad -->
             <div class="modal-actions-box mt-3">
+              <!-- CU16 Criterio a / Paso 1: Redactar Nota SOAP al concluir la cita -->
+              <div *ngIf="citaSeleccionada.nota_soap_id">
+                <a 
+                  [routerLink]="['/notas-soap/nueva']" 
+                  [queryParams]="{ id: citaSeleccionada.nota_soap_id, historia: citaSeleccionada.paciente_datos?.historia_id, cita: citaSeleccionada.id }"
+                  (click)="closeDetalleModal()"
+                  class="btn btn-outline-success w-100 mb-2">
+                  <i class="fa-solid fa-file-waveform me-2"></i> Ver Nota SOAP Firmada (Inmutable)
+                </a>
+              </div>
+
+              <div *ngIf="!citaSeleccionada.nota_soap_id && (citaSeleccionada.estado === 'REALIZADA' || citaSeleccionada.estado === 'CONFIRMADA')">
+                <a 
+                  [routerLink]="['/notas-soap/nueva']" 
+                  [queryParams]="{ historia: citaSeleccionada.paciente_datos?.historia_id, cita: citaSeleccionada.id }"
+                  (click)="closeDetalleModal()"
+                  class="btn btn-success w-100 mb-2">
+                  <i class="fa-solid fa-file-waveform me-2"></i> Redactar Nota SOAP
+                </a>
+              </div>
+
               <!-- Enlace a Teleconsulta Jitsi -->
               <button 
                 *ngIf="citaSeleccionada.modalidad === 'VIRTUAL' && (citaSeleccionada.estado === 'PROGRAMADA' || citaSeleccionada.estado === 'CONFIRMADA')"

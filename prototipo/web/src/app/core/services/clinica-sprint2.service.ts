@@ -174,7 +174,8 @@ export class ClinicaSprint2Service {
               fecha: item.fecha,
               titulo: item.titulo,
               detalle: item.subjetivo || item.justificacion || item.titulo || '',
-              alerta: item.estado_avance === 'RETROCESO_CRISIS',
+              alerta: item.estado_avance === 'RETROCESO_CRISIS' || item.alerta === true,
+              estado: item.estado_avance || item.estado,
               profesional: item.profesional,
               metadata: item
             }))
@@ -220,10 +221,17 @@ export class ClinicaSprint2Service {
     plan: string;
     intervenciones_aplicadas?: string;
     nivel_riesgo: string;
-  }): Observable<{ mensaje: string; nota: NotaSesion; sha256: string }> {
-    return this.http.post<{ mensaje: string; nota: NotaSesion; sha256: string }>(
-      `${this.apiUrl}/notas-sesion/${notaId}/firmar_nota/`,
+  }): Observable<{ mensaje: string; nota: NotaSesion; sha256: string; firmada?: boolean; nota_id?: string }> {
+    return this.http.post<{ mensaje: string; nota: NotaSesion; sha256: string; firmada?: boolean; nota_id?: string }>(
+      `${this.apiUrl}/notas-sesion/${notaId}/firmar/`,
       data
+    );
+  }
+
+  agregarAdendaNotaSesion(notaId: string, textoAdenda: string): Observable<{ mensaje: string; nota: NotaSesion; adendas: string }> {
+    return this.http.post<{ mensaje: string; nota: NotaSesion; adendas: string }>(
+      `${this.apiUrl}/notas-sesion/${notaId}/adenda/`,
+      { texto_adenda: textoAdenda }
     );
   }
 
@@ -238,12 +246,16 @@ export class ClinicaSprint2Service {
 
   registrarEvolucion(data: {
     historia_clinica: string;
+    estado_avance?: string;
+    justificacion?: string;
+    acuerdos_pactados?: string;
     nota_sesion?: string;
-    puntuacion_escala: number;
-    indicador_progreso: string;
+    puntuacion_escala?: number;
+    indicador_progreso?: string;
     alerta_crisis_recaida?: boolean;
     descripcion_crisis?: string;
     recomendacion_inmediata?: string;
+    [key: string]: any;
   }): Observable<EvolucionClinica> {
     return this.http.post<EvolucionClinica>(`${this.apiUrl}/evoluciones/`, data);
   }
@@ -272,9 +284,9 @@ export class ClinicaSprint2Service {
     reflexion_paciente: string;
     nivel_dificultad_percibido: number;
     archivo_adjunto?: string;
-  }): Observable<{ mensaje: string; tarea: TareaTerapeutica }> {
-    return this.http.post<{ mensaje: string; tarea: TareaTerapeutica }>(
-      `${this.apiUrl}/tareas/${tareaId}/subir_evidencia/`,
+  }): Observable<{ mensaje: string; estado: string; completada_porcentaje: number; tarea?: TareaTerapeutica }> {
+    return this.http.post<{ mensaje: string; estado: string; completada_porcentaje: number; tarea?: TareaTerapeutica }>(
+      `${this.apiUrl}/tareas/${tareaId}/evidencia/`,
       data
     );
   }
@@ -304,12 +316,15 @@ export class ClinicaSprint2Service {
   }
 
   firmarConsentimiento(data: {
-    plantilla: string;
+    plantilla?: string;
+    consentimiento?: string;
     paciente: string;
-    contenido_final_renderizado: string;
+    contenido_final_renderizado?: string;
     firma_imagen?: string;
-  }): Observable<FirmaConsentimiento> {
-    return this.http.post<FirmaConsentimiento>(`${this.apiUrl}/consentimientos-firmas/`, data);
+    firma_canvas_url?: string;
+    hash_sha256?: string;
+  }): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/consentimientos/firmar/`, data);
   }
 
   descargarConsentimientoPdf(firmaId: string): Observable<Blob> {

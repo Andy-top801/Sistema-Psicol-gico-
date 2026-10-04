@@ -149,23 +149,28 @@ import { Paciente } from '../../core/models';
           </div>
           <div class="modal-body-custom p-4">
             <div class="row g-3 mb-3">
-              <div class="col-md-4">
+              <div class="col-md-3">
                 <label class="form-label">Código Único *</label>
-                <input type="text" class="form-control" [(ngModel)]="plantillaForm.codigo_plantilla" placeholder="Ej. CI-ADULTOS-2026" />
+                <input type="text" class="form-control font-monospace" [(ngModel)]="plantillaForm.codigo_plantilla" placeholder="Ej. CI-ADULTOS-2026" />
               </div>
-              <div class="col-md-8">
+              <div class="col-md-6">
                 <label class="form-label">Título Oficial *</label>
                 <input type="text" class="form-control" [(ngModel)]="plantillaForm.titulo" placeholder="Ej. Consentimiento Informado para Psicoterapia Individual" />
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Versión Legal *</label>
+                <input type="text" class="form-control font-monospace" [(ngModel)]="plantillaForm.version" placeholder="v1.0, v1.1" />
               </div>
             </div>
 
             <div class="variables-hint glass-panel p-2 mb-2 small">
-              <strong class="text-primary">Variables Dinámicas Soportadas:</strong>
+              <strong class="text-primary">Variables Dinámicas Soportadas (HU-31):</strong>
               <code class="me-2">&#123;PACIENTE_NOMBRE&#125;</code>
               <code class="me-2">&#123;PACIENTE_CI&#125;</code>
               <code class="me-2">&#123;FECHA&#125;</code>
               <code class="me-2">&#123;PSICOLOGO_CABECERA&#125;</code>
-              <code>&#123;CENTRO_NOMBRE&#125;</code>
+              <code class="me-2">&#123;CENTRO_NOMBRE&#125;</code>
+              <code>&#123;VERSION&#125;</code>
             </div>
 
             <div class="mb-3">
@@ -191,11 +196,17 @@ import { Paciente } from '../../core/models';
             <button class="btn-close-custom" (click)="cerrarModalFirma()"><i class="fa-solid fa-xmark"></i></button>
           </div>
           <div class="modal-body-custom p-4">
+
+            <!-- Alerta automática para menores de edad (HU-31 Criterio b) -->
+            <div *ngIf="avisoMenorEdad" class="alert alert-warning d-flex align-items-center mb-3">
+              <i class="fa-solid fa-user-shield me-2 fa-lg text-warning"></i>
+              <span>{{ avisoMenorEdad }}</span>
+            </div>
             
             <div class="row g-3 mb-3">
               <div class="col-md-6">
                 <label class="form-label">Seleccionar Paciente *</label>
-                <select class="form-select" [(ngModel)]="firmaForm.paciente" (ngModelChange)="actualizarVistaPreviaTexto()">
+                <select class="form-select" [(ngModel)]="firmaForm.paciente" (ngModelChange)="onPacienteChange()">
                   <option value="" disabled selected>-- Elija paciente --</option>
                   <option *ngFor="let pac of pacientes()" [value]="pac.id">
                     {{ pac.usuario.nombre }} {{ pac.usuario.apellido }} (CI: {{ pac.ci }})
@@ -208,7 +219,7 @@ import { Paciente } from '../../core/models';
                 <select class="form-select" [(ngModel)]="firmaForm.plantilla" (ngModelChange)="actualizarVistaPreviaTexto()">
                   <option value="" disabled selected>-- Elija plantilla --</option>
                   <option *ngFor="let pl of plantillas()" [value]="pl.id">
-                    {{ pl.titulo }} ({{ pl.codigo_plantilla }})
+                    {{ pl.titulo }} ({{ pl.version || 'v1.0' }})
                   </option>
                 </select>
               </div>
@@ -367,6 +378,8 @@ export class ConsentimientosHubComponent implements OnInit {
   plantillas = signal<ConsentimientoInformado[]>([]);
   pacientes = signal<Paciente[]>([]);
   mensajeAviso = signal<string | null>(null);
+  avisoMenorEdad = '';
+  esMenorDetectado = false;
 
   // Plantilla Modal
   mostrarModalPlantillaForm = false;
@@ -374,7 +387,8 @@ export class ConsentimientosHubComponent implements OnInit {
     id: '',
     codigo_plantilla: '',
     titulo: '',
-    cuerpo_plantilla: ''
+    cuerpo_plantilla: '',
+    version: 'v1.0'
   };
 
   // Firma Modal
@@ -432,7 +446,8 @@ export class ConsentimientosHubComponent implements OnInit {
       id: '',
       codigo_plantilla: 'CI-PSIC-2026',
       titulo: 'Consentimiento Informado para Tratamiento Psicoterapéutico',
-      cuerpo_plantilla: `Por medio del presente documento, yo, {PACIENTE_NOMBRE}, titular de la Cédula de Identidad N° {PACIENTE_CI}, manifiesto de forma libre y voluntaria que he sido informado/a detalladamente sobre el proceso terapéutico a cargo de {PSICOLOGO_CABECERA} en el centro {CENTRO_NOMBRE}.\n\nSe me ha explicado la confidencialidad de la información y sus límites legales (riesgo inminente de daño hacia sí mismo o hacia terceros, o requerimiento judicial expreso).\n\nEn señal de conformidad y aceptación, se suscribe en la fecha {FECHA}.`
+      cuerpo_plantilla: `Por medio del presente documento, yo, {paciente_nombre}, titular de la Cédula de Identidad N° {ci}, manifiesto de forma libre y voluntaria que he sido informado/a detalladamente sobre el proceso terapéutico a cargo de {psicologo} en el centro {centro}.\n\nSe me ha explicado la confidencialidad de la información y sus límites legales (riesgo inminente de daño hacia sí mismo o hacia terceros, o requerimiento judicial expreso).\n\nEn señal de conformidad y aceptación, se suscribe en la fecha {fecha} bajo la versión legal {version}.`,
+      version: 'v1.0'
     };
     this.mostrarModalPlantillaForm = true;
   }
@@ -442,7 +457,8 @@ export class ConsentimientosHubComponent implements OnInit {
       id: p.id,
       codigo_plantilla: p.codigo_plantilla,
       titulo: p.titulo,
-      cuerpo_plantilla: p.cuerpo_plantilla
+      cuerpo_plantilla: p.cuerpo_plantilla,
+      version: (p as any).version || 'v1.0'
     };
     this.mostrarModalPlantillaForm = true;
   }
@@ -458,18 +474,63 @@ export class ConsentimientosHubComponent implements OnInit {
   }
 
   abrirModalFirmaDigital(): void {
+    const primerPaciente = this.pacientes().length > 0 ? this.pacientes()[0].id : '';
+    const primeraPlantilla = this.plantillas().length > 0 ? this.plantillas()[0].id : '';
     this.firmaForm = {
-      paciente: this.pacientes().length > 0 ? this.pacientes()[0].id : '',
-      plantilla: this.plantillas().length > 0 ? this.plantillas()[0].id : '',
+      paciente: primerPaciente,
+      plantilla: primeraPlantilla,
       confirmado: false
     };
     this.hayTrazoFirma = false;
     this.mostrarModalFirma = true;
-    this.actualizarVistaPreviaTexto();
+    this.onPacienteChange();
 
     setTimeout(() => {
       this.iniciarCanvasContext();
     }, 150);
+  }
+
+  onPacienteChange(): void {
+    const pac = this.pacientes().find(p => p.id === this.firmaForm.paciente);
+    if (!pac) {
+      this.avisoMenorEdad = '';
+      this.esMenorDetectado = false;
+      this.actualizarVistaPreviaTexto();
+      return;
+    }
+
+    let edad = pac.edad;
+    if (edad === undefined && pac.fecha_nacimiento) {
+      const hoy = new Date();
+      const fn = new Date(pac.fecha_nacimiento);
+      edad = hoy.getFullYear() - fn.getFullYear();
+      const m = hoy.getMonth() - fn.getMonth();
+      if (m < 0 || (m === 0 && hoy.getDate() < fn.getDate())) {
+        edad--;
+      }
+    }
+
+    if (edad !== undefined && edad < 18) {
+      this.esMenorDetectado = true;
+      const tutorTxt = pac.tutor_legal_nombre ? ` Tutor legal registrado: ${pac.tutor_legal_nombre} (CI: ${pac.tutor_legal_ci || 'N/A'}).` : '';
+      this.avisoMenorEdad = `El paciente ${pac.usuario?.nombre || ''} ${pac.usuario?.apellido || ''} es MENOR DE EDAD (${edad} años). Se ha seleccionado automáticamente la plantilla legal de Autorización para Menores y Tutores Legales.${tutorTxt}`;
+
+      // Selector automático de plantilla para menores de 18 años (HU-31 Criterio b)
+      const plantMenor = this.plantillas().find(pl =>
+        pl.codigo_plantilla === 'MENORES_EDAD' ||
+        (pl as any).tipo === 'MENORES_EDAD' ||
+        pl.titulo.toLowerCase().includes('menor') ||
+        pl.titulo.toLowerCase().includes('tutor')
+      );
+      if (plantMenor) {
+        this.firmaForm.plantilla = plantMenor.id;
+      }
+    } else {
+      this.esMenorDetectado = false;
+      this.avisoMenorEdad = '';
+    }
+
+    this.actualizarVistaPreviaTexto();
   }
 
   actualizarVistaPreviaTexto(): void {
@@ -481,16 +542,23 @@ export class ConsentimientosHubComponent implements OnInit {
       return;
     }
 
-    let t = plant.cuerpo_plantilla;
+    let t = plant.cuerpo_plantilla || (plant as any).contenido_legal || '';
     const nombre = pac ? `${pac.usuario?.nombre} ${pac.usuario?.apellido}` : '[NOMBRE_DEL_PACIENTE]';
     const ci = pac?.ci || '[CI_DEL_PACIENTE]';
+    const tutorNombre = pac?.tutor_legal_nombre || (this.esMenorDetectado ? '[TUTOR_LEGAL_NOMBRE]' : '');
+    const tutorCi = pac?.tutor_legal_ci || (this.esMenorDetectado ? '[TUTOR_LEGAL_CI]' : '');
     const hoy = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
+    const version = (plant as any).version || 'v1.0';
 
-    t = t.replace(/{PACIENTE_NOMBRE}/g, nombre);
-    t = t.replace(/{PACIENTE_CI}/g, ci);
-    t = t.replace(/{FECHA}/g, hoy);
-    t = t.replace(/{PSICOLOGO_CABECERA}/g, 'Equipo Psicológico SIGEPSI');
-    t = t.replace(/{CENTRO_NOMBRE}/g, 'Centro de Atención Psicológica SIGEPSI');
+    // Sustitución interactiva de variables en tiempo real (HU-31 Criterio a):
+    t = t.replace(/\{(?:paciente_nombre|PACIENTE_NOMBRE|nombre_paciente)\}/gi, nombre);
+    t = t.replace(/\{(?:ci|PACIENTE_CI|ci_paciente)\}/gi, ci);
+    t = t.replace(/\{(?:fecha|FECHA)\}/gi, hoy);
+    t = t.replace(/\{(?:psicologo|PSICOLOGO_CABECERA|psicologo_cabecera)\}/gi, 'Equipo Psicológico SIGEPSI');
+    t = t.replace(/\{(?:centro|CENTRO_NOMBRE|nombre_centro)\}/gi, 'Centro de Atención Psicológica SIGEPSI');
+    t = t.replace(/\{(?:version|VERSION)\}/gi, version);
+    t = t.replace(/\{(?:tutor_nombre|TUTOR_NOMBRE)\}/gi, tutorNombre);
+    t = t.replace(/\{(?:tutor_ci|TUTOR_CI)\}/gi, tutorCi);
 
     this.textoRenderizadoPreview = t;
   }
@@ -567,7 +635,8 @@ export class ConsentimientosHubComponent implements OnInit {
     this.clinicaService.firmarConsentimiento(payload).subscribe({
       next: (f) => {
         this.cerrarModalFirma();
-        this.mostrarAvisoFeedback(`Consentimiento sellado criptográficamente (Hash: ${f.hash_integridad.substring(0, 8)}...)`);
+        const hashStr = (f.hash_sha256 || f.hash_integridad || '').substring(0, 8);
+        this.mostrarAvisoFeedback(`Consentimiento sellado criptográficamente inmutable (Hash: ${hashStr}...). Estado verificado y citas habilitadas.`);
         this.cargarDatos();
       }
     });
