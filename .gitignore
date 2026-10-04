@@ -76,3 +76,7 @@ ehthumbs.db
 Desktop.ini
 ~$*
 *.tmp
+
+.atl/
+.codegraph/
+odd/
