@@ -1,9 +1,10 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ReportService, ColumnaDef, FiltroDef, ReporteResultado, FuenteMetadata } from '../../core/services/report.service';
 import { AuthService } from '../../core/services/auth.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-reporte-visor',
@@ -111,6 +112,14 @@ import { AuthService } from '../../core/services/auth.service';
           </div>
         </div>
       </div>
+
+      <section *ngIf="fuente === 'bitacora'" class="filters-panel">
+        <label for="report-audit-key">Clave de desarrollador</label>
+        <input id="report-audit-key" type="password" autocomplete="off" [(ngModel)]="developerKey" (ngModelChange)="keyChanged()">
+        <button class="btn-apply" type="button" (click)="cargarReporte()">Consultar bitácora</button>
+        <button class="btn-clear" type="button" (click)="lockAudit()">Bloquear</button>
+        <p *ngIf="accessError" role="alert">{{ accessError }}</p>
+      </section>
 
       <!-- Dynamic Filters Drawer -->
       <div class="filters-panel" *ngIf="mostrarFiltros">
@@ -1127,7 +1136,7 @@ import { AuthService } from '../../core/services/auth.service';
     }
   `]
 })
-export class ReporteVisorComponent implements OnInit {
+export class ReporteVisorComponent implements OnInit, OnDestroy {
   fuente = 'citas';
   tituloReporte = 'Reporte Clínico';
   descripcionReporte = '';
@@ -1159,21 +1168,30 @@ export class ReporteVisorComponent implements OnInit {
   enviandoEmail = false;
   emailMensaje = '';
   emailError = '';
+  developerKey = '';
+  accessError = '';
+  private requests = new Subscription();
+  private routeSubscription?: Subscription;
 
   constructor(
     private route: ActivatedRoute,
     private reportService: ReportService,
     public authService: AuthService
-  ) {}
+  ) {
+    effect(() => { if (!this.authService.isAuthenticated()) this.clearAuditState(); });
+  }
 
   ngOnInit(): void {
-    this.route.paramMap.subscribe(params => {
+    this.routeSubscription = this.route.paramMap.subscribe(params => {
       const f = params.get('fuente');
-      if (f) {
+      if (!f) return;
+      if (f !== this.fuente) {
+        this.clearAuditState();
+        this.resultado = null;
         this.fuente = f;
-        this.configurarFuente();
-        this.cargarReporte();
       }
+      this.configurarFuente();
+      if (this.fuente !== 'bitacora') this.cargarReporte();
     });
   }
 
@@ -1219,9 +1237,11 @@ export class ReporteVisorComponent implements OnInit {
     this.emailAsunto = `SIGEPSI — ${this.tituloReporte}`;
 
     // Cargar metadata de columnas y filtros disponibles
+    const fuenteConfigurada = this.fuente;
     this.reportService.getMetadata().subscribe({
       next: (meta) => {
-        const fMeta = meta[this.fuente];
+        if (fuenteConfigurada !== this.fuente) return;
+        const fMeta = meta[fuenteConfigurada];
         if (fMeta) {
           this.todasLasColumnas = fMeta.columnas;
           this.filtrosDisponibles = fMeta.filtros;
@@ -1235,12 +1255,22 @@ export class ReporteVisorComponent implements OnInit {
   }
 
   cargarReporte(): void {
+    if (this.fuente === 'bitacora' && !this.developerKey.trim()) {
+      this.clearAuditResult();
+      this.accessError = 'Ingresá la clave de desarrollador para consultar la bitácora.';
+      return;
+    }
+    this.accessError = '';
     this.cargando = true;
+    if (this.fuente === 'bitacora') this.clearAuditRequest();
+    const fuenteConsultada = this.fuente;
+    const keyConsultada = fuenteConsultada === 'bitacora' ? this.developerKey : undefined;
     const orden = this.ordenColumna ? { columna: this.ordenColumna, direccion: this.ordenDireccion } : undefined;
     const cols = this.columnasVisibles.length > 0 ? this.columnasVisibles : undefined;
 
-    this.reportService.getReporte(this.fuente, this.valoresFiltros, cols, orden).subscribe({
+    this.requests.add(this.reportService.getReporte(fuenteConsultada, this.valoresFiltros, cols, orden, keyConsultada).subscribe({
       next: (res) => {
+        if (fuenteConsultada !== this.fuente || (fuenteConsultada === 'bitacora' && (keyConsultada !== this.developerKey || !this.authService.isAuthenticated()))) return;
         this.resultado = res;
         this.todasLasColumnas = res.columnas;
         if (this.columnasVisibles.length === 0) {
@@ -1251,10 +1281,37 @@ export class ReporteVisorComponent implements OnInit {
         this.paginaActual = 1;
       },
       error: (err) => {
-        console.error('Error cargando reporte:', err);
+        if (fuenteConsultada !== this.fuente || (fuenteConsultada === 'bitacora' && (keyConsultada !== this.developerKey || !this.authService.isAuthenticated()))) return;
+        if (fuenteConsultada === 'bitacora') this.accessError = err.status === 401 || err.status === 403
+          ? 'Acceso denegado. Verificá la clave de desarrollador y tu sesión de SuperAdmin.'
+          : 'No se pudo cargar la bitácora. Verificá la clave e intentá nuevamente.';
         this.cargando = false;
       }
-    });
+    }));
+  }
+
+  keyChanged(): void { this.clearAuditResult(); this.accessError = ''; }
+
+  private clearAuditRequest(): void { this.requests.unsubscribe(); this.requests = new Subscription(); }
+  private clearAuditResult(): void {
+    this.clearAuditRequest();
+    this.resultado = null;
+    this.cargando = false;
+    this.modalEmailAbierto = false;
+    this.enviandoEmail = false;
+    this.emailMensaje = '';
+    this.emailError = '';
+  }
+  private clearAuditState(): void {
+    this.clearAuditResult();
+    this.developerKey = '';
+    this.accessError = '';
+  }
+  lockAudit(): void { this.clearAuditState(); }
+  ngOnDestroy(): void {
+    this.clearAuditState();
+    this.requests.unsubscribe();
+    this.routeSubscription?.unsubscribe();
   }
 
   toggleFiltros(): void {
@@ -1418,14 +1475,17 @@ export class ReporteVisorComponent implements OnInit {
     this.emailMensaje = '';
     this.emailError = '';
 
-    this.reportService.enviarEmail({
+    const fuenteEnviada = this.fuente;
+    const keyEnviada = fuenteEnviada === 'bitacora' ? this.developerKey : undefined;
+    this.requests.add(this.reportService.enviarEmail({
       email: this.emailDestino,
       fuente: this.fuente,
       asunto: this.emailAsunto,
       filtros: this.valoresFiltros,
       columnas: this.columnasVisibles
-    }).subscribe({
+    }, keyEnviada).subscribe({
       next: (res) => {
+        if (fuenteEnviada !== this.fuente || (fuenteEnviada === 'bitacora' && (keyEnviada !== this.developerKey || !this.authService.isAuthenticated()))) return;
         this.enviandoEmail = false;
         this.emailMensaje = res.mensaje || 'Reporte enviado con éxito.';
         setTimeout(() => {
@@ -1433,9 +1493,12 @@ export class ReporteVisorComponent implements OnInit {
         }, 2000);
       },
       error: (err) => {
+        if (fuenteEnviada !== this.fuente || (fuenteEnviada === 'bitacora' && keyEnviada !== this.developerKey)) return;
         this.enviandoEmail = false;
-        this.emailError = err.error?.error || 'Error al enviar el reporte.';
+        this.emailError = fuenteEnviada === 'bitacora' && (err.status === 401 || err.status === 403)
+          ? 'Acceso denegado. Verificá la clave de desarrollador y tu sesión de SuperAdmin.'
+          : err.error?.error || 'Error al enviar el reporte.';
       }
-    });
+    }));
   }
 }
