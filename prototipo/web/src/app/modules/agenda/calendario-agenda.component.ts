@@ -9,7 +9,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { AgendaService } from '../../core/services/agenda.service';
 import { ClinicaService } from '../../core/services/clinica.service';
 import { Cita, SlotDisponible, Psicologo, Paciente } from '../../core/models';
@@ -25,7 +25,7 @@ interface DiaCalendario {
 @Component({
   selector: 'app-calendario-agenda',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   template: `
     <div class="agenda-container">
       <!-- Header de Sección -->
@@ -130,6 +130,7 @@ interface DiaCalendario {
               >
                 <span class="chip-time">{{ cita.hora_inicio.slice(0, 5) }}</span>
                 <span class="chip-paciente">{{ cita.paciente_nombre }}</span>
+                <i *ngIf="cita.formulario_pendiente" class="fa-solid fa-clipboard-question chip-icon text-warning" title="Intake pre-consulta pendiente (<24h)"></i>
                 <i *ngIf="cita.modalidad === 'VIRTUAL'" class="fa-solid fa-video chip-icon" title="Teleconsulta"></i>
               </div>
             </div>
@@ -175,6 +176,12 @@ interface DiaCalendario {
               <td>
                 <span class="badge" [ngClass]="getEstadoBadgeClass(c.estado)">
                   {{ c.estado }}
+                </span>
+                <span *ngIf="c.formulario_pendiente" class="badge badge-warning ms-1" title="Faltan menos de 24h y no ha completado el Intake pre-consulta">
+                  <i class="fa-solid fa-clock-rotate-left"></i> Intake Pendiente
+                </span>
+                <span *ngIf="c.intake_id" class="badge badge-success ms-1" title="Intake pre-consulta completado">
+                  <i class="fa-solid fa-clipboard-check"></i> Intake Listo
                 </span>
               </td>
               <td>
@@ -380,6 +387,30 @@ interface DiaCalendario {
               <div class="detail-item full-width" *ngIf="citaSeleccionada.motivo_consulta">
                 <span class="detail-label">Motivo de Consulta</span>
                 <p class="motivo-box">{{ citaSeleccionada.motivo_consulta }}</p>
+              </div>
+
+              <!-- Banner Alerta Intake Pre-Consulta (<24h) -->
+              <div class="detail-item full-width" *ngIf="citaSeleccionada.formulario_pendiente">
+                <div class="alert-box alert-warning p-2 d-flex align-items-center gap-2">
+                  <i class="fa-solid fa-triangle-exclamation text-warning fa-lg"></i>
+                  <div>
+                    <strong>Alerta Pre-Consulta (< 24h):</strong>
+                    <span class="d-block text-sm">Faltan menos de 24 horas y el paciente no ha completado el Intake inicial requerido.</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Banner Intake Completado -->
+              <div class="detail-item full-width" *ngIf="citaSeleccionada.intake_id">
+                <div class="alert-box alert-success p-2 d-flex justify-content-between align-items-center">
+                  <div class="d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-circle-check text-success fa-lg"></i>
+                    <span>Cuestionario de pre-consulta completado por el paciente.</span>
+                  </div>
+                  <a routerLink="/intake" (click)="closeDetalleModal()" class="btn btn-sm btn-primary">
+                    <i class="fa-solid fa-brain me-1"></i> Ver en Intake
+                  </a>
+                </div>
               </div>
             </div>
 
@@ -836,7 +867,12 @@ export class CalendarioAgendaComponent implements OnInit {
     });
 
     this.clinicaService.getPacientes().subscribe({
-      next: (res) => this.pacientes.set(res)
+      next: (res) => {
+        this.pacientes.set(res);
+        if (res.length === 1 && !this.nuevaCita.paciente) {
+          this.nuevaCita.paciente = res[0].id;
+        }
+      }
     });
   }
 
@@ -938,10 +974,10 @@ export class CalendarioAgendaComponent implements OnInit {
   // --------------------------------------------------------------------------
   openNuevaCitaModal(): void {
     this.modalError.set(null);
-    this.cargarDatosMaestros();
     const hoyStr = new Date().toISOString().split('T')[0];
+    const pacList = this.pacientes();
     this.nuevaCita = {
-      paciente: '',
+      paciente: pacList.length === 1 ? pacList[0].id : '',
       psicologo: '',
       fecha: hoyStr,
       hora_inicio: '',
@@ -950,6 +986,7 @@ export class CalendarioAgendaComponent implements OnInit {
       motivo_consulta: '',
       costo: 150.00
     };
+    this.cargarDatosMaestros();
     this.slotsDisponibles = [];
     this.showNuevaCitaModal = true;
   }

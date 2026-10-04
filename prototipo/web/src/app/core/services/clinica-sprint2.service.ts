@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   FormularioPreConsulta,
@@ -67,7 +67,28 @@ export class ClinicaSprint2Service {
   }
 
   analizarRespuestaConIA(respuestaId: string): Observable<AnalisisIAResponse> {
-    return this.http.post<AnalisisIAResponse>(`${this.apiUrl}/respuestas-preconsulta/${respuestaId}/analizar_ia/`, {});
+    return this.http.post<any>(`${this.apiUrl}/ia/preconsulta/analizar/`, { respuesta_id: respuestaId }).pipe(
+      map((res: any) => ({
+        analisis_id: res.auditoria_id,
+        puntuacion_severidad: res.puntaje_severidad ?? res.puntuacion_severidad ?? 0,
+        nivel_alerta: res.prioridad_sugerida || res.nivel_alerta || 'NORMAL',
+        reglas_disparadas: (res.reglas_aplicadas || res.reglas_disparadas || []).map((r: any) => ({
+          regla: r.codigo || r.regla || 'Regla Heurística',
+          evidencia: r.criterio || r.evidencia || '',
+          explicacion: r.explicacion || '',
+          severidad: (r.codigo === 'REG-ALERTA-CRISIS' ? 'CRITICA' : (r.codigo === 'REG-MALESTAR-ALTO' ? 'ALTA' : (r.severidad || 'MEDIA'))),
+          prioridad: r.prioridad || 1
+        })),
+        resumen_clinico_sugerido: res.resumen_generado || res.resumen_clinico_sugerido || '',
+        preguntas_profundizacion_sugeridas: res.preguntas_profundizacion_sugeridas || [
+          '¿Cuándo fue la primera vez que experimentó este nivel de malestar?',
+          '¿Qué factores atenúan o intensifican los síntomas descritos?',
+          '¿Cuenta con red de apoyo familiar o social inmediata?'
+        ],
+        disclaimer: res.etiqueta_obligatoria || 'Borrador IA — Requiere Revisión Profesional',
+        sha256_verificacion: res.hash_prompt || res.sha256_verificacion || ''
+      } as AnalisisIAResponse))
+    );
   }
 
   // --------------------------------------------------------------------------
@@ -103,7 +124,7 @@ export class ClinicaSprint2Service {
 
   buscarCIE10(query: string): Observable<CieItem[]> {
     const params = new HttpParams().set('q', query);
-    return this.http.get<CieItem[]>(`${this.apiUrl}/historias-clinicas/buscar_cie10/`, { params });
+    return this.http.get<CieItem[]>(`${this.apiUrl}/cie10/`, { params });
   }
 
   agregarDiagnostico(historiaId: string, data: {
@@ -111,23 +132,23 @@ export class ClinicaSprint2Service {
     descripcion: string;
     tipo: 'PRINCIPAL' | 'SECUNDARIO' | 'PRESUNTIVO' | 'DESCARTADO';
     notas_criterio?: string;
-  }): Observable<{ mensaje: string; diagnosticos: DiagnosticoCIE[] }> {
-    return this.http.post<{ mensaje: string; diagnosticos: DiagnosticoCIE[] }>(
-      `${this.apiUrl}/historias-clinicas/${historiaId}/agregar_diagnostico/`,
-      data
-    );
+  }): Observable<{ mensaje: string; diagnostico: any }> {
+    const payload = {
+      historia_clinica: historiaId,
+      codigo_cie: data.codigo_cie10,
+      descripcion: data.descripcion,
+      tipo: data.tipo,
+      observaciones: data.notas_criterio || ''
+    };
+    return this.http.post<any>(`${this.apiUrl}/diagnosticos-cie/`, payload);
   }
 
-  removerDiagnostico(historiaId: string, diagnosticoId: string): Observable<{ mensaje: string; diagnosticos: DiagnosticoCIE[] }> {
-    const params = new HttpParams().set('diagnostico_id', diagnosticoId);
-    return this.http.delete<{ mensaje: string; diagnosticos: DiagnosticoCIE[] }>(
-      `${this.apiUrl}/historias-clinicas/${historiaId}/remover_diagnostico/`,
-      { params }
-    );
+  removerDiagnostico(historiaId: string, diagnosticoId: string): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/diagnosticos-cie/${diagnosticoId}/`);
   }
 
   getTimeline(historiaId: string): Observable<{
-    historia: { id: string; numero: string; paciente: string };
+    historia: { id: string; numero?: string; paciente?: string };
     total_eventos: number;
     timeline: Array<{
       id: string;
@@ -141,7 +162,27 @@ export class ClinicaSprint2Service {
       metadata: Record<string, any>;
     }>;
   }> {
-    return this.http.get<any>(`${this.apiUrl}/historias-clinicas/${historiaId}/timeline/`);
+    return this.http.get<any>(`${this.apiUrl}/historias-clinicas/${historiaId}/timeline/`).pipe(
+      map((res: any) => {
+        if (Array.isArray(res)) {
+          return {
+            historia: { id: historiaId },
+            total_eventos: res.length,
+            timeline: res.map(item => ({
+              id: item.id,
+              tipo: item.tipo === 'NOTA_SOAP' ? 'SESION' : item.tipo,
+              fecha: item.fecha,
+              titulo: item.titulo,
+              detalle: item.subjetivo || item.justificacion || item.titulo || '',
+              alerta: item.estado_avance === 'RETROCESO_CRISIS',
+              profesional: item.profesional,
+              metadata: item
+            }))
+          };
+        }
+        return res;
+      })
+    );
   }
 
   // --------------------------------------------------------------------------
@@ -316,9 +357,14 @@ export class ClinicaSprint2Service {
   // HU-35: AUDITORÍA Y DECISIÓN HUMANA DE IA
   // --------------------------------------------------------------------------
   registrarDecisionIA(data: DecisionIARequest): Observable<{ mensaje: string; auditoria: any }> {
+    const payload = {
+      auditoria_id: data.analisis_id,
+      decision: data.decision,
+      observaciones: data.texto_final_utilizado || data.motivo_descarte || ''
+    };
     return this.http.post<{ mensaje: string; auditoria: any }>(
-      `${this.apiUrl}/auditorias-ia/registrar_decision/`,
-      data
+      `${this.apiUrl}/ia/preconsulta/decision/`,
+      payload
     );
   }
 }

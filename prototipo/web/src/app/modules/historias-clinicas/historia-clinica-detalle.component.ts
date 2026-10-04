@@ -17,7 +17,27 @@ import { HistoriaClinica, DiagnosticoCIE, CieItem } from '../../core/models/clin
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
-    <div class="ehr-detail-container" *ngIf="historia()">
+    <!-- Security Screen for 403 Forbidden Access (HU-26) -->
+    <div class="ehr-forbidden-container glass-panel text-center p-5 mx-auto my-5" style="max-width: 650px; background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);" *ngIf="accesoRestringido()">
+      <div class="security-shield-badge mb-3">
+        <i class="fa-solid fa-user-shield fa-4x text-danger"></i>
+      </div>
+      <h2 class="text-slate-900 fw-bold mb-2">Acceso Clínico Restringido (HU-26)</h2>
+      <p class="text-muted mb-4">
+        {{ errorMensajeAcceso() }}
+      </p>
+      <div class="audit-log-pill p-2 mb-4 bg-light rounded text-xs text-muted d-inline-flex align-items-center gap-2">
+        <i class="fa-solid fa-fingerprint text-primary"></i>
+        <span>Evento de seguridad auditado forensemente en disco con marca de tiempo e IP.</span>
+      </div>
+      <div>
+        <a routerLink="/historias-clinicas" class="btn btn-primary px-4 py-2">
+          <i class="fa-solid fa-arrow-left me-2"></i> Volver a Mis Historias Clínicas
+        </a>
+      </div>
+    </div>
+
+    <div class="ehr-detail-container" *ngIf="historia() && !accesoRestringido()">
       
       <!-- Top Banner con Identificación Clínica -->
       <div class="patient-header glass-panel mb-4">
@@ -148,61 +168,120 @@ import { HistoriaClinica, DiagnosticoCIE, CieItem } from '../../core/models/clin
             Búsqueda por código o criterio clínico normalizado de acuerdo con la clasificación internacional de la OMS.
           </p>
 
-          <div class="row g-3 align-items-end">
-            <div class="col-md-5 position-relative">
-              <label class="form-label">Buscar Código o Denominación CIE-10</label>
-              <input
-                type="text"
-                class="form-control"
-                [(ngModel)]="busquedaCieQuery"
-                (ngModelChange)="onBuscarCie($event)"
-                placeholder="Ej. F41.1, depresión, fobia, estrés..."
-              />
+          <div class="cie-search-panel">
+            <!-- Barra de Búsqueda Principal -->
+            <div class="cie-search-bar">
+              <label class="form-label fw-semibold">Buscar Código o Criterio Diagnóstico CIE-10 / OMS</label>
+              <div class="cie-input-group">
+                <i class="fa-solid fa-magnifying-glass cie-group-icon"></i>
+                <input
+                  type="text"
+                  class="form-control cie-main-input"
+                  [(ngModel)]="busquedaCieQuery"
+                  (ngModelChange)="onBuscarCie($event)"
+                  placeholder="Escriba aquí para buscar diagnósticos (ej. ansiedad, depresión, F41, estrés, fobia)..."
+                />
+                <button *ngIf="busquedaCieQuery" type="button" class="btn btn-sm btn-light cie-clear-btn" (click)="limpiarBusquedaCie()">
+                  <i class="fa-solid fa-xmark me-1"></i> Borrar
+                </button>
+              </div>
+            </div>
 
-              <!-- Menú Desplegable con Resultados -->
-              <div *ngIf="resultadosCie().length > 0" class="cie-dropdown glass-card">
+            <!-- LISTA VISIBLE EN PANTALLA: Opciones Encontradas mientras el usuario escribe -->
+            <div *ngIf="resultadosCie().length > 0" class="cie-results-card">
+              <div class="cie-results-header">
+                <div>
+                  <i class="fa-solid fa-list-check text-primary me-2"></i>
+                  <strong>Opciones diagnósticas encontradas ({{ resultadosCie().length }}):</strong>
+                  <span class="text-muted ms-2 small">Haga clic en una opción para seleccionarla</span>
+                </div>
+                <span class="badge bg-primary">{{ resultadosCie().length }} coincidencias</span>
+              </div>
+              <div class="cie-results-list">
                 <div 
                   *ngFor="let item of resultadosCie()" 
-                  class="cie-option" 
+                  class="cie-result-item" 
+                  [class.is-selected]="nuevoDiagnostico.codigo_cie10 === item.codigo"
                   (click)="seleccionarCie(item)">
-                  <div class="d-flex justify-content-between align-items-center">
-                    <span class="cie-code">{{ item.codigo }}</span>
-                    <span class="cie-cat badge bg-light text-dark">{{ item.categoria }}</span>
+                  <div class="cie-item-content">
+                    <span class="cie-code-pill">{{ item.codigo }}</span>
+                    <span class="cie-desc-label">{{ item.descripcion }}</span>
                   </div>
-                  <div class="cie-desc">{{ item.descripcion }}</div>
+                  <button type="button" class="btn btn-sm" [ngClass]="nuevoDiagnostico.codigo_cie10 === item.codigo ? 'btn-success' : 'btn-outline-primary'">
+                    <i class="fa-solid" [ngClass]="nuevoDiagnostico.codigo_cie10 === item.codigo ? 'fa-check' : 'fa-hand-pointer'"></i>
+                    {{ nuevoDiagnostico.codigo_cie10 === item.codigo ? 'Seleccionado' : 'Elegir' }}
+                  </button>
                 </div>
               </div>
             </div>
 
-            <div class="col-md-3">
-              <label class="form-label">Jerarquía Diagnóstica</label>
-              <select class="form-select" [(ngModel)]="nuevoDiagnostico.tipo">
-                <option value="PRINCIPAL">Principal</option>
-                <option value="SECUNDARIO">Secundario / Comorbilidad</option>
-                <option value="PRESUNTIVO">Presuntivo / En Estudio</option>
-                <option value="DESCARTADO">Descartado</option>
-              </select>
-            </div>
-
-            <div class="col-md-4">
-              <button 
-                class="btn btn-primary w-100" 
-                [disabled]="!nuevoDiagnostico.codigo_cie10"
-                (click)="agregarDiagnostico()">
-                <i class="fa-solid fa-plus-circle me-1"></i> Asignar al Expediente
+            <!-- Accesos Rápidos Frecuentes (para selección inmediata con 1 clic) -->
+            <div class="cie-quick-chips">
+              <span class="cie-chips-label"><i class="fa-solid fa-bolt text-warning me-1"></i> Frecuentes:</span>
+              <button type="button" class="cie-chip" (click)="seleccionarCieRapido('F41.1', 'Trastorno de ansiedad generalizada (TAG)')">
+                <strong>F41.1</strong> Ansiedad Generalizada
+              </button>
+              <button type="button" class="cie-chip" (click)="seleccionarCieRapido('F32.1', 'Episodio depresivo moderado')">
+                <strong>F32.1</strong> Depresión Moderada
+              </button>
+              <button type="button" class="cie-chip" (click)="seleccionarCieRapido('F43.1', 'Trastorno por estrés postraumático (TEPT)')">
+                <strong>F43.1</strong> Estrés Postraumático
+              </button>
+              <button type="button" class="cie-chip" (click)="seleccionarCieRapido('F42.2', 'Actos y pensamientos obsesivos mixtos (TOC)')">
+                <strong>F42.2</strong> TOC Mixto
+              </button>
+              <button type="button" class="cie-chip" (click)="seleccionarCieRapido('F90.0', 'Perturbación de la actividad y de la atención (TDAH)')">
+                <strong>F90.0</strong> TDAH
               </button>
             </div>
 
-            <div class="col-12" *ngIf="nuevoDiagnostico.codigo_cie10">
-              <div class="selected-cie-box p-3 glass-panel">
-                <div class="d-flex justify-content-between">
-                  <strong>Seleccionado: [{{ nuevoDiagnostico.codigo_cie10 }}] {{ nuevoDiagnostico.descripcion }}</strong>
-                  <button class="btn-close-sm" (click)="nuevoDiagnostico.codigo_cie10 = ''">×</button>
+            <!-- Panel de Asignación con Diagnóstico Elegido -->
+            <div class="cie-assign-panel">
+              <div class="row-fields">
+                <div class="field-selected">
+                  <label class="form-label fw-semibold">Diagnóstico a Asignar</label>
+                  <div class="selected-display-box" [class.has-selection]="nuevoDiagnostico.codigo_cie10">
+                    <div *ngIf="nuevoDiagnostico.codigo_cie10" class="d-flex align-items-center justify-content-between w-100">
+                      <div>
+                        <strong class="text-success me-2"><i class="fa-solid fa-circle-check"></i> [{{ nuevoDiagnostico.codigo_cie10 }}]</strong>
+                        <span class="fw-semibold text-dark">{{ nuevoDiagnostico.descripcion }}</span>
+                      </div>
+                      <button type="button" class="btn-clean" (click)="deseleccionarCie()" title="Quitar selección">×</button>
+                    </div>
+                    <div *ngIf="!nuevoDiagnostico.codigo_cie10" class="text-muted small">
+                      <i class="fa-solid fa-arrow-up me-1"></i> Escriba arriba o elija un acceso frecuente para seleccionar el diagnóstico.
+                    </div>
+                  </div>
                 </div>
-                <div class="mt-2">
-                  <input type="text" class="form-control form-control-sm" [(ngModel)]="nuevoDiagnostico.notas_criterio"
-                         placeholder="Notas clínicas de respaldo diagnóstico o criterios DSM-5/CIE-10 observados..." />
+
+                <div class="field-hierarchy">
+                  <label class="form-label fw-semibold">Jerarquía Diagnóstica</label>
+                  <select class="form-select" [(ngModel)]="nuevoDiagnostico.tipo">
+                    <option value="PRINCIPAL">Principal</option>
+                    <option value="SECUNDARIO">Secundario / Comorbilidad</option>
+                    <option value="PRESUNTIVO">Presuntivo / En Estudio</option>
+                    <option value="DESCARTADO">Descartado</option>
+                  </select>
                 </div>
+
+                <div class="field-button">
+                  <button 
+                    class="btn btn-primary w-100 btn-assign-action" 
+                    [disabled]="!nuevoDiagnostico.codigo_cie10"
+                    (click)="agregarDiagnostico()">
+                    <i class="fa-solid fa-plus-circle me-1"></i> Asignar al Expediente
+                  </button>
+                </div>
+              </div>
+
+              <!-- Notas adicionales / Justificación (Opcional) -->
+              <div class="mt-2" *ngIf="nuevoDiagnostico.codigo_cie10">
+                <input 
+                  type="text" 
+                  class="form-control form-control-sm" 
+                  [(ngModel)]="nuevoDiagnostico.notas_criterio"
+                  placeholder="Notas clínicas de respaldo diagnóstico o criterios DSM-5/CIE-10 observados (opcional)..." 
+                />
               </div>
             </div>
           </div>
@@ -424,17 +503,99 @@ import { HistoriaClinica, DiagnosticoCIE, CieItem } from '../../core/models/clin
     .section-heading { font-size: 1.1rem; font-weight: 700; color: #0f172a; margin: 0; }
     .content-block { font-size: 0.92rem; color: #334155; line-height: 1.6; white-space: pre-line; }
 
-    .cie-dropdown {
-      position: absolute; top: 100%; left: 0; right: 0; z-index: 100;
-      background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px;
-      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); max-height: 260px; overflow-y: auto;
-      margin-top: 4px;
+    /* Buscador y Lista de Resultados CIE-10 (HU-25 / HU-26) */
+    .cie-search-panel { display: flex; flex-direction: column; gap: 1rem; width: 100%; }
+    .cie-search-bar { width: 100%; }
+    .cie-input-group { position: relative; width: 100%; display: flex; align-items: center; }
+    .cie-group-icon {
+      position: absolute; left: 1.1rem; color: #0d9488; font-size: 1.05rem; pointer-events: none;
     }
-    .cie-option { padding: 0.75rem 1rem; cursor: pointer; border-bottom: 1px solid #f1f5f9; }
-    .cie-option:hover { background: #f8fafc; }
-    .cie-code { font-family: monospace; font-weight: 700; color: #0284c7; }
-    .cie-desc { font-size: 0.85rem; color: #1e293b; margin-top: 0.2rem; }
-    .selected-cie-box { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; }
+    .cie-main-input {
+      padding-left: 2.85rem; padding-right: 6rem; height: 46px;
+      border: 2px solid #cbd5e1; border-radius: 12px; font-size: 0.95rem; width: 100%;
+      background: #ffffff; transition: all 0.2s ease;
+    }
+    .cie-main-input:focus {
+      border-color: #0d9488; box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15); outline: none;
+    }
+    .cie-clear-btn {
+      position: absolute; right: 0.6rem; border-radius: 8px; font-size: 0.8rem;
+    }
+
+    /* Lista Visible de Opciones Encontradas en Flujo Normal */
+    .cie-results-card {
+      background: #ffffff; border: 2px solid #0d9488; border-radius: 12px;
+      box-shadow: 0 8px 16px -4px rgba(13, 148, 136, 0.12); overflow: hidden; width: 100%;
+    }
+    .cie-results-header {
+      background: #f0fdfa; padding: 0.7rem 1.25rem; border-bottom: 1px solid #ccfbf1;
+      display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: #0f766e;
+    }
+    .cie-results-list {
+      max-height: 240px; overflow-y: auto; display: flex; flex-direction: column;
+    }
+    .cie-result-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.75rem 1.25rem; border-bottom: 1px solid #f1f5f9; cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .cie-result-item:last-child { border-bottom: none; }
+    .cie-result-item:hover { background: #f8fafc; }
+    .cie-result-item.is-selected { background: #ecfdf5; border-left: 4px solid #10b981; }
+    .cie-item-content { display: flex; align-items: center; gap: 0.85rem; flex: 1; }
+    .cie-code-pill {
+      font-family: ui-monospace, monospace; font-weight: 800; color: #0d9488;
+      background: #ccfbf1; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.88rem;
+    }
+    .cie-desc-label { font-size: 0.92rem; font-weight: 600; color: #1e293b; }
+
+    /* Chips de Selección Rápida CIE-10 */
+    .cie-quick-chips { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+    .cie-chips-label { font-size: 0.82rem; font-weight: 700; color: #64748b; }
+    .cie-chip {
+      background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 9999px;
+      padding: 0.3rem 0.8rem; font-size: 0.8rem; color: #334155; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 0.35rem; transition: all 0.15s ease;
+    }
+    .cie-chip strong { color: #0d9488; }
+    .cie-chip:hover { background: #ccfbf1; border-color: #5eead4; color: #0f766e; transform: translateY(-1px); }
+
+    /* Panel de Asignación y Jerarquía */
+    .cie-assign-panel {
+      background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.25rem; width: 100%;
+    }
+    .row-fields {
+      display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;
+    }
+    .field-selected { flex: 1 1 360px; min-width: 280px; }
+    .field-hierarchy { flex: 0 0 220px; }
+    .field-button { flex: 0 0 220px; }
+
+    .selected-display-box {
+      min-height: 44px; background: #ffffff; border: 1.5px dashed #cbd5e1; border-radius: 10px;
+      padding: 0.55rem 1rem; display: flex; align-items: center;
+    }
+    .selected-display-box.has-selection {
+      border: 1.5px solid #10b981; background: #f0fdf4;
+    }
+    .btn-clean {
+      background: none; border: none; font-size: 1.25rem; line-height: 1; cursor: pointer;
+      color: #94a3b8; padding: 0 0.3rem;
+    }
+    .btn-clean:hover { color: #ef4444; }
+
+    .btn-assign-action {
+      height: 44px; font-weight: 600; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+      background: #0d9488; border-color: #0d9488; color: #ffffff;
+      box-shadow: 0 2px 6px rgba(13, 148, 136, 0.25); cursor: pointer; transition: all 0.2s ease;
+    }
+    .btn-assign-action:hover:not(:disabled) {
+      background: #0f766e; border-color: #0f766e; transform: translateY(-1px);
+    }
+    .btn-assign-action:disabled {
+      background: #94a3b8; border-color: #94a3b8; opacity: 0.65; cursor: not-allowed; box-shadow: none;
+    }
     .btn-close-sm { background: none; border: none; font-size: 1.25rem; line-height: 1; cursor: pointer; color: #64748b; }
 
     .custom-table { width: 100%; border-collapse: collapse; }
@@ -485,6 +646,8 @@ export class HistoriaClinicaDetalleComponent implements OnInit {
   historia = signal<HistoriaClinica | null>(null);
   activeTab: 'anamnesis' | 'diagnosticos' | 'plan' | 'timeline' = 'anamnesis';
   feedbackMensaje = signal<string | null>(null);
+  accesoRestringido = signal<boolean>(false);
+  errorMensajeAcceso = signal<string>('');
 
   // Tab 1 Edit
   editandoAnamnesis = false;
@@ -538,6 +701,7 @@ export class HistoriaClinicaDetalleComponent implements OnInit {
   }
 
   cargarHistoria(): void {
+    this.accesoRestringido.set(false);
     this.clinicaService.getHistoriaClinicaById(this.historiaId).subscribe({
       next: (hc) => {
         this.historia.set(hc);
@@ -549,7 +713,18 @@ export class HistoriaClinicaDetalleComponent implements OnInit {
         };
         this.planForm = { plan_terapeutico: hc.plan_terapeutico || '' };
       },
-      error: () => this.router.navigate(['/historias-clinicas'])
+      error: (err) => {
+        if (err.status === 403) {
+          this.accesoRestringido.set(true);
+          this.errorMensajeAcceso.set(
+            err?.error?.detail ||
+            err?.error?.message ||
+            'Acceso denegado: El expediente clínico está protegido y reservado exclusivamente al psicólogo tratante asignado (HU-26).'
+          );
+        } else {
+          this.router.navigate(['/historias-clinicas']);
+        }
+      }
     });
   }
 
@@ -584,6 +759,25 @@ export class HistoriaClinicaDetalleComponent implements OnInit {
     });
   }
 
+  limpiarBusquedaCie(): void {
+    this.busquedaCieQuery = '';
+    this.resultadosCie.set([]);
+  }
+
+  seleccionarCieRapido(codigo: string, descripcion: string): void {
+    this.nuevoDiagnostico.codigo_cie10 = codigo;
+    this.nuevoDiagnostico.descripcion = descripcion;
+    this.busquedaCieQuery = `${codigo} - ${descripcion}`;
+    this.resultadosCie.set([]);
+  }
+
+  deseleccionarCie(): void {
+    this.nuevoDiagnostico.codigo_cie10 = '';
+    this.nuevoDiagnostico.descripcion = '';
+    this.nuevoDiagnostico.notas_criterio = '';
+    this.busquedaCieQuery = '';
+  }
+
   seleccionarCie(item: CieItem): void {
     this.nuevoDiagnostico.codigo_cie10 = item.codigo;
     this.nuevoDiagnostico.descripcion = item.descripcion;
@@ -593,9 +787,10 @@ export class HistoriaClinicaDetalleComponent implements OnInit {
 
   agregarDiagnostico(): void {
     if (!this.nuevoDiagnostico.codigo_cie10) return;
+    const codigo = this.nuevoDiagnostico.codigo_cie10;
     this.clinicaService.agregarDiagnostico(this.historiaId, this.nuevoDiagnostico).subscribe({
       next: () => {
-        this.mostrarFeedback(`Diagnóstico ${this.nuevoDiagnostico.codigo_cie10} agregado`);
+        this.mostrarFeedback(`Diagnóstico [${codigo}] asignado exitosamente al expediente`);
         this.nuevoDiagnostico = {
           codigo_cie10: '',
           descripcion: '',
@@ -604,6 +799,11 @@ export class HistoriaClinicaDetalleComponent implements OnInit {
         };
         this.busquedaCieQuery = '';
         this.cargarHistoria();
+      },
+      error: (err) => {
+        console.error('Error al agregar diagnóstico:', err);
+        const detalle = err?.error?.detail || (typeof err?.error === 'object' ? JSON.stringify(err?.error) : '') || 'Error al guardar';
+        this.mostrarFeedback(`Error al asignar diagnóstico: ${detalle}`);
       }
     });
   }

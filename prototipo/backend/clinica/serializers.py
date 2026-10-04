@@ -444,8 +444,11 @@ from clinica.models import (
     NotaSesion, EvolucionClinica,
     TareaTerapeutica, EvidenciaTarea,
     ConsentimientoInformado, FirmaConsentimiento,
-    DerivacionCaso, AuditoriaIA
+    DerivacionCaso, AuditoriaIA,
+    ConversacionChatbot, MensajeChatbot
 )
+
+from clinica.validators import validar_esquema_preguntas, validar_respuestas_contra_esquema
 
 # ──────────────────────────────────────────────────────────────────────────────
 # CU14: Formulario Pre-Consulta e Intake Digital
@@ -457,19 +460,20 @@ class FormularioPreConsultaSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'fecha_creacion', 'fecha_actualizacion']
 
     def validate_preguntas_schema(self, value):
-        if not isinstance(value, list):
-            raise serializers.ValidationError("El esquema de preguntas debe ser una lista de campos JSON.")
-        return value
+        return validar_esquema_preguntas(value)
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
         data['preguntas_json'] = instance.preguntas_schema or []
+        data['preguntas_total'] = len(instance.preguntas_schema) if instance.preguntas_schema else 0
         return data
 
 
 class RespuestaPreConsultaSerializer(serializers.ModelSerializer):
     paciente_nombre = serializers.SerializerMethodField()
     tiene_urgencia_alta = serializers.BooleanField(read_only=True)
+    respuestas_json = serializers.JSONField(write_only=True, required=False)
+    consentimiento_ia_procesamiento = serializers.BooleanField(write_only=True, required=False)
 
     class Meta:
         model = RespuestaPreConsulta
@@ -477,7 +481,8 @@ class RespuestaPreConsultaSerializer(serializers.ModelSerializer):
             'id', 'formulario', 'paciente', 'paciente_nombre', 'cita',
             'motivo_consulta', 'sintomas_principales', 'nivel_urgencia_percibido',
             'antecedentes_medicos', 'antecedentes_psiquiatricos', 'medicacion_actual',
-            'respuestas_detalle', 'estado', 'tiene_urgencia_alta', 'fecha_envio'
+            'respuestas_detalle', 'respuestas_json', 'consentimiento_ia_procesamiento',
+            'estado', 'tiene_urgencia_alta', 'fecha_envio'
         ]
         read_only_fields = ['id', 'fecha_envio', 'tiene_urgencia_alta']
 
@@ -491,10 +496,39 @@ class RespuestaPreConsultaSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("La escala de malestar/urgencia debe estar comprendida entre 1 y 5.")
         return value
 
+    def validate(self, attrs):
+        formulario = attrs.get('formulario')
+        if not formulario and self.instance:
+            formulario = self.instance.formulario
+
+        # Aceptar respuestas_json o respuestas_detalle indistintamente
+        if 'respuestas_json' in attrs and 'respuestas_detalle' not in attrs:
+            attrs['respuestas_detalle'] = attrs.pop('respuestas_json')
+        else:
+            attrs.pop('respuestas_json', None)
+
+        attrs.pop('consentimiento_ia_procesamiento', None)
+
+        if not attrs.get('motivo_consulta'):
+            attrs['motivo_consulta'] = 'Evaluación diagnóstica y sintomatología clínica inicial'
+
+        respuestas_detalle = attrs.get('respuestas_detalle')
+        if formulario and respuestas_detalle is not None:
+            attrs['respuestas_detalle'] = validar_respuestas_contra_esquema(formulario, respuestas_detalle)
+
+        # Validar consistencia si se incluye cita y paciente
+        cita = attrs.get('cita')
+        paciente = attrs.get('paciente')
+        if cita and paciente and cita.paciente != paciente:
+            raise serializers.ValidationError({"cita": "La cita seleccionada no pertenece al paciente indicado."})
+
+        return attrs
+
     def to_representation(self, instance):
         data = super().to_representation(instance)
         data['respuestas_json'] = instance.respuestas_detalle or {}
         data['formulario_titulo'] = instance.formulario.titulo if instance.formulario else ""
+        data['formulario_preguntas_total'] = len(instance.formulario.preguntas_schema) if (instance.formulario and instance.formulario.preguntas_schema) else 0
         data['completado'] = instance.estado in ('ENVIADO', 'REVISADO', 'ARCHIVADO')
         data['consentimiento_ia_procesamiento'] = True
         return data
@@ -504,10 +538,28 @@ class RespuestaPreConsultaSerializer(serializers.ModelSerializer):
 # CU15: Historia Clínica Psicológica y Diagnóstico CIE
 # ──────────────────────────────────────────────────────────────────────────────
 class DiagnosticoCIESerializer(serializers.ModelSerializer):
+    tipo = serializers.ChoiceField(
+        choices=['PRINCIPAL', 'SECUNDARIO', 'PRESUNTIVO', 'CONFIRMADO', 'DIFERENCIAL', 'DESCARTADO'],
+        default='CONFIRMADO'
+    )
+
     class Meta:
         model = DiagnosticoCIE
         fields = ['id', 'historia_clinica', 'codigo_cie', 'descripcion', 'tipo', 'observaciones', 'fecha_diagnostico']
         read_only_fields = ['id']
+
+    def to_internal_value(self, data):
+        data = data.copy() if hasattr(data, 'copy') else dict(data)
+        if 'codigo_cie10' in data and 'codigo_cie' not in data:
+            data['codigo_cie'] = data['codigo_cie10']
+        if 'notas_criterio' in data and 'observaciones' not in data:
+            data['observaciones'] = data['notas_criterio']
+        tipo = data.get('tipo', 'CONFIRMADO')
+        if tipo == 'PRINCIPAL':
+            data['tipo'] = 'CONFIRMADO'
+        elif tipo in ('SECUNDARIO', 'DESCARTADO'):
+            data['tipo'] = 'DIFERENCIAL'
+        return super().to_internal_value(data)
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -521,6 +573,16 @@ class HistoriaClinicaSerializer(serializers.ModelSerializer):
     paciente_nombre = serializers.SerializerMethodField()
     paciente_ci = serializers.SerializerMethodField()
     psicologo_nombre = serializers.SerializerMethodField()
+    psicologo_apertura = serializers.PrimaryKeyRelatedField(
+        queryset=Psicologo.objects.all(),
+        required=False,
+        allow_null=True
+    )
+
+    # Alias de entrada desde el frontend
+    anamnesis = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    examen_estado_mental = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    plan_terapeutico = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     class Meta:
         model = HistoriaClinica
@@ -530,10 +592,29 @@ class HistoriaClinicaSerializer(serializers.ModelSerializer):
             'codigo_historia', 'motivo_consulta_inicial',
             'antecedentes_personales', 'antecedentes_familiares',
             'historia_evolutiva', 'examen_mental_inicial', 'plan_tratamiento',
+            'anamnesis', 'examen_estado_mental', 'plan_terapeutico',
             'cerrada', 'fecha_apertura', 'fecha_cierre', 'fecha_actualizacion',
             'diagnosticos'
         ]
         read_only_fields = ['id', 'codigo_historia', 'fecha_apertura', 'fecha_actualizacion']
+
+    def validate(self, attrs):
+        if 'anamnesis' in attrs and 'historia_evolutiva' not in attrs:
+            attrs['historia_evolutiva'] = attrs.pop('anamnesis')
+        else:
+            attrs.pop('anamnesis', None)
+
+        if 'examen_estado_mental' in attrs and 'examen_mental_inicial' not in attrs:
+            attrs['examen_mental_inicial'] = attrs.pop('examen_estado_mental')
+        else:
+            attrs.pop('examen_estado_mental', None)
+
+        if 'plan_terapeutico' in attrs and 'plan_tratamiento' not in attrs:
+            attrs['plan_tratamiento'] = attrs.pop('plan_terapeutico')
+        else:
+            attrs.pop('plan_terapeutico', None)
+
+        return attrs
 
     def get_paciente_nombre(self, obj):
         if obj.paciente and obj.paciente.usuario:
@@ -579,7 +660,14 @@ class HistoriaClinicaSerializer(serializers.ModelSerializer):
 # CU16: Notas de Sesión Clínicas (Modelo SOAP)
 # ──────────────────────────────────────────────────────────────────────────────
 class NotaSesionSerializer(serializers.ModelSerializer):
+    psicologo = serializers.PrimaryKeyRelatedField(queryset=Psicologo.objects.all(), required=False, allow_null=True)
     psicologo_nombre = serializers.SerializerMethodField()
+    numero_sesion = serializers.IntegerField(required=False, default=1)
+    subjetivo = serializers.CharField(required=False, allow_blank=True, default="")
+    objetivo = serializers.CharField(required=False, allow_blank=True, default="")
+    analisis = serializers.CharField(required=False, allow_blank=True, default="")
+    plan = serializers.CharField(required=False, allow_blank=True, default="")
+    estado_guardado = serializers.CharField(required=False, default='BORRADOR')
 
     class Meta:
         model = NotaSesion
@@ -592,13 +680,19 @@ class NotaSesionSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'fecha_creacion']
 
+    def to_internal_value(self, data):
+        data = data.copy() if hasattr(data, 'copy') else dict(data)
+        if 'intervenciones_aplicadas' in data and 'tecnicas_aplicadas' not in data:
+            data['tecnicas_aplicadas'] = data['intervenciones_aplicadas']
+        return super().to_internal_value(data)
+
     def get_psicologo_nombre(self, obj):
         if obj.psicologo and obj.psicologo.usuario:
             return f"Lic. {obj.psicologo.usuario.nombre} {obj.psicologo.usuario.apellido}"
         return ""
 
     def validate_numero_sesion(self, value):
-        if value <= 0:
+        if value is not None and value <= 0:
             raise serializers.ValidationError("El número correlativo de sesión debe ser mayor a 0.")
         return value
 
@@ -804,7 +898,52 @@ class AuditoriaIASerializer(serializers.ModelSerializer):
             'evaluacion_humana', 'observaciones_profesional',
             'fecha_analisis', 'fecha_decision', 'ip_origen'
         ]
-        read_only_fields = ['id', 'fecha_analisis']
+# ──────────────────────────────────────────────────────────────────────────────
+# CU20: Chatbot de Orientación Clínica (HU-36)
+# ──────────────────────────────────────────────────────────────────────────────
+class MensajeChatbotSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MensajeChatbot
+        fields = ['id', 'conversacion', 'remitente', 'texto', 'es_alerta_crisis', 'opciones_sugeridas', 'timestamp']
+        read_only_fields = ['id', 'timestamp']
 
 
+class ConversacionChatbotSerializer(serializers.ModelSerializer):
+    mensajes = MensajeChatbotSerializer(many=True, read_only=True)
+    paciente_nombre = serializers.SerializerMethodField()
+    operador_nombre = serializers.SerializerMethodField()
+    ultimo_mensaje = serializers.SerializerMethodField()
 
+    class Meta:
+        model = ConversacionChatbot
+        fields = [
+            'id', 'session_id', 'paciente', 'paciente_nombre',
+            'usuario', 'estado', 'nivel_riesgo',
+            'operador_asignado', 'operador_nombre',
+            'fecha_inicio', 'fecha_actualizacion',
+            'mensajes', 'ultimo_mensaje'
+        ]
+        read_only_fields = ['id', 'fecha_inicio', 'fecha_actualizacion']
+
+    def get_paciente_nombre(self, obj):
+        if obj.paciente and obj.paciente.usuario:
+            return f"{obj.paciente.usuario.nombre} {obj.paciente.usuario.apellido}"
+        if obj.usuario:
+            return f"{obj.usuario.nombre} {obj.usuario.apellido}"
+        return "Visitante Anónimo"
+
+    def get_operador_nombre(self, obj):
+        if obj.operador_asignado:
+            return f"{obj.operador_asignado.nombre} {obj.operador_asignado.apellido}"
+        return None
+
+    def get_ultimo_mensaje(self, obj):
+        msg = obj.mensajes.order_by('-timestamp').first()
+        if msg:
+            return {
+                "remitente": msg.remitente,
+                "texto": msg.texto,
+                "timestamp": msg.timestamp.isoformat(),
+                "es_alerta_crisis": msg.es_alerta_crisis
+            }
+        return None

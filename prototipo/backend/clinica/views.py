@@ -210,7 +210,8 @@ from clinica.models import (
     NotaSesion, EvolucionClinica,
     TareaTerapeutica, EvidenciaTarea,
     ConsentimientoInformado, FirmaConsentimiento,
-    DerivacionCaso, AuditoriaIA
+    DerivacionCaso, AuditoriaIA,
+    ConversacionChatbot, MensajeChatbot
 )
 from clinica.serializers import (
     FormularioPreConsultaSerializer, RespuestaPreConsultaSerializer,
@@ -218,8 +219,11 @@ from clinica.serializers import (
     NotaSesionSerializer, EvolucionClinicaSerializer,
     TareaTerapeuticaSerializer, EvidenciaTareaSerializer,
     ConsentimientoInformadoSerializer, FirmaConsentimientoSerializer,
-    DerivacionCasoSerializer, AuditoriaIASerializer
+    DerivacionCasoSerializer, AuditoriaIASerializer,
+    ConversacionChatbotSerializer, MensajeChatbotSerializer
 )
+from clinica.chatbot_service import ChatbotEngine
+from rest_framework.permissions import AllowAny, IsAuthenticated
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -236,6 +240,18 @@ class FormularioPreConsultaViewSet(viewsets.ModelViewSet):
         if activo is not None:
             qs = qs.filter(activo=activo.lower() in ('true', '1'))
         return qs
+
+    @action(detail=False, methods=['get'], url_path='activo')
+    def activo(self, request):
+        """Retorna el formulario institucional activo vigente para el tenant."""
+        formulario = self.get_queryset().filter(activo=True).first()
+        if not formulario:
+            return Response(
+                {"detalle": "No existe un formulario de preconsulta activo actualmente."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        serializer = self.get_serializer(formulario)
+        return Response(serializer.data)
 
 
 class RespuestaPreConsultaViewSet(viewsets.ModelViewSet):
@@ -257,6 +273,11 @@ class RespuestaPreConsultaViewSet(viewsets.ModelViewSet):
         if paciente_id:
             qs = qs.filter(paciente_id=paciente_id)
 
+        # Filtro por cita
+        cita_id = self.request.query_params.get('cita') or self.request.query_params.get('cita_id')
+        if cita_id:
+            qs = qs.filter(cita_id=cita_id)
+
         # Filtro por estado
         estado = self.request.query_params.get('estado')
         if estado:
@@ -272,11 +293,29 @@ class RespuestaPreConsultaViewSet(viewsets.ModelViewSet):
         else:
             serializer.save()
 
+    @action(detail=False, methods=['get'], url_path='por-cita')
+    def por_cita(self, request):
+        """Consulta el estado del intake de una cita específica."""
+        cita_id = request.query_params.get('cita') or request.query_params.get('cita_id')
+        if not cita_id:
+            return Response(
+                {"error": "Debe especificar el parámetro cita o cita_id."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        respuesta = self.get_queryset().filter(cita_id=cita_id).first()
+        if not respuesta:
+            return Response(
+                {"completado": False, "mensaje": "La cita no cuenta con intake completado aún.", "respuesta": None},
+                status=status.HTTP_200_OK
+            )
+        serializer = self.get_serializer(respuesta)
+        return Response({"completado": True, "respuesta": serializer.data}, status=status.HTTP_200_OK)
+
     @action(detail=True, methods=['post'], url_path='marcar-revisado')
     def marcar_revisado(self, request, pk=None):
         respuesta = self.get_object()
         respuesta.estado = 'REVISADO'
-        respuesta.save()
+        respuesta.save(update_fields=['estado'])
         return Response({"mensaje": "Formulario previo marcado como revisado.", "estado": respuesta.estado})
 
 
@@ -412,9 +451,42 @@ class NotaSesionViewSet(viewsets.ModelViewSet):
         psico = getattr(user, 'perfil_psicologo', None)
         if not psico and not serializer.validated_data.get('psicologo'):
             psico = Psicologo.objects.filter(activo=True).first()
-        serializer.save(psicologo=serializer.validated_data.get('psicologo') or psico)
+        
+        historia = serializer.validated_data.get('historia_clinica')
+        num_sesion = serializer.validated_data.get('numero_sesion')
+        if not num_sesion and historia:
+            ultimo = historia.notas_sesion.order_by('-numero_sesion').first()
+            num_sesion = (ultimo.numero_sesion + 1) if ultimo else 1
+        elif not num_sesion:
+            num_sesion = 1
 
-    @action(detail=True, methods=['patch'], url_path='borrador')
+        serializer.save(
+            psicologo=serializer.validated_data.get('psicologo') or psico,
+            numero_sesion=num_sesion
+        )
+
+    @action(detail=False, methods=['post'], url_path='guardar_borrador')
+    def guardar_borrador_endpoint(self, request):
+        """Crear o actualizar borrador de nota SOAP (CU16)."""
+        nota_id = request.data.get('id')
+        if nota_id:
+            try:
+                nota = NotaSesion.objects.get(id=nota_id)
+                serializer = self.get_serializer(nota, data=request.data, partial=True)
+                serializer.is_valid(raise_exception=True)
+                serializer.save(estado_guardado='BORRADOR')
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            except NotaSesion.DoesNotExist:
+                pass
+        
+        data = request.data.copy()
+        data['estado_guardado'] = 'BORRADOR'
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['patch', 'post'], url_path='borrador')
     def guardar_borrador(self, request, pk=None):
         """Autoguardado reactivo cada 30 segundos (CU16 Criterio b)."""
         nota = self.get_object()
@@ -424,28 +496,40 @@ class NotaSesionViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(nota, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save(estado_guardado='BORRADOR')
-        return Response({
-            "mensaje": "Borrador de nota SOAP autoguardado exitosamente.",
-            "data": serializer.data
-        }, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['post'], url_path='firmar')
+    @action(detail=True, methods=['post', 'patch'], url_path='firmar')
     def firmar_nota(self, request, pk=None):
-        """Firma legal e inmutabilidad de la nota vinculada a cita atendida (CU16 Criterio c)."""
+        return self._ejecutar_firma(request, pk)
+
+    @action(detail=True, methods=['post', 'patch'], url_path='firmar_nota')
+    def firmar_nota_alias(self, request, pk=None):
+        return self._ejecutar_firma(request, pk)
+
+    def _ejecutar_firma(self, request, pk):
         nota = self.get_object()
+        # Actualizar cuadrantes si vienen en request.data
+        for field in ['subjetivo', 'objetivo', 'analisis', 'plan', 'tecnicas_aplicadas']:
+            if field in request.data:
+                setattr(nota, field, request.data[field])
+        if 'intervenciones_aplicadas' in request.data and not getattr(nota, 'tecnicas_aplicadas', None):
+            nota.tecnicas_aplicadas = request.data['intervenciones_aplicadas']
+        
         nota.estado_guardado = 'FIRMADA'
         nota.fecha_firma = timezone.now()
         nota.save()
 
-        # Si tiene cita asociada, actualizar su estado a REALIZADA
         if nota.cita:
             nota.cita.estado = 'REALIZADA'
             nota.cita.save()
 
+        serializer = self.get_serializer(nota)
         return Response({
             "mensaje": "Nota SOAP firmada y consolidada inmutablemente.",
             "id": str(nota.id),
+            "nota": serializer.data,
             "estado": nota.estado_guardado,
+            "sha256": serializer.data.get('firma_hash_integridad', ''),
             "fecha_firma": nota.fecha_firma.isoformat()
         }, status=status.HTTP_200_OK)
 
@@ -680,8 +764,12 @@ class IAPreconsultaViewSet(viewsets.ViewSet):
         except RespuestaPreConsulta.DoesNotExist:
             return Response({"error": "Respuesta pre-consulta no encontrada."}, status=status.HTTP_404_NOT_FOUND)
 
-        # Criterio d: Verificar consentimiento informado activo
-        tiene_consentimiento = FirmaConsentimiento.objects.filter(paciente=respuesta.paciente).exists()
+        # Criterio d: Verificar consentimiento informado activo (Firma legal O autorización en Intake)
+        tiene_firma_legal = FirmaConsentimiento.objects.filter(paciente=respuesta.paciente).exists()
+        consentimiento_intake = bool(
+            respuesta.respuestas_detalle.get('consentimiento_ia_procesamiento', True)
+        )
+        tiene_consentimiento = tiene_firma_legal or consentimiento_intake
         if not tiene_consentimiento:
             return Response({
                 "error": "Procesamiento asistivo bloqueado: El paciente no cuenta con un consentimiento informado activo registrado en la plataforma.",
@@ -731,4 +819,177 @@ class IAPreconsultaViewSet(viewsets.ViewSet):
             })
         except AuditoriaIA.DoesNotExist:
             return Response({"error": "Registro de auditoría no encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# CU20: Chatbot de Orientación Clínica y Derivación Humana (HU-36)
+# ──────────────────────────────────────────────────────────────────────────────
+class ChatbotViewSet(viewsets.ViewSet):
+    """
+    Controlador para el Chatbot orientador del centro de salud mental (CU20 / HU-36).
+    Permite interacción anónima o autenticada, contención de crisis y escalamiento a recepción.
+    """
+    permission_classes = [AllowAny]
+
+    @action(detail=False, methods=['post'], url_path='mensaje')
+    def enviar_mensaje(self, request):
+        import uuid
+        session_id = request.data.get('session_id')
+        if not session_id or not session_id.strip():
+            session_id = uuid.uuid4().hex
+
+        texto = request.data.get('mensaje', '').strip()
+        if not texto:
+            return Response({"error": "Debe proporcionar un mensaje."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Buscar o crear la conversación activa
+        conv, created = ConversacionChatbot.objects.get_or_create(
+            session_id=session_id,
+            defaults={
+                'estado': 'BOT_ACTIVO',
+                'nivel_riesgo': 'NORMAL'
+            }
+        )
+
+        # Si el usuario está autenticado y no está asociado, asociar
+        if request.user and request.user.is_authenticated:
+            if not conv.usuario:
+                conv.usuario = request.user
+            if hasattr(request.user, 'perfil_paciente') and not conv.paciente:
+                conv.paciente = request.user.perfil_paciente
+            conv.save(update_fields=['usuario', 'paciente', 'fecha_actualizacion'])
+
+        # 1. Registrar mensaje del usuario
+        msg_usuario = MensajeChatbot.objects.create(
+            conversacion=conv,
+            remitente='USUARIO',
+            texto=texto
+        )
+
+        # 2. Si la conversación está en atención por operador humano, no responde el bot
+        if conv.estado == 'EN_ATENCION':
+            conv.fecha_actualizacion = timezone.now()
+            conv.save(update_fields=['fecha_actualizacion'])
+            return Response({
+                "session_id": conv.session_id,
+                "conversacion_id": str(conv.id),
+                "estado": conv.estado,
+                "nivel_riesgo": conv.nivel_riesgo,
+                "es_crisis": False,
+                "mensaje_enviado": MensajeChatbotSerializer(msg_usuario).data,
+                "esperando_operador": True
+            })
+
+        # 3. Procesar con el motor de reglas y FAQ de SIGEPSI
+        resultado = ChatbotEngine.procesar_mensaje(texto)
+
+        # 4. Actualizar estado y nivel de riesgo si corresponde
+        if resultado.get("es_crisis"):
+            conv.nivel_riesgo = 'CRISIS'
+            conv.estado = 'ESCALADA_HUMANO'
+            conv.save(update_fields=['nivel_riesgo', 'estado', 'fecha_actualizacion'])
+        elif resultado.get("escalar_humano"):
+            conv.estado = 'ESCALADA_HUMANO'
+            conv.save(update_fields=['estado', 'fecha_actualizacion'])
+        else:
+            conv.fecha_actualizacion = timezone.now()
+            conv.save(update_fields=['fecha_actualizacion'])
+
+        # 5. Registrar respuesta del Bot
+        msg_bot = MensajeChatbot.objects.create(
+            conversacion=conv,
+            remitente='BOT',
+            texto=resultado["texto"],
+            es_alerta_crisis=resultado.get("es_crisis", False),
+            opciones_sugeridas=resultado.get("opciones", [])
+        )
+
+        return Response({
+            "session_id": conv.session_id,
+            "conversacion_id": str(conv.id),
+            "estado": conv.estado,
+            "nivel_riesgo": conv.nivel_riesgo,
+            "es_crisis": resultado.get("es_crisis", False),
+            "mensaje_usuario": MensajeChatbotSerializer(msg_usuario).data,
+            "mensaje_bot": MensajeChatbotSerializer(msg_bot).data
+        }, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['get'], url_path='historial')
+    def historial(self, request):
+        session_id = request.query_params.get('session_id')
+        if not session_id:
+            return Response({"error": "Debe especificar 'session_id'."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            conv = ConversacionChatbot.objects.get(session_id=session_id)
+            mensajes = conv.mensajes.all().order_by('timestamp')
+            return Response({
+                "session_id": conv.session_id,
+                "conversacion_id": str(conv.id),
+                "estado": conv.estado,
+                "nivel_riesgo": conv.nivel_riesgo,
+                "mensajes": MensajeChatbotSerializer(mensajes, many=True).data
+            })
+        except ConversacionChatbot.DoesNotExist:
+            return Response({"mensajes": [], "estado": "BOT_ACTIVO", "nivel_riesgo": "NORMAL"})
+
+    @action(detail=False, methods=['post'], url_path='solicitar-humano')
+    def solicitar_humano(self, request):
+        session_id = request.data.get('session_id')
+        if not session_id:
+            return Response({"error": "Debe proporcionar 'session_id'."}, status=status.HTTP_400_BAD_REQUEST)
+
+        conv = ConversacionChatbot.objects.filter(session_id=session_id).first()
+        if not conv:
+            conv = ConversacionChatbot.objects.create(session_id=session_id, estado='ESCALADA_HUMANO')
+        else:
+            conv.estado = 'ESCALADA_HUMANO'
+            conv.save(update_fields=['estado', 'fecha_actualizacion'])
+
+        msg_bot = MensajeChatbot.objects.create(
+            conversacion=conv,
+            remitente='BOT',
+            texto="He transferido tu conversación con prioridad a la recepción del centro. Un asesor te responderá a la brevedad.",
+            opciones_sugeridas=["Esperar Asesor", "Ver Horarios"]
+        )
+
+        return Response({
+            "mensaje": "Conversación transferida a recepción exitosamente.",
+            "estado": conv.estado,
+            "mensaje_bot": MensajeChatbotSerializer(msg_bot).data
+        })
+
+    @action(detail=False, methods=['get'], url_path='conversaciones-activas', permission_classes=[IsAuthenticated])
+    def conversaciones_activas(self, request):
+        """Para recepción: lista conversaciones en espera o activas."""
+        qs = ConversacionChatbot.objects.exclude(estado='FINALIZADA').order_by('-fecha_actualizacion')
+        serializer = ConversacionChatbotSerializer(qs, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['post'], url_path='responder-operador', permission_classes=[IsAuthenticated])
+    def responder_operador(self, request):
+        """Para recepción: enviar mensaje desde el panel de operador."""
+        conversacion_id = request.data.get('conversacion_id')
+        texto = request.data.get('texto', '').strip()
+        if not conversacion_id or not texto:
+            return Response({"error": "Debe proporcionar 'conversacion_id' y 'texto'."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            conv = ConversacionChatbot.objects.get(id=conversacion_id)
+            conv.estado = 'EN_ATENCION'
+            conv.operador_asignado = request.user
+            conv.save(update_fields=['estado', 'operador_asignado', 'fecha_actualizacion'])
+
+            msg = MensajeChatbot.objects.create(
+                conversacion=conv,
+                remitente='OPERADOR',
+                texto=texto
+            )
+            return Response({
+                "mensaje": "Mensaje de operador enviado con éxito.",
+                "mensaje_operador": MensajeChatbotSerializer(msg).data
+            })
+        except ConversacionChatbot.DoesNotExist:
+            return Response({"error": "Conversación no encontrada."}, status=status.HTTP_404_NOT_FOUND)
+
 

@@ -480,16 +480,23 @@ export class NotaSoapEditorComponent implements OnInit, OnDestroy {
   }
 
   confirmarFirma(): void {
+    this.firmando.set(true);
     if (!this.notaId) {
-      // First save draft to get an ID
+      // Primero guardar borrador para obtener ID persistido
       const payload = {
         historia_clinica: this.historiaId,
         ...this.notaForm
       };
       this.clinicaService.guardarBorrador(payload).subscribe({
-        next: (nota) => {
-          this.notaId = nota.id;
-          this.ejecutarFirma(nota.id);
+        next: (nota: any) => {
+          const id = nota.id || nota.data?.id;
+          this.notaId = id;
+          this.ejecutarFirma(id);
+        },
+        error: (err) => {
+          this.firmando.set(false);
+          console.error('Error al registrar borrador:', err);
+          alert('Error al inicializar la nota: ' + (err?.error?.detail || JSON.stringify(err?.error) || 'Error de conexión'));
         }
       });
     } else {
@@ -500,13 +507,18 @@ export class NotaSoapEditorComponent implements OnInit, OnDestroy {
   private ejecutarFirma(id: string): void {
     this.firmando.set(true);
     this.clinicaService.firmarNotaSesion(id, this.notaForm).subscribe({
-      next: (res) => {
-        this.notaSesion.set(res.nota);
+      next: (res: any) => {
+        const notaActualizada = res.nota || res;
+        this.notaSesion.set(notaActualizada);
         this.firmando.set(false);
         this.mostrarModalFirma = false;
         this.cambiosPendientes = false;
       },
-      error: () => this.firmando.set(false)
+      error: (err) => {
+        this.firmando.set(false);
+        console.error('Error al firmar nota:', err);
+        alert('Error al firmar y sellar la nota: ' + (err?.error?.detail || JSON.stringify(err?.error) || 'Error de firma'));
+      }
     });
   }
 }

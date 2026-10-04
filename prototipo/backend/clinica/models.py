@@ -616,3 +616,66 @@ class AuditoriaIA(models.Model):
     def __str__(self):
         return f"Auditoría IA [{self.prioridad_sugerida}] - Decisión: {self.evaluacion_humana}"
 
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ENTIDAD: ConversacionChatbot & MensajeChatbot (CU20 / HU-36)
+# ──────────────────────────────────────────────────────────────────────────────
+class ConversacionChatbot(models.Model):
+    ESTADO_CHOICES = [
+        ('BOT_ACTIVO', 'Bot Activo'),
+        ('ESCALADA_HUMANO', 'Escalada a Recepción Humana'),
+        ('EN_ATENCION', 'En Atención por Operador'),
+        ('FINALIZADA', 'Conversación Finalizada'),
+    ]
+
+    RIESGO_CHOICES = [
+        ('NORMAL', 'Normal'),
+        ('MODERADO', 'Moderado'),
+        ('CRISIS', 'Crisis / Alerta Inminente'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    session_id = models.CharField(max_length=128, db_index=True, verbose_name="ID de Sesión Web/Móvil")
+    paciente = models.ForeignKey(Paciente, on_delete=models.SET_NULL, null=True, blank=True, related_name="conversaciones_chatbot", verbose_name="Paciente")
+    usuario = models.ForeignKey('accounts.Usuario', on_delete=models.SET_NULL, null=True, blank=True, related_name="conversaciones_chatbot", verbose_name="Usuario Autenticado")
+    estado = models.CharField(max_length=30, choices=ESTADO_CHOICES, default='BOT_ACTIVO', verbose_name="Estado de la Conversación")
+    nivel_riesgo = models.CharField(max_length=20, choices=RIESGO_CHOICES, default='NORMAL', verbose_name="Nivel de Riesgo Detectado")
+    operador_asignado = models.ForeignKey('accounts.Usuario', on_delete=models.SET_NULL, null=True, blank=True, related_name="chats_operados", verbose_name="Operador Asignado")
+    fecha_inicio = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Inicio")
+    fecha_actualizacion = models.DateTimeField(auto_now=True, verbose_name="Última Actividad")
+
+    class Meta:
+        db_table = "clinica_conversacion_chatbot"
+        verbose_name = "Conversación de Chatbot"
+        verbose_name_plural = "Conversaciones de Chatbot"
+        ordering = ['-fecha_actualizacion']
+
+    def __str__(self):
+        return f"Chat [{self.session_id[:8]}] - {self.estado} ({self.nivel_riesgo})"
+
+
+class MensajeChatbot(models.Model):
+    REMITENTE_CHOICES = [
+        ('BOT', 'Asistente Bot'),
+        ('USUARIO', 'Usuario / Paciente'),
+        ('OPERADOR', 'Recepcionista Humano'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    conversacion = models.ForeignKey(ConversacionChatbot, on_delete=models.CASCADE, related_name="mensajes", verbose_name="Conversación")
+    remitente = models.CharField(max_length=20, choices=REMITENTE_CHOICES, verbose_name="Remitente")
+    texto = models.TextField(verbose_name="Contenido del Mensaje")
+    es_alerta_crisis = models.BooleanField(default=False, verbose_name="Alerta de Riesgo Vital / Crisis")
+    opciones_sugeridas = models.JSONField(default=list, blank=True, verbose_name="Opciones Rápidas")
+    timestamp = models.DateTimeField(auto_now_add=True, verbose_name="Marca Temporal")
+
+    class Meta:
+        db_table = "clinica_mensaje_chatbot"
+        verbose_name = "Mensaje de Chatbot"
+        verbose_name_plural = "Mensajes de Chatbot"
+        ordering = ['timestamp']
+
+    def __str__(self):
+        return f"[{self.remitente}] {self.texto[:40]}... ({self.timestamp.strftime('%H:%M')})"
+
+

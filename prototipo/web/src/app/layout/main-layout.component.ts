@@ -2,11 +2,12 @@ import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../core/services/auth.service';
+import { ChatbotWidgetComponent } from './chatbot-widget.component';
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, ChatbotWidgetComponent],
   template: `
     <div class="app-layout">
       <!-- Backdrop for mobile sidebar drawer -->
@@ -45,78 +46,88 @@ import { AuthService } from '../core/services/auth.service';
             <span>Inicio</span>
           </a>
 
-          <!-- GESTIÓN ADMINISTRATIVA -->
-          <div class="nav-section-title">GESTIÓN ADMINISTRATIVA</div>
+          <!-- GESTIÓN ADMINISTRATIVA (Solo Staff / Admins) -->
+          <ng-container *ngIf="!authService.isPaciente() && (authService.isAdminCentro() || authService.isSuperAdmin())">
+            <div class="nav-section-title">GESTIÓN ADMINISTRATIVA</div>
 
-          <!-- Centros Psicológicos (SuperAdmin) -->
-          <a *ngIf="authService.isSuperAdmin()" routerLink="/tenants" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
-            <i class="fa-solid fa-building nav-icon"></i>
-            <span>Centros Psicológicos</span>
-          </a>
+            <!-- Centros Psicológicos (SuperAdmin) -->
+            <a *ngIf="authService.isSuperAdmin()" routerLink="/tenants" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
+              <i class="fa-solid fa-building nav-icon"></i>
+              <span>Centros Psicológicos</span>
+            </a>
 
-          <a *ngIf="authService.isSuperAdmin()" routerLink="/audit" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
-            <i class="fa-solid fa-clipboard-list nav-icon"></i>
-            <span>Bitácora de auditoría</span>
-          </a>
+            <a *ngIf="authService.isSuperAdmin()" routerLink="/audit" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
+              <i class="fa-solid fa-clipboard-list nav-icon"></i>
+              <span>Bitácora de auditoría</span>
+            </a>
 
-          <!-- Usuarios -->
-          <a routerLink="/users" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
-            <i class="fa-solid fa-users nav-icon"></i>
-            <span>Usuarios</span>
-          </a>
+            <!-- Usuarios -->
+            <a routerLink="/users" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
+              <i class="fa-solid fa-users nav-icon"></i>
+              <span>Usuarios</span>
+            </a>
 
-          <!-- Roles y Permisos -->
-          <a routerLink="/roles" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
-            <i class="fa-solid fa-shield-halved nav-icon"></i>
-            <span>Roles y Permisos</span>
-          </a>
+            <!-- Roles y Permisos -->
+            <a routerLink="/roles" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
+              <i class="fa-solid fa-shield-halved nav-icon"></i>
+              <span>Roles y Permisos</span>
+            </a>
 
-          <!-- Reportes Clínicos y Personalizables (Punto 5) -->
-          <a *ngIf="authService.isSuperAdmin() || authService.isAdminCentro()" 
-             routerLink="/reportes" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
-            <i class="fa-solid fa-chart-pie nav-icon"></i>
-            <span>Reportes Clínicos</span>
-          </a>
+            <!-- Reportes Clínicos y Personalizables -->
+            <a routerLink="/reportes" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
+              <i class="fa-solid fa-chart-pie nav-icon"></i>
+              <span>Reportes Clínicos</span>
+            </a>
+          </ng-container>
 
-          <!-- MÓDULO CLÍNICO & AGENDA (Sprint 1) -->
+          <!-- MÓDULO CLÍNICO & AGENDA -->
           <ng-container *ngIf="!authService.isSuperAdmin() || authService.isInTenantContext()">
-            <div class="nav-section-title">CLÍNICA Y CONSULTAS</div>
+            <div class="nav-section-title">{{ authService.isPaciente() ? 'MI ATENCIÓN CLÍNICA' : 'CLÍNICA Y CONSULTAS' }}</div>
+            
             <a routerLink="/agenda" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
               <i class="fa-solid fa-calendar-check nav-icon"></i>
-              <span>Agenda y Citas</span>
+              <span>{{ authService.isPaciente() ? 'Mis Citas y Horarios' : 'Agenda y Citas' }}</span>
             </a>
-            <a routerLink="/psicologos" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
+            
+            <a *ngIf="!authService.isPaciente()" routerLink="/psicologos" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
               <i class="fa-solid fa-user-doctor nav-icon"></i>
               <span>Directorio Psicólogos</span>
             </a>
-            <a routerLink="/pacientes" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
+            
+            <a *ngIf="!authService.isPaciente()" routerLink="/pacientes" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
               <i class="fa-solid fa-folder-open nav-icon"></i>
               <span>Expedientes Pacientes</span>
             </a>
-            <a routerLink="/centro" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
+            
+            <a *ngIf="!authService.isPaciente() && authService.isAdminCentro()" routerLink="/centro" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
               <i class="fa-solid fa-sliders nav-icon"></i>
               <span>Configuración del Centro</span>
             </a>
 
             <!-- MÓDULO EXPEDIENTES & ATENCIÓN CLÍNICA (Sprint 2) -->
-            <div class="nav-section-title">EXPEDIENTES & CLÍNICA (S2)</div>
-            <a routerLink="/historias-clinicas" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
+            <div class="nav-section-title">{{ authService.isPaciente() ? 'DOCUMENTOS Y TAREAS' : 'EXPEDIENTES & CLÍNICA (S2)' }}</div>
+            
+            <a *ngIf="authService.canAccessHistoriasClinicas()" routerLink="/historias-clinicas" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
               <i class="fa-solid fa-notes-medical nav-icon"></i>
               <span>Historias Clínicas (EHR)</span>
             </a>
+            
             <a routerLink="/intake" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
               <i class="fa-solid fa-clipboard-question nav-icon"></i>
-              <span>Intake Digital & IA</span>
+              <span>{{ authService.isPaciente() ? 'Pre-Consulta (Intake)' : 'Intake Digital & IA' }}</span>
             </a>
+            
             <a routerLink="/tareas-terapeuticas" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
               <i class="fa-solid fa-list-check nav-icon"></i>
-              <span>Tareas Terapéuticas</span>
+              <span>{{ authService.isPaciente() ? 'Mis Tareas Terapéuticas' : 'Tareas Terapéuticas' }}</span>
             </a>
+            
             <a routerLink="/consentimientos" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
               <i class="fa-solid fa-file-signature nav-icon"></i>
-              <span>Consentimientos Digitales</span>
+              <span>{{ authService.isPaciente() ? 'Mis Consentimientos' : 'Consentimientos Digitales' }}</span>
             </a>
-            <a routerLink="/derivaciones" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
+            
+            <a *ngIf="authService.canAccessHistoriasClinicas()" routerLink="/derivaciones" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
               <i class="fa-solid fa-share-from-square nav-icon"></i>
               <span>Cierre y Derivaciones</span>
             </a>
@@ -127,11 +138,11 @@ import { AuthService } from '../core/services/auth.service';
         <div class="sidebar-footer">
           <div class="user-profile-row">
             <div class="user-avatar-beige">
-              {{ (authService.currentUser()?.nombre || 'A').charAt(0).toUpperCase() }}
+              {{ (authService.currentUser()?.nombre || 'U').charAt(0).toUpperCase() }}
             </div>
             <div class="user-info">
-              <span class="user-name">{{ authService.currentUser()?.nombre || 'Administrador' }}</span>
-              <span class="user-role">{{ authService.currentUser()?.rol?.nombre || (authService.isSuperAdmin() ? 'SuperAdmin' : 'Usuario') }}</span>
+              <span class="user-name">{{ authService.currentUser()?.nombre || 'Usuario' }}</span>
+              <span class="user-role">{{ authService.getRolNombre() }}</span>
             </div>
           </div>
           
@@ -161,7 +172,7 @@ import { AuthService } from '../core/services/auth.service';
             <div *ngIf="authService.isInTenantContext()" class="tenant-context-pill">
               <i class="fa-solid fa-building text-primary"></i>
               <span>{{ authService.currentTenant()?.nombre }}</span>
-              <button class="btn-exit-tenant-pill" (click)="exitTenantContext()" title="Volver a la vista global">
+              <button *ngIf="authService.isSuperAdmin()" class="btn-exit-tenant-pill" (click)="exitTenantContext()" title="Volver a la vista global">
                 <i class="fa-solid fa-arrow-left"></i> Salir del centro
               </button>
             </div>
@@ -178,8 +189,8 @@ import { AuthService } from '../core/services/auth.service';
                 Esquema: <strong>{{ authService.currentTenant()?.schema_name || 'public' }}</strong>
               </span>
             </div>
-            <span class="badge badge-primary">
-              <i class="fa-solid fa-shield"></i> {{ authService.currentUser()?.rol?.nombre || 'SuperAdmin' }}
+            <span class="badge" [ngClass]="authService.isPaciente() ? 'badge-info' : 'badge-primary'">
+              <i class="fa-solid fa-shield"></i> {{ authService.getRolNombre() }}
             </span>
           </div>
         </header>
@@ -188,6 +199,9 @@ import { AuthService } from '../core/services/auth.service';
         <main class="content-body">
           <router-outlet></router-outlet>
         </main>
+
+        <!-- Asistente de Orientación Clínica y Contención (HU-36) -->
+        <app-chatbot-widget></app-chatbot-widget>
       </div>
     </div>
   `,

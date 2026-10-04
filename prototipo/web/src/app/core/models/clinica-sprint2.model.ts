@@ -8,7 +8,7 @@ export interface FormularioPreConsulta {
   preguntas_json: Array<{
     id: string;
     texto: string;
-    tipo: 'texto' | 'opcion_multiple' | 'escala_1_5' | 'booleano';
+    tipo: 'texto' | 'opcion_multiple' | 'escala_1_5' | 'booleano' | 'likert' | string;
     opciones?: string[];
     requerido: boolean;
   }>;
@@ -28,8 +28,14 @@ export interface RespuestaPreConsulta {
   respuestas_json: Record<string, any>;
   completado: boolean;
   fecha_respuesta?: string;
+  fecha_envio?: string;
   consentimiento_ia_procesamiento: boolean;
   analisis_ia_previo?: any;
+  motivo_consulta?: string;
+  nivel_urgencia_percibido?: number;
+  respuestas_detalle?: Record<string, any>;
+  estado?: string;
+  tiene_urgencia_alta?: boolean;
 }
 
 export interface DiagnosticoCIE {
@@ -180,6 +186,7 @@ export interface AnalisisIARequest {
 export interface ReglaDisparada {
   regla: string;
   evidencia: string;
+  explicacion?: string;
   severidad: 'BAJA' | 'MEDIA' | 'ALTA' | 'CRITICA';
   prioridad: number;
 }

@@ -164,6 +164,31 @@ class UsuarioSerializer(serializers.ModelSerializer):
             except Exception:
                 pass
 
+        # Sincronización automática de perfil clínico para rol Paciente
+        if user.rol and 'paciente' in user.rol.nombre.lower():
+            try:
+                import random
+                from datetime import date
+                from clinica.models import Paciente
+                if not Paciente.objects.filter(usuario=user).exists():
+                    rnd = random.randint(1000, 9999)
+                    prefix = f"EXP-{timezone.localdate().strftime('%Y%m')}"
+                    cod_exp = f"{prefix}-{rnd}"
+                    while Paciente.objects.filter(codigo_expediente=cod_exp).exists():
+                        rnd = random.randint(1000, 9999)
+                        cod_exp = f"{prefix}-{rnd}"
+
+                    ci_prov = user.telefono if (user.telefono and not Paciente.objects.filter(ci=user.telefono).exists()) else f"CI-{user.id.hex[:8].upper()}"
+                    Paciente.objects.create(
+                        usuario=user,
+                        codigo_expediente=cod_exp,
+                        ci=ci_prov,
+                        fecha_nacimiento=date(1995, 1, 1),
+                        genero='O'
+                    )
+            except Exception:
+                pass
+
         return user
 
     def update(self, instance, validated_data):
@@ -203,6 +228,31 @@ class UsuarioSerializer(serializers.ModelSerializer):
             except Exception:
                 pass
 
+        # Sincronización automática si se asigna rol Paciente
+        if instance.rol and 'paciente' in instance.rol.nombre.lower():
+            try:
+                import random
+                from datetime import date
+                from clinica.models import Paciente
+                if not Paciente.objects.filter(usuario=instance).exists():
+                    rnd = random.randint(1000, 9999)
+                    prefix = f"EXP-{timezone.localdate().strftime('%Y%m')}"
+                    cod_exp = f"{prefix}-{rnd}"
+                    while Paciente.objects.filter(codigo_expediente=cod_exp).exists():
+                        rnd = random.randint(1000, 9999)
+                        cod_exp = f"{prefix}-{rnd}"
+
+                    ci_prov = instance.telefono if (instance.telefono and not Paciente.objects.filter(ci=instance.telefono).exists()) else f"CI-{instance.id.hex[:8].upper()}"
+                    Paciente.objects.create(
+                        usuario=instance,
+                        codigo_expediente=cod_exp,
+                        ci=ci_prov,
+                        fecha_nacimiento=date(1995, 1, 1),
+                        genero='O'
+                    )
+            except Exception:
+                pass
+
         return instance
 
 
@@ -233,7 +283,39 @@ class RegistroSerializer(serializers.ModelSerializer):
                 validated_data['rol'] = Rol.objects.get(id=rol_id)
             except Rol.DoesNotExist:
                 pass
-        return Usuario.objects.create_user(password=password, **validated_data)
+        else:
+            rol_pac = Rol.objects.filter(nombre__icontains="Paciente").first()
+            if rol_pac:
+                validated_data['rol'] = rol_pac
+
+        user = Usuario.objects.create_user(password=password, **validated_data)
+
+        # Sincronización automática de perfil clínico para rol Paciente
+        if user.rol and 'paciente' in user.rol.nombre.lower():
+            try:
+                import random
+                from datetime import date
+                from clinica.models import Paciente
+                if not Paciente.objects.filter(usuario=user).exists():
+                    rnd = random.randint(1000, 9999)
+                    prefix = f"EXP-{timezone.localdate().strftime('%Y%m')}"
+                    cod_exp = f"{prefix}-{rnd}"
+                    while Paciente.objects.filter(codigo_expediente=cod_exp).exists():
+                        rnd = random.randint(1000, 9999)
+                        cod_exp = f"{prefix}-{rnd}"
+
+                    ci_prov = user.telefono if (user.telefono and not Paciente.objects.filter(ci=user.telefono).exists()) else f"CI-{user.id.hex[:8].upper()}"
+                    Paciente.objects.create(
+                        usuario=user,
+                        codigo_expediente=cod_exp,
+                        ci=ci_prov,
+                        fecha_nacimiento=date(1995, 1, 1),
+                        genero='O'
+                    )
+            except Exception:
+                pass
+
+        return user
 
 
 class LoginSerializer(serializers.Serializer):

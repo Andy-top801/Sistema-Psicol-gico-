@@ -17,14 +17,45 @@ export class AuthService {
   refreshToken = signal<string | null>(localStorage.getItem('sigepsi_refresh'));
 
   isAuthenticated = computed(() => !!this.accessToken());
-  isSuperAdmin = computed(() => {
+
+  getRolNombre(): string {
     const user = this.currentUser();
-    return user?.is_superuser || user?.rol?.nombre === 'SuperAdmin' || localStorage.getItem('sigepsi_rol') === 'SuperAdmin';
+    if (user?.rol_detalle?.nombre) return user.rol_detalle.nombre;
+    if (typeof user?.rol === 'object' && (user.rol as any)?.nombre) return (user.rol as any).nombre;
+    const local = localStorage.getItem('sigepsi_rol');
+    if (local && local !== 'undefined' && local !== 'null') return local;
+    return user?.is_superuser ? 'SuperAdmin' : 'Usuario';
+  }
+
+  isPaciente = computed(() => {
+    return this.getRolNombre().toLowerCase() === 'paciente';
   });
+
+  isPsicologo = computed(() => {
+    return this.getRolNombre().toLowerCase().includes('psic');
+  });
+
   isAdminCentro = computed(() => {
+    if (this.isPaciente()) return false;
     const user = this.currentUser();
-    const rolName = (user?.rol?.nombre || localStorage.getItem('sigepsi_rol') || '').toLowerCase();
-    return rolName.includes('admin') || rolName.includes('coordinador') || !!user?.is_superuser;
+    const r = this.getRolNombre().toLowerCase();
+    return r.includes('admin') || r.includes('coordinador') || !!user?.is_superuser;
+  });
+
+  isSuperAdmin = computed(() => {
+    if (this.isPaciente()) return false;
+    const user = this.currentUser();
+    const r = this.getRolNombre();
+    return !!user?.is_superuser || r === 'SuperAdmin';
+  });
+
+  isRecepcionista = computed(() => {
+    const r = this.getRolNombre().toLowerCase();
+    return r.includes('recep') || r.includes('secretar');
+  });
+
+  canAccessHistoriasClinicas = computed(() => {
+    return !this.isPaciente() && !this.isRecepcionista();
   });
 
   constructor(private http: HttpClient) {

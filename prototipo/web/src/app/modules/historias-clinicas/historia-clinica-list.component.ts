@@ -18,6 +18,27 @@ import { Paciente } from '../../core/models';
   imports: [CommonModule, FormsModule],
   template: `
     <div class="ehr-list-container">
+      <!-- Security Screen for 403 Forbidden Access (HU-26) -->
+      <div class="ehr-forbidden-container glass-panel text-center p-5 mx-auto my-5" style="max-width: 650px; background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);" *ngIf="accesoRestringido()">
+        <div class="security-shield-badge mb-3">
+          <i class="fa-solid fa-user-shield fa-4x text-danger"></i>
+        </div>
+        <h2 class="text-slate-900 fw-bold mb-2">Acceso Clínico Restringido (HU-26)</h2>
+        <p class="text-muted mb-4">
+          No posee privilegios clínicos para consultar el archivo general de expedientes psicológicos. Esta función está reservada estrictamente a profesionales tratantes y auditores médicos autorizados.
+        </p>
+        <div class="audit-log-pill p-2 mb-4 bg-light rounded text-xs text-muted d-inline-flex align-items-center gap-2">
+          <i class="fa-solid fa-fingerprint text-primary"></i>
+          <span>Evento de seguridad auditado forensemente en disco con marca de tiempo e IP.</span>
+        </div>
+        <div>
+          <button (click)="irAInicio()" class="btn btn-primary px-4 py-2">
+            <i class="fa-solid fa-house me-2"></i> Volver al Inicio
+          </button>
+        </div>
+      </div>
+
+      <ng-container *ngIf="!accesoRestringido()">
       <!-- Encabezado Principal -->
       <div class="page-header glass-panel mb-4">
         <div class="header-info">
@@ -211,6 +232,7 @@ import { Paciente } from '../../core/models';
           </div>
         </div>
       </div>
+      </ng-container>
 
     </div>
   `,
@@ -290,6 +312,7 @@ import { Paciente } from '../../core/models';
 })
 export class HistoriaClinicaListComponent implements OnInit {
   cargando = signal<boolean>(true);
+  accesoRestringido = signal<boolean>(false);
   historias = signal<HistoriaClinica[]>([]);
   pacientesDisponibles = signal<Paciente[]>([]);
   terminoBusqueda = '';
@@ -322,8 +345,17 @@ export class HistoriaClinicaListComponent implements OnInit {
         this.historias.set(data);
         this.cargando.set(false);
       },
-      error: () => this.cargando.set(false)
+      error: (err) => {
+        this.cargando.set(false);
+        if (err?.status === 403) {
+          this.accesoRestringido.set(true);
+        }
+      }
     });
+  }
+
+  irAInicio(): void {
+    this.router.navigate(['/dashboard']);
   }
 
   buscar(): void {
@@ -365,7 +397,16 @@ export class HistoriaClinicaListComponent implements OnInit {
         this.verDetalle(creada.id);
       },
       error: (err) => {
-        this.errorApertura.set(err?.error?.error || 'Error al aperturar la historia clínica.');
+        let msg = 'Error al aperturar la historia clínica.';
+        if (err?.error?.error) {
+          msg = err.error.error;
+        } else if (err?.error?.detail) {
+          msg = err.error.detail;
+        } else if (err?.error && typeof err.error === 'object') {
+          const values = Object.values(err.error).flat();
+          if (values.length > 0) msg = values.join(' ');
+        }
+        this.errorApertura.set(msg);
       }
     });
   }

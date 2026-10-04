@@ -17,7 +17,8 @@ from clinica.views import (
     ConsentimientoInformadoViewSet,
     FirmaConsentimientoViewSet,
     DerivacionCasoViewSet,
-    IAPreconsultaViewSet
+    IAPreconsultaViewSet,
+    ChatbotViewSet
 )
 
 router = DefaultRouter()
@@ -40,6 +41,7 @@ router.register(r'consentimientos', ConsentimientoInformadoViewSet, basename='co
 router.register(r'firmas-consentimiento', FirmaConsentimientoViewSet, basename='firma-consentimiento')
 router.register(r'derivaciones', DerivacionCasoViewSet, basename='derivacion-caso')
 router.register(r'ia/preconsulta', IAPreconsultaViewSet, basename='ia-preconsulta')
+router.register(r'chatbot', ChatbotViewSet, basename='chatbot')
 
 urlpatterns = [
     path('', include(router.urls)),

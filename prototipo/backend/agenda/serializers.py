@@ -37,6 +37,8 @@ class CitaSerializer(serializers.ModelSerializer):
     paciente_datos = serializers.SerializerMethodField(read_only=True)
     psicologo_datos = serializers.SerializerMethodField(read_only=True)
     teleconsulta = TeleconsultaSerializer(read_only=True)
+    formulario_pendiente = serializers.SerializerMethodField(read_only=True)
+    intake_id = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Cita
@@ -47,9 +49,9 @@ class CitaSerializer(serializers.ModelSerializer):
             'modalidad', 'estado', 'motivo_consulta',
             'costo', 'motivo_cancelacion',
             'fecha_creacion', 'fecha_modificacion',
-            'teleconsulta'
+            'teleconsulta', 'formulario_pendiente', 'intake_id'
         ]
-        read_only_fields = ['id', 'fecha_creacion', 'fecha_modificacion']
+        read_only_fields = ['id', 'fecha_creacion', 'fecha_modificacion', 'formulario_pendiente', 'intake_id']
 
     def get_paciente_datos(self, obj):
         u = obj.paciente.usuario
@@ -71,6 +73,37 @@ class CitaSerializer(serializers.ModelSerializer):
             "modalidad": obj.psicologo.modalidad
         }
 
+    def get_intake_id(self, obj):
+        """Retorna el UUID de la respuesta de intake si ya fue diligenciada."""
+        if hasattr(obj, 'respuestas_preconsulta'):
+            primera = obj.respuestas_preconsulta.first()
+            if primera:
+                return str(primera.id)
+        return None
+
+    def get_formulario_pendiente(self, obj):
+        """
+        HU-23 Criterio b: Retorna True si faltan menos de 24 horas para la cita
+        y el paciente aún no ha completado el formulario de preconsulta.
+        """
+        if hasattr(obj, 'respuestas_preconsulta') and obj.respuestas_preconsulta.exists():
+            return False
+
+        if obj.estado not in ('PROGRAMADA', 'CONFIRMADA', 'PENDIENTE'):
+            return False
+
+        try:
+            now = timezone.localtime()
+            dt_combined = datetime.combine(obj.fecha, obj.hora_inicio)
+            if timezone.is_naive(dt_combined):
+                cita_dt = timezone.make_aware(dt_combined, timezone.get_current_timezone())
+            else:
+                cita_dt = dt_combined
+            diff = cita_dt - now
+            return timedelta(0) <= diff <= timedelta(hours=24)
+        except Exception:
+            return False
+
     def to_representation(self, instance):
         data = super().to_representation(instance)
         if instance.paciente and instance.paciente.usuario:
@@ -80,6 +113,8 @@ class CitaSerializer(serializers.ModelSerializer):
         if instance.psicologo and instance.psicologo.usuario:
             u = instance.psicologo.usuario
             data['psicologo_nombre'] = f"{u.nombre} {u.apellido}".strip()
+        data['formulario_pendiente'] = self.get_formulario_pendiente(instance)
+        data['intake_id'] = self.get_intake_id(instance)
         return data
 
 

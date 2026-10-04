@@ -16,6 +16,8 @@ export interface Cita {
   costo: number;
   fecha_creacion?: string;
   teleconsulta_id?: string;
+  formulario_pendiente?: boolean;
+  intake_id?: string | null;
 }
 
 export interface SlotDisponible {
