@@ -25,29 +25,29 @@ Requisitos funcionales asociados: RF-04, RF-06, RF-07, RF-14, RF-15, RF-16
 
 <br>
 
-| ID | Descripción | Estado | Móvil | Web | Sprint |
-| :---: | :--- | :---: | :---: | :---: | :---: |
-| **CU6** | Gestionar psicólogos y perfiles profesionales | Propuesto | | X | SP1 |
-| **CU7** | Gestionar pacientes | Propuesto | X | X | SP1 |
-| **CU8** | Gestionar disponibilidad y carga de trabajo de psicólogos | Propuesto | | X | SP1 |
-| **CU9** | Consultar Dashboard e indicadores del centro psicológico | Propuesto | | X | SP1 |
-| **CU10** | Gestionar alertas de priorización y seguimiento | Propuesto | | X | SP1 |
-| **CU11** | Gestionar citas y agenda psicológica | Propuesto | X | X | SP1 |
-| **CU13** | Gestionar teleconsultas y videoconferencias | Propuesto | X | X | SP1 |
+|    ID    | Descripción                                               |  Estado   | Móvil |  Web  | Sprint |
+| :------: | :-------------------------------------------------------- | :-------: | :---: | :---: | :----: |
+| **CU6**  | Gestionar psicólogos y perfiles profesionales             | Propuesto |       |   X   |  SP1   |
+| **CU7**  | Gestionar pacientes                                       | Propuesto |   X   |   X   |  SP1   |
+| **CU8**  | Gestionar disponibilidad y carga de trabajo de psicólogos | Propuesto |       |   X   |  SP1   |
+| **CU9**  | Consultar Dashboard e indicadores del centro psicológico  | Propuesto |       |   X   |  SP1   |
+| **CU10** | Gestionar alertas de priorización y seguimiento           | Propuesto |       |   X   |  SP1   |
+| **CU11** | Gestionar citas y agenda psicológica                      | Propuesto |   X   |   X   |  SP1   |
+| **CU13** | Gestionar teleconsultas y videoconferencias               | Propuesto |   X   |   X   |  SP1   |
 
 <br>
 
 **Cronograma y Tabla de Fechas del Sprint 1:**
 
-| Hito / Actividad | Fecha de Inicio | Fecha de Fin | Duración | Estado |
-| :--- | :---: | :---: | :---: | :---: |
-| Planificación del Sprint (Sprint Planning) | 26 de agosto de 2026 | 26 de agosto de 2026 | 1 día | Concluido |
-| Desarrollo, Integración (Web / Móvil) y Daily Scrum | 26 de agosto de 2026 | 05 de septiembre de 2026 | 11 días | Concluido |
-| Pruebas de Calidad (QA) y Ajustes de Integración | 05 de septiembre de 2026 | 06 de septiembre de 2026 | 2 días | Concluido |
-| Revisión del Sprint (Sprint Review) | 06 de septiembre de 2026 | 06 de septiembre de 2026 | 1 día | Concluido |
-| Retrospectiva del Sprint (Sprint Retrospective) | 06 de septiembre de 2026 | 06 de septiembre de 2026 | 1 día | Concluido |
-| Entrega Formal del Documento de Sprint 1 | 06 de septiembre de 2026 | 06 de septiembre de 2026 | 1 día | Concluido |
-| Presentación y Defensa del Sprint 1 (Docente) | 08 de septiembre de 2026 | 10 de septiembre de 2026 | 2 días | Programado |
+| Hito / Actividad                                    |     Fecha de Inicio      |       Fecha de Fin       | Duración |   Estado   |
+| :-------------------------------------------------- | :----------------------: | :----------------------: | :------: | :--------: |
+| Planificación del Sprint (Sprint Planning)          |   26 de agosto de 2026   |   26 de agosto de 2026   |  1 día   | Concluido  |
+| Desarrollo, Integración (Web / Móvil) y Daily Scrum |   26 de agosto de 2026   | 05 de septiembre de 2026 | 11 días  | Concluido  |
+| Pruebas de Calidad (QA) y Ajustes de Integración    | 05 de septiembre de 2026 | 06 de septiembre de 2026 |  2 días  | Concluido  |
+| Revisión del Sprint (Sprint Review)                 | 06 de septiembre de 2026 | 06 de septiembre de 2026 |  1 día   | Concluido  |
+| Retrospectiva del Sprint (Sprint Retrospective)     | 06 de septiembre de 2026 | 06 de septiembre de 2026 |  1 día   | Concluido  |
+| Entrega Formal del Documento de Sprint 1            | 06 de septiembre de 2026 | 06 de septiembre de 2026 |  1 día   | Concluido  |
+| Presentación y Defensa del Sprint 1 (Docente)       | 08 de septiembre de 2026 | 10 de septiembre de 2026 |  2 días  | Programado |
 
 ---
 
@@ -62,143 +62,143 @@ La estimación del esfuerzo relativo de cada historia de usuario se realizó med
 
 #### Resumen de Historias de Usuario del Sprint 1
 
-| ID | Título | Prioridad | PHU | Desarrollador a cargo | Prototipo Asociado (Figma) |
-| :--- | :--- | :---: | :---: | :--- | :--- |
-| **HU-11** | Gestión de perfiles y especialidades de psicólogos | Alta | 5 | Mujica Vallejos Andy Mauricio | Pantalla Directorio y Perfil Psicólogo (Web) |
-| **HU-12** | Configuración de disponibilidad y carga horaria | Alta | 5 | Romero Saavedra Maria Ilse | Pantalla Matriz de Disponibilidad Semanal |
-| **HU-13** | Registro y expediente clínico básico del paciente | Alta | 5 | Romero Saavedra Maria Ilse | Pantalla Gestión y Ficha de Paciente (Web) |
-| **HU-14** | Registro y consulta de perfil de paciente en app móvil | Alta | 5 | Delgado Rojas Alberto Caleb | Pantalla Perfil y Datos Personales (Móvil) |
-| **HU-15** | Programación y reserva de citas en plataforma web | Alta | 8 | Mujica Vallejos Andy Mauricio | Pantalla Calendario y Reserva de Citas (Web) |
-| **HU-16** | Consulta y reserva de citas desde la app móvil | Alta | 5 | Delgado Rojas Alberto Caleb | Pantalla Mis Citas y Reservar Cita (Móvil) |
-| **HU-17** | Reprogramación y cancelación de citas con validación de anticipación | Media | 5 | Mujica Vallejos Andy Mauricio | Modal Reprogramar / Cancelar Cita |
-| **HU-18** | Sala de teleconsulta con Jitsi Meet en plataforma web | Alta | 8 | Mujica Vallejos Andy Mauricio | Pantalla Videoconsulta WebRTC (Web) |
-| **HU-19** | Acceso a videollamada de teleconsulta desde app móvil | Alta | 5 | Delgado Rojas Alberto Caleb | Pantalla Sala de Teleconsulta (Móvil) |
-| **HU-20** | Dashboard administrativo y clínico con KPIs en tiempo real | Alta | 8 | Larrazabal Rojas Julio Cesar | Pantalla Dashboard Indicadores y Métricas |
-| **HU-21** | Alertas de priorización y seguimiento de inasistencias | Media | 5 | Romero Saavedra Maria Ilse | Panel de Notificaciones y Alertas Clínicas |
-| **HU-22** | Calendario interactivo multi-vista de agenda clínica | Media | 5 | Larrazabal Rojas Julio Cesar | Vista Calendario Semanal / Diario por Profesional |
-| **TOTAL** | **Esfuerzo planificado en Historias de Usuario** | — | **69 PHU** | **Equipo SCRUM (6 integrantes)** | **12 prototipos interactivos** |
+| ID        | Título                                                               | Prioridad |    PHU     | Desarrollador a cargo            | Prototipo Asociado (Figma)                        |
+| :-------- | :------------------------------------------------------------------- | :-------: | :--------: | :------------------------------- | :------------------------------------------------ |
+| **HU-11** | Gestión de perfiles y especialidades de psicólogos                   |   Alta    |     5      | Mujica Vallejos Andy Mauricio    | Pantalla Directorio y Perfil Psicólogo (Web)      |
+| **HU-12** | Configuración de disponibilidad y carga horaria                      |   Alta    |     5      | Romero Saavedra Maria Ilse       | Pantalla Matriz de Disponibilidad Semanal         |
+| **HU-13** | Registro y expediente clínico básico del paciente                    |   Alta    |     5      | Romero Saavedra Maria Ilse       | Pantalla Gestión y Ficha de Paciente (Web)        |
+| **HU-14** | Registro y consulta de perfil de paciente en app móvil               |   Alta    |     5      | Delgado Rojas Alberto Caleb      | Pantalla Perfil y Datos Personales (Móvil)        |
+| **HU-15** | Programación y reserva de citas en plataforma web                    |   Alta    |     8      | Mujica Vallejos Andy Mauricio    | Pantalla Calendario y Reserva de Citas (Web)      |
+| **HU-16** | Consulta y reserva de citas desde la app móvil                       |   Alta    |     5      | Delgado Rojas Alberto Caleb      | Pantalla Mis Citas y Reservar Cita (Móvil)        |
+| **HU-17** | Reprogramación y cancelación de citas con validación de anticipación |   Media   |     5      | Mujica Vallejos Andy Mauricio    | Modal Reprogramar / Cancelar Cita                 |
+| **HU-18** | Sala de teleconsulta con Jitsi Meet en plataforma web                |   Alta    |     8      | Mujica Vallejos Andy Mauricio    | Pantalla Videoconsulta WebRTC (Web)               |
+| **HU-19** | Acceso a videollamada de teleconsulta desde app móvil                |   Alta    |     5      | Delgado Rojas Alberto Caleb      | Pantalla Sala de Teleconsulta (Móvil)             |
+| **HU-20** | Dashboard administrativo y clínico con KPIs en tiempo real           |   Alta    |     8      | Larrazabal Rojas Julio Cesar     | Pantalla Dashboard Indicadores y Métricas         |
+| **HU-21** | Alertas de priorización y seguimiento de inasistencias               |   Media   |     5      | Romero Saavedra Maria Ilse       | Panel de Notificaciones y Alertas Clínicas        |
+| **HU-22** | Calendario interactivo multi-vista de agenda clínica                 |   Media   |     5      | Larrazabal Rojas Julio Cesar     | Vista Calendario Semanal / Diario por Profesional |
+| **TOTAL** | **Esfuerzo planificado en Historias de Usuario**                     |     —     | **69 PHU** | **Equipo SCRUM (6 integrantes)** | **12 prototipos interactivos**                    |
 
 ---
 
 ### Detalle de Historias de Usuario (Tarjetas 3C en Formato Oficial)
 
 #### Historia de Usuario HU-11
-| **Título:** | **Gestión de perfiles y especialidades de psicólogos** |
-| :--- | :--- |
-| **ID:** HU-11 *(CU6, RF-07)* | **Descripción:** Como Administrador del Centro, quiero registrar y actualizar los perfiles profesionales de los psicólogos (especialidades, colegiatura, biografía, tarifa y modalidad), para que el centro disponga de un directorio profesional confiable para la asignación de pacientes. |
-| **Prioridad / Valor:** Alta | **Estimación PHU:** 5 |
-| **Criterios de aceptación:** | • **a)** Dado que soy Administrador autenticado, cuando completo el formulario de psicólogo con número de colegiado válido, tarifa base y al menos una especialidad clínica activa, entonces el sistema guarda el perfil y lo vincula a la cuenta de usuario del esquema tenant.<br>• **b)** Dado que ingreso un número de colegiado que ya está registrado para otro profesional en el mismo centro, cuando intento guardar, entonces el sistema rechaza la operación y notifica que el código profesional ya se encuentra en uso.<br>• **c)** Dado que edito la biografía o agrego nuevas especialidades a un psicólogo existente, cuando presiono guardar, entonces los cambios se reflejan de inmediato en la lista del directorio y en los filtros de búsqueda. |
-| **Desarrollador a cargo:** | Mujica Vallejos Andy Mauricio &nbsp;&nbsp;\|&nbsp;&nbsp; **Prototipo:** Pantalla Directorio y Perfil Psicólogo (Figma)<br>**Prompt para IA (Generación UI):** *"UI/UX web design of a professional psychologist directory and profile management screen for a mental health platform named SIGEPSI, Angular 17 style. Clean light mode with teal and indigo tones. Main view includes search bar with specialty filters (Terapia Cognitivo-Conductual, Infanto-Juvenil, Pareja) and a grid of therapist profile cards showing avatar photo, full name, professional license number (Colegiatura), active specialties badges, consultation fee (Bs. 180), modalities accepted (Presencial / Virtual), and action buttons 'Editar Perfil' and 'Ver Horarios'. Modern SaaS medical typography Inter, high fidelity Figma UI, crisp layout, 4k."*  |
+| **Título:**                  | **Gestión de perfiles y especialidades de psicólogos**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| :--------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ID:** HU-11 *(CU6, RF-07)* | **Descripción:** Como Administrador del Centro, quiero registrar y actualizar los perfiles profesionales de los psicólogos (especialidades, colegiatura, biografía, tarifa y modalidad), para que el centro disponga de un directorio profesional confiable para la asignación de pacientes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| **Prioridad / Valor:** Alta  | **Estimación PHU:** 5                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| **Criterios de aceptación:** | • **a)** Dado que soy Administrador autenticado, cuando completo el formulario de psicólogo con número de colegiado válido, tarifa base y al menos una especialidad clínica activa, entonces el sistema guarda el perfil y lo vincula a la cuenta de usuario del esquema tenant.<br>• **b)** Dado que ingreso un número de colegiado que ya está registrado para otro profesional en el mismo centro, cuando intento guardar, entonces el sistema rechaza la operación y notifica que el código profesional ya se encuentra en uso.<br>• **c)** Dado que edito la biografía o agrego nuevas especialidades a un psicólogo existente, cuando presiono guardar, entonces los cambios se reflejan de inmediato en la lista del directorio y en los filtros de búsqueda.                                                                          |
+| **Desarrollador a cargo:**   | Mujica Vallejos Andy Mauricio &nbsp;&nbsp;\|&nbsp;&nbsp; **Prototipo:** Pantalla Directorio y Perfil Psicólogo (Figma)<br>**Prompt para IA (Generación UI):** *"UI/UX web design of a professional psychologist directory and profile management screen for a mental health platform named SIGEPSI, Angular 17 style. Clean light mode with teal and indigo tones. Main view includes search bar with specialty filters (Terapia Cognitivo-Conductual, Infanto-Juvenil, Pareja) and a grid of therapist profile cards showing avatar photo, full name, professional license number (Colegiatura), active specialties badges, consultation fee (Bs. 180), modalities accepted (Presencial / Virtual), and action buttons 'Editar Perfil' and 'Ver Horarios'. Modern SaaS medical typography Inter, high fidelity Figma UI, crisp layout, 4k."* |
 
 <br>
 
 #### Historia de Usuario HU-12
-| **Título:** | **Configuración de disponibilidad y carga horaria** |
-| :--- | :--- |
-| **ID:** HU-12 *(CU8, RF-07)* | **Descripción:** Como Psicólogo, quiero configurar mis bloques de disponibilidad horaria por día de la semana y la duración de mis sesiones, para que los recepcionistas y pacientes solo puedan agendar citas en mis horarios efectivamente disponibles. |
-| **Prioridad / Valor:** Alta | **Estimación PHU:** 5 |
-| **Criterios de aceptación:** | • **a)** Dado que soy Psicólogo autenticado, cuando defino mi horario de atención (ej. Lunes de 08:00 a 12:00 con bloques de 45 minutos), entonces el sistema genera automáticamente los intervalos disponibles para reserva.<br>• **b)** Dado que intento configurar un bloque cuya hora de inicio sea posterior o igual a la hora de fin, cuando envío el formulario, entonces el sistema muestra un mensaje de validación indicando la inconsistencia temporal.<br>• **c)** Dado que ya poseo citas pactadas en un intervalo determinado, si intento desactivar ese día de disponibilidad, entonces el sistema advierte que existen citas activas y solicita reubicarlas antes de consolidar el cambio. |
-| **Desarrollador a cargo:** | Romero Saavedra Maria Ilse &nbsp;&nbsp;\|&nbsp;&nbsp; **Prototipo:** Pantalla Matriz de Disponibilidad Semanal (Figma)<br>**Prompt para IA (Generación UI):** *"UI/UX web application screen of a weekly schedule and shift availability matrix for psychologists in mental health clinic SIGEPSI, Angular style. Clean modern design with soft neutral background and purple/teal accents. Left panel with therapist summary and consultation duration selector (30 min, 45 min, 60 min). Center view displays an interactive weekly schedule matrix (Monday to Saturday) with toggle switches for active days and configurable time blocks (e.g. 08:00 - 12:00, 14:00 - 18:00) with visual time chip tags and 'Agregar Franja' button. Clear warning notice for active appointments conflict. High fidelity Figma mockup, clean UI kit, 4k."*  |
+| **Título:**                  | **Configuración de disponibilidad y carga horaria**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| :--------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ID:** HU-12 *(CU8, RF-07)* | **Descripción:** Como Psicólogo, quiero configurar mis bloques de disponibilidad horaria por día de la semana y la duración de mis sesiones, para que los recepcionistas y pacientes solo puedan agendar citas en mis horarios efectivamente disponibles.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| **Prioridad / Valor:** Alta  | **Estimación PHU:** 5                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| **Criterios de aceptación:** | • **a)** Dado que soy Psicólogo autenticado, cuando defino mi horario de atención (ej. Lunes de 08:00 a 12:00 con bloques de 45 minutos), entonces el sistema genera automáticamente los intervalos disponibles para reserva.<br>• **b)** Dado que intento configurar un bloque cuya hora de inicio sea posterior o igual a la hora de fin, cuando envío el formulario, entonces el sistema muestra un mensaje de validación indicando la inconsistencia temporal.<br>• **c)** Dado que ya poseo citas pactadas en un intervalo determinado, si intento desactivar ese día de disponibilidad, entonces el sistema advierte que existen citas activas y solicita reubicarlas antes de consolidar el cambio.                                                                                                                                      |
+| **Desarrollador a cargo:**   | Romero Saavedra Maria Ilse &nbsp;&nbsp;\|&nbsp;&nbsp; **Prototipo:** Pantalla Matriz de Disponibilidad Semanal (Figma)<br>**Prompt para IA (Generación UI):** *"UI/UX web application screen of a weekly schedule and shift availability matrix for psychologists in mental health clinic SIGEPSI, Angular style. Clean modern design with soft neutral background and purple/teal accents. Left panel with therapist summary and consultation duration selector (30 min, 45 min, 60 min). Center view displays an interactive weekly schedule matrix (Monday to Saturday) with toggle switches for active days and configurable time blocks (e.g. 08:00 - 12:00, 14:00 - 18:00) with visual time chip tags and 'Agregar Franja' button. Clear warning notice for active appointments conflict. High fidelity Figma mockup, clean UI kit, 4k."* |
 
 <br>
 
 #### Historia de Usuario HU-13
-| **Título:** | **Registro y expediente clínico básico del paciente en web** |
-| :--- | :--- |
-| **ID:** HU-13 *(CU7, RF-06)* | **Descripción:** Como Recepcionista o Administrador, quiero registrar a un nuevo paciente con sus datos personales, sociodemográficos y contacto de emergencia, para abrir su expediente clínico digital dentro del centro. |
-| **Prioridad / Valor:** Alta | **Estimación PHU:** 5 |
-| **Criterios de aceptación:** | • **a)** Dado que ingreso datos completos de un paciente (nombres, apellidos, CI, fecha de nacimiento, teléfono y contacto de emergencia), cuando presiono registrar, entonces el sistema crea la ficha del paciente asignándole un código de expediente único dentro del tenant.<br>• **b)** Dado que intento registrar un paciente con un documento de identidad (CI) ya existente en el centro, cuando el sistema valida los datos, entonces bloquea el registro duplicado y muestra un enlace directo al expediente existente.<br>• **c)** Dado que un paciente es menor de edad (menor a 18 años calculado por fecha de nacimiento), cuando se procesa el formulario, entonces el sistema exige obligatoriamente los datos del tutor o apoderado legal. |
-| **Desarrollador a cargo:** | Romero Saavedra Maria Ilse &nbsp;&nbsp;\|&nbsp;&nbsp; **Prototipo:** Pantalla Gestión y Ficha de Paciente (Figma - Larrazabal Julio Cesar)<br>**Prompt para IA (Generación UI):** *"UI/UX desktop web design for clinical patient registration and electronic health record intake form for SIGEPSI mental health system, Angular 17. Clean clinical light theme. Form organized in modern card sections: Personal Identification (Full Name, CI/DNI, Date of Birth, Gender), Emergency Contact with legal guardian toggle for minors under 18 showing guardian full name and phone number. Top header with patient code badge 'EXP-2026-084'. Tabbed navigation for Personal Info, Consultation History, and Active Alerts. Modern clean form inputs, floating labels, validation states, Figma design system, 4k."*  |
+| **Título:**                  | **Registro y expediente clínico básico del paciente en web**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| :--------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ID:** HU-13 *(CU7, RF-06)* | **Descripción:** Como Recepcionista o Administrador, quiero registrar a un nuevo paciente con sus datos personales, sociodemográficos y contacto de emergencia, para abrir su expediente clínico digital dentro del centro.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| **Prioridad / Valor:** Alta  | **Estimación PHU:** 5                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| **Criterios de aceptación:** | • **a)** Dado que ingreso datos completos de un paciente (nombres, apellidos, CI, fecha de nacimiento, teléfono y contacto de emergencia), cuando presiono registrar, entonces el sistema crea la ficha del paciente asignándole un código de expediente único dentro del tenant.<br>• **b)** Dado que intento registrar un paciente con un documento de identidad (CI) ya existente en el centro, cuando el sistema valida los datos, entonces bloquea el registro duplicado y muestra un enlace directo al expediente existente.<br>• **c)** Dado que un paciente es menor de edad (menor a 18 años calculado por fecha de nacimiento), cuando se procesa el formulario, entonces el sistema exige obligatoriamente los datos del tutor o apoderado legal.                                                          |
+| **Desarrollador a cargo:**   | Romero Saavedra Maria Ilse &nbsp;&nbsp;\|&nbsp;&nbsp; **Prototipo:** Pantalla Gestión y Ficha de Paciente (Figma - Larrazabal Julio Cesar)<br>**Prompt para IA (Generación UI):** *"UI/UX desktop web design for clinical patient registration and electronic health record intake form for SIGEPSI mental health system, Angular 17. Clean clinical light theme. Form organized in modern card sections: Personal Identification (Full Name, CI/DNI, Date of Birth, Gender), Emergency Contact with legal guardian toggle for minors under 18 showing guardian full name and phone number. Top header with patient code badge 'EXP-2026-084'. Tabbed navigation for Personal Info, Consultation History, and Active Alerts. Modern clean form inputs, floating labels, validation states, Figma design system, 4k."* |
 
 <br>
 
 #### Historia de Usuario HU-14
-| **Título:** | **Registro y consulta de perfil de paciente en app móvil** |
-| :--- | :--- |
-| **ID:** HU-14 *(CU7, RF-06)* | **Descripción:** Como Paciente, quiero registrarme y consultar mi perfil desde la aplicación móvil Flutter, para mantener actualizados mis datos de contacto y acceder a los servicios psicológicos de mi centro. |
-| **Prioridad / Valor:** Alta | **Estimación PHU:** 5 |
-| **Criterios de aceptación:** | • **a)** Dado que descargo la app móvil e ingreso mi código de centro (tenant), cuando lleno mi formulario de registro con correo y contraseña válidos, entonces el sistema crea mi usuario con rol Paciente y me permite iniciar sesión automáticamente.<br>• **b)** Dado que estoy autenticado en la app móvil, cuando accedo a la sección 'Mi Perfil', entonces puedo visualizar y actualizar mi número telefónico, dirección y contacto de emergencia.<br>• **c)** Dado que se interrumpe la conexión a Internet durante la actualización del perfil, cuando la app detecta el error de red, entonces muestra un mensaje amigable indicando que no se pudo conectar al servidor del centro y mantiene los datos locales intactos. |
-| **Desarrollador a cargo:** | Delgado Rojas Alberto Caleb &nbsp;&nbsp;\|&nbsp;&nbsp; **Prototipo:** Pantalla Perfil y Datos Personales Móvil (Figma)<br>**Prompt para IA (Generación UI):** *"Mobile app UI design for patient personal profile screen in Flutter 3 style on an iPhone 15 Pro mockup for SIGEPSI mental health app. Modern soothing pastel blue and mint green palette. Top app bar with back arrow and center title 'Mi Perfil'. User avatar circle with camera edit badge, patient full name 'Sofía Beltrán', and tenant clinic badge 'Centro San Rafael'. Card list displaying editable fields: phone number, residential address, emergency contact person and phone, and security options. Primary button 'Guardar Cambios' with smooth corner radius. Clean mobile UX, high fidelity Figma mockup, 4k."*  |
+| **Título:**                  | **Registro y consulta de perfil de paciente en app móvil**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| :--------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ID:** HU-14 *(CU7, RF-06)* | **Descripción:** Como Paciente, quiero registrarme y consultar mi perfil desde la aplicación móvil Flutter, para mantener actualizados mis datos de contacto y acceder a los servicios psicológicos de mi centro.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| **Prioridad / Valor:** Alta  | **Estimación PHU:** 5                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| **Criterios de aceptación:** | • **a)** Dado que descargo la app móvil e ingreso mi código de centro (tenant), cuando lleno mi formulario de registro con correo y contraseña válidos, entonces el sistema crea mi usuario con rol Paciente y me permite iniciar sesión automáticamente.<br>• **b)** Dado que estoy autenticado en la app móvil, cuando accedo a la sección 'Mi Perfil', entonces puedo visualizar y actualizar mi número telefónico, dirección y contacto de emergencia.<br>• **c)** Dado que se interrumpe la conexión a Internet durante la actualización del perfil, cuando la app detecta el error de red, entonces muestra un mensaje amigable indicando que no se pudo conectar al servidor del centro y mantiene los datos locales intactos.                                                            |
+| **Desarrollador a cargo:**   | Delgado Rojas Alberto Caleb &nbsp;&nbsp;\|&nbsp;&nbsp; **Prototipo:** Pantalla Perfil y Datos Personales Móvil (Figma)<br>**Prompt para IA (Generación UI):** *"Mobile app UI design for patient personal profile screen in Flutter 3 style on an iPhone 15 Pro mockup for SIGEPSI mental health app. Modern soothing pastel blue and mint green palette. Top app bar with back arrow and center title 'Mi Perfil'. User avatar circle with camera edit badge, patient full name 'Sofía Beltrán', and tenant clinic badge 'Centro San Rafael'. Card list displaying editable fields: phone number, residential address, emergency contact person and phone, and security options. Primary button 'Guardar Cambios' with smooth corner radius. Clean mobile UX, high fidelity Figma mockup, 4k."* |
 
 <br>
 
 #### Historia de Usuario HU-15
-| **Título:** | **Programación y reserva de citas en plataforma web** |
-| :--- | :--- |
-| **ID:** HU-15 *(CU11, RF-14)* | **Descripción:** Como Recepcionista o Psicólogo, quiero programar una cita seleccionando paciente, terapeuta, modalidad (presencial/virtual) y fecha/hora, para organizar la atención clínica sin solapamientos. |
-| **Prioridad / Valor:** Alta | **Estimación PHU:** 8 |
-| **Criterios de aceptación:** | • **a)** Dado que selecciono un psicólogo, una fecha y un bloque disponible, cuando asigno un paciente y confirmo la reserva, entonces el sistema registra la cita con estado 'Programada' y bloquea dicho slot para evitar dobles reservas.<br>• **b)** Dado que dos usuarios intentan reservar simultáneamente el mismo bloque del mismo psicólogo, cuando el segundo usuario envía la solicitud, entonces el sistema detecta la colisión mediante concurrencia pesimista/transaccional y notifica que el horario acaba de ser ocupado.<br>• **c)** Dado que la modalidad elegida es 'Virtual', cuando se confirma la cita, entonces el sistema crea automáticamente un registro de teleconsulta con identificador único de sala Jitsi Meet. |
-| **Desarrollador a cargo:** | Mujica Vallejos Andy Mauricio &nbsp;&nbsp;\|&nbsp;&nbsp; **Prototipo:** Pantalla Calendario y Reserva de Citas Web (Figma)<br>**Prompt para IA (Generación UI):** *"UI/UX web modal and page for booking psychological appointments in SIGEPSI, Angular 17. Clean SaaS modal dialog overlaid on a blurred clinic dashboard. Left section has doctor selection with avatar, specialty, and modality selector pills: 'Presencial (Consultorio 3)' or 'Teleconsulta (Jitsi Meet)'. Center shows an interactive mini calendar and available time slots (chips: 09:00, 10:00, 11:00, 15:00) with real-time collision detection badge 'Horario Disponible'. Bottom input for reason of consultation and primary confirm button 'Confirmar Reserva'. High fidelity Figma mockup, modern healthcare UI, 4k."*  |
+| **Título:**                   | **Programación y reserva de citas en plataforma web**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| :---------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ID:** HU-15 *(CU11, RF-14)* | **Descripción:** Como Recepcionista o Psicólogo, quiero programar una cita seleccionando paciente, terapeuta, modalidad (presencial/virtual) y fecha/hora, para organizar la atención clínica sin solapamientos.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| **Prioridad / Valor:** Alta   | **Estimación PHU:** 8                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| **Criterios de aceptación:**  | • **a)** Dado que selecciono un psicólogo, una fecha y un bloque disponible, cuando asigno un paciente y confirmo la reserva, entonces el sistema registra la cita con estado 'Programada' y bloquea dicho slot para evitar dobles reservas.<br>• **b)** Dado que dos usuarios intentan reservar simultáneamente el mismo bloque del mismo psicólogo, cuando el segundo usuario envía la solicitud, entonces el sistema detecta la colisión mediante concurrencia pesimista/transaccional y notifica que el horario acaba de ser ocupado.<br>• **c)** Dado que la modalidad elegida es 'Virtual', cuando se confirma la cita, entonces el sistema crea automáticamente un registro de teleconsulta con identificador único de sala Jitsi Meet.                                                        |
+| **Desarrollador a cargo:**    | Mujica Vallejos Andy Mauricio &nbsp;&nbsp;\|&nbsp;&nbsp; **Prototipo:** Pantalla Calendario y Reserva de Citas Web (Figma)<br>**Prompt para IA (Generación UI):** *"UI/UX web modal and page for booking psychological appointments in SIGEPSI, Angular 17. Clean SaaS modal dialog overlaid on a blurred clinic dashboard. Left section has doctor selection with avatar, specialty, and modality selector pills: 'Presencial (Consultorio 3)' or 'Teleconsulta (Jitsi Meet)'. Center shows an interactive mini calendar and available time slots (chips: 09:00, 10:00, 11:00, 15:00) with real-time collision detection badge 'Horario Disponible'. Bottom input for reason of consultation and primary confirm button 'Confirmar Reserva'. High fidelity Figma mockup, modern healthcare UI, 4k."* |
 
 <br>
 
 #### Historia de Usuario HU-16
-| **Título:** | **Consulta y reserva de citas desde la app móvil** |
-| :--- | :--- |
-| **ID:** HU-16 *(CU11, RF-14)* | **Descripción:** Como Paciente autenticado en la app móvil, quiero ver el listado de mis citas (próximas e históricas) y solicitar una nueva cita según la disponibilidad de mi psicólogo, para gestionar mis consultas de salud mental desde mi teléfono. |
-| **Prioridad / Valor:** Alta | **Estimación PHU:** 5 |
-| **Criterios de aceptación:** | • **a)** Dado que ingreso al módulo 'Mis Citas' en la app Flutter, cuando la pantalla carga, entonces muestra mis citas ordenadas cronológicamente con tarjetas visuales diferenciadas por estado (Programada, Confirmada, Realizada, Cancelada).<br>• **b)** Dado que elijo la opción 'Nueva Cita', selecciono mi psicólogo y escojo un horario disponible, cuando presiono confirmar, entonces la solicitud se envía al backend y la cita aparece inmediatamente en mi listado.<br>• **c)** Dado que selecciono una cita virtual programada para hoy, cuando faltan menos de 15 minutos para la hora fijada, entonces se activa un botón visible de 'Ingresar a Teleconsulta'. |
-| **Desarrollador a cargo:** | Delgado Rojas Alberto Caleb &nbsp;&nbsp;\|&nbsp;&nbsp; **Prototipo:** Pantalla Mis Citas y Reservar Cita Móvil (Figma)<br>**Prompt para IA (Generación UI):** *"Mobile application UI screen for patient appointment management 'Mis Citas' in Flutter 3 for SIGEPSI on iOS/Android device. Soothing mental wellness colors, teal and lavender accents. Segmented control with tabs 'Próximas' and 'Historial'. Cards for upcoming sessions showing psychologist photo, name, date badge 'Jueves 3 Sept - 10:00 AM', session type 'Teleconsulta Virtual', and color badge 'Confirmada' in emerald green. Card has an active prominent button 'Ingresar a Teleconsulta' with a video icon. Floating action button '+' to book a new appointment. High fidelity Figma UI, 4k."*  |
+| **Título:**                   | **Consulta y reserva de citas desde la app móvil**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| :---------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ID:** HU-16 *(CU11, RF-14)* | **Descripción:** Como Paciente autenticado en la app móvil, quiero ver el listado de mis citas (próximas e históricas) y solicitar una nueva cita según la disponibilidad de mi psicólogo, para gestionar mis consultas de salud mental desde mi teléfono.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| **Prioridad / Valor:** Alta   | **Estimación PHU:** 5                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| **Criterios de aceptación:**  | • **a)** Dado que ingreso al módulo 'Mis Citas' en la app Flutter, cuando la pantalla carga, entonces muestra mis citas ordenadas cronológicamente con tarjetas visuales diferenciadas por estado (Programada, Confirmada, Realizada, Cancelada).<br>• **b)** Dado que elijo la opción 'Nueva Cita', selecciono mi psicólogo y escojo un horario disponible, cuando presiono confirmar, entonces la solicitud se envía al backend y la cita aparece inmediatamente en mi listado.<br>• **c)** Dado que selecciono una cita virtual programada para hoy, cuando faltan menos de 15 minutos para la hora fijada, entonces se activa un botón visible de 'Ingresar a Teleconsulta'.                                                                                              |
+| **Desarrollador a cargo:**    | Delgado Rojas Alberto Caleb &nbsp;&nbsp;\|&nbsp;&nbsp; **Prototipo:** Pantalla Mis Citas y Reservar Cita Móvil (Figma)<br>**Prompt para IA (Generación UI):** *"Mobile application UI screen for patient appointment management 'Mis Citas' in Flutter 3 for SIGEPSI on iOS/Android device. Soothing mental wellness colors, teal and lavender accents. Segmented control with tabs 'Próximas' and 'Historial'. Cards for upcoming sessions showing psychologist photo, name, date badge 'Jueves 3 Sept - 10:00 AM', session type 'Teleconsulta Virtual', and color badge 'Confirmada' in emerald green. Card has an active prominent button 'Ingresar a Teleconsulta' with a video icon. Floating action button '+' to book a new appointment. High fidelity Figma UI, 4k."* |
 
 <br>
 
 #### Historia de Usuario HU-17
-| **Título:** | **Reprogramación y cancelación de citas con validación de anticipación** |
-| :--- | :--- |
-| **ID:** HU-17 *(CU11, RF-15)* | **Descripción:** Como Usuario (Recepcionista o Paciente), quiero cancelar o reprogramar una cita pactada, respetando las políticas de anticipación horaria configuradas por el centro, para optimizar los cupos de atención. |
-| **Prioridad / Valor:** Media | **Estimación PHU:** 5 |
-| **Criterios de aceptación:** | • **a)** Dado que un paciente solicita cancelar una cita con más de 24 horas de anticipación, cuando se procesa la solicitud, entonces el sistema cambia el estado a 'Cancelada', libera el bloque en la agenda del psicólogo y registra el motivo de cancelación.<br>• **b)** Dado que un paciente intenta cancelar una cita con menos de 2 horas de anticipación desde la app móvil, cuando presiona cancelar, entonces el sistema le advierte que está fuera de la política de cancelación y le indica comunicarse con recepción.<br>• **c)** Dado que se reprograma una cita, cuando se selecciona un nuevo horario válido, entonces el sistema actualiza la fecha/hora de la cita existente sin perder el historial ni el código de seguimiento. |
-| **Desarrollador a cargo:** | Mujica Vallejos Andy Mauricio &nbsp;&nbsp;\|&nbsp;&nbsp; **Prototipo:** Modal Reprogramar / Cancelar Cita (Figma)<br>**Prompt para IA (Generación UI):** *"UI/UX modal pop-up design for rescheduling or canceling a clinical appointment in psychological platform SIGEPSI, Angular 17. Centered clean dialog with backdrop blur. Top alert notice in amber: 'Cancelación sin recargo permitida hasta 24 horas antes'. Two distinct action tabs: 'Reprogramar Cita' with date picker and available time slots chips, and 'Cancelar Cita' with dropdown for cancellation reason (Motivo personal, Salud, Cruce de horarios) and optional text feedback. Actions: secondary ghost button 'Volver' and danger button 'Confirmar Cancelación'. Clean medical SaaS UX, Figma mockup, 4k."*  |
+| **Título:**                   | **Reprogramación y cancelación de citas con validación de anticipación**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| :---------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ID:** HU-17 *(CU11, RF-15)* | **Descripción:** Como Usuario (Recepcionista o Paciente), quiero cancelar o reprogramar una cita pactada, respetando las políticas de anticipación horaria configuradas por el centro, para optimizar los cupos de atención.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| **Prioridad / Valor:** Media  | **Estimación PHU:** 5                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| **Criterios de aceptación:**  | • **a)** Dado que un paciente solicita cancelar una cita con más de 24 horas de anticipación, cuando se procesa la solicitud, entonces el sistema cambia el estado a 'Cancelada', libera el bloque en la agenda del psicólogo y registra el motivo de cancelación.<br>• **b)** Dado que un paciente intenta cancelar una cita con menos de 2 horas de anticipación desde la app móvil, cuando presiona cancelar, entonces el sistema le advierte que está fuera de la política de cancelación y le indica comunicarse con recepción.<br>• **c)** Dado que se reprograma una cita, cuando se selecciona un nuevo horario válido, entonces el sistema actualiza la fecha/hora de la cita existente sin perder el historial ni el código de seguimiento.                                  |
+| **Desarrollador a cargo:**    | Mujica Vallejos Andy Mauricio &nbsp;&nbsp;\|&nbsp;&nbsp; **Prototipo:** Modal Reprogramar / Cancelar Cita (Figma)<br>**Prompt para IA (Generación UI):** *"UI/UX modal pop-up design for rescheduling or canceling a clinical appointment in psychological platform SIGEPSI, Angular 17. Centered clean dialog with backdrop blur. Top alert notice in amber: 'Cancelación sin recargo permitida hasta 24 horas antes'. Two distinct action tabs: 'Reprogramar Cita' with date picker and available time slots chips, and 'Cancelar Cita' with dropdown for cancellation reason (Motivo personal, Salud, Cruce de horarios) and optional text feedback. Actions: secondary ghost button 'Volver' and danger button 'Confirmar Cancelación'. Clean medical SaaS UX, Figma mockup, 4k."* |
 
 <br>
 
 #### Historia de Usuario HU-18
-| **Título:** | **Sala de teleconsulta con Jitsi Meet en plataforma web** |
-| :--- | :--- |
-| **ID:** HU-18 *(CU13, RF-16)* | **Descripción:** Como Psicólogo, quiero iniciar una sesión virtual por videollamada cifrada con mi paciente desde el navegador, para prestar atención psicológica a distancia con audio y video estables. |
-| **Prioridad / Valor:** Alta | **Estimación PHU:** 8 |
-| **Criterios de aceptación:** | • **a)** Dado que el psicólogo hace clic en 'Iniciar Sesión Virtual' en una cita virtual vigente, cuando el componente carga, entonces se instancia el Jitsi Meet External API embebido con el nombre de sala seguro del tenant y el psicólogo entra con permisos de moderador.<br>• **b)** Dado que el paciente entra a la sala web, cuando ambos están conectados, entonces pueden interactuar con audio bidireccional, video HD y visualización de temporizador de sesión.<br>• **c)** Dado que el psicólogo presiona 'Finalizar Consulta', cuando se confirma el cierre, entonces el sistema cierra la sala virtual, calcula la duración real de la sesión y actualiza el estado de la cita a 'Realizada'. |
-| **Desarrollador a cargo:** | Mujica Vallejos Andy Mauricio &nbsp;&nbsp;\|&nbsp;&nbsp; **Prototipo:** Pantalla Videoconsulta WebRTC (Figma - Larrazabal Julio Cesar)<br>**Prompt para IA (Generación UI):** *"UI/UX desktop web screen for encrypted telehealth psychological video consultation using embedded Jitsi Meet in SIGEPSI, Angular 17. Dark elegant teletherapy room layout. Main central video area showing the patient in high definition, with picture-in-picture floating window of the psychologist in the bottom right corner. Bottom floating glassmorphic control dock with mute audio, toggle video, end call (red button), secure chat panel toggle, and digital session timer showing '34:12 / 50:00 min'. Top bar with patient name, encrypted lock icon, and quick clinical notes sidebar toggle. High fidelity Figma UI, professional telepsychology SaaS, 4k."*  |
+| **Título:**                   | **Sala de teleconsulta con Jitsi Meet en plataforma web**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| :---------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ID:** HU-18 *(CU13, RF-16)* | **Descripción:** Como Psicólogo, quiero iniciar una sesión virtual por videollamada cifrada con mi paciente desde el navegador, para prestar atención psicológica a distancia con audio y video estables.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| **Prioridad / Valor:** Alta   | **Estimación PHU:** 8                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| **Criterios de aceptación:**  | • **a)** Dado que el psicólogo hace clic en 'Iniciar Sesión Virtual' en una cita virtual vigente, cuando el componente carga, entonces se instancia el Jitsi Meet External API embebido con el nombre de sala seguro del tenant y el psicólogo entra con permisos de moderador.<br>• **b)** Dado que el paciente entra a la sala web, cuando ambos están conectados, entonces pueden interactuar con audio bidireccional, video HD y visualización de temporizador de sesión.<br>• **c)** Dado que el psicólogo presiona 'Finalizar Consulta', cuando se confirma el cierre, entonces el sistema cierra la sala virtual, calcula la duración real de la sesión y actualiza el estado de la cita a 'Realizada'.                                                                                                                                               |
+| **Desarrollador a cargo:**    | Mujica Vallejos Andy Mauricio &nbsp;&nbsp;\|&nbsp;&nbsp; **Prototipo:** Pantalla Videoconsulta WebRTC (Figma - Larrazabal Julio Cesar)<br>**Prompt para IA (Generación UI):** *"UI/UX desktop web screen for encrypted telehealth psychological video consultation using embedded Jitsi Meet in SIGEPSI, Angular 17. Dark elegant teletherapy room layout. Main central video area showing the patient in high definition, with picture-in-picture floating window of the psychologist in the bottom right corner. Bottom floating glassmorphic control dock with mute audio, toggle video, end call (red button), secure chat panel toggle, and digital session timer showing '34:12 / 50:00 min'. Top bar with patient name, encrypted lock icon, and quick clinical notes sidebar toggle. High fidelity Figma UI, professional telepsychology SaaS, 4k."* |
 
 <br>
 
 #### Historia de Usuario HU-19
-| **Título:** | **Acceso a videollamada de teleconsulta desde app móvil** |
-| :--- | :--- |
-| **ID:** HU-19 *(CU13, RF-16)* | **Descripción:** Como Paciente, quiero unirme a la sesión de teleconsulta directamente desde la app móvil Flutter, para recibir mi atención psicológica cómodamente desde mi smartphone sin instalar aplicaciones externas. |
-| **Prioridad / Valor:** Alta | **Estimación PHU:** 5 |
-| **Criterios de aceptación:** | • **a)** Dado que una cita virtual está dentro del rango horario permitido, cuando el paciente presiona 'Unirse a Videollamada', entonces la app solicita permisos de micrófono/cámara y lanza la vista nativa de Jitsi Meet con controles táctiles optimizados.<br>• **b)** Dado que el paciente pierde temporalmente la conexión WiFi/datos durante la llamada, cuando la red se restablece, entonces el SDK de Jitsi reconecta automáticamente a la sala sin expulsar al usuario de la cita.<br>• **c)** Dado que la cita no corresponde al día actual o fue cancelada, cuando el usuario intenta ingresar, entonces el botón permanece inactivo con un mensaje explicativo del motivo. |
-| **Desarrollador a cargo:** | Delgado Rojas Alberto Caleb &nbsp;&nbsp;\|&nbsp;&nbsp; **Prototipo:** Pantalla Sala de Teleconsulta Móvil (Figma)<br>**Prompt para IA (Generación UI):** *"Mobile app UI design for telehealth video session in Flutter 3 on a smartphone for mental health patient in SIGEPSI. Fullscreen immersive video layout showing the psychologist speaking on full display with soft lighting and professional office background, patient self-view in a small top-right rounded corner thumbnail. Bottom semi-transparent floating action bar with rounded touch buttons: microphone mute, camera flip, chat overlay toggle, and red end-session button. Top overlay shows connection status indicator 'HD Seguro' and call duration timer '18:45'. Modern mobile UX, Figma style, 4k."*  |
+| **Título:**                   | **Acceso a videollamada de teleconsulta desde app móvil**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| :---------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ID:** HU-19 *(CU13, RF-16)* | **Descripción:** Como Paciente, quiero unirme a la sesión de teleconsulta directamente desde la app móvil Flutter, para recibir mi atención psicológica cómodamente desde mi smartphone sin instalar aplicaciones externas.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| **Prioridad / Valor:** Alta   | **Estimación PHU:** 5                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| **Criterios de aceptación:**  | • **a)** Dado que una cita virtual está dentro del rango horario permitido, cuando el paciente presiona 'Unirse a Videollamada', entonces la app solicita permisos de micrófono/cámara y lanza la vista nativa de Jitsi Meet con controles táctiles optimizados.<br>• **b)** Dado que el paciente pierde temporalmente la conexión WiFi/datos durante la llamada, cuando la red se restablece, entonces el SDK de Jitsi reconecta automáticamente a la sala sin expulsar al usuario de la cita.<br>• **c)** Dado que la cita no corresponde al día actual o fue cancelada, cuando el usuario intenta ingresar, entonces el botón permanece inactivo con un mensaje explicativo del motivo.                                                                                         |
+| **Desarrollador a cargo:**    | Delgado Rojas Alberto Caleb &nbsp;&nbsp;\|&nbsp;&nbsp; **Prototipo:** Pantalla Sala de Teleconsulta Móvil (Figma)<br>**Prompt para IA (Generación UI):** *"Mobile app UI design for telehealth video session in Flutter 3 on a smartphone for mental health patient in SIGEPSI. Fullscreen immersive video layout showing the psychologist speaking on full display with soft lighting and professional office background, patient self-view in a small top-right rounded corner thumbnail. Bottom semi-transparent floating action bar with rounded touch buttons: microphone mute, camera flip, chat overlay toggle, and red end-session button. Top overlay shows connection status indicator 'HD Seguro' and call duration timer '18:45'. Modern mobile UX, Figma style, 4k."* |
 
 <br>
 
 #### Historia de Usuario HU-20
-| **Título:** | **Dashboard administrativo y clínico con KPIs en tiempo real** |
-| :--- | :--- |
-| **ID:** HU-20 *(CU9, RF-04)* | **Descripción:** Como Administrador o Coordinador del Centro, quiero un panel visual con indicadores de citas del día, pacientes activos, tasa de ausentismo y ocupación por terapeuta, para monitorear la operatividad del centro en tiempo real. |
-| **Prioridad / Valor:** Alta | **Estimación PHU:** 8 |
-| **Criterios de aceptación:** | • **a)** Dado que el Administrador accede al Dashboard, cuando la página carga, entonces se visualizan cuatro tarjetas principales (Citas Hoy, Pacientes Activos del Mes, Tasa de Inasistencia %, Ocupación Promedio %) calculadas con datos del tenant.<br>• **b)** Dado que se filtran las métricas por rango de fechas (semana/mes), cuando se aplica el filtro, entonces los gráficos de barras y líneas se redibujan dinámicamente reflejando la evolución de atenciones.<br>• **c)** Dado que un usuario con rol 'Psicólogo' accede al Dashboard, entonces el sistema filtra automáticamente las métricas mostrando únicamente sus propias estadísticas y no las de otros profesionales. |
-| **Desarrollador a cargo:** | Larrazabal Rojas Julio Cesar &nbsp;&nbsp;\|&nbsp;&nbsp; **Prototipo:** Pantalla Dashboard Indicadores y Métricas (Figma)<br>**Prompt para IA (Generación UI):** *"UI/UX analytics dashboard design for clinical mental health clinic management SIGEPSI, Angular 17 desktop view. Modern clean layout with soft neutral grey background. Top metrics row with four key KPI metric cards: 'Citas Hoy' (28 citas), 'Pacientes Activos del Mes' (142 pacientes), 'Tasa de Inasistencia' (6.4% in green down trend), and 'Ocupación Profesional' (84%). Middle section with two interactive charts: monthly appointment volume bar chart and consultation modality distribution donut chart (Presencial vs Teleconsulta). Filter bar by therapist and date range. Figma UI kit, clean typography, 4k."*  |
+| **Título:**                  | **Dashboard administrativo y clínico con KPIs en tiempo real**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| :--------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ID:** HU-20 *(CU9, RF-04)* | **Descripción:** Como Administrador o Coordinador del Centro, quiero un panel visual con indicadores de citas del día, pacientes activos, tasa de ausentismo y ocupación por terapeuta, para monitorear la operatividad del centro en tiempo real.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| **Prioridad / Valor:** Alta  | **Estimación PHU:** 8                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| **Criterios de aceptación:** | • **a)** Dado que el Administrador accede al Dashboard, cuando la página carga, entonces se visualizan cuatro tarjetas principales (Citas Hoy, Pacientes Activos del Mes, Tasa de Inasistencia %, Ocupación Promedio %) calculadas con datos del tenant.<br>• **b)** Dado que se filtran las métricas por rango de fechas (semana/mes), cuando se aplica el filtro, entonces los gráficos de barras y líneas se redibujan dinámicamente reflejando la evolución de atenciones.<br>• **c)** Dado que un usuario con rol 'Psicólogo' accede al Dashboard, entonces el sistema filtra automáticamente las métricas mostrando únicamente sus propias estadísticas y no las de otros profesionales.                                                                                                      |
+| **Desarrollador a cargo:**   | Larrazabal Rojas Julio Cesar &nbsp;&nbsp;\|&nbsp;&nbsp; **Prototipo:** Pantalla Dashboard Indicadores y Métricas (Figma)<br>**Prompt para IA (Generación UI):** *"UI/UX analytics dashboard design for clinical mental health clinic management SIGEPSI, Angular 17 desktop view. Modern clean layout with soft neutral grey background. Top metrics row with four key KPI metric cards: 'Citas Hoy' (28 citas), 'Pacientes Activos del Mes' (142 pacientes), 'Tasa de Inasistencia' (6.4% in green down trend), and 'Ocupación Profesional' (84%). Middle section with two interactive charts: monthly appointment volume bar chart and consultation modality distribution donut chart (Presencial vs Teleconsulta). Filter bar by therapist and date range. Figma UI kit, clean typography, 4k."* |
 
 <br>
 
 #### Historia de Usuario HU-21
-| **Título:** | **Alertas de priorización y seguimiento de inasistencias** |
-| :--- | :--- |
-| **ID:** HU-21 *(CU10, RF-04, RF-26)* | **Descripción:** Como Coordinador Clínico o Psicólogo, quiero que el sistema genere alertas automáticas ante inasistencias consecutivas o inactividad prolongada de pacientes, para prevenir el abandono terapéutico temprano. |
-| **Prioridad / Valor:** Media | **Estimación PHU:** 5 |
-| **Criterios de aceptación:** | • **a)** Dado que un paciente acumula 2 inasistencias consecutivas sin justificación, cuando el recepcionista marca la segunda inasistencia, entonces el sistema genera de inmediato una alerta de severidad 'Media' en el panel del psicólogo asignado.<br>• **b)** Dado que un paciente con tratamiento en curso lleva más de 21 días sin agendar cita, cuando corre el proceso nocturno de verificación, entonces se dispara una alerta de 'Riesgo de Abandono'.<br>• **c)** Dado que el psicólogo contacta al paciente y resuelve el motivo, cuando presiona 'Marcar como Resuelta' e ingresa una nota de seguimiento, entonces la alerta se archiva en el historial clínico. |
-| **Desarrollador a cargo:** | Romero Saavedra Maria Ilse &nbsp;&nbsp;\|&nbsp;&nbsp; **Prototipo:** Panel de Notificaciones y Alertas Clínicas (Figma)<br>**Prompt para IA (Generación UI):** *"UI/UX notification center and clinical alert panel for psychologists in SIGEPSI, Angular 17. Slide-over drawer and table view displaying prioritized patient risk and attendance alerts. Alert cards categorized by severity badges: Red badge 'Riesgo de Abandono' (Paciente >21 días sin cita), Orange badge 'Inasistencias Reiteradas' (2 faltas consecutivas), and Blue badge 'Confirmación Pendiente'. Each card shows patient avatar, days elapsed, quick notes input, and action button 'Contactar Paciente' / 'Marcar Resuelta'. Clean clinical healthcare UX, Figma mockup, 4k."*  |
+| **Título:**                          | **Alertas de priorización y seguimiento de inasistencias**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| :----------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ID:** HU-21 *(CU10, RF-04, RF-26)* | **Descripción:** Como Coordinador Clínico o Psicólogo, quiero que el sistema genere alertas automáticas ante inasistencias consecutivas o inactividad prolongada de pacientes, para prevenir el abandono terapéutico temprano.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| **Prioridad / Valor:** Media         | **Estimación PHU:** 5                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| **Criterios de aceptación:**         | • **a)** Dado que un paciente acumula 2 inasistencias consecutivas sin justificación, cuando el recepcionista marca la segunda inasistencia, entonces el sistema genera de inmediato una alerta de severidad 'Media' en el panel del psicólogo asignado.<br>• **b)** Dado que un paciente con tratamiento en curso lleva más de 21 días sin agendar cita, cuando corre el proceso nocturno de verificación, entonces se dispara una alerta de 'Riesgo de Abandono'.<br>• **c)** Dado que el psicólogo contacta al paciente y resuelve el motivo, cuando presiona 'Marcar como Resuelta' e ingresa una nota de seguimiento, entonces la alerta se archiva en el historial clínico.                                                                           |
+| **Desarrollador a cargo:**           | Romero Saavedra Maria Ilse &nbsp;&nbsp;\|&nbsp;&nbsp; **Prototipo:** Panel de Notificaciones y Alertas Clínicas (Figma)<br>**Prompt para IA (Generación UI):** *"UI/UX notification center and clinical alert panel for psychologists in SIGEPSI, Angular 17. Slide-over drawer and table view displaying prioritized patient risk and attendance alerts. Alert cards categorized by severity badges: Red badge 'Riesgo de Abandono' (Paciente >21 días sin cita), Orange badge 'Inasistencias Reiteradas' (2 faltas consecutivas), and Blue badge 'Confirmación Pendiente'. Each card shows patient avatar, days elapsed, quick notes input, and action button 'Contactar Paciente' / 'Marcar Resuelta'. Clean clinical healthcare UX, Figma mockup, 4k."* |
 
 <br>
 
 #### Historia de Usuario HU-22
-| **Título:** | **Calendario interactivo multi-vista de agenda clínica** |
-| :--- | :--- |
-| **ID:** HU-22 *(CU11, RF-14)* | **Descripción:** Como Recepcionista o Psicólogo, quiero visualizar la agenda en vistas mensual, semanal y diaria con códigos de color por estado de cita, para una gestión visual rápida y ergonómica de los consultorios. |
-| **Prioridad / Valor:** Media | **Estimación PHU:** 5 |
-| **Criterios de aceptación:** | • **a)** Dado que abro la vista de calendario en Angular, cuando selecciono la vista semanal, entonces veo las columnas por día con bloques coloreados según el estado (Azul: Programada, Verde: Confirmada, Naranja: En teleconsulta, Gris: Realizada, Rojo: Cancelada/Inasistencia).<br>• **b)** Dado que hago clic sobre un bloque de cita en el calendario, entonces se despliega un popover interactivo con resumen del paciente, psicólogo, modalidad y botones de acción rápida.<br>• **c)** Dado que un recepcionista filtra la agenda por psicólogo específico, entonces el calendario actualiza la vista mostrando únicamente la agenda de dicho terapeuta. |
-| **Desarrollador a cargo:** | Larrazabal Rojas Julio Cesar &nbsp;&nbsp;\|&nbsp;&nbsp; **Prototipo:** Vista Calendario Semanal / Diario por Profesional (Figma)<br>**Prompt para IA (Generación UI):** *"UI/UX dashboard design of an interactive clinical appointment calendar for a mental health platform named SIGEPSI. Desktop web interface in Angular style, clean light mode, modern SaaS healthcare design. Top bar with clinic name, date navigation 'Lunes 1 de Septiembre', view switcher pills (Mes, Semana, Día) with 'Semana' selected, and psychologist filter dropdown 'Lic. Andy Mujica - Psicología Clínica'. Main weekly calendar time grid (08:00 to 18:00, Monday to Saturday) populated with color-coded appointment cards: blue for 'Programada', emerald green for 'Confirmada', vibrant orange with video icon for 'En Teleconsulta', grey for 'Realizada'. An interactive floating popover card is highlighted over a 10:00 AM slot displaying patient 'Carlos Mendoza', service 'Teleconsulta Jitsi Meet', time '10:00 - 10:50 AM', and quick action buttons 'Ingresar a Sala' in teal and 'Reprogramar'. Clean typography, 8px grid, Figma UI design, premium medical software, high fidelity, 4k."*  |
+| **Título:**                   | **Calendario interactivo multi-vista de agenda clínica**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| :---------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ID:** HU-22 *(CU11, RF-14)* | **Descripción:** Como Recepcionista o Psicólogo, quiero visualizar la agenda en vistas mensual, semanal y diaria con códigos de color por estado de cita, para una gestión visual rápida y ergonómica de los consultorios.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| **Prioridad / Valor:** Media  | **Estimación PHU:** 5                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| **Criterios de aceptación:**  | • **a)** Dado que abro la vista de calendario en Angular, cuando selecciono la vista semanal, entonces veo las columnas por día con bloques coloreados según el estado (Azul: Programada, Verde: Confirmada, Naranja: En teleconsulta, Gris: Realizada, Rojo: Cancelada/Inasistencia).<br>• **b)** Dado que hago clic sobre un bloque de cita en el calendario, entonces se despliega un popover interactivo con resumen del paciente, psicólogo, modalidad y botones de acción rápida.<br>• **c)** Dado que un recepcionista filtra la agenda por psicólogo específico, entonces el calendario actualiza la vista mostrando únicamente la agenda de dicho terapeuta.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| **Desarrollador a cargo:**    | Larrazabal Rojas Julio Cesar &nbsp;&nbsp;\|&nbsp;&nbsp; **Prototipo:** Vista Calendario Semanal / Diario por Profesional (Figma)<br>**Prompt para IA (Generación UI):** *"UI/UX dashboard design of an interactive clinical appointment calendar for a mental health platform named SIGEPSI. Desktop web interface in Angular style, clean light mode, modern SaaS healthcare design. Top bar with clinic name, date navigation 'Lunes 1 de Septiembre', view switcher pills (Mes, Semana, Día) with 'Semana' selected, and psychologist filter dropdown 'Lic. Andy Mujica - Psicología Clínica'. Main weekly calendar time grid (08:00 to 18:00, Monday to Saturday) populated with color-coded appointment cards: blue for 'Programada', emerald green for 'Confirmada', vibrant orange with video icon for 'En Teleconsulta', grey for 'Realizada'. An interactive floating popover card is highlighted over a 10:00 AM slot displaying patient 'Carlos Mendoza', service 'Teleconsulta Jitsi Meet', time '10:00 - 10:50 AM', and quick action buttons 'Ingresar a Sala' in teal and 'Reprogramar'. Clean typography, 8px grid, Figma UI design, premium medical software, high fidelity, 4k."* |
 
 <br>
 
@@ -617,47 +617,47 @@ endif
 ### 4.1.4 Sprint Backlog
 El Sprint Backlog del Sprint 1 comprende **15 tareas técnicas** extraídas directamente del Product Backlog (ítems NRO 19 al 33), continuando de manera secuencial la numeración del proyecto tras el cierre de las 18 tareas del Sprint 0 (`SP0-1` a `SP0-18`). La carga horaria total estimada es de **73 horas**.
 
-| **Sprint Backlog** | |
-| :--- | :--- |
-| **Número de Sprint :** Sprint 1 | **Tiempo programado :** 12 días (26 de agosto al 6 de septiembre de 2026) |
-| **Objetivo :** Implementar la gestión de psicólogos y disponibilidad, expedientes de pacientes (web/móvil), motor de citas sin solapamiento, teleconsulta Jitsi Meet, dashboard con KPIs y alertas de seguimiento. | |
-| **Fecha de inicio :** 26 de agosto de 2026 | **Fecha de finalización :** 06 de septiembre de 2026 |
+| **Sprint Backlog**                                                                                                                                                                                                 |                                                                           |
+| :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------ |
+| **Número de Sprint :** Sprint 1                                                                                                                                                                                    | **Tiempo programado :** 12 días (26 de agosto al 6 de septiembre de 2026) |
+| **Objetivo :** Implementar la gestión de psicólogos y disponibilidad, expedientes de pacientes (web/móvil), motor de citas sin solapamiento, teleconsulta Jitsi Meet, dashboard con KPIs y alertas de seguimiento. |                                                                           |
+| **Fecha de inicio :** 26 de agosto de 2026                                                                                                                                                                         | **Fecha de finalización :** 06 de septiembre de 2026                      |
 
 <br>
 
 **Tabla de tareas del Sprint 1 (Continuación secuencial NRO 19 al 33):**
 
-| Nro | ID | Tarea del Product Backlog | Tipo | Estimación | Responsable | Estado |
-| :---: | :--- | :--- | :--- | :---: | :--- | :---: |
-| **19** | **SP1-19** | Diseñar la interfaz para la gestión de psicólogos y sus perfiles profesionales | Diseño | 4 hr | Larrazabal Rojas Julio Cesar | Terminado |
-| **20** | **SP1-20** | Implementar la gestión de psicólogos, especialidades, disponibilidad y modalidad de atención | Desarrollo | 8 hr | Mujica Vallejos Andy Mauricio | Terminado |
-| **21** | **SP1-21** | Realizar pruebas de la gestión de psicólogos | Pruebas | 3 hr | Velasco Soliz Rolando | Terminado |
-| **22** | **SP1-22** | Diseñar la interfaz para la gestión de pacientes | Diseño | 4 hr | Larrazabal Rojas Julio Cesar | Terminado |
-| **23** | **SP1-23** | Implementar el registro, actualización y consulta de pacientes | Desarrollo | 8 hr | Romero Saavedra Maria Ilse | Terminado |
-| **24** | **SP1-24** | Realizar pruebas de la gestión de pacientes | Pruebas | 3 hr | Condori Diaz Marilyn Esther | Terminado |
-| **25** | **SP1-25** | Diseñar la interfaz del Dashboard administrativo y clínico | Diseño | 4 hr | Larrazabal Rojas Julio Cesar | Terminado |
-| **26** | **SP1-26** | Implementar Dashboard con indicadores de citas, pacientes, inasistencias y carga profesional | Desarrollo | 8 hr | Romero Saavedra Maria Ilse | Terminado |
-| **27** | **SP1-27** | Realizar pruebas del Dashboard e indicadores principales | Pruebas | 3 hr | Velasco Soliz Rolando | Terminado |
-| **28** | **SP1-28** | Diseñar la interfaz para agenda y gestión de citas | Diseño | 4 hr | Larrazabal Rojas Julio Cesar | Terminado |
-| **29** | **SP1-29** | Implementar reserva, confirmación, cancelación y reprogramación de citas | Desarrollo | 8 hr | Mujica Vallejos Andy Mauricio | Terminado |
-| **30** | **SP1-30** | Realizar pruebas de agenda y gestión de citas | Pruebas | 3 hr | Velasco Soliz Rolando | Terminado |
-| **31** | **SP1-31** | Diseñar la interfaz para sesiones virtuales y videoconferencias | Diseño | 3 hr | Larrazabal Rojas Julio Cesar | Terminado |
-| **32** | **SP1-32** | Implementar la integración de videoconferencias mediante Jitsi Meet o Zoom | Desarrollo | 7 hr | Delgado Rojas Alberto Caleb | Terminado |
-| **33** | **SP1-33** | Realizar pruebas de acceso y funcionamiento de las videoconferencias | Pruebas | 3 hr | Condori Diaz Marilyn Esther | Terminado |
-| **TOTAL** | — | **Esfuerzo total estimado del Sprint 1** | — | **73 hr** | **Equipo SCRUM (6 integrantes)** | **Terminado (100%)** |
+|    Nro    | ID         | Tarea del Product Backlog                                                                    | Tipo       | Estimación | Responsable                      |        Estado        |
+| :-------: | :--------- | :------------------------------------------------------------------------------------------- | :--------- | :--------: | :------------------------------- | :------------------: |
+|  **19**   | **SP1-19** | Diseñar la interfaz para la gestión de psicólogos y sus perfiles profesionales               | Diseño     |    4 hr    | Larrazabal Rojas Julio Cesar     |      Terminado       |
+|  **20**   | **SP1-20** | Implementar la gestión de psicólogos, especialidades, disponibilidad y modalidad de atención | Desarrollo |    8 hr    | Mujica Vallejos Andy Mauricio    |      Terminado       |
+|  **21**   | **SP1-21** | Realizar pruebas de la gestión de psicólogos                                                 | Pruebas    |    3 hr    | Velasco Soliz Rolando            |      Terminado       |
+|  **22**   | **SP1-22** | Diseñar la interfaz para la gestión de pacientes                                             | Diseño     |    4 hr    | Larrazabal Rojas Julio Cesar     |      Terminado       |
+|  **23**   | **SP1-23** | Implementar el registro, actualización y consulta de pacientes                               | Desarrollo |    8 hr    | Romero Saavedra Maria Ilse       |      Terminado       |
+|  **24**   | **SP1-24** | Realizar pruebas de la gestión de pacientes                                                  | Pruebas    |    3 hr    | Condori Diaz Marilyn Esther      |      Terminado       |
+|  **25**   | **SP1-25** | Diseñar la interfaz del Dashboard administrativo y clínico                                   | Diseño     |    4 hr    | Larrazabal Rojas Julio Cesar     |      Terminado       |
+|  **26**   | **SP1-26** | Implementar Dashboard con indicadores de citas, pacientes, inasistencias y carga profesional | Desarrollo |    8 hr    | Romero Saavedra Maria Ilse       |      Terminado       |
+|  **27**   | **SP1-27** | Realizar pruebas del Dashboard e indicadores principales                                     | Pruebas    |    3 hr    | Velasco Soliz Rolando            |      Terminado       |
+|  **28**   | **SP1-28** | Diseñar la interfaz para agenda y gestión de citas                                           | Diseño     |    4 hr    | Larrazabal Rojas Julio Cesar     |      Terminado       |
+|  **29**   | **SP1-29** | Implementar reserva, confirmación, cancelación y reprogramación de citas                     | Desarrollo |    8 hr    | Mujica Vallejos Andy Mauricio    |      Terminado       |
+|  **30**   | **SP1-30** | Realizar pruebas de agenda y gestión de citas                                                | Pruebas    |    3 hr    | Velasco Soliz Rolando            |      Terminado       |
+|  **31**   | **SP1-31** | Diseñar la interfaz para sesiones virtuales y videoconferencias                              | Diseño     |    3 hr    | Larrazabal Rojas Julio Cesar     |      Terminado       |
+|  **32**   | **SP1-32** | Implementar la integración de videoconferencias mediante Jitsi Meet o Zoom                   | Desarrollo |    7 hr    | Delgado Rojas Alberto Caleb      |      Terminado       |
+|  **33**   | **SP1-33** | Realizar pruebas de acceso y funcionamiento de las videoconferencias                         | Pruebas    |    3 hr    | Condori Diaz Marilyn Esther      |      Terminado       |
+| **TOTAL** | —          | **Esfuerzo total estimado del Sprint 1**                                                     | —          | **73 hr**  | **Equipo SCRUM (6 integrantes)** | **Terminado (100%)** |
 
 ---
 
 ### 4.1.5 Equipo SCRUM del Sprint 1
 
-| Nombre del Integrante | Rol SCRUM | Especialidad en el Sprint 1 | Tareas Asignadas (Sprint Backlog) |
-| :--- | :--- | :--- | :--- |
-| **Condori Diaz Marilyn Esther** | Product Owner | Validación de Negocio y Criterios de Aceptación | SP1-24, SP1-33 |
-| **Delgado Rojas Alberto Caleb** | Scrum Master | Desarrollo Móvil (Flutter) & Integración WebRTC | SP1-32 |
-| **Mujica Vallejos Andy Mauricio** | Development Team | Backend (Django/DRF), BD PostgreSQL & Teleconsulta | SP1-20, SP1-29 |
-| **Larrazabal Rojas Julio Cesar** | Development Team | Diseño UI/UX (Figma), Frontend Web (Angular) & Dashboard | SP1-19, SP1-22, SP1-25, SP1-28, SP1-31 |
-| **Romero Saavedra Maria Ilse** | Development Team | Lógica Backend, Frontend Web & Módulo Alertas | SP1-23, SP1-26 |
-| **Velasco Soliz Rolando** | Development Team | Aseguramiento de Calidad (QA), Pruebas de Caja Negra y BD | SP1-21, SP1-27, SP1-30 |
+| Nombre del Integrante             | Rol SCRUM        | Especialidad en el Sprint 1                               | Tareas Asignadas (Sprint Backlog)      |
+| :-------------------------------- | :--------------- | :-------------------------------------------------------- | :------------------------------------- |
+| **Condori Diaz Marilyn Esther**   | Product Owner    | Validación de Negocio y Criterios de Aceptación           | SP1-24, SP1-33                         |
+| **Delgado Rojas Alberto Caleb**   | Scrum Master     | Desarrollo Móvil (Flutter) & Integración WebRTC           | SP1-32                                 |
+| **Mujica Vallejos Andy Mauricio** | Development Team | Backend (Django/DRF), BD PostgreSQL & Teleconsulta        | SP1-20, SP1-29                         |
+| **Larrazabal Rojas Julio Cesar**  | Development Team | Diseño UI/UX (Figma), Frontend Web (Angular) & Dashboard  | SP1-19, SP1-22, SP1-25, SP1-28, SP1-31 |
+| **Romero Saavedra Maria Ilse**    | Development Team | Lógica Backend, Frontend Web & Módulo Alertas             | SP1-23, SP1-26                         |
+| **Velasco Soliz Rolando**         | Development Team | Aseguramiento de Calidad (QA), Pruebas de Caja Negra y BD | SP1-21, SP1-27, SP1-30                 |
 
 ---
 
@@ -861,41 +861,41 @@ El sistema completo acumula **17 tablas relacionales** organizadas bajo la estru
 ##### 1. Esquema `public` (Global / Multi-Tenant – Consolidado Sprint 0)
 Tablas compartidas a nivel de plataforma para el aprovisionamiento, enrutamiento y administración de los centros:
 
-| Tabla | Campos Principales | Tipo de Datos | Descripción de Regla de Negocio |
-| :--- | :--- | :--- | :--- |
-| `tenants_tenant` | `id`<br>`nombre`<br>`slug`<br>`schema_name`<br>`plan`<br>`activo`<br>`fecha_creacion` | UUID (PK)<br>Varchar(100)<br>Varchar(100) UNIQUE<br>Varchar(63) UNIQUE<br>Varchar(20)<br>Boolean<br>DateTime | Registro maestro de cada centro psicológico suscrito; define el nombre del esquema PostgreSQL aislado. |
-| `tenants_dominio` | `id`<br>`tenant_id`<br>`dominio`<br>`es_primario` | Serial (PK)<br>UUID (FK Tenant)<br>Varchar(253) UNIQUE<br>Boolean | Enrutamiento de subdominios o dominios personalizados vinculados al centro. |
-| `accounts_superadmin` | `id`<br>`email`<br>`password_hash`<br>`nombre`<br>`apellido`<br>`activo`<br>`fecha_creacion` | Serial (PK)<br>Varchar(254) UNIQUE<br>Varchar(255)<br>Varchar(150)<br>Varchar(150)<br>Boolean<br>DateTime | Cuenta con privilegios globales para crear, suspender o monitorear tenants en la plataforma. |
+| Tabla                 | Campos Principales                                                                           | Tipo de Datos                                                                                                | Descripción de Regla de Negocio                                                                        |
+| :-------------------- | :------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------- |
+| `tenants_tenant`      | `id`<br>`nombre`<br>`slug`<br>`schema_name`<br>`plan`<br>`activo`<br>`fecha_creacion`        | UUID (PK)<br>Varchar(100)<br>Varchar(100) UNIQUE<br>Varchar(63) UNIQUE<br>Varchar(20)<br>Boolean<br>DateTime | Registro maestro de cada centro psicológico suscrito; define el nombre del esquema PostgreSQL aislado. |
+| `tenants_dominio`     | `id`<br>`tenant_id`<br>`dominio`<br>`es_primario`                                            | Serial (PK)<br>UUID (FK Tenant)<br>Varchar(253) UNIQUE<br>Boolean                                            | Enrutamiento de subdominios o dominios personalizados vinculados al centro.                            |
+| `accounts_superadmin` | `id`<br>`email`<br>`password_hash`<br>`nombre`<br>`apellido`<br>`activo`<br>`fecha_creacion` | Serial (PK)<br>Varchar(254) UNIQUE<br>Varchar(255)<br>Varchar(150)<br>Varchar(150)<br>Boolean<br>DateTime    | Cuenta con privilegios globales para crear, suspender o monitorear tenants en la plataforma.           |
 
 <br>
 
 ##### 2. Esquema por `tenant` (Base Institucional y Usuarios – Consolidado Sprint 0)
 Tablas aisladas e independientes replicadas dentro del esquema de cada centro psicológico:
 
-| Tabla | Campos Principales | Tipo de Datos | Descripción de Regla de Negocio |
-| :--- | :--- | :--- | :--- |
-| `core_centro` | `id`<br>`nombre`<br>`direccion`<br>`telefono`<br>`email`<br>`logo`<br>`horarios_atencion`<br>`configuracion` | UUID (PK)<br>Varchar(200)<br>Varchar(255)<br>Varchar(30)<br>Varchar(254)<br>Varchar(255)<br>JSONB<br>JSONB | Identidad institucional, logotipo y parámetros operativos propios de la clínica o consultorio. |
-| `accounts_usuario` | `id`<br>`email`<br>`password_hash`<br>`nombre`<br>`apellido`<br>`telefono`<br>`rol_id`<br>`activo`<br>`fecha_creacion` | UUID (PK)<br>Varchar(254) UNIQUE<br>Varchar(255)<br>Varchar(150)<br>Varchar(150)<br>Varchar(30)<br>Integer (FK Rol)<br>Boolean<br>DateTime | Cuenta de usuario perteneciente al centro (Admin, Psicólogo, Recepcionista, Coordinador o Paciente). |
-| `accounts_rol` | `id`<br>`nombre`<br>`descripcion` | Serial (PK)<br>Varchar(50) UNIQUE<br>Text | Catálogo de roles de seguridad institucionales bajo el modelo RBAC. |
-| `accounts_permiso` | `id`<br>`nombre`<br>`codigo`<br>`modulo`<br>`descripcion` | Serial (PK)<br>Varchar(100)<br>Varchar(100) UNIQUE<br>Varchar(50)<br>Text | Permisos atómicos del sistema (ej. `clinica.view_psicologo`, `agenda.book_cita`). |
-| `accounts_rol_permiso` | `id`<br>`rol_id`<br>`permiso_id` | Serial (PK)<br>Integer (FK Rol)<br>Integer (FK Permiso) | Matriz de permisos asignados a cada rol del centro psicológico. |
-| `accounts_token_recuperacion` | `id`<br>`usuario_id`<br>`token`<br>`fecha_expiracion`<br>`usado` | UUID (PK)<br>UUID (FK Usuario)<br>Varchar(100) UNIQUE<br>DateTime<br>Boolean | Tokens unívocos de un solo uso para el restablecimiento seguro de credenciales olvidadas. |
+| Tabla                         | Campos Principales                                                                                                     | Tipo de Datos                                                                                                                              | Descripción de Regla de Negocio                                                                      |
+| :---------------------------- | :--------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------- |
+| `core_centro`                 | `id`<br>`nombre`<br>`direccion`<br>`telefono`<br>`email`<br>`logo`<br>`horarios_atencion`<br>`configuracion`           | UUID (PK)<br>Varchar(200)<br>Varchar(255)<br>Varchar(30)<br>Varchar(254)<br>Varchar(255)<br>JSONB<br>JSONB                                 | Identidad institucional, logotipo y parámetros operativos propios de la clínica o consultorio.       |
+| `accounts_usuario`            | `id`<br>`email`<br>`password_hash`<br>`nombre`<br>`apellido`<br>`telefono`<br>`rol_id`<br>`activo`<br>`fecha_creacion` | UUID (PK)<br>Varchar(254) UNIQUE<br>Varchar(255)<br>Varchar(150)<br>Varchar(150)<br>Varchar(30)<br>Integer (FK Rol)<br>Boolean<br>DateTime | Cuenta de usuario perteneciente al centro (Admin, Psicólogo, Recepcionista, Coordinador o Paciente). |
+| `accounts_rol`                | `id`<br>`nombre`<br>`descripcion`                                                                                      | Serial (PK)<br>Varchar(50) UNIQUE<br>Text                                                                                                  | Catálogo de roles de seguridad institucionales bajo el modelo RBAC.                                  |
+| `accounts_permiso`            | `id`<br>`nombre`<br>`codigo`<br>`modulo`<br>`descripcion`                                                              | Serial (PK)<br>Varchar(100)<br>Varchar(100) UNIQUE<br>Varchar(50)<br>Text                                                                  | Permisos atómicos del sistema (ej. `clinica.view_psicologo`, `agenda.book_cita`).                    |
+| `accounts_rol_permiso`        | `id`<br>`rol_id`<br>`permiso_id`                                                                                       | Serial (PK)<br>Integer (FK Rol)<br>Integer (FK Permiso)                                                                                    | Matriz de permisos asignados a cada rol del centro psicológico.                                      |
+| `accounts_token_recuperacion` | `id`<br>`usuario_id`<br>`token`<br>`fecha_expiracion`<br>`usado`                                                       | UUID (PK)<br>UUID (FK Usuario)<br>Varchar(100) UNIQUE<br>DateTime<br>Boolean                                                               | Tokens unívocos de un solo uso para el restablecimiento seguro de credenciales olvidadas.            |
 
 <br>
 
 ##### 3. Esquema por `tenant` (Módulo Clínico, Agenda y Teleconsulta – Incremento Sprint 1)
 Nuevas tablas operativas incorporadas en el incremento del Sprint 1, vinculadas a las cuentas de usuario:
 
-| Tabla | Campos Principales | Tipo de Datos | Descripción de Regla de Negocio |
-| :--- | :--- | :--- | :--- |
-| `clinica_especialidad` | `id`<br>`nombre`<br>`descripcion` | Serial (PK)<br>Varchar(100)<br>Text | Catálogo de especialidades clínicas (Infantil, Parejas, Cognitivo-Conductual, Neuropsicología). |
-| `clinica_psicologo` | `id`<br>`usuario_id`<br>`numero_colegiado`<br>`biografia`<br>`modalidad`<br>`tarifa_base`<br>`activo` | UUID (PK)<br>UUID (FK Usuario) UNIQUE<br>Varchar(50) UNIQUE<br>Text<br>Varchar(20)<br>Decimal(10,2)<br>Boolean | Perfil profesional de salud mental vinculado biunívocamente al usuario institucional. |
-| `clinica_psicologo_especialidad` | `id`<br>`psicologo_id`<br>`especialidad_id` | Serial (PK)<br>UUID (FK Psicologo)<br>Integer (FK Especialidad) | Relación muchos a muchos entre terapeutas y especialidades dominadas. |
-| `clinica_disponibilidad` | `id`<br>`psicologo_id`<br>`dia_semana`<br>`hora_inicio`<br>`hora_fin`<br>`duracion_bloque_min`<br>`activo` | UUID (PK)<br>UUID (FK Psicologo)<br>SmallInt (0=Dom...6=Sáb)<br>Time<br>Time<br>SmallInt<br>Boolean | Matriz de horarios laborales para autogeneración de intervalos de cita libres. |
-| `clinica_paciente` | `id`<br>`usuario_id`<br>`codigo_expediente`<br>`ci`<br>`fecha_nacimiento`<br>`genero`<br>`contacto_emergencia_nombre`<br>`contacto_emergencia_telf` | UUID (PK)<br>UUID (FK Usuario) UNIQUE<br>Varchar(30) UNIQUE<br>Varchar(20) UNIQUE<br>Date<br>Varchar(1)<br>Varchar(120)<br>Varchar(25) | Ficha general y expediente sociodemográfico del paciente atendido en el centro. |
-| `agenda_cita` | `id`<br>`paciente_id`<br>`psicologo_id`<br>`fecha`<br>`hora_inicio`<br>`hora_fin`<br>`modalidad`<br>`estado`<br>`motivo_consulta`<br>`costo` | UUID (PK)<br>UUID (FK Paciente)<br>UUID (FK Psicologo)<br>Date<br>Time<br>Time<br>Varchar(20)<br>Varchar(25)<br>Text<br>Decimal(10,2) | Registro de la sesión pactada. Estados: `PROGRAMADA`, `CONFIRMADA`, `REALIZADA`, `CANCELADA`, `INASISTENCIA`. |
-| `agenda_teleconsulta` | `id`<br>`cita_id`<br>`sala_id`<br>`jwt_room_token`<br>`hora_inicio_real`<br>`hora_fin_real`<br>`duracion_segundos` | UUID (PK)<br>UUID (FK Cita) UNIQUE<br>Varchar(150)<br>Text<br>DateTime<br>DateTime<br>Integer | Parámetros de conexión segura e historial de duración de la sesión virtual Jitsi Meet. |
-| `agenda_alerta` | `id`<br>`paciente_id`<br>`tipo`<br>`severidad`<br>`descripcion`<br>`resuelta`<br>`fecha_creacion` | UUID (PK)<br>UUID (FK Paciente)<br>Varchar(50)<br>Varchar(20)<br>Text<br>Boolean<br>DateTime | Alertas preventivas tempranas por inasistencias consecutivas o riesgo de deserción terapéutica. |
+| Tabla                            | Campos Principales                                                                                                                                  | Tipo de Datos                                                                                                                          | Descripción de Regla de Negocio                                                                               |
+| :------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------ |
+| `clinica_especialidad`           | `id`<br>`nombre`<br>`descripcion`                                                                                                                   | Serial (PK)<br>Varchar(100)<br>Text                                                                                                    | Catálogo de especialidades clínicas (Infantil, Parejas, Cognitivo-Conductual, Neuropsicología).               |
+| `clinica_psicologo`              | `id`<br>`usuario_id`<br>`numero_colegiado`<br>`biografia`<br>`modalidad`<br>`tarifa_base`<br>`activo`                                               | UUID (PK)<br>UUID (FK Usuario) UNIQUE<br>Varchar(50) UNIQUE<br>Text<br>Varchar(20)<br>Decimal(10,2)<br>Boolean                         | Perfil profesional de salud mental vinculado biunívocamente al usuario institucional.                         |
+| `clinica_psicologo_especialidad` | `id`<br>`psicologo_id`<br>`especialidad_id`                                                                                                         | Serial (PK)<br>UUID (FK Psicologo)<br>Integer (FK Especialidad)                                                                        | Relación muchos a muchos entre terapeutas y especialidades dominadas.                                         |
+| `clinica_disponibilidad`         | `id`<br>`psicologo_id`<br>`dia_semana`<br>`hora_inicio`<br>`hora_fin`<br>`duracion_bloque_min`<br>`activo`                                          | UUID (PK)<br>UUID (FK Psicologo)<br>SmallInt (0=Dom...6=Sáb)<br>Time<br>Time<br>SmallInt<br>Boolean                                    | Matriz de horarios laborales para autogeneración de intervalos de cita libres.                                |
+| `clinica_paciente`               | `id`<br>`usuario_id`<br>`codigo_expediente`<br>`ci`<br>`fecha_nacimiento`<br>`genero`<br>`contacto_emergencia_nombre`<br>`contacto_emergencia_telf` | UUID (PK)<br>UUID (FK Usuario) UNIQUE<br>Varchar(30) UNIQUE<br>Varchar(20) UNIQUE<br>Date<br>Varchar(1)<br>Varchar(120)<br>Varchar(25) | Ficha general y expediente sociodemográfico del paciente atendido en el centro.                               |
+| `agenda_cita`                    | `id`<br>`paciente_id`<br>`psicologo_id`<br>`fecha`<br>`hora_inicio`<br>`hora_fin`<br>`modalidad`<br>`estado`<br>`motivo_consulta`<br>`costo`        | UUID (PK)<br>UUID (FK Paciente)<br>UUID (FK Psicologo)<br>Date<br>Time<br>Time<br>Varchar(20)<br>Varchar(25)<br>Text<br>Decimal(10,2)  | Registro de la sesión pactada. Estados: `PROGRAMADA`, `CONFIRMADA`, `REALIZADA`, `CANCELADA`, `INASISTENCIA`. |
+| `agenda_teleconsulta`            | `id`<br>`cita_id`<br>`sala_id`<br>`jwt_room_token`<br>`hora_inicio_real`<br>`hora_fin_real`<br>`duracion_segundos`                                  | UUID (PK)<br>UUID (FK Cita) UNIQUE<br>Varchar(150)<br>Text<br>DateTime<br>DateTime<br>Integer                                          | Parámetros de conexión segura e historial de duración de la sesión virtual Jitsi Meet.                        |
+| `agenda_alerta`                  | `id`<br>`paciente_id`<br>`tipo`<br>`severidad`<br>`descripcion`<br>`resuelta`<br>`fecha_creacion`                                                   | UUID (PK)<br>UUID (FK Paciente)<br>Varchar(50)<br>Varchar(20)<br>Text<br>Boolean<br>DateTime                                           | Alertas preventivas tempranas por inasistencias consecutivas o riesgo de deserción terapéutica.               |
 
 <br>
 
@@ -1464,21 +1464,21 @@ Durante el desarrollo del Sprint 1 se construyeron los siguientes módulos y art
 
 **Endpoints API REST Generados en el Sprint 1:**
 
-| Método | Endpoint | Descripción | Permisos Requeridos |
-| :---: | :--- | :--- | :--- |
-| `GET / POST` | `/api/clinica/especialidades/` | Listar y registrar especialidades clínicas | Admin / Coordinador |
-| `GET / POST` | `/api/clinica/psicologos/` | Listar directorio y registrar perfil de psicólogo | Admin / Recepcionista |
-| `GET / PUT` | `/api/clinica/psicologos/{id}/` | Consultar y actualizar perfil profesional | Admin / Psicólogo propietario |
-| `GET / POST` | `/api/clinica/psicologos/{id}/disponibilidad/` | Consultar y configurar bloques semanales de atención | Psicólogo propietario / Admin |
-| `GET / POST` | `/api/clinica/pacientes/` | Listar y dar de alta expedientes de pacientes | Recepcionista / Admin |
-| `GET / PUT` | `/api/clinica/pacientes/{id}/` | Consultar y actualizar ficha de paciente | Recepcionista / Psicólogo asignado |
-| `GET / POST` | `/api/agenda/citas/` | Consultar agenda y programar nueva cita | Recepcionista / Paciente / Psicólogo |
-| `GET / PUT` | `/api/agenda/citas/{id}/` | Detalle, confirmación y reprogramación de cita | Recepcionista / Paciente involucrado |
-| `POST` | `/api/agenda/citas/{id}/cancelar/` | Cancelación de cita con verificación de anticipación | Paciente / Recepcionista |
-| `GET` | `/api/agenda/teleconsulta/{cita_id}/access/` | Obtener sala y token de teleconsulta Jitsi | Psicólogo o Paciente de la cita |
-| `POST` | `/api/agenda/teleconsulta/{cita_id}/finish/` | Finalizar sesión virtual y registrar duración | Psicólogo moderador |
-| `GET` | `/api/agenda/dashboard/kpis/` | Métricas operativas (citas, ausentismo, ocupación) | Admin / Coordinador Clínico |
-| `GET / PUT` | `/api/agenda/alertas/` | Listar y resolver alertas de priorización | Coordinador / Psicólogo |
+|    Método    | Endpoint                                       | Descripción                                          | Permisos Requeridos                  |
+| :----------: | :--------------------------------------------- | :--------------------------------------------------- | :----------------------------------- |
+| `GET / POST` | `/api/clinica/especialidades/`                 | Listar y registrar especialidades clínicas           | Admin / Coordinador                  |
+| `GET / POST` | `/api/clinica/psicologos/`                     | Listar directorio y registrar perfil de psicólogo    | Admin / Recepcionista                |
+| `GET / PUT`  | `/api/clinica/psicologos/{id}/`                | Consultar y actualizar perfil profesional            | Admin / Psicólogo propietario        |
+| `GET / POST` | `/api/clinica/psicologos/{id}/disponibilidad/` | Consultar y configurar bloques semanales de atención | Psicólogo propietario / Admin        |
+| `GET / POST` | `/api/clinica/pacientes/`                      | Listar y dar de alta expedientes de pacientes        | Recepcionista / Admin                |
+| `GET / PUT`  | `/api/clinica/pacientes/{id}/`                 | Consultar y actualizar ficha de paciente             | Recepcionista / Psicólogo asignado   |
+| `GET / POST` | `/api/agenda/citas/`                           | Consultar agenda y programar nueva cita              | Recepcionista / Paciente / Psicólogo |
+| `GET / PUT`  | `/api/agenda/citas/{id}/`                      | Detalle, confirmación y reprogramación de cita       | Recepcionista / Paciente involucrado |
+|    `POST`    | `/api/agenda/citas/{id}/cancelar/`             | Cancelación de cita con verificación de anticipación | Paciente / Recepcionista             |
+|    `GET`     | `/api/agenda/teleconsulta/{cita_id}/access/`   | Obtener sala y token de teleconsulta Jitsi           | Psicólogo o Paciente de la cita      |
+|    `POST`    | `/api/agenda/teleconsulta/{cita_id}/finish/`   | Finalizar sesión virtual y registrar duración        | Psicólogo moderador                  |
+|    `GET`     | `/api/agenda/dashboard/kpis/`                  | Métricas operativas (citas, ausentismo, ocupación)   | Admin / Coordinador Clínico          |
+| `GET / PUT`  | `/api/agenda/alertas/`                         | Listar y resolver alertas de priorización            | Coordinador / Psicólogo              |
 
 **Frontend Web (Angular 17):**
 * `PsicologoListComponent` / `PsicologoFormComponent`: Directorio, búsqueda por especialidad y formulario reactivo.
@@ -1499,84 +1499,241 @@ Durante el desarrollo del Sprint 1 se construyeron los siguientes módulos y art
 ---
 
 ### 4.2.3 Pruebas
+5.2.2.1 Plan de Pruebas Funcionales (Caja Negra)
+Siguiendo las directrices expuestas en clase para el aseguramiento de la calidad del softwa-re, el plan de pruebas del Sprint 1 se enfoca en técnicas de Caja Negra (partición de equi-valencia, análisis de valores límite y tablas de decisión), evaluando entradas, condiciones esperadas y salidas del sistema en base a los criterios de aceptación BDD.
+HU 11 – Gestión de perfiles y especialidades de psicólogos
+Historia de Usuario:
+Como Administrador del Centro
+quiero registrar y actualizar los perfiles profesionales de los psicólogos (especialidades, colegiatura, biografía, tarifa y modalidad)
+para que el centro disponga de un directorio profesional confiable para la asignación de pacientes.
+Criterios de aceptación:
+1.	El sistema debe permitir registrar y editar un psicólogo con colegiatura válida, tarifa y al menos una especialidad activa.
+2.	Si el número de colegiado ya existe en el centro, debe mostrar "Colegiatura ya regis-trada".
+3.	Si la tarifa base es negativa o cero, debe mostrar "La tarifa debe ser mayor a cero".
+4.	Todos los campos obligatorios deben ser completados; de lo contrario debe mostrar "Campos obligatorios incompletos".
+Casos de prueba funcionales (Caja negra):
+ID	Entrada	Proceso	Salida esperada
+CP01	Colegiado válido "PSI-7890" + tari-fa 180 Bs + especialidad activa seleccionada	Intentar registro	Perfil guardado exitosamente en esquema tenant (HTTP 201 Created)
+CP02	Colegiado "PSI-7890" ya existente en la base de datos del centro	Intentar registro	Mensaje "Colegiatura ya regis-trada" (HTTP 400 Bad Request)
+CP03	Tarifa base = -50.00 Bs	Intentar registro	Mensaje "La tarifa debe ser ma-yor a cero"
+CP04	Formulario con colegiatura o nom-bre vacíos	Intentar registro	Mensaje "Campos obligatorios incompletos"
+Adjunto: Interfaz/Form/Consulta/Reporte
+ 
+HU 12 – Configuración de disponibilidad y carga horaria
+Historia de Usuario:
+Como Psicólogo
+quiero configurar mis bloques de disponibilidad horaria por día de la semana y la duración de mis sesiones
+para que los recepcionistas y pacientes solo puedan agendar citas en mis horarios efecti-vamente disponibles.
+Criterios de aceptación:
+1.	El sistema debe permitir definir franjas horarias por día (ej. Lunes 08:00 a 12:00) y calcular automáticamente los bloques de sesión disponibles.
+2.	Si la hora de inicio es posterior o igual a la de fin, debe mostrar "Hora de fin debe ser posterior a la de inicio".
+3.	Si se intenta desactivar un día con citas activas ya pactadas, debe mostrar "Existen citas programadas en este horario".
+4.	La duración del bloque de sesión debe ser un valor numérico entero mayor a cero.
+Casos de prueba funcionales (Caja negra):
+ID	Entrada	Proceso	Salida esperada
+CP01	Lunes de 08:00 a 12:00 + bloques configurados de 45 min	Intentar guar-dar disponibi-lidad	Franja guardada y 5 slots de cita autogenerados correctamente
+CP02	Hora inicio = 18:00 + Hora fin = 14:00	Intentar guar-dar disponibi-lidad	Mensaje "Hora de fin debe ser posterior a la de inicio"
+CP03	Desactivar día Miércoles teniendo 2 citas activas programadas	Intentar des-activar día	Mensaje "Existen citas programa-das en este horario; reubique las citas primero"
+CP04	Duración de bloque = 0 minutos o campo vacío	Intentar guar-dar disponibi-lidad	Mensaje "La duración del bloque debe ser mayor a cero"
+Adjunto: Interfaz/Form/Consulta/Reporte
+ 
+HU 13 – Registro y expediente clínico básico del paciente en web
+Historia de Usuario:
+Como Recepcionista o Administrador
+quiero registrar a un nuevo paciente con sus datos personales, sociodemográficos y con-tacto de emergencia
+para abrir su expediente clínico digital dentro del centro.
+Criterios de aceptación:
+1.	El sistema debe crear el expediente asignándole un código único (ej. EXP-2026-0042) con datos válidos.
+2.	Si el documento de identidad (CI) ya existe en el centro, debe mostrar "Documento de identidad ya registrado".
+3.	Si el paciente es menor de 18 años, debe exigir obligatoriamente los datos del tutor o apoderado legal.
+4.	Los campos de nombres, apellidos, CI, fecha de nacimiento y teléfono deben ser obligatorios.
+Casos de prueba funcionales (Caja negra):
+ID	Entrada	Proceso	Salida esperada
+CP01	Paciente adulto (25 años) con CI "7845120" y datos comple-tos	Intentar regis-tro de pacien-te	Expediente creado con código único asignado (HTTP 201 Created)
+CP02	CI "7845120" ya existente en la base de datos del tenant	Intentar regis-tro de pacien-te	Mensaje "Documento de identi-dad ya registrado en el centro"
+CP03	Menor de edad (14 años) con campos de tutor en blanco	Intentar regis-tro de pacien-te	Mensaje "Datos de tutor o apo-derado obligatorios para meno-res de edad"
+CP04	Formulario con campos de nombres o CI vacíos	Intentar regis-tro de pacien-te	Mensaje "Campos obligatorios incompletos"
+Adjunto: Interfaz/Form/Consulta/Reporte
+ 
+HU 14 – Registro y consulta de perfil de paciente en app móvil
+Historia de Usuario:
+Como Paciente
+quiero registrarme y consultar mi perfil desde la aplicación móvil Flutter
+para mantener actualizados mis datos de contacto y acceder a los servicios psicológicos de mi centro.
+Criterios de aceptación:
+1.	El sistema debe permitir el registro e inicio de sesión automático con correo, contra-seña y código de centro válidos.
+2.	Si el correo electrónico ya está registrado o el formato es inválido, debe mostrar "Co-rreo inválido o ya registrado".
+3.	Si se interrumpe la conexión a Internet durante el guardado, debe mostrar "Sin co-nexión al servidor; datos guardados localmente".
+4.	Todos los campos de contacto editados deben reflejarse inmediatamente en la vista de perfil.
+Casos de prueba funcionales (Caja negra):
+ID	Entrada	Proceso	Salida esperada
+CP01	Correo nuevo + contraseña segura + tenant "sanmartin"	Intentar regis-tro móvil	Cuenta creada y sesión iniciada en la app móvil con rol Paciente
+CP02	Correo duplicado o con for-mato inválido ("paciente@")	Intentar regis-tro móvil	Mensaje "Correo inválido o ya registrado"
+CP03	Modo avión activo / sin co-nexión de red al guardar perfil	Intentar ac-tualizar telé-fono	Mensaje "Sin conexión al servi-dor; reintentando cuando vuelva la red"
+CP04	Campos de contraseña va-cíos en formulario de registro	Intentar regis-tro móvil	Mensaje "Debe ingresar una con-traseña válida"
+Adjunto: Interfaz/Form/Consulta/Reporte
+ 
+HU 15 – Programación y reserva de citas en plataforma web
+Historia de Usuario:
+Como Recepcionista o Psicólogo
+quiero programar una cita seleccionando paciente, terapeuta, modalidad (presencial/virtual) y fecha/hora
+para organizar la atención clínica sin solapamientos.
+Criterios de aceptación:
+1.	El sistema debe registrar la cita en estado 'Programada' y bloquear el bloque en la agenda.
+2.	Si dos usuarios intentan reservar el mismo bloque simultáneamente, el segundo de-be recibir "El horario acaba de ser ocupado".
+3.	Si la modalidad seleccionada es 'Virtual', debe generar automáticamente una sala segura de teleconsulta Jitsi.
+4.	No se debe permitir reservar en fechas pasadas ni en horarios fuera de la disponibi-lidad del terapeuta.
+Casos de prueba funcionales (Caja negra):
+ID	Entrada	Proceso	Salida esperada
+CP01	Paciente válido + psicó-logo + slot libre 10:00-10:45 + Presencial	Intentar agendar cita	Cita guardada en estado 'Programada' y slot bloqueado
+CP02	Dos peticiones simultá-neas sobre el mismo slot libre	Intentar agendar concurrente	1ra transacción aprobada (201 Crea-ted); 2da rechazada con "Horario ocu-pado" (409 Conflict)
+CP03	Modalidad seleccionada = "Virtual (Teleconsul-ta)"	Intentar agendar cita	Cita creada + enlace y sala Jitsi gene-rados en agenda_teleconsulta
+CP04	Fecha de cita seleccio-nada en el pasado	Intentar agendar cita	Mensaje "No se pueden agendar citas en fechas pasadas"
+Adjunto: Interfaz/Form/Consulta/Reporte
+ 
+HU 16 – Consulta y reserva de citas desde la app móvil
+Historia de Usuario:
+Como Paciente autenticado en la app móvil
+quiero ver el listado de mis citas (próximas e históricas) y solicitar una nueva cita según la disponibilidad de mi psicólogo
+para gestionar mis consultas de salud mental desde mi teléfono.
+Criterios de aceptación:
+1.	La app debe mostrar las citas organizadas cronológicamente en pestañas 'Próximas' e 'Historial' con colores de estado.
+2.	Si una cita virtual está programada para hoy y faltan menos de 15 minutos, debe habilitar el botón "Ingresar a Teleconsulta".
+3.	Si la cita es para una fecha posterior, el botón de teleconsulta debe estar bloqueado mostrando "Disponible 15 min antes".
+4.	El paciente debe poder seleccionar su terapeuta y ver sus días disponibles para so-licitar una cita.
+Casos de prueba funcionales (Caja negra):
+ID	Entrada	Proceso	Salida esperada
+CP01	Cita confirmada cargada en lista 'Próximas'	Abrir panta-lla Mis Citas	Visualización de tarjeta de cita con fecha, hora, terapeuta y badge verde
+CP02	Cita virtual con horario actual (faltan 10 minutos para la sesión)	Abrir detalle de cita	Botón 'Ingresar a Teleconsulta' activo y destacado en color verde con icono de cámara
+CP03	Cita virtual programada para dentro de 4 días	Abrir detalle de cita	Botón 'Ingresar a Teleconsulta' des-habilitado con aviso "Disponible 15 min antes de la sesión"
+CP04	Solicitud de nueva cita sin seleccionar horario	Intentar con-firmar reser-va	Mensaje "Debe seleccionar un hora-rio disponible"
+Adjunto: Interfaz/Form/Consulta/Reporte
+ 
+HU 17 – Reprogramación y cancelación de citas con validación de anticipación
+Historia de Usuario:
+Como Usuario (Recepcionista o Paciente)
+quiero cancelar o reprogramar una cita pactada, respetando las políticas de anticipación horaria configuradas por el centro
+para optimizar los cupos de atención.
+Criterios de aceptación:
+1.	Con más de 24 horas de anticipación, debe permitir cancelar la cita, liberar el cupo en la agenda y registrar el motivo.
+2.	Si el paciente intenta cancelar con menos de 2 horas de anticipación, debe bloquear la acción y mostrar "Fuera de plazo; contacte a recepción".
+3.	Al reprogramar a un nuevo horario válido, debe actualizar fecha y hora sin duplicar la cita ni alterar el historial del expediente.
+4.	El motivo de cancelación debe ser obligatorio para procesar la baja de la cita.
+Casos de prueba funcionales (Caja negra):
+ID	Entrada	Proceso	Salida esperada
+CP01	Cancelación solicitada con 48 horas de anticipación + motivo "Cruce laboral"	Intentar cancelar cita	Cita marcada como 'Cancelada', cupo liberado en agenda del psicólogo
+CP02	Paciente solicita cancelación 1 hora antes de la cita desde la app móvil	Intentar cancelar cita	Mensaje "Fuera del plazo permitido para cancelación online. Por favor comuníquese con recepción"
+CP03	Reprogramar cita a nuevo slot libre del mismo terapeu-ta	Intentar repro-gramar	Cita actualizada con nueva fe-cha/hora, conservando ID de cita y notas previas
+CP04	Confirmar cancelación con campo de motivo en blanco	Intentar cancelar cita	Mensaje "Debe ingresar el motivo de cancelación"
+Adjunto: Interfaz/Form/Consulta/Reporte
+ 
+HU 18 – Sala de teleconsulta con Jitsi Meet en plataforma web
+Historia de Usuario:
+Como Psicólogo
+quiero iniciar una sesión virtual por videollamada cifrada con mi paciente desde el navega-dor
+para prestar atención psicológica a distancia con audio y video estables.
+Criterios de aceptación:
+1.	Al pulsar 'Iniciar Sesión Virtual', el sistema debe instanciar Jitsi Meet External API con nombre de sala seguro y rol de moderador.
+2.	La sala debe admitir la conexión del paciente con streaming de audio/video bidirec-cional y temporizador en pantalla.
+3.	Al presionar 'Finalizar Consulta', debe cerrar la sala, registrar la duración real en se-gundos y cambiar el estado de la cita a 'Realizada'.
+4.	Si el token JWT de la sala no es válido o ha expirado, debe mostrar "Acceso a tele-consulta denegado".
+Casos de prueba funcionales (Caja negra):
+ID	Entrada	Proceso	Salida esperada
+CP01	Cita virtual vigente + terapeuta autenticado	Iniciar sesión virtual	Sala Jitsi Meet embebida cargada exi-tosamente con rol de moderador
+CP02	Paciente y psicólogo conectados en la mis-ma sala	Transmisión WebRTC	Audio y video bidireccional sincroniza-do sin cortes con temporizador activo
+CP03	Psicólogo pulsa 'Finali-zar Consulta' tras 45 minutos de sesión	Finalizar vi-deollamada	Sala cerrada, duración de 2700 seg registrada en agenda_teleconsulta y estado = 'Realizada'
+CP04	Token JWT de sala manipulado o expirado	Intentar co-nexión a sala	Mensaje "Acceso no autorizado a la sala de teleconsulta" (HTTP 403 Forbi-dden)
+Adjunto: Interfaz/Form/Consulta/Reporte
+ 
+HU 19 – Acceso a videollamada de teleconsulta desde app móvil
+Historia de Usuario:
+Como Paciente
+quiero unirme a la sesión de teleconsulta directamente desde la app móvil Flutter
+para recibir mi atención psicológica cómodamente desde mi smartphone sin instalar aplica-ciones externas.
+Criterios de aceptación:
+1.	Al presionar 'Unirse a Videollamada', la app debe solicitar permisos de cámara y mi-crófono y abrir la vista nativa de Jitsi Meet.
+2.	Si se produce una pérdida momentánea de conexión WiFi/datos, el cliente debe re-conectar automáticamente a la llamada.
+3.	Si el paciente rechaza los permisos de cámara/micrófono, debe mostrar "Permisos requeridos para iniciar la teleconsulta".
+4.	Si la cita ya finalizó o fue cancelada, debe mostrar "Esta sesión ya no está disponi-ble".
+Casos de prueba funcionales (Caja negra):
+ID	Entrada	Proceso	Salida esperada
+CP01	Cita virtual activa + pa-ciente pulsa 'Unirse'	Solicitar conexión móvil	Permisos de sistema concedidos y vista nativa de Jitsi Meet abierta en pantalla completa
+CP02	Desconexión transitoria de red (5 seg) durante la se-sión	Reconexión automática	El cliente Jitsi reconecta automáti-camente a la sala sin expulsar al usuario
+CP03	Permisos de cámara o micrófono denegados por el usuario	Intentar unirse	Mensaje "Debe otorgar permisos de cámara y micrófono para ingresar a la videollamada"
+CP04	Intentar unirse a una cita con estado 'Realizada' o 'Cancelada'	Intentar unirse	Mensaje "Esta sesión de teleconsulta ya ha concluido"
+Adjunto: Interfaz/Form/Consulta/Reporte
+ 
+HU 20 – Dashboard administrativo y clínico con KPIs en tiempo real
+Historia de Usuario:
+Como Administrador o Coordinador del Centro
+quiero un panel visual con indicadores de citas del día, pacientes activos, tasa de ausen-tismo y ocupación por terapeuta
+para monitorear la operatividad del centro en tiempo real.
+Criterios de aceptación:
+1.	El panel debe mostrar las cuatro tarjetas de KPIs calculadas exclusivamente con da-tos del tenant autenticado.
+2.	Al filtrar por rango de fechas (semana/mes), los gráficos de Chart.js deben actuali-zarse reactivamente sin recargar la página.
+3.	Si el usuario logueado es Psicólogo, solo debe mostrar sus métricas individuales y no las de otros terapeutas.
+4.	Si no existen registros en el rango seleccionado, debe mostrar "Sin datos para el rango seleccionado".
+Casos de prueba funcionales (Caja negra):
+ID	Entrada	Proceso	Salida esperada
+CP01	Administrador accede al Dashboard con 28 citas hoy y 142 pacientes activos	Cargar Dashboard	Las 4 tarjetas de KPIs mues-tran valores numéricos exac-tos del esquema tenant
+CP02	Selección de filtro "Últimos 30 días" en selector de rango	Filtrar métri-cas	Gráficos de barras y dona se recalculan dinámicamente con datos del periodo
+CP03	Psicólogo autenticado accede al Dashboard	Cargar métri-cas	Vista personalizada mostrando únicamente citas y tasa de ocupación propias
+CP04	Selección de rango de fechas sin atenciones registradas	Filtrar métri-cas	Gráficos en estado vacío con mensaje "Sin registros para el rango seleccionado"
+Adjunto: Interfaz/Form/Consulta/Reporte
+ 
+HU 21 – Alertas de priorización y seguimiento de inasistencias
+Historia de Usuario:
+Como Coordinador Clínico o Psicólogo
+quiero que el sistema genere alertas automáticas ante inasistencias consecutivas o inacti-vidad prolongada de pacientes
+para prevenir el abandono terapéutico temprano.
+Criterios de aceptación:
+1.	Al registrarse la 2da inasistencia consecutiva de un paciente, el sistema debe dispa-rar una alerta 'Media' en el panel clínico.
+2.	Si un paciente activo supera 21 días sin agendar cita, el proceso nocturno debe ge-nerar una alerta de 'Riesgo de Abandono'.
+3.	Al presionar 'Marcar como Resuelta' con nota de seguimiento, la alerta debe archi-varse en el historial del expediente.
+4.	Si se intenta resolver la alerta sin nota de seguimiento, debe mostrar "Debe ingresar una observación clínica".
+Casos de prueba funcionales (Caja negra):
+ID	Entrada	Proceso	Salida esperada
+CP01	Paciente acumula su se-gunda inasistencia conse-cutiva sin justificar	Marcar inasistencia	Se crea automáticamente registro en agenda_alerta con severidad 'Me-dia'
+CP02	Paciente con tratamiento activo supera 21 días sin cita registrada	Ejecutar proceso nocturno	Alerta generada con tipo 'RIES-GO_DESERCION' y severidad 'Alta'
+CP03	Psicólogo ingresa nota "Paciente contactado, reagendado" y pulsa resol-ver	Resolver alerta	Alerta actualizada a resuelta = true y archivada del panel activo
+CP04	Pulsar botón 'Marcar Re-suelta' con campo de notas vacío	Resolver alerta	Mensaje "Debe ingresar una obser-vación clínica para resolver la alerta"
+Adjunto: Interfaz/Form/Consulta/Reporte
+ 
+HU 22 – Calendario interactivo multi-vista de agenda clínica
+Historia de Usuario:
+Como Recepcionista o Psicólogo
+quiero visualizar la agenda en vistas mensual, semanal y diaria con códigos de color por estado de cita
+para una gestión visual rápida y ergonómica de los consultorios.
+Criterios de aceptación:
+1.	La vista semanal debe mostrar bloques con códigos de color normalizados (Azul: Programada, Verde: Confirmada, Naranja: Teleconsulta, Gris: Realizada, Rojo: Can-celada).
+2.	Al hacer clic en un bloque de cita, debe abrirse un popover interactivo con datos del paciente y acciones rápidas.
+3.	Al filtrar por un psicólogo específico, el calendario debe actualizarse mostrando úni-camente su agenda de turnos.
+4.	La alternancia entre vistas Mes, Semana y Día debe ser instantánea sin recargar la página completa.
+Casos de prueba funcionales (Caja negra):
+ID	Entrada	Proceso	Salida esperada
+CP01	Selección de vista semanal en el selector de vistas	Cambiar vista	Columnas de Lunes a Sábado con bloques coloreados según el estado de cada cita
+CP02	Clic sobre bloque de cita de las 10:00 AM	Selec-cionar cita	Popover flotante desplegado con nombre del paciente, psicólogo, modalidad y botones 'Ingresar' / 'Reprogramar'
+CP03	Filtro por psicólogo "Lic. Andy Mujica" seleccionado	Aplicar filtro	El calendario oculta citas de otros profesio-nales y renderiza solo las del terapeuta
+CP04	Conmutar entre vistas 'Mes' y 'Día' repetida-mente	Cambiar vista	Transición fluida e instantánea de FullCalen-dar sin errores ni recarga de página
+Adjunto: Interfaz/Form/Consulta/Reporte
+ 
+5.2.3.2 Reporte de Pruebas
+Todas las pruebas fueron ejecutadas en ambiente de homologación sobre la base de datos PostgreSQL 16 Multi-Tenant, validando tanto clientes web (Angular 17 en Google Chrome) como clientes móviles (Flutter 3.x en emulador Pixel 7 y dispositivo físico Android). Se cu-brieron los 48 casos de prueba funcionales (4 casos por cada una de las 12 Historias de Usuario):
+HU Aso-ciada	Casos Ejecu-tados	Resulta-do Ge-neral	Observaciones Técnicas de Homologación
+HU-11	CP01 - CP04	Aproba-do (4/4)	Registro y unicidad de colegiatura validados en clinica_psicologo. Rechazo de tarifas negativas con MinValueValidator(0.01).
+HU-12	CP01 - CP04	Aproba-do (4/4)	Generación matemática exacta de 5 slots de 45 min. Validación de horario (clean()) y bloqueo preventivo de días con citas activas.
+HU-13	CP01 - CP04	Aproba-do (4/4)	Generación secuencial de código EXP-2026-XXXX. Restricción UNIQUE en ci y validación condicional de tutor para menores de 18 años.
+HU-14	CP01 - CP04	Aproba-do (4/4)	Consumo de API móvil con subdominio tenant. Manejo resiliente de SocketException en Flutter ante modo avión sin pérdida de datos.
+HU-15	CP01 - CP04	Aproba-do (4/4)	Inserción en agenda_cita en estado PROGRAMADA. Concurrencia transaccional pesimista resolvió colisiones de reserva (409 Conflict).
+HU-16	CP01 - CP04	Aproba-do (4/4)	Parseo JSON correcto en Flutter. Ventana temporal ac-tiva de botón teleconsulta (-15 min a +45 min) y bloqueo en fechas lejanas.
+HU-17	CP01 - CP04	Aproba-do (4/4)	Cancelación con liberación inmediata de cupo con >24h. Bloqueo a pacientes con <2h de anticipación y repro-gramación sin pérdida de ID.
+HU-18	CP01 - CP04	Aproba-do (4/4)	Instanciación de JitsiMeetExternalAPI en Angular con rol moderador. WebRTC P2P/SFU con 42 ms de latencia y registro de duración real.
+HU-19	CP01 - CP04	Aproba-do (4/4)	Diálogo nativo de Android para permi-sos CAMERA y RECORD_AUDIO. Reconexión automá-tica transparente ante corte breve de red.
+HU-20	CP01 - CP04	Aproba-do (4/4)	Agregaciones Count y Case(When...) en Django ORM validadas contra SQL. Actualización reactiva de datasets en Chart.js por filtros.
+HU-21	CP01 - CP04	Aproba-do (4/4)	Regla de negocio disparó alerta clínica por 2 inasisten-cias consecutivas. Transición a resuelta = true con al-macenamiento de observación.
+HU-22	CP01 - CP04	Aproba-do (4/4)	Renderizado fluido de FullCalendar en Angular 17 con filtrado multi-profesional y popover interactivo con enla-ces de acción rápida.
+Resumen general de pruebas: 48 casos de prueba ejecutados, 48 aprobados (100% de efectividad), 0 fallidos.
 
-#### 4.2.3.1 Plan de Pruebas Funcionales (Caja Negra)
-Siguiendo las directrices expuestas en clase para el aseguramiento de la calidad del software, el plan de pruebas del Sprint 1 se enfoca en técnicas de **Caja Negra** (partición de equivalencia, análisis de valores límite y tablas de decisión), evaluando entradas, condiciones esperadas y salidas del sistema en base a los criterios de aceptación BDD.
-
-| ID Prueba | HU | Descripción de la Prueba | Entrada / Precondición | Resultado Esperado |
-| :---: | :---: | :--- | :--- | :--- |
-| **TP-26** | HU-11 | Registrar psicólogo con datos válidos | Colegiado "PSI-7890", tarifa 150 Bs, especialidad válida | Perfil creado en esquema tenant, HTTP 201 Created |
-| **TP-27** | HU-11 | Registrar psicólogo con colegiatura duplicada | Colegiado "PSI-7890" ya existente en el centro | Rechazo con HTTP 400: "Colegiatura ya registrada" |
-| **TP-28** | HU-11 | Validar tarifa negativa en perfil | Tarifa base = -50.00 Bs | Error de validación: "La tarifa debe ser mayor a cero" |
-| **TP-29** | HU-12 | Configurar disponibilidad con horario coherente | Lunes de 08:00 a 12:00, bloques de 45 min | Franja guardada, 5 slots autogenerados correctamente |
-| **TP-30** | HU-12 | Configurar horario con hora fin anterior a inicio | Hora inicio = 18:00, Hora fin = 14:00 | Error de validación: "Hora de fin debe ser posterior" |
-| **TP-31** | HU-12 | Desactivar día con citas previamente pactadas | Intentar desactivar Miércoles teniendo 2 citas activas | Advertencia bloqueante: "Existen citas programadas" |
-| **TP-32** | HU-13 | Registrar paciente adulto con datos completos | CI "6845123", fecha nac 15/05/1995, contacto emergencia | Expediente creado con código único (ej. PAC-2026-0042) |
-| **TP-33** | HU-13 | Registrar paciente con documento de identidad duplicado | CI "6845123" ya existente en el mismo tenant | Rechazo con HTTP 400: "Documento de identidad en uso" |
-| **TP-34** | HU-13 | Registrar menor de edad sin datos de apoderado | Paciente con 14 años de edad, campos de tutor vacíos | Error de validación: "Datos de tutor obligatorios" |
-| **TP-35** | HU-14 | Registro de paciente desde app móvil Flutter | Datos válidos enviados desde smartphone a través de API | Cuenta de paciente creada y login automático exitoso |
-| **TP-36** | HU-14 | Actualizar teléfono de paciente sin conexión | Modo avión activado en dispositivo móvil al guardar | La app notifica fallo de conexión sin perder datos |
-| **TP-37** | HU-15 | Reservar cita en horario libre de psicólogo | Psicólogo disponible, slot 10:00-10:45 libre | Cita registrada como 'Programada', slot ocupado |
-| **TP-38** | HU-15 | Detección de colisión por reservas concurrentes | Dos peticiones simultáneas sobre el mismo slot | Una aprobada (201), la segunda rechazada (409 Conflict) |
-| **TP-39** | HU-15 | Generación de teleconsulta al elegir modalidad virtual | Modalidad seleccionada = "VIRTUAL" | Registro automático en `agenda_teleconsulta` con sala |
-| **TP-40** | HU-16 | Visualizar lista de citas en app móvil | Paciente con 1 cita programada y 2 realizadas | Las 3 citas se renderizan con tarjetas y colores correctos |
-| **TP-41** | HU-16 | Habilitación de botón teleconsulta según horario | Cita virtual pactada para dentro de 10 minutos | Botón 'Ingresar a Teleconsulta' pasa a estado activo |
-| **TP-42** | HU-16 | Bloqueo de botón teleconsulta con anticipación excesiva | Cita virtual pactada para dentro de 3 días | Botón inactivo con texto "Disponible el día de la cita" |
-| **TP-43** | HU-17 | Cancelar cita con más de 24 horas de anticipación | Paciente solicita cancelación 48h antes de la cita | Estado pasa a 'Cancelada', slot liberado en agenda |
-| **TP-44** | HU-17 | Intentar cancelación tardía desde app móvil | Paciente solicita cancelación 1 hora antes de la cita | Notificación: "Comuníquese a recepción para cancelar" |
-| **TP-45** | HU-17 | Reprogramar cita a nuevo slot libre | Cita existente cambiada a fecha futura sin conflicto | Cita actualizada preservando ID y motivo de consulta |
-| **TP-46** | HU-18 | Iniciar teleconsulta desde web por el psicólogo | Psicólogo autenticado hace clic en sesión virtual | Carga sala Jitsi Meet embebida con rol moderador |
-| **TP-47** | HU-18 | Conexión mutua y transmisión WebRTC en navegador | Psicólogo y paciente presentes en la sala virtual | Audio y video bidireccional estable sin desconexión |
-| **TP-48** | HU-18 | Finalizar consulta y registrar duración real | Sesión finalizada tras 48 minutos de conexión | Duración grabada (2880 seg) y estado = 'Realizada' |
-| **TP-49** | HU-19 | Unirse a videollamada desde app Flutter | Paciente pulsa unirse en smartphone Android | Permisos de cámara solicitados y sala Jitsi abierta |
-| **TP-50** | HU-19 | Reconexión automática de teleconsulta móvil | Desconexión breve de red de datos (5 segundos) | El cliente Jitsi reanuda la llamada automáticamente |
-| **TP-51** | HU-20 | Cálculo correcto de KPIs en Dashboard | 10 citas programadas hoy, 2 inasistencias del mes | Tarjetas de métricas muestran valores exactos del tenant |
-| **TP-52** | HU-20 | Filtro de métricas por rango de fechas | Seleccionar rango "Últimos 30 días" en Angular | Gráficos Chart.js se recalculan con datos del periodo |
-| **TP-53** | HU-21 | Generación de alerta por inasistencias consecutivas | Marcar segunda inasistencia seguida de un paciente | Se inserta registro en `agenda_alerta` con severidad 'Media' |
-| **TP-54** | HU-21 | Marcar alerta como resuelta con nota de seguimiento | Terapeuta ingresa justificación y presiona resolver | Alerta pasa a `resuelta = true` y desaparece del panel |
-| **TP-55** | HU-22 | Interacción y filtrado en calendario de agenda | Filtrar por "Lic. Andy Mujica" y cambiar a semana | Visualización exclusiva de bloques del psicólogo filtrado |
-
----
-
-#### 4.2.3.2 Reporte de Pruebas
-Todas las pruebas fueron ejecutadas en ambiente de homologación sobre la base de datos PostgreSQL 16 Multi-Tenant, validando tanto clientes web (Angular en Google Chrome) como clientes móviles (Flutter en emulador Pixel 7 y dispositivo físico Android).
-
-| ID Prueba | HU Asociada | Resultado | Observaciones Técnicas |
-| :---: | :---: | :---: | :--- |
-| **TP-26** | HU-11 | **Aprobado** | Registro verificado en tabla `clinica_psicologo` del esquema tenant. |
-| **TP-27** | HU-11 | **Aprobado** | Restricción de unicidad capturada por serializer DRF con mensaje adecuado. |
-| **TP-28** | HU-11 | **Aprobado** | Validador `MinValueValidator(0.01)` rechazó valores menores o iguales a cero. |
-| **TP-29** | HU-12 | **Aprobado** | Generación matemática exacta de 5 slots de 45 minutos (08:00, 08:45, 09:30, 10:15, 11:00). |
-| **TP-30** | HU-12 | **Aprobado** | Validación a nivel de modelo en Django (`clean()`) impidió inconsistencias temporales. |
-| **TP-31** | HU-12 | **Aprobado** | Conteo preventivo sobre `agenda_cita` bloqueó la desactivación del día laboral. |
-| **TP-32** | HU-13 | **Aprobado** | Generación secuencial de código de expediente con prefijo institucional del centro. |
-| **TP-33** | HU-13 | **Aprobado** | Clave única sobre campo `ci` en esquema PostgreSQL evitó duplicidad. |
-| **TP-34** | HU-13 | **Aprobado** | Validación condicional frontend y backend exigió nombre y teléfono de apoderado. |
-| **TP-35** | HU-14 | **Aprobado** | Registro móvil consumió exitosamente el endpoint con cabecera de subdominio tenant. |
-| **TP-36** | HU-14 | **Aprobado** | Captura de `SocketException` en Flutter mostró banner informativo sin crashear. |
-| **TP-37** | HU-15 | **Aprobado** | Inserción en tabla `agenda_cita` con estado `PROGRAMADA` y bloqueo en calendario. |
-| **TP-38** | HU-15 | **Aprobado** | Concurrencia transaccional pesimista resolvió colisiones de forma consistente. |
-| **TP-39** | HU-15 | **Aprobado** | Creación de sala con UUID ofuscado para prevenir intrusiones en la teleconsulta. |
-| **TP-40** | HU-16 | **Aprobado** | Parseo JSON correcto en Flutter con modelos inmutables y visualización ergonómica. |
-| **TP-41** | HU-16 | **Aprobado** | Ventana temporal activa de -15 min a +45 min respecto a la hora de inicio. |
-| **TP-42** | HU-16 | **Aprobado** | Estado deshabilitado del botón en Flutter verificado visualmente en emulador. |
-| **TP-43** | HU-17 | **Aprobado** | Cambio de estado inmediato y recálculo automático de slots libres en frontend. |
-| **TP-44** | HU-17 | **Aprobado** | Regla de negocio de 2 horas de anticipación aplicada con éxito para rol Paciente. |
-| **TP-45** | HU-17 | **Aprobado** | Sentencia `UPDATE` conservó el ID primario y los metadatos de auditoría de la cita. |
-| **TP-46** | HU-18 | **Aprobado** | Instanciación correcta de `JitsiMeetExternalAPI` dentro del contenedor `div` de Angular. |
-| **TP-47** | HU-18 | **Aprobado** | Protocolo WebRTC estableció conexión P2P/SFU con latencia promedio de 42 ms. |
-| **TP-48** | HU-18 | **Aprobado** | Evento `videoConferenceLeft` capturado para disparar el cierre formal de sesión. |
-| **TP-49** | HU-19 | **Aprobado** | Diálogo nativo de Android solicitó permisos `CAMERA` y `RECORD_AUDIO` sin fallos. |
-| **TP-50** | HU-19 | **Aprobado** | Resiliencia de Jitsi ante cambio de red WiFi a 4G sin interrupción de la llamada. |
-| **TP-51** | HU-20 | **Aprobado** | Consultas agregadas con `Count` y `Case(When...)` en Django ORM validadas contra SQL. |
-| **TP-52** | HU-20 | **Aprobado** | Actualización reactiva de datasets en Chart.js sin parpadeos en pantalla. |
-| **TP-53** | HU-21 | **Aprobado** | Trigger de negocio identificó 2 inasistencias continuas y generó la alerta clínica. |
-| **TP-54** | HU-21 | **Aprobado** | Actualización de campo `resuelta = true` y almacenamiento de nota explicativa. |
-| **TP-55** | HU-22 | **Aprobado** | Renderizado fluido de FullCalendar en Angular 17 con filtrado multi-profesional. |
-
-**Resumen de pruebas:** 30 pruebas ejecutadas, **30 aprobadas (100%)**, 0 fallidas.
-
----
 
 ## 4.3 DAILY SCRUM (O SCRUM DIARIO)
 
@@ -1585,160 +1742,160 @@ El Sprint 1 se desarrolló a lo largo de **12 días calendario**, del **26 de ag
 <br>
 
 #### Delgado Rojas Alberto Caleb (Scrum Master & Móvil Flutter)
-| Fecha | ¿Qué hiciste ayer? | ¿Qué hiciste hoy? | Obstáculo |
-| :---: | :--- | :--- | :--- |
-| **26/08** | Cierre y evaluación del Sprint 0 | Planificación del Sprint 1 y asignación de tareas SP1-19 a SP1-33 | Discusiones sobre la división de tiempo entre la web y la app móvil |
-| **27/08** | Planificación del sprint | Configuración del entorno Flutter con las dependencias HTTP y storage | Demoras en la instalación del emulador Android en equipos de baja gama |
-| **28/08** | Ajustes de emuladores móviles | Análisis de requerimientos de la pantalla de perfil del paciente (SP1-22) | Cruce de horarios con clases de laboratorio de otra materia |
-| **29/08** | Maquetación básica en Flutter | Implementación de la pantalla de perfil y registro de paciente móvil | Dificultad para enviar la cabecera de subdominio tenant desde Flutter |
-| **30/08** | Resolución de cabeceras en Flutter | Integración del consumo de API de pacientes y manejo de estados | Errores de validación en campos de teléfono y contacto de emergencia |
-| **31/08** | Pantalla de perfil finalizada | Inicio del diseño del módulo de consulta y reserva de citas (SP1-28) | Fatiga acumulada; el equipo solicitó redistribuir horas del fin de semana |
-| **01/09** | Estructura de citas móvil | Maquetación de tarjetas de citas con estados diferenciados en Flutter | Complejidad al formatear fechas ISO en formato legible para el paciente |
-| **02/09** | Formato de fechas en móvil | Implementación del flujo de reserva de cita seleccionando terapeuta y fecha | Lentitud en la respuesta del backend en consultas concurrentes |
-| **03/09** | Pruebas de reserva móvil | Investigación del plugin de Jitsi Meet para Flutter e integración nativa | Errores de compilación en Gradle por incompatibilidad de versión de Kotlin |
-| **04/09** | Solución de dependencias Gradle | Implementación de la pantalla de teleconsulta nativa en Flutter (SP1-32) | Gestión compleja de permisos de micrófono y cámara en Android 14 |
-| **05/09** | Teleconsulta móvil operativa | Pruebas de videollamada cruzada entre navegador web y smartphone | Desconexiones ocasionales por latencia de la red WiFi |
-| **06/09** | Pruebas de integración móvil | Coordinación de la sesión de Sprint Review y preparación de métricas | Ninguno |
+|   Fecha   | ¿Qué hiciste ayer?                 | ¿Qué hiciste hoy?                                                           | Obstáculo                                                                  |
+| :-------: | :--------------------------------- | :-------------------------------------------------------------------------- | :------------------------------------------------------------------------- |
+| **26/08** | Cierre y evaluación del Sprint 0   | Planificación del Sprint 1 y asignación de tareas SP1-19 a SP1-33           | Discusiones sobre la división de tiempo entre la web y la app móvil        |
+| **27/08** | Planificación del sprint           | Configuración del entorno Flutter con las dependencias HTTP y storage       | Demoras en la instalación del emulador Android en equipos de baja gama     |
+| **28/08** | Ajustes de emuladores móviles      | Análisis de requerimientos de la pantalla de perfil del paciente (SP1-22)   | Cruce de horarios con clases de laboratorio de otra materia                |
+| **29/08** | Maquetación básica en Flutter      | Implementación de la pantalla de perfil y registro de paciente móvil        | Dificultad para enviar la cabecera de subdominio tenant desde Flutter      |
+| **30/08** | Resolución de cabeceras en Flutter | Integración del consumo de API de pacientes y manejo de estados             | Errores de validación en campos de teléfono y contacto de emergencia       |
+| **31/08** | Pantalla de perfil finalizada      | Inicio del diseño del módulo de consulta y reserva de citas (SP1-28)        | Fatiga acumulada; el equipo solicitó redistribuir horas del fin de semana  |
+| **01/09** | Estructura de citas móvil          | Maquetación de tarjetas de citas con estados diferenciados en Flutter       | Complejidad al formatear fechas ISO en formato legible para el paciente    |
+| **02/09** | Formato de fechas en móvil         | Implementación del flujo de reserva de cita seleccionando terapeuta y fecha | Lentitud en la respuesta del backend en consultas concurrentes             |
+| **03/09** | Pruebas de reserva móvil           | Investigación del plugin de Jitsi Meet para Flutter e integración nativa    | Errores de compilación en Gradle por incompatibilidad de versión de Kotlin |
+| **04/09** | Solución de dependencias Gradle    | Implementación de la pantalla de teleconsulta nativa en Flutter (SP1-32)    | Gestión compleja de permisos de micrófono y cámara en Android 14           |
+| **05/09** | Teleconsulta móvil operativa       | Pruebas de videollamada cruzada entre navegador web y smartphone            | Desconexiones ocasionales por latencia de la red WiFi                      |
+| **06/09** | Pruebas de integración móvil       | Coordinación de la sesión de Sprint Review y preparación de métricas        | Ninguno                                                                    |
 
 <br>
 
 #### Condori Diaz Marilyn Esther (Product Owner)
-| Fecha | ¿Qué hiciste ayer? | ¿Qué hiciste hoy? | Obstáculo |
-| :---: | :--- | :--- | :--- |
-| **26/08** | Aprobación de entrega de Sprint 0 | Definición de prioridades del backlog para el Sprint 1 con el equipo | Diferencias de criterio sobre si incluir pagos en el Sprint 1 o Sprint 4 |
-| **27/08** | Refinamiento de requerimientos | Redacción detallada de criterios de aceptación para citas y teleconsultas | Falta de claridad inicial en las políticas de cancelación de citas |
-| **28/08** | Reglas de anticipación de citas | Validación de prototipos de perfiles de psicólogos en Figma con Julio | Necesidad de agregar campos para modalidad presencial/virtual |
-| **29/08** | Feedback de prototipos Figma | Revisión de requisitos de expediente clínico básico de pacientes | Duda legal sobre el manejo de datos de menores de edad en el sistema |
-| **30/08** | Consulta sobre tutores legales | Definición de obligatoriedad de datos de apoderado para menores de edad | Tiempo limitado por compromisos académicos universitarios |
-| **31/08** | Validación de reglas de tutores | Inspección del avance en la vista de calendario interactivo de citas | Se solicitó que las citas se diferencien claramente por colores de estado |
-| **01/09** | Pruebas de usabilidad en agenda | Revisión de la experiencia de reserva de citas desde la app móvil | La interfaz móvil requería confirmación previa antes de agendar |
-| **02/09** | Feedback de interfaz móvil | Definición de los indicadores clínicos prioritarios para el Dashboard (SP1-25) | Discusión sobre qué tasa de ausentismo considerar como crítica |
-| **03/09** | Definición de umbrales de alerta | Regulación de la regla: 2 inasistencias consecutivas generan alerta | Ninguno |
-| **04/09** | Pruebas preliminares de teleconsulta | Participación en prueba de videollamada entre psicólogo y paciente | El video tardaba en conectar en la primera solicitud |
-| **05/09** | Validación de criterios de teleconsulta | Ejecución del plan de pruebas de aceptación formal (SP1-33) | Presión de tiempo para revisar las historias de usuario |
-| **06/09** | Aprobación del incremento de software | Firma de la Definition of Done (DoD) y cierre de revisión de Sprint 1 | Ninguno |
+|   Fecha   | ¿Qué hiciste ayer?                      | ¿Qué hiciste hoy?                                                              | Obstáculo                                                                 |
+| :-------: | :-------------------------------------- | :----------------------------------------------------------------------------- | :------------------------------------------------------------------------ |
+| **26/08** | Aprobación de entrega de Sprint 0       | Definición de prioridades del backlog para el Sprint 1 con el equipo           | Diferencias de criterio sobre si incluir pagos en el Sprint 1 o Sprint 4  |
+| **27/08** | Refinamiento de requerimientos          | Redacción detallada de criterios de aceptación para citas y teleconsultas      | Falta de claridad inicial en las políticas de cancelación de citas        |
+| **28/08** | Reglas de anticipación de citas         | Validación de prototipos de perfiles de psicólogos en Figma con Julio          | Necesidad de agregar campos para modalidad presencial/virtual             |
+| **29/08** | Feedback de prototipos Figma            | Revisión de requisitos de expediente clínico básico de pacientes               | Duda legal sobre el manejo de datos de menores de edad en el sistema      |
+| **30/08** | Consulta sobre tutores legales          | Definición de obligatoriedad de datos de apoderado para menores de edad        | Tiempo limitado por compromisos académicos universitarios                 |
+| **31/08** | Validación de reglas de tutores         | Inspección del avance en la vista de calendario interactivo de citas           | Se solicitó que las citas se diferencien claramente por colores de estado |
+| **01/09** | Pruebas de usabilidad en agenda         | Revisión de la experiencia de reserva de citas desde la app móvil              | La interfaz móvil requería confirmación previa antes de agendar           |
+| **02/09** | Feedback de interfaz móvil              | Definición de los indicadores clínicos prioritarios para el Dashboard (SP1-25) | Discusión sobre qué tasa de ausentismo considerar como crítica            |
+| **03/09** | Definición de umbrales de alerta        | Regulación de la regla: 2 inasistencias consecutivas generan alerta            | Ninguno                                                                   |
+| **04/09** | Pruebas preliminares de teleconsulta    | Participación en prueba de videollamada entre psicólogo y paciente             | El video tardaba en conectar en la primera solicitud                      |
+| **05/09** | Validación de criterios de teleconsulta | Ejecución del plan de pruebas de aceptación formal (SP1-33)                    | Presión de tiempo para revisar las historias de usuario                   |
+| **06/09** | Aprobación del incremento de software   | Firma de la Definition of Done (DoD) y cierre de revisión de Sprint 1          | Ninguno                                                                   |
 
 <br>
 
 #### Mujica Vallejos Andy Mauricio (Development Team - Fullstack / Backend / BD)
-| Fecha | ¿Qué hiciste ayer? | ¿Qué hiciste hoy? | Obstáculo |
-| :---: | :--- | :--- | :--- |
-| **26/08** | Revisión de esquemas Multi-Tenant | Modelado de tablas `clinica_psicologo`, `especialidad` y `disponibilidad` | Dudas sobre el almacenamiento de franjas horarias (rango vs. bloques fijos) |
-| **27/08** | Migraciones en esquemas tenant | Implementación de serializers y ViewSets para psicólogos (SP1-20) | Conflictos al serializar especialidades en relaciones Many-to-Many |
-| **28/08** | Endpoints de psicólogos listos | Modelado e implementación de endpoints de pacientes y expediente (SP1-23) | Validación de unicidad de CI condicionada al tenant activo |
-| **29/08** | Endpoints de pacientes finalizados | Diseño del motor de citas en backend con detección de solapamiento | Complejidad algorítmica para detectar solapamientos parciales de horario |
-| **30/08** | Algoritmo de solapamiento de citas | Implementación de transacciones con `SELECT FOR UPDATE` (SP1-29) | Bloqueos transaccionales (deadlocks) en pruebas de concurrencia |
-| **31/08** | Solución de bloqueos pesimistas | Endpoints de reserva, confirmación y reprogramación de citas | Sobrecarga de trabajo por entregas simultáneas de otras materias |
-| **01/09** | API de citas operativa | Pruebas de integración de la API con los componentes frontend de Maria | Desajustes en los formatos de fecha entre Django (`YYYY-MM-DD`) y Angular |
-| **02/09** | Ajuste de serializadores de fecha | Investigación de la API externa de Jitsi Meet y generación de salas seguras | Configuración de los parámetros de JWT para moderador de sala virtual |
-| **03/09** | Módulo backend de teleconsulta | Creación de endpoints `/api/agenda/teleconsulta/access/` y finish (SP1-32) | Errores en el cálculo de duración en segundos al finalizar llamada |
-| **04/09** | Corrección de cálculo de duración | Soporte en la integración de WebRTC con el cliente web y móvil | Dificultad para coordinar pruebas conjuntas con Alberto y Julio |
-| **05/09** | Apoyo en teleconsulta | Optimización de consultas SQL para el Dashboard mediante agregaciones ORM | Lentitud en consultas con muchos joins en PostgreSQL |
-| **06/09** | Índices creados en PostgreSQL | Cierre de tareas de desarrollo y verificación de pruebas unitarias | Ninguno |
+|   Fecha   | ¿Qué hiciste ayer?                 | ¿Qué hiciste hoy?                                                           | Obstáculo                                                                   |
+| :-------: | :--------------------------------- | :-------------------------------------------------------------------------- | :-------------------------------------------------------------------------- |
+| **26/08** | Revisión de esquemas Multi-Tenant  | Modelado de tablas `clinica_psicologo`, `especialidad` y `disponibilidad`   | Dudas sobre el almacenamiento de franjas horarias (rango vs. bloques fijos) |
+| **27/08** | Migraciones en esquemas tenant     | Implementación de serializers y ViewSets para psicólogos (SP1-20)           | Conflictos al serializar especialidades en relaciones Many-to-Many          |
+| **28/08** | Endpoints de psicólogos listos     | Modelado e implementación de endpoints de pacientes y expediente (SP1-23)   | Validación de unicidad de CI condicionada al tenant activo                  |
+| **29/08** | Endpoints de pacientes finalizados | Diseño del motor de citas en backend con detección de solapamiento          | Complejidad algorítmica para detectar solapamientos parciales de horario    |
+| **30/08** | Algoritmo de solapamiento de citas | Implementación de transacciones con `SELECT FOR UPDATE` (SP1-29)            | Bloqueos transaccionales (deadlocks) en pruebas de concurrencia             |
+| **31/08** | Solución de bloqueos pesimistas    | Endpoints de reserva, confirmación y reprogramación de citas                | Sobrecarga de trabajo por entregas simultáneas de otras materias            |
+| **01/09** | API de citas operativa             | Pruebas de integración de la API con los componentes frontend de Maria      | Desajustes en los formatos de fecha entre Django (`YYYY-MM-DD`) y Angular   |
+| **02/09** | Ajuste de serializadores de fecha  | Investigación de la API externa de Jitsi Meet y generación de salas seguras | Configuración de los parámetros de JWT para moderador de sala virtual       |
+| **03/09** | Módulo backend de teleconsulta     | Creación de endpoints `/api/agenda/teleconsulta/access/` y finish (SP1-32)  | Errores en el cálculo de duración en segundos al finalizar llamada          |
+| **04/09** | Corrección de cálculo de duración  | Soporte en la integración de WebRTC con el cliente web y móvil              | Dificultad para coordinar pruebas conjuntas con Alberto y Julio             |
+| **05/09** | Apoyo en teleconsulta              | Optimización de consultas SQL para el Dashboard mediante agregaciones ORM   | Lentitud en consultas con muchos joins en PostgreSQL                        |
+| **06/09** | Índices creados en PostgreSQL      | Cierre de tareas de desarrollo y verificación de pruebas unitarias          | Ninguno                                                                     |
 
 <br>
 
 #### Larrazabal Rojas Julio Cesar (Development Team - Frontend Angular / UI)
-| Fecha | ¿Qué hiciste ayer? | ¿Qué hiciste hoy? | Obstáculo |
-| :---: | :--- | :--- | :--- |
-| **26/08** | Mantenimiento de vistas del Sprint 0 | Diseño en Figma de perfiles de psicólogos y disponibilidad (SP1-19) | Búsqueda de una disposición limpia para mostrar múltiples horarios |
-| **27/08** | Aprobación de wireframes en Figma | Diseño de pantallas de gestión de pacientes y ficha sociodemográfica (SP1-22) | Espacio reducido para ubicar los datos del contacto de emergencia |
-| **28/08** | Prototipos de pacientes aprobados | Diseño de agenda interactiva y modal de agendamiento en Figma (SP1-28) | Decidir entre una vista de tabla simple o un calendario completo |
-| **29/08** | Prototipos de agenda en Figma | Maquetación en Angular de la lista y formulario de psicólogos (SP1-19) | Dificultades con componentes standalone y directivas de formulario |
-| **30/08** | Formulario de psicólogos funcional | Instalación y configuración de FullCalendar en Angular 17 | Problemas de compatibilidad con plugins de FullCalendar en Angular 17 |
-| **31/08** | Configuración de FullCalendar | Maquetación del contenedor de calendario con vistas mensual y semanal | Desalineación de eventos en resoluciones de pantalla medianas |
-| **01/09** | Ajustes CSS de calendario | Implementación del modal reactivo para agendar citas desde la web | Errores al capturar el clic sobre una franja horaria vacía |
-| **02/09** | Modal de agendamiento funcional | Diseño e implementación de la pantalla del Dashboard con Chart.js (SP1-25) | Curva de aprendizaje para integrar gráficos dinámicos con TypeScript |
-| **03/09** | Tarjetas de KPIs y gráficas | Maquetación del contenedor web para embeber Jitsi Meet (SP1-31) | Conflictos con el z-index de la barra de navegación sobre el iframe de Jitsi |
-| **04/09** | Solución de superposición de video | Implementación de filtros dinámicos por psicólogo en el calendario (SP1-28) | Retrasos en la renderización al alternar rápidamente entre terapeutas |
-| **05/09** | Optimización de detección de cambios | Pulido estético, responsividad y validación de estilos con el equipo | Cansancio por jornadas extendidas de depuración frontend |
-| **06/09** | Verificación visual completada | Entrega de componentes web para la revisión de sprint | Ninguno |
+|   Fecha   | ¿Qué hiciste ayer?                   | ¿Qué hiciste hoy?                                                             | Obstáculo                                                                    |
+| :-------: | :----------------------------------- | :---------------------------------------------------------------------------- | :--------------------------------------------------------------------------- |
+| **26/08** | Mantenimiento de vistas del Sprint 0 | Diseño en Figma de perfiles de psicólogos y disponibilidad (SP1-19)           | Búsqueda de una disposición limpia para mostrar múltiples horarios           |
+| **27/08** | Aprobación de wireframes en Figma    | Diseño de pantallas de gestión de pacientes y ficha sociodemográfica (SP1-22) | Espacio reducido para ubicar los datos del contacto de emergencia            |
+| **28/08** | Prototipos de pacientes aprobados    | Diseño de agenda interactiva y modal de agendamiento en Figma (SP1-28)        | Decidir entre una vista de tabla simple o un calendario completo             |
+| **29/08** | Prototipos de agenda en Figma        | Maquetación en Angular de la lista y formulario de psicólogos (SP1-19)        | Dificultades con componentes standalone y directivas de formulario           |
+| **30/08** | Formulario de psicólogos funcional   | Instalación y configuración de FullCalendar en Angular 17                     | Problemas de compatibilidad con plugins de FullCalendar en Angular 17        |
+| **31/08** | Configuración de FullCalendar        | Maquetación del contenedor de calendario con vistas mensual y semanal         | Desalineación de eventos en resoluciones de pantalla medianas                |
+| **01/09** | Ajustes CSS de calendario            | Implementación del modal reactivo para agendar citas desde la web             | Errores al capturar el clic sobre una franja horaria vacía                   |
+| **02/09** | Modal de agendamiento funcional      | Diseño e implementación de la pantalla del Dashboard con Chart.js (SP1-25)    | Curva de aprendizaje para integrar gráficos dinámicos con TypeScript         |
+| **03/09** | Tarjetas de KPIs y gráficas          | Maquetación del contenedor web para embeber Jitsi Meet (SP1-31)               | Conflictos con el z-index de la barra de navegación sobre el iframe de Jitsi |
+| **04/09** | Solución de superposición de video   | Implementación de filtros dinámicos por psicólogo en el calendario (SP1-28)   | Retrasos en la renderización al alternar rápidamente entre terapeutas        |
+| **05/09** | Optimización de detección de cambios | Pulido estético, responsividad y validación de estilos con el equipo          | Cansancio por jornadas extendidas de depuración frontend                     |
+| **06/09** | Verificación visual completada       | Entrega de componentes web para la revisión de sprint                         | Ninguno                                                                      |
 
 <br>
 
 #### Romero Saavedra Maria Ilse (Development Team - Backend / Lógica)
-| Fecha | ¿Qué hiciste ayer? | ¿Qué hiciste hoy? | Obstáculo |
-| :---: | :--- | :--- | :--- |
-| **26/08** | Revisión de permisos RBAC de Sprint 0 | Implementación de la lógica de validación de disponibilidad horaria (SP1-20) | Casos borde cuando un horario nocturno cruzaba la medianoche |
-| **27/08** | Reglas de franjas horarias | Algoritmo para dividir franjas de disponibilidad en bloques de sesión | Manejo de residuos de tiempo menores a la duración del bloque |
-| **28/08** | Pruebas de partición de bloques | Desarrollo del componente Angular para gestión de pacientes (SP1-23) | Dificultad para manejar formularios anidados para los datos del tutor |
-| **29/08** | Formulario de pacientes en Angular | Integración de endpoints de pacientes con servicios HTTP de Angular | Errores 401 por expiración no controlada del token JWT en frontend |
-| **30/08** | Renovación de tokens con refresh | Conexión del calendario FullCalendar con el endpoint de citas (SP1-28) | Mapeo de objetos de cita a la estructura requerida por FullCalendar |
-| **31/08** | Renderizado de eventos en calendario | Lógica de colores de eventos según el estado de la cita | Dificultades para actualizar el evento sin recargar toda la página |
-| **01/09** | Actualización reactiva de citas | Implementación de la política de cancelación de citas (anticipación 24h) | Manejo de zonas horarias entre servidor UTC y hora local boliviana |
-| **02/09** | Unificación de zona horaria | Desarrollo del motor de alertas tempranas por ausentismo (SP1-26) | Lógica para determinar si las inasistencias eran continuas o alternadas |
-| **03/09** | Consulta de inasistencias continuas | Implementación del panel de alertas clínicas prioritarias en Angular | Dudas sobre si el psicólogo debía ver alertas de otros profesionales |
-| **04/09** | Filtrado de alertas por rol | Pruebas de integración de la lógica de negocio con la base de datos | Tiempo ajustado por exámenes parciales universitarios |
-| **05/09** | Ajustes de validaciones backend | Apoyo en la ejecución de pruebas cruzadas con Rolando | Corrección de mensajes de error para que fueran comprensibles |
-| **06/09** | Documentación de rutas y lógica | Cierre del sprint y participación en la retrospectiva | Ninguno |
+|   Fecha   | ¿Qué hiciste ayer?                    | ¿Qué hiciste hoy?                                                            | Obstáculo                                                               |
+| :-------: | :------------------------------------ | :--------------------------------------------------------------------------- | :---------------------------------------------------------------------- |
+| **26/08** | Revisión de permisos RBAC de Sprint 0 | Implementación de la lógica de validación de disponibilidad horaria (SP1-20) | Casos borde cuando un horario nocturno cruzaba la medianoche            |
+| **27/08** | Reglas de franjas horarias            | Algoritmo para dividir franjas de disponibilidad en bloques de sesión        | Manejo de residuos de tiempo menores a la duración del bloque           |
+| **28/08** | Pruebas de partición de bloques       | Desarrollo del componente Angular para gestión de pacientes (SP1-23)         | Dificultad para manejar formularios anidados para los datos del tutor   |
+| **29/08** | Formulario de pacientes en Angular    | Integración de endpoints de pacientes con servicios HTTP de Angular          | Errores 401 por expiración no controlada del token JWT en frontend      |
+| **30/08** | Renovación de tokens con refresh      | Conexión del calendario FullCalendar con el endpoint de citas (SP1-28)       | Mapeo de objetos de cita a la estructura requerida por FullCalendar     |
+| **31/08** | Renderizado de eventos en calendario  | Lógica de colores de eventos según el estado de la cita                      | Dificultades para actualizar el evento sin recargar toda la página      |
+| **01/09** | Actualización reactiva de citas       | Implementación de la política de cancelación de citas (anticipación 24h)     | Manejo de zonas horarias entre servidor UTC y hora local boliviana      |
+| **02/09** | Unificación de zona horaria           | Desarrollo del motor de alertas tempranas por ausentismo (SP1-26)            | Lógica para determinar si las inasistencias eran continuas o alternadas |
+| **03/09** | Consulta de inasistencias continuas   | Implementación del panel de alertas clínicas prioritarias en Angular         | Dudas sobre si el psicólogo debía ver alertas de otros profesionales    |
+| **04/09** | Filtrado de alertas por rol           | Pruebas de integración de la lógica de negocio con la base de datos          | Tiempo ajustado por exámenes parciales universitarios                   |
+| **05/09** | Ajustes de validaciones backend       | Apoyo en la ejecución de pruebas cruzadas con Rolando                        | Corrección de mensajes de error para que fueran comprensibles           |
+| **06/09** | Documentación de rutas y lógica       | Cierre del sprint y participación en la retrospectiva                        | Ninguno                                                                 |
 
 <br>
 
 #### Velasco Soliz Rolando (Development Team - QA & Base de Datos)
-| Fecha | ¿Qué hiciste ayer? | ¿Qué hiciste hoy? | Obstáculo |
-| :---: | :--- | :--- | :--- |
-| **26/08** | Validación de base de datos Sprint 0 | Diseño de la matriz de pruebas de caja negra para el Sprint 1 | Falta de definiciones iniciales en los formatos de respuesta de citas |
-| **27/08** | Casos de prueba de psicólogos | Pruebas de partición de equivalencia sobre tarifas y números de colegiado | Dificultad para simular datos masivos de prueba en esquemas tenant |
-| **28/08** | Scripts de población de pruebas | Pruebas funcionales de endpoints de pacientes y validación de menores de edad | Detectado error: se permitía registrar menor sin teléfono de tutor (Reportado) |
-| **29/08** | Verificación de corrección de tutor | Elaboración de pruebas de valores límite para bloques de disponibilidad | Horarios de 0 minutos provocaban loops en el generador de slots |
-| **30/08** | Reporte de error de bloque cero | Pruebas de concurrencia y estrés sobre reserva de citas con Postman / JMeter | Alta latencia en PostgreSQL por falta de índices en fecha y hora |
-| **31/08** | Creación de índices en BD de prueba | Validación de detección de colisiones de horario (TP-38) | Ajuste necesario en los niveles de aislamiento de transacción |
-| **01/09** | Pruebas de agenda en Angular | Verificación del renderizado de eventos y cambios de estado en calendario | El color de citas canceladas no se distinguía de las inasistencias |
-| **02/09** | Pruebas de la app móvil Flutter | Pruebas de flujo completo de reserva de cita en emulador y teléfono físico | Error al girar la pantalla del móvil: overflow visual en el selector |
-| **03/09** | Reporte de overflow en Flutter | Pruebas de conexión de teleconsulta Jitsi Meet en navegador web (TP-46) | Bloqueo inicial de cámara por permisos del navegador no configurados |
-| **04/09** | Pruebas de teleconsulta móvil | Pruebas de reconexión ante pérdida de red y finalización de llamada | Comprobación de que la duración real se almacene correctamente en la BD |
-| **05/09** | Ejecución integral de pruebas | Consolidación de los casos de prueba funcionales (SP1-21, SP1-27, SP1-30) | Jornada extendida hasta la medianoche para certificar la entrega |
-| **06/09** | Reporte final de calidad | Emisión del informe de pruebas: 30/30 aprobadas y métricas del Sprint 1 | Ninguno |
+|   Fecha   | ¿Qué hiciste ayer?                   | ¿Qué hiciste hoy?                                                             | Obstáculo                                                                      |
+| :-------: | :----------------------------------- | :---------------------------------------------------------------------------- | :----------------------------------------------------------------------------- |
+| **26/08** | Validación de base de datos Sprint 0 | Diseño de la matriz de pruebas de caja negra para el Sprint 1                 | Falta de definiciones iniciales en los formatos de respuesta de citas          |
+| **27/08** | Casos de prueba de psicólogos        | Pruebas de partición de equivalencia sobre tarifas y números de colegiado     | Dificultad para simular datos masivos de prueba en esquemas tenant             |
+| **28/08** | Scripts de población de pruebas      | Pruebas funcionales de endpoints de pacientes y validación de menores de edad | Detectado error: se permitía registrar menor sin teléfono de tutor (Reportado) |
+| **29/08** | Verificación de corrección de tutor  | Elaboración de pruebas de valores límite para bloques de disponibilidad       | Horarios de 0 minutos provocaban loops en el generador de slots                |
+| **30/08** | Reporte de error de bloque cero      | Pruebas de concurrencia y estrés sobre reserva de citas con Postman / JMeter  | Alta latencia en PostgreSQL por falta de índices en fecha y hora               |
+| **31/08** | Creación de índices en BD de prueba  | Validación de detección de colisiones de horario (TP-38)                      | Ajuste necesario en los niveles de aislamiento de transacción                  |
+| **01/09** | Pruebas de agenda en Angular         | Verificación del renderizado de eventos y cambios de estado en calendario     | El color de citas canceladas no se distinguía de las inasistencias             |
+| **02/09** | Pruebas de la app móvil Flutter      | Pruebas de flujo completo de reserva de cita en emulador y teléfono físico    | Error al girar la pantalla del móvil: overflow visual en el selector           |
+| **03/09** | Reporte de overflow en Flutter       | Pruebas de conexión de teleconsulta Jitsi Meet en navegador web (TP-46)       | Bloqueo inicial de cámara por permisos del navegador no configurados           |
+| **04/09** | Pruebas de teleconsulta móvil        | Pruebas de reconexión ante pérdida de red y finalización de llamada           | Comprobación de que la duración real se almacene correctamente en la BD        |
+| **05/09** | Ejecución integral de pruebas        | Consolidación de los casos de prueba funcionales (SP1-21, SP1-27, SP1-30)     | Jornada extendida hasta la medianoche para certificar la entrega               |
+| **06/09** | Reporte final de calidad             | Emisión del informe de pruebas: 30/30 aprobadas y métricas del Sprint 1       | Ninguno                                                                        |
 
 ---
 
 ## 4.4 SPRINT REVIEW (REVISIÓN DE SPRINT)
 
-| **Revisión de Sprint :** Sprint 1 |
-| :--- |
+| **Revisión de Sprint :** Sprint 1                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Objetivos del Sprint**<br>*(Objetivos establecidos durante la planificación del sprint y evaluación del progreso como equipo)*<br>• **Gestión de Profesionales y Disponibilidad:** Implementar el catálogo de psicólogos, especialidades clínicas y la configuración de franjas horarias semanales.<br>• **Expediente de Pacientes Web y Móvil:** Desarrollar el alta y consulta de pacientes en plataforma web (Angular 17) y app móvil (Flutter 3), incluyendo reglas para menores de edad.<br>• **Motor de Citas y Prevención de Colisiones:** Implementar la agenda interactiva con control de solapamientos mediante concurrencia pesimista en PostgreSQL.<br>• **Teleconsulta Integrada (Jitsi Meet):** Habilitar sesiones virtuales seguras con audio/video HD mediante WebRTC tanto en navegador web como en smartphones.<br>• **Dashboard Operativo y Alertas:** Construir el panel de métricas clave (KPIs de citas, ausentismo y ocupación) y disparadores de alertas por inasistencias consecutivas.<br>• **Evaluación del equipo:** **100% de los objetivos cumplidos.** Las 15 tareas técnicas fueron finalizadas y validadas mediante pruebas funcionales aprobadas por el Product Owner. |
 
 <br>
 
-| **Participantes** | |
-| :--- | :--- |
-| **Nombre** | **Rol** |
-| **Condori Diaz Marilyn Esther** | Product Owner |
-| **Delgado Rojas Alberto Caleb** | Scrum Master & Desarrollador Móvil Flutter |
-| **Mujica Vallejos Andy Mauricio** | Development Team (Fullstack, Backend Django & PostgreSQL) |
-| **Larrazabal Rojas Julio Cesar** | Development Team (Frontend Angular & UI/UX Designer) |
-| **Romero Saavedra Maria Ilse** | Development Team (Backend Lógica & Frontend Web) |
-| **Velasco Soliz Rolando** | Development Team (Aseguramiento de Calidad - QA & Base de Datos) |
+| **Participantes**                 |                                                                  |
+| :-------------------------------- | :--------------------------------------------------------------- |
+| **Nombre**                        | **Rol**                                                          |
+| **Condori Diaz Marilyn Esther**   | Product Owner                                                    |
+| **Delgado Rojas Alberto Caleb**   | Scrum Master & Desarrollador Móvil Flutter                       |
+| **Mujica Vallejos Andy Mauricio** | Development Team (Fullstack, Backend Django & PostgreSQL)        |
+| **Larrazabal Rojas Julio Cesar**  | Development Team (Frontend Angular & UI/UX Designer)             |
+| **Romero Saavedra Maria Ilse**    | Development Team (Backend Lógica & Frontend Web)                 |
+| **Velasco Soliz Rolando**         | Development Team (Aseguramiento de Calidad - QA & Base de Datos) |
 
 <br>
 
-| **Presentación del incremento** | |
-| :--- | :--- |
-| **Función presentada** *(Elemento de trabajo presentado)* | **Retroalimentación** *(Preguntas, observaciones y comentarios del Product Owner)* |
-| **Directorio de Psicólogos y Matriz de Disponibilidad** *(HU-11, HU-12)* | **Aprobado.** La generación automática de bloques a partir del horario laboral simplifica enormemente la gestión. *Sugerencia:* Permitir en un futuro sprint marcar días feriados o bloqueos excepcionales por vacaciones. |
-| **Expediente de Pacientes y Perfil Móvil** *(HU-13, HU-14)* | **Aprobado.** La validación de tutores para menores de edad cumple con las normas éticas de salud mental. La app móvil sincroniza inmediatamente con el servidor del centro. |
-| **Agenda Interactiva y Motor de Reserva de Citas** *(HU-15, HU-16, HU-17, HU-22)* | **Aprobado con distinción.** Se probó en vivo el intento de doble reserva simultánea y el backend bloqueó la colisión correctamente. La vista semanal con códigos de color es altamente intuitiva. |
-| **Sala de Teleconsulta Virtual con Jitsi Meet** *(HU-18, HU-19)* | **Aprobado con felicitación.** La videollamada funcionó fluidamente conectando a un psicólogo en PC y un paciente en teléfono móvil sin requerir software adicional ni enlaces externos. |
-| **Dashboard de KPIs y Alertas de Ausentismo** *(HU-20, HU-21)* | **Aprobado.** Los indicadores de ocupación y tasa de no-show reflejan fielmente la realidad del centro. La alerta ante 2 inasistencias consecutivas fue catalogada como muy valiosa para la retención clínica. |
-| **Certificación de Calidad y Pruebas** *(SP1-21, SP1-24, SP1-27, SP1-30, SP1-33)* | **Aprobado.** Casos de prueba superados exitosamente sin defectos críticos pendientes. |
+| **Presentación del incremento**                                                   |                                                                                                                                                                                                                            |
+| :-------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Función presentada** *(Elemento de trabajo presentado)*                         | **Retroalimentación** *(Preguntas, observaciones y comentarios del Product Owner)*                                                                                                                                         |
+| **Directorio de Psicólogos y Matriz de Disponibilidad** *(HU-11, HU-12)*          | **Aprobado.** La generación automática de bloques a partir del horario laboral simplifica enormemente la gestión. *Sugerencia:* Permitir en un futuro sprint marcar días feriados o bloqueos excepcionales por vacaciones. |
+| **Expediente de Pacientes y Perfil Móvil** *(HU-13, HU-14)*                       | **Aprobado.** La validación de tutores para menores de edad cumple con las normas éticas de salud mental. La app móvil sincroniza inmediatamente con el servidor del centro.                                               |
+| **Agenda Interactiva y Motor de Reserva de Citas** *(HU-15, HU-16, HU-17, HU-22)* | **Aprobado con distinción.** Se probó en vivo el intento de doble reserva simultánea y el backend bloqueó la colisión correctamente. La vista semanal con códigos de color es altamente intuitiva.                         |
+| **Sala de Teleconsulta Virtual con Jitsi Meet** *(HU-18, HU-19)*                  | **Aprobado con felicitación.** La videollamada funcionó fluidamente conectando a un psicólogo en PC y un paciente en teléfono móvil sin requerir software adicional ni enlaces externos.                                   |
+| **Dashboard de KPIs y Alertas de Ausentismo** *(HU-20, HU-21)*                    | **Aprobado.** Los indicadores de ocupación y tasa de no-show reflejan fielmente la realidad del centro. La alerta ante 2 inasistencias consecutivas fue catalogada como muy valiosa para la retención clínica.             |
+| **Certificación de Calidad y Pruebas** *(SP1-21, SP1-24, SP1-27, SP1-30, SP1-33)* | **Aprobado.** Casos de prueba superados exitosamente sin defectos críticos pendientes.                                                                                                                                     |
 
 ---
 
 ## 4.5 SPRINT RETROSPECTIVE (RETROSPECTIVA DE SPRINT)
 
-| **Retrospectiva de Sprint :** Sprint 1 | |
-| :--- | :--- |
-| **Fecha :** 06 de septiembre de 2026 | |
-| **Facilitador :** Delgado Rojas Alberto Caleb (Scrum Master) | |
-| **Objetivo :** | Analizar el desempeño del equipo durante el Sprint 1, reflexionar sobre las dificultades con las tecnologías WebRTC y móviles, evaluar el impacto de la carga académica universitaria y definir compromisos concretos de mejora para el Sprint 2. |
-| **Nombres de asistentes :** | • **Condori Diaz Marilyn Esther** (Product Owner)<br>• **Delgado Rojas Alberto Caleb** (Scrum Master)<br>• **Mujica Vallejos Andy Mauricio** (Development Team)<br>• **Larrazabal Rojas Julio Cesar** (Development Team)<br>• **Romero Saavedra Maria Ilse** (Development Team)<br>• **Velasco Soliz Rolando** (Development Team) |
-| **Temas a tratar :** | • Integración exitosa pero desafiante de **Jitsi Meet** en web y app móvil Flutter.<br>• Manejo de concurrencia y zonas horarias en la programación de citas.<br>• Impacto de la presión de tiempo y cruce de horarios con materias de la universidad.<br>• Lecciones aprendidas y preparación para el Sprint 2 (Historia clínica y formularios previos). |
+| **Retrospectiva de Sprint :** Sprint 1                       |                                                                                                                                                                                                                                                                                                                                                           |
+| :----------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Fecha :** 06 de septiembre de 2026                         |                                                                                                                                                                                                                                                                                                                                                           |
+| **Facilitador :** Delgado Rojas Alberto Caleb (Scrum Master) |                                                                                                                                                                                                                                                                                                                                                           |
+| **Objetivo :**                                               | Analizar el desempeño del equipo durante el Sprint 1, reflexionar sobre las dificultades con las tecnologías WebRTC y móviles, evaluar el impacto de la carga académica universitaria y definir compromisos concretos de mejora para el Sprint 2.                                                                                                         |
+| **Nombres de asistentes :**                                  | • **Condori Diaz Marilyn Esther** (Product Owner)<br>• **Delgado Rojas Alberto Caleb** (Scrum Master)<br>• **Mujica Vallejos Andy Mauricio** (Development Team)<br>• **Larrazabal Rojas Julio Cesar** (Development Team)<br>• **Romero Saavedra Maria Ilse** (Development Team)<br>• **Velasco Soliz Rolando** (Development Team)                         |
+| **Temas a tratar :**                                         | • Integración exitosa pero desafiante de **Jitsi Meet** en web y app móvil Flutter.<br>• Manejo de concurrencia y zonas horarias en la programación de citas.<br>• Impacto de la presión de tiempo y cruce de horarios con materias de la universidad.<br>• Lecciones aprendidas y preparación para el Sprint 2 (Historia clínica y formularios previos). |
 
 <br>
 
-| **Discusión** | | |
-| :--- | :--- | :--- |
-| **¿Qué salió bien?** | **¿Qué no salió bien?** | **¿Qué haremos de manera diferente?** |
+| **Discusión**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **¿Qué salió bien?**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | **¿Qué no salió bien?**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | **¿Qué haremos de manera diferente?**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | • **La teleconsulta superó las expectativas:** Logramos integrar Jitsi Meet directamente en Angular y Flutter sin depender de enlaces externos como Zoom, garantizando privacidad.<br>• **El motor de citas es sólido:** La concurrencia transaccional (`SELECT FOR UPDATE`) impidió colisiones de horario en pruebas reales de estrés.<br>• **Flutter respondió excelente:** Se demostró la capacidad de conectar la app móvil con el backend multi-tenant sin fricciones.<br>• **El pair programming funcionó:** La colaboración directa entre frontend y backend agilizó la conexión de endpoints. | • **Subestimamos la curva de Jitsi y Gradle en Flutter:** Perdimos casi un día entero batallando con incompatibilidades de versiones de Kotlin y dependencias de Android en el SDK móvil.<br>• **Dolores de cabeza con zonas horarias:** Inicialmente las citas se guardaban en UTC y se mostraban desfasadas por 4 horas en la hora local boliviana (`America/La_Paz`).<br>• **Poco tiempo para descanso:** Dejamos la integración final de la teleconsulta para los últimos 3 días, generando jornadas de trabajo hasta la madrugada. | • **Estandarizar entornos antes de codificar:** Crear scripts de compilación para Flutter y dependencias de Android que todos tengan verificados antes del inicio del sprint.<br>• **Manejo uniforme de fechas:** Configurar Django y Angular para manejar timestamps ISO con timezone explícito (`America/La_Paz`) desde el diseño de modelos.<br>• **Adelantar pruebas de integración móvil:** Comenzar las pruebas de integración en dispositivos físicos desde la mitad del sprint y no al final.<br>• **Preparar con anticipación el modelo del Sprint 2:** Diseñar el esquema de historia clínica psicológica y formularios previos antes del Sprint Planning. |
 
 ---
@@ -1750,21 +1907,21 @@ El **Burndown Chart** refleja el ritmo con el que el equipo fue consumiendo las 
 
 **Datos diarios de seguimiento (Burndown - Sprint 1):**
 
-| Día | Fecha | Horas Restantes (Línea Ideal) | Horas Restantes (Línea Real) | Horas Ejecutadas en el Día | Horas Acumuladas |
-| :---: | :---: | :---: | :---: | :---: | :---: |
-| **Día 0** | Mié 26/08 | 73 hr | 73 hr | 0 hr | 0 hr |
-| **Día 1** | Jue 27/08 | 67 hr | 69 hr | 4 hr | 4 hr |
-| **Día 2** | Vie 28/08 | 61 hr | 64 hr | 5 hr | 9 hr |
-| **Día 3** | Sáb 29/08 | 55 hr | 58 hr | 6 hr | 15 hr |
-| **Día 4** | Dom 30/08 | 49 hr | 52 hr | 6 hr | 21 hr |
-| **Día 5** | Lun 31/08 | 43 hr | 45 hr | 7 hr | 28 hr |
-| **Día 6** | Mar 01/09 | 37 hr | 38 hr | 7 hr | 35 hr |
-| **Día 7** | Mié 02/09 | 30 hr | 29 hr | 9 hr | 44 hr |
-| **Día 8** | Jue 03/09 | 24 hr | 21 hr | 8 hr | 52 hr |
-| **Día 9** | Vie 04/09 | 18 hr | 14 hr | 7 hr | 59 hr |
-| **Día 10** | Sáb 05/09 | 12 hr | 8 hr | 6 hr | 65 hr |
-| **Día 11** | Dom 06/09 | 6 hr | 3 hr | 5 hr | 70 hr |
-| **Día 12** | Dom 06/09 (Cierre) | 0 hr | 0 hr | 3 hr | 73 hr (Reales: 80h) |
+|    Día     |       Fecha        | Horas Restantes (Línea Ideal) | Horas Restantes (Línea Real) | Horas Ejecutadas en el Día |  Horas Acumuladas   |
+| :--------: | :----------------: | :---------------------------: | :--------------------------: | :------------------------: | :-----------------: |
+| **Día 0**  |     Mié 26/08      |             73 hr             |            73 hr             |            0 hr            |        0 hr         |
+| **Día 1**  |     Jue 27/08      |             67 hr             |            69 hr             |            4 hr            |        4 hr         |
+| **Día 2**  |     Vie 28/08      |             61 hr             |            64 hr             |            5 hr            |        9 hr         |
+| **Día 3**  |     Sáb 29/08      |             55 hr             |            58 hr             |            6 hr            |        15 hr        |
+| **Día 4**  |     Dom 30/08      |             49 hr             |            52 hr             |            6 hr            |        21 hr        |
+| **Día 5**  |     Lun 31/08      |             43 hr             |            45 hr             |            7 hr            |        28 hr        |
+| **Día 6**  |     Mar 01/09      |             37 hr             |            38 hr             |            7 hr            |        35 hr        |
+| **Día 7**  |     Mié 02/09      |             30 hr             |            29 hr             |            9 hr            |        44 hr        |
+| **Día 8**  |     Jue 03/09      |             24 hr             |            21 hr             |            8 hr            |        52 hr        |
+| **Día 9**  |     Vie 04/09      |             18 hr             |            14 hr             |            7 hr            |        59 hr        |
+| **Día 10** |     Sáb 05/09      |             12 hr             |             8 hr             |            6 hr            |        65 hr        |
+| **Día 11** |     Dom 06/09      |             6 hr              |             3 hr             |            5 hr            |        70 hr        |
+| **Día 12** | Dom 06/09 (Cierre) |             0 hr              |             0 hr             |            3 hr            | 73 hr (Reales: 80h) |
 
 <br>
 
@@ -1799,21 +1956,21 @@ El **Burnup Chart** muestra el avance acumulativo de las **15 tareas terminadas 
 
 **Datos acumulados de progreso (Burnup - Sprint 1):**
 
-| Día | Fecha | Alcance Total (Tareas) | Tareas Terminadas (Done) | % Avance Acumulado | Estado del Sprint |
-| :---: | :---: | :---: | :---: | :---: | :--- |
-| **Día 0** | 26/08 | 15 | 0 | 0% | Planificación inicial del Sprint 1 |
-| **Día 1** | 27/08 | 15 | 1 | 7% | Diseñar interfaz de psicólogos (SP1-19) |
-| **Día 2** | 28/08 | 15 | 2 | 13% | Pruebas de psicólogos (SP1-21) |
-| **Día 3** | 29/08 | 15 | 3 | 20% | Diseñar interfaz de pacientes (SP1-22) |
-| **Día 4** | 30/08 | 15 | 5 | 33% | Backend psicólogos y pruebas pacientes (SP1-20, SP1-24) |
-| **Día 5** | 31/08 | 15 | 7 | 47% | Backend pacientes y diseño Dashboard (SP1-23, SP1-25) |
-| **Día 6** | 01/09 | 15 | 8 | 53% | Diseñar interfaz de agenda y citas (SP1-28) |
-| **Día 7** | 02/09 | 15 | 10 | 67% | Dashboard KPIs y pruebas de Dashboard (SP1-26, SP1-27) |
-| **Día 8** | 03/09 | 15 | 11 | 73% | Diseñar interfaz videoconferencias (SP1-31) |
-| **Día 9** | 04/09 | 15 | 13 | 87% | Backend citas y pruebas de agenda (SP1-29, SP1-30) |
-| **Día 10** | 05/09 | 15 | 14 | 93% | Integración de videoconferencias Jitsi (SP1-32) |
-| **Día 11** | 06/09 | 15 | 15 | 100% | Pruebas finales de teleconsulta con PO (SP1-33) |
-| **Día 12** | 06/09 | 15 | 15 | 100% | Cierre formal y entrega del incremento |
+|    Día     | Fecha | Alcance Total (Tareas) | Tareas Terminadas (Done) | % Avance Acumulado | Estado del Sprint                                       |
+| :--------: | :---: | :--------------------: | :----------------------: | :----------------: | :------------------------------------------------------ |
+| **Día 0**  | 26/08 |           15           |            0             |         0%         | Planificación inicial del Sprint 1                      |
+| **Día 1**  | 27/08 |           15           |            1             |         7%         | Diseñar interfaz de psicólogos (SP1-19)                 |
+| **Día 2**  | 28/08 |           15           |            2             |        13%         | Pruebas de psicólogos (SP1-21)                          |
+| **Día 3**  | 29/08 |           15           |            3             |        20%         | Diseñar interfaz de pacientes (SP1-22)                  |
+| **Día 4**  | 30/08 |           15           |            5             |        33%         | Backend psicólogos y pruebas pacientes (SP1-20, SP1-24) |
+| **Día 5**  | 31/08 |           15           |            7             |        47%         | Backend pacientes y diseño Dashboard (SP1-23, SP1-25)   |
+| **Día 6**  | 01/09 |           15           |            8             |        53%         | Diseñar interfaz de agenda y citas (SP1-28)             |
+| **Día 7**  | 02/09 |           15           |            10            |        67%         | Dashboard KPIs y pruebas de Dashboard (SP1-26, SP1-27)  |
+| **Día 8**  | 03/09 |           15           |            11            |        73%         | Diseñar interfaz videoconferencias (SP1-31)             |
+| **Día 9**  | 04/09 |           15           |            13            |        87%         | Backend citas y pruebas de agenda (SP1-29, SP1-30)      |
+| **Día 10** | 05/09 |           15           |            14            |        93%         | Integración de videoconferencias Jitsi (SP1-32)         |
+| **Día 11** | 06/09 |           15           |            15            |        100%        | Pruebas finales de teleconsulta con PO (SP1-33)         |
+| **Día 12** | 06/09 |           15           |            15            |        100%        | Cierre formal y entrega del incremento                  |
 
 <br>
 
@@ -1850,24 +2007,24 @@ Tareas
 ### 4.7.1 Datos de Esfuerzo por Tarea – Estimado vs. Real
 En cumplimiento estricto con las directrices metodológicas, la siguiente tabla consolida las horas estimadas frente a las horas reales ejecutadas para las 15 tareas del Sprint Backlog (NRO 19 al 33), detallando la desviación individual y su causa técnica:
 
-| NRO | ID | Tarea del Sprint Backlog (Product Backlog) | Horas Estimadas | Horas Reales | Desviación | Responsable | Causa de la Variación Técnica |
-| :---: | :---: | :--- | :---: | :---: | :---: | :--- | :--- |
-| **19** | **SP1-19** | Diseñar interfaz gestión psicólogos y perfiles | 4 hr | 4 hr | 0 hr | Julio Cesar Larrazabal | Prototipo validado rápidamente con el PO |
-| **20** | **SP1-20** | Implementar psicólogos, especialidades y disponibilidad | 8 hr | 10 hr | +2 hr | Andy Mujica | Complejidad en lógica de franjas y validaciones |
-| **21** | **SP1-21** | Realizar pruebas de la gestión de psicólogos | 3 hr | 3 hr | 0 hr | Rolando Velasco | Casos de prueba de número de colegiado y tarifas |
-| **22** | **SP1-22** | Diseñar interfaz para la gestión de pacientes | 4 hr | 4 hr | 0 hr | Julio Cesar Larrazabal | Adaptación de formularios web y móviles en Figma |
-| **23** | **SP1-23** | Implementar registro, actualización y consulta pacientes | 8 hr | 9 hr | +1 hr | Maria Ilse Romero | Validación condicional de tutor en menores de edad |
-| **24** | **SP1-24** | Realizar pruebas de la gestión de pacientes | 3 hr | 3 hr | 0 hr | Esther Condori | Certificación de unicidad de CI por tenant |
-| **25** | **SP1-25** | Diseñar interfaz del Dashboard administrativo y clínico | 4 hr | 4 hr | 0 hr | Julio Cesar Larrazabal | Distribución de tarjetas de KPIs y gráficos |
-| **26** | **SP1-26** | Implementar Dashboard con indicadores y alertas | 8 hr | 9 hr | +1 hr | Maria Ilse Romero | Consultas agregadas con ORM en esquema tenant |
-| **27** | **SP1-27** | Realizar pruebas del Dashboard e indicadores | 3 hr | 3 hr | 0 hr | Rolando Velasco | Verificación de filtros de fecha y cálculo de no-show |
-| **28** | **SP1-28** | Diseñar interfaz para agenda y gestión de citas | 4 hr | 4 hr | 0 hr | Julio Cesar Larrazabal | Guías visuales de estado y vista semanal |
-| **29** | **SP1-29** | Implementar reserva, cancelación y reprogramación citas | 8 hr | 10 hr | +2 hr | Andy Mujica | Concurrencia pesimista SELECT FOR UPDATE y deadlocks |
-| **30** | **SP1-30** | Realizar pruebas de agenda y gestión de citas | 3 hr | 3 hr | 0 hr | Rolando Velasco | Pruebas de estrés y colisiones horarias |
-| **31** | **SP1-31** | Diseñar interfaz para sesiones virtuales/teleconsulta | 3 hr | 3 hr | 0 hr | Julio Cesar Larrazabal | Contenedor responsivo y controles de llamada |
-| **32** | **SP1-32** | Implementar integración de videoconferencias (Jitsi) | 7 hr | 8 hr | +1 hr | Alberto Caleb Delgado | Configuración de WebRTC y permisos de cámara en Android |
-| **33** | **SP1-33** | Realizar pruebas de acceso y teleconsulta | 3 hr | 3 hr | 0 hr | Esther Condori | Verificación de conexión cruzada web-móvil |
-| **TOTAL** | — | **Esfuerzo Total del Sprint 1** | **73 hr** | **80 hr** | **+7 hr (+9.6%)** | **Equipo SCRUM** | **Sobreesfuerzo controlado y absorbido** |
+|    NRO    |     ID     | Tarea del Sprint Backlog (Product Backlog)               | Horas Estimadas | Horas Reales |    Desviación     | Responsable            | Causa de la Variación Técnica                           |
+| :-------: | :--------: | :------------------------------------------------------- | :-------------: | :----------: | :---------------: | :--------------------- | :------------------------------------------------------ |
+|  **19**   | **SP1-19** | Diseñar interfaz gestión psicólogos y perfiles           |      4 hr       |     4 hr     |       0 hr        | Julio Cesar Larrazabal | Prototipo validado rápidamente con el PO                |
+|  **20**   | **SP1-20** | Implementar psicólogos, especialidades y disponibilidad  |      8 hr       |    10 hr     |       +2 hr       | Andy Mujica            | Complejidad en lógica de franjas y validaciones         |
+|  **21**   | **SP1-21** | Realizar pruebas de la gestión de psicólogos             |      3 hr       |     3 hr     |       0 hr        | Rolando Velasco        | Casos de prueba de número de colegiado y tarifas        |
+|  **22**   | **SP1-22** | Diseñar interfaz para la gestión de pacientes            |      4 hr       |     4 hr     |       0 hr        | Julio Cesar Larrazabal | Adaptación de formularios web y móviles en Figma        |
+|  **23**   | **SP1-23** | Implementar registro, actualización y consulta pacientes |      8 hr       |     9 hr     |       +1 hr       | Maria Ilse Romero      | Validación condicional de tutor en menores de edad      |
+|  **24**   | **SP1-24** | Realizar pruebas de la gestión de pacientes              |      3 hr       |     3 hr     |       0 hr        | Esther Condori         | Certificación de unicidad de CI por tenant              |
+|  **25**   | **SP1-25** | Diseñar interfaz del Dashboard administrativo y clínico  |      4 hr       |     4 hr     |       0 hr        | Julio Cesar Larrazabal | Distribución de tarjetas de KPIs y gráficos             |
+|  **26**   | **SP1-26** | Implementar Dashboard con indicadores y alertas          |      8 hr       |     9 hr     |       +1 hr       | Maria Ilse Romero      | Consultas agregadas con ORM en esquema tenant           |
+|  **27**   | **SP1-27** | Realizar pruebas del Dashboard e indicadores             |      3 hr       |     3 hr     |       0 hr        | Rolando Velasco        | Verificación de filtros de fecha y cálculo de no-show   |
+|  **28**   | **SP1-28** | Diseñar interfaz para agenda y gestión de citas          |      4 hr       |     4 hr     |       0 hr        | Julio Cesar Larrazabal | Guías visuales de estado y vista semanal                |
+|  **29**   | **SP1-29** | Implementar reserva, cancelación y reprogramación citas  |      8 hr       |    10 hr     |       +2 hr       | Andy Mujica            | Concurrencia pesimista SELECT FOR UPDATE y deadlocks    |
+|  **30**   | **SP1-30** | Realizar pruebas de agenda y gestión de citas            |      3 hr       |     3 hr     |       0 hr        | Rolando Velasco        | Pruebas de estrés y colisiones horarias                 |
+|  **31**   | **SP1-31** | Diseñar interfaz para sesiones virtuales/teleconsulta    |      3 hr       |     3 hr     |       0 hr        | Julio Cesar Larrazabal | Contenedor responsivo y controles de llamada            |
+|  **32**   | **SP1-32** | Implementar integración de videoconferencias (Jitsi)     |      7 hr       |     8 hr     |       +1 hr       | Alberto Caleb Delgado  | Configuración de WebRTC y permisos de cámara en Android |
+|  **33**   | **SP1-33** | Realizar pruebas de acceso y teleconsulta                |      3 hr       |     3 hr     |       0 hr        | Esther Condori         | Verificación de conexión cruzada web-móvil              |
+| **TOTAL** |     —      | **Esfuerzo Total del Sprint 1**                          |    **73 hr**    |  **80 hr**   | **+7 hr (+9.6%)** | **Equipo SCRUM**       | **Sobreesfuerzo controlado y absorbido**                |
 
 ---
 
@@ -1910,23 +2067,23 @@ El Scrum Taskboard refleja el flujo de trabajo de las **15 tareas del Sprint 1**
 
 #### Scrum Taskboard – Estado Final al Cierre del Sprint 1
 
-| Product Backlog | Por hacer (To Do) | En progreso (Doing) | Terminado (Done) |
-| :--- | :---: | :---: | :--- |
-| **[SP1-19]** Diseñar interfaz gestión psicólogos | *(vacío)* | *(vacío)* | ✓ **SP1-19:** Diseño perfiles psicólogos *(Julio Larrazabal)* |
-| **[SP1-20]** Implementar psicólogos y disponibilidad | *(vacío)* | *(vacío)* | ✓ **SP1-20:** Backend psicólogos y disponibilidad *(Andy Mujica)* |
-| **[SP1-21]** Realizar pruebas gestión psicólogos | *(vacío)* | *(vacío)* | ✓ **SP1-21:** Pruebas psicólogos *(Rolando Velasco)* |
-| **[SP1-22]** Diseñar interfaz gestión pacientes | *(vacío)* | *(vacío)* | ✓ **SP1-22:** Diseño UI pacientes *(Julio Larrazabal)* |
-| **[SP1-23]** Implementar registro/consulta pacientes | *(vacío)* | *(vacío)* | ✓ **SP1-23:** Backend pacientes *(Maria Ilse Romero)* |
-| **[SP1-24]** Realizar pruebas gestión pacientes | *(vacío)* | *(vacío)* | ✓ **SP1-24:** Pruebas pacientes *(Esther Condori)* |
-| **[SP1-25]** Diseñar interfaz Dashboard KPIs | *(vacío)* | *(vacío)* | ✓ **SP1-25:** Diseño Dashboard *(Julio Larrazabal)* |
-| **[SP1-26]** Implementar Dashboard indicadores | *(vacío)* | *(vacío)* | ✓ **SP1-26:** Dashboard indicadores *(Maria Ilse Romero)* |
-| **[SP1-27]** Realizar pruebas del Dashboard | *(vacío)* | *(vacío)* | ✓ **SP1-27:** Pruebas Dashboard *(Rolando Velasco)* |
-| **[SP1-28]** Diseñar interfaz agenda y citas | *(vacío)* | *(vacío)* | ✓ **SP1-28:** Diseño agenda y citas *(Julio Larrazabal)* |
-| **[SP1-29]** Implementar reserva/cancelación citas | *(vacío)* | *(vacío)* | ✓ **SP1-29:** Motor backend citas *(Andy Mujica)* |
-| **[SP1-30]** Realizar pruebas de agenda y citas | *(vacío)* | *(vacío)* | ✓ **SP1-30:** Pruebas agenda *(Rolando Velasco)* |
-| **[SP1-31]** Diseñar interfaz sesiones virtuales | *(vacío)* | *(vacío)* | ✓ **SP1-31:** Diseño teleconsulta *(Julio Larrazabal)* |
-| **[SP1-32]** Implementar integración Jitsi Meet | *(vacío)* | *(vacío)* | ✓ **SP1-32:** Teleconsulta WebRTC *(Alberto Caleb Delgado)* |
-| **[SP1-33]** Realizar pruebas acceso teleconsulta | *(vacío)* | *(vacío)* | ✓ **SP1-33:** Pruebas teleconsulta PO *(Esther Condori)* |
+| Product Backlog                                      | Por hacer (To Do) | En progreso (Doing) | Terminado (Done)                                                  |
+| :--------------------------------------------------- | :---------------: | :-----------------: | :---------------------------------------------------------------- |
+| **[SP1-19]** Diseñar interfaz gestión psicólogos     |     *(vacío)*     |      *(vacío)*      | ✓ **SP1-19:** Diseño perfiles psicólogos *(Julio Larrazabal)*     |
+| **[SP1-20]** Implementar psicólogos y disponibilidad |     *(vacío)*     |      *(vacío)*      | ✓ **SP1-20:** Backend psicólogos y disponibilidad *(Andy Mujica)* |
+| **[SP1-21]** Realizar pruebas gestión psicólogos     |     *(vacío)*     |      *(vacío)*      | ✓ **SP1-21:** Pruebas psicólogos *(Rolando Velasco)*              |
+| **[SP1-22]** Diseñar interfaz gestión pacientes      |     *(vacío)*     |      *(vacío)*      | ✓ **SP1-22:** Diseño UI pacientes *(Julio Larrazabal)*            |
+| **[SP1-23]** Implementar registro/consulta pacientes |     *(vacío)*     |      *(vacío)*      | ✓ **SP1-23:** Backend pacientes *(Maria Ilse Romero)*             |
+| **[SP1-24]** Realizar pruebas gestión pacientes      |     *(vacío)*     |      *(vacío)*      | ✓ **SP1-24:** Pruebas pacientes *(Esther Condori)*                |
+| **[SP1-25]** Diseñar interfaz Dashboard KPIs         |     *(vacío)*     |      *(vacío)*      | ✓ **SP1-25:** Diseño Dashboard *(Julio Larrazabal)*               |
+| **[SP1-26]** Implementar Dashboard indicadores       |     *(vacío)*     |      *(vacío)*      | ✓ **SP1-26:** Dashboard indicadores *(Maria Ilse Romero)*         |
+| **[SP1-27]** Realizar pruebas del Dashboard          |     *(vacío)*     |      *(vacío)*      | ✓ **SP1-27:** Pruebas Dashboard *(Rolando Velasco)*               |
+| **[SP1-28]** Diseñar interfaz agenda y citas         |     *(vacío)*     |      *(vacío)*      | ✓ **SP1-28:** Diseño agenda y citas *(Julio Larrazabal)*          |
+| **[SP1-29]** Implementar reserva/cancelación citas   |     *(vacío)*     |      *(vacío)*      | ✓ **SP1-29:** Motor backend citas *(Andy Mujica)*                 |
+| **[SP1-30]** Realizar pruebas de agenda y citas      |     *(vacío)*     |      *(vacío)*      | ✓ **SP1-30:** Pruebas agenda *(Rolando Velasco)*                  |
+| **[SP1-31]** Diseñar interfaz sesiones virtuales     |     *(vacío)*     |      *(vacío)*      | ✓ **SP1-31:** Diseño teleconsulta *(Julio Larrazabal)*            |
+| **[SP1-32]** Implementar integración Jitsi Meet      |     *(vacío)*     |      *(vacío)*      | ✓ **SP1-32:** Teleconsulta WebRTC *(Alberto Caleb Delgado)*       |
+| **[SP1-33]** Realizar pruebas acceso teleconsulta    |     *(vacío)*     |      *(vacío)*      | ✓ **SP1-33:** Pruebas teleconsulta PO *(Esther Condori)*          |
 
 <br>
 

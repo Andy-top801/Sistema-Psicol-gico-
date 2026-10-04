@@ -38,6 +38,14 @@ def seed_tenant_roles_and_permissions():
          "Asignar y evaluar tareas entre sesiones"),
         ("Configurar Centro", "configurar_centro", "Administración",
          "Editar datos institucionales, horarios y políticas"),
+        ("Gestionar Intake Digital", "gestionar_intake", "Área Clínica",
+         "Configurar cuestionarios pre-consulta y revisar respuestas"),
+        ("Consentimientos Informados", "gestionar_consentimientos", "Área Legal y Ética",
+         "Configurar plantillas y verificar firmas digitales selladas"),
+        ("Derivación y Cierre de Caso", "gestionar_derivaciones", "Área Clínica",
+         "Emitir referencias psiquiátricas, interconsultas y actas de alta"),
+        ("Asistente IA Asistivo", "asistente_ia_clinico", "Área Clínica",
+         "Acceso y auditoría de decisiones del asistente de IA para preconsulta"),
     ]
 
     permisos_map = {}
@@ -57,12 +65,15 @@ def seed_tenant_roles_and_permissions():
         Rol.COORDINADOR: {
             "desc": "Supervisión clínica, asignaciones y triage",
             "permisos": ["ver_dashboard", "ver_alertas", "gestionar_citas",
-                         "ver_agenda", "ver_historia_clinica"]
+                         "ver_agenda", "ver_historia_clinica", "gestionar_intake",
+                         "gestionar_derivaciones", "asistente_ia_clinico"]
         },
         Rol.PSICOLOGO: {
             "desc": "Profesional de atención terapéutica",
             "permisos": ["ver_agenda", "gestionar_citas", "ver_historia_clinica",
-                         "registrar_notas_sesion", "gestionar_tareas", "teleconsulta"]
+                         "registrar_notas_sesion", "gestionar_tareas", "teleconsulta",
+                         "gestionar_intake", "gestionar_consentimientos",
+                         "gestionar_derivaciones", "asistente_ia_clinico"]
         },
         Rol.RECEPCIONISTA: {
             "desc": "Atención al paciente y agendamiento",

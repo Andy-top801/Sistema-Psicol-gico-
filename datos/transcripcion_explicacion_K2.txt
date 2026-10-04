@@ -1,0 +1,50 @@
+===============================================================================
+AUDIO K2.m4a - TRANSCRIPCIÓN Y EXPLICACIÓN DETALLADA
+===============================================================================
+
+TEMA PRINCIPAL:
+Explicación detallada de las 8 características técnicas del proyecto, arquitectura SaaS Multi-tenant, buenas prácticas de desarrollo, IA y modelado UML.
+
+RESUMEN GENERAL:
+La docente explica exhaustivamente los requerimientos técnicos del software, enfatizando el concepto de "Solución Universal" mediante el modelo SaaS Multi-tenant, los módulos de seguridad y bitácora, la facilidad de uso, los backups y restauración, la integración Web/Móvil obligatoria y el uso correcto de la Inteligencia Artificial sin descuidar las capas del diseño UML.
+
+PUNTOS DETALLADOS Y EXPLICACIÓN DE CONTENIDO:
+
+1. Solución Universal y Modelo SaaS (Software as a Service):
+   - Concepto de Solución Universal: El software no debe estar diseñado para una única empresa específica, sino para todo un rubro comercial/médico (por ejemplo, clínicas, consultorios o múltiples especialidades como oftalmología).
+   - Concepto de Tenant (Inquilino): Cada empresa o cliente es un tenant independiente con sus propios usuarios, datos, permisos y configuraciones.
+   - Comparación Tenant Simple vs. Multi-tenant:
+     * Multi-tenant (Recomendado): Mismo software, misma infraestructura de nube y servidores compartidos, pero con aislamiento total de datos entre tenants. Ofrece menores costos, fácil mantenimiento descentralizado y alta escalabilidad.
+     * Tenant Simple: Servidor dedicado por cada cliente. Costos elevados, mantenimiento complejo e ineficiencia en el uso de recursos.
+   - Rol del Administrador SaaS: Es el único perfil con capacidad de gestionar y visualizar cuántas empresas existen en la plataforma. Ningún tenant puede ver la información de otro tenant.
+
+2. Seguridad, Autenticación, Autorización y Bitácora (Audit Log):
+   - Módulo de Seguridad: Manejo de autenticación (login con contraseñas encriptadas) y autorización por roles, grupos y niveles de acceso a funciones.
+   - Bitácora de Auditoría: Registro automático del 100% de acciones del usuario, capturando IP, acción realizada, fecha y hora configurada estrictamente al huso horario local (no al horario por defecto del servidor en la nube).
+
+3. Facilidad de Uso e Interfaz de Usuario:
+   - Búsquedas inteligentes y predictivas para optimizar el tiempo de respuesta del usuario.
+   - Métodos abreviados de teclado (shortcuts para guardar, copiar, cortar) y optimización del uso del mouse.
+   - Prototipos con diseño coherente y estandarizado para facilitar el aprendizaje intuitivo del usuario.
+
+4. Copias de Seguridad (Backup) y Restauración de Datos:
+   - Doble modalidad de Backup:
+     1. Manual: Ejecutado a demanda por el usuario.
+     2. Automático: Programado de forma periódica (ej. diariamente a la 1:00 AM).
+   - Gestión de límites de almacenamiento en servidores gratuitos o de prueba.
+   - Restauración: Permite recuperar la información histórica de gestiones anteriores (ej. cierres de mes/año o consultas de años previos) en modo lectura y generación de reportes, sin alterar los datos activos.
+
+5. Enfoque Web y Móvil Obligatorio:
+   - Ambas plataformas (Web y Móvil) son obligatorias tanto para la presentación del proyecto como para el examen.
+   - Todos los integrantes del grupo deben dominar y participar en el desarrollo móvil y web, evitando dejar a un solo integrante a cargo del entorno móvil.
+   - Reflexión sobre la carrera de sistemas: Exige aprendizaje diario de nuevas tecnologías debido a su crecimiento exponencial.
+
+6. Uso Responsable de la Inteligencia Artificial (IA):
+   - Requisito de entrenamiento con datos de calidad (datasets con un mínimo de 6 meses de antigüedad para modelos de Machine Learning).
+   - Aplicaciones de IA: Reconocimiento de voz, sistemas de recomendación (ej. prendas similares en tiendas) y modelos predictivos.
+   - Crítica a los diagramas UML generados por IA: La IA tiende a incluir la "Base de Datos" como entidad directa en los diagramas de secuencia. Se exige la separación estricta en tres capas UML: Clase Interfaz (Boundary), Clase Control (Controller) y Clase Entidad (Entity).
+
+7. Diagramas de Diseño para Transacciones:
+   - Para los procesos transaccionales principales (compras, ventas), se exige presentar: Diagrama de Secuencia, Diagrama de Tiempos y Diagrama de Estados.
+
+===============================================================================

@@ -1,0 +1,35 @@
+===============================================================================
+AUDIO K1.m4a - TRANSCRIPCIÓN Y EXPLICACIÓN DETALLADA
+===============================================================================
+
+TEMA PRINCIPAL:
+Indicaciones, advertencias académicas y requisitos del Examen Parcial y avance del Sprint 2.
+
+RESUMEN GENERAL:
+La docente establece las reglas del examen parcial, enfatiza la responsabilidad individual y ética en el desarrollo del software y la documentación, exige notación UML 2.0+, y detalla la programación de fechas y modalidad para la entrega del Sprint 2.
+
+PUNTOS DETALLADOS Y EXPLICACIÓN DE CONTENIDO:
+
+1. Contexto del Proyecto de Examen:
+   - Se exige que el documento incluya como mínimo una tienda física y una tienda virtual para contextualizar el trabajo.
+   - El contexto del negocio debe estar debidamente explicado y desarrollado en la documentación previa al examen.
+
+2. Ética Académica y Trabajo Individual vs. Grupal:
+   - La docente recalca de forma contundente que el desarrollo debe ser realizado por los propios estudiantes y no por terceros pagados ("Ustedes están trabajando para que les paguen, no para estar pagando a otros").
+   - En la evaluación del examen se tomará una prueba escrita individual donde cada estudiante deberá detallar explícitamente sus aportes específicos en el Sprint 0, Sprint 1 y Sprint 2 (por ejemplo: si fue Scrum Master, Product Owner o Developer, y qué historias de usuario o módulos específicos implementó en entornos móvil o web).
+
+3. Rigor en la Documentación y Notación UML:
+   - La documentación enviada debe estar completa (Análisis, Diseño, Implementación y Pruebas). Si la documentación está incompleta, carece de validez.
+   - Exige la notación UML 2.0 o superior (específicamente UML 2.5.1). Critica que los estudiantes entreguen notación UML 1.x sin conocer las diferencias.
+   - Se dará una última oportunidad de corregir y completar la documentación el día domingo. Si el documento no cumple con los estándares, el examen parcial se evaluará automáticamente sobre la mitad de la nota máxima.
+   - Advierte que no se deben hacer entregas a última hora ("un día o una noche antes no se puede hacer lo que no se hizo en tanto tiempo") ni se aceptarán postergaciones.
+   - La documentación copiada, no personalizada o que no coincida con el software en ejecución será sancionada con nota mínima (1 punto).
+
+4. Fechas Clave y Modalidad de Clases/Examen:
+   - Fin de septiembre marca el inicio de la recta final del semestre.
+   - Martes: Examen parcial presencial.
+   - Sprint 2: Programado para el 6 y 8 de octubre.
+   - Primer avance del Sprint 2: Entrega obligatoria hasta el miércoles a las 7:00 PM.
+   - Clases del jueves: A las 7:00 AM en punto de manera "en línea" (asistencia estricta a las 7:00 AM; no se permitirá el ingreso a quienes intenten entrar a las 7:20 o 7:30 AM).
+
+===============================================================================

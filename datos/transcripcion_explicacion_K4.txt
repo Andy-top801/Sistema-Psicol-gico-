@@ -1,0 +1,51 @@
+===============================================================================
+AUDIO K4.m4a - TRANSCRIPCIÓN Y EXPLICACIÓN DETALLADA
+===============================================================================
+
+TEMA PRINCIPAL:
+Revisión de avances del Sprint 2, aplicación del Modelo C4 de Arquitectura, notación UML 2.5+ y retroalimentación de errores comunes en los proyectos.
+
+RESUMEN GENERAL:
+La docente revisa los documentos presentados por los grupos para el Sprint 2, hace aclaraciones metodológicas sobre el Modelo C4 en sustitución de los diagramas tradicionales, remarca la notación UML 2.5+ e insiste en la integración real de las 8 características técnicas y el rol del Administrador SaaS.
+
+PUNTOS DETALLADOS Y EXPLICACIÓN DE CONTENIDO:
+
+1. Integración de las 8 Características del Proyecto:
+   - Las 8 características no deben redactarse como un texto teórico aislado o un cuestionario de preguntas y respuestas, sino demostrarse directamente en el funcionamiento y diseño del sistema.
+   - Cronograma: Presentación del Sprint 2 programada para el 6 y 8 de octubre. Examen parcial el martes 22 (abarcando 2 sesiones). Última revisión de documentos el jueves 1 de octubre.
+
+2. Notación UML 2.5+ y Diagramas Transaccionales:
+   - Notación UML 2.5+: Los diagramas de secuencia no deben terminar en una caja de "Base de Datos", sino usar la estructura formal de Clases Interfaz, Clases Control y Clases Entidad.
+   - Diagrama de Navegación: Muestra el flujo entre pantallas web y móviles según el perfil/login del usuario.
+   - Diagrama de Tiempos: Mide la estimación de tiempo requerida para completar una transacción (ej. tiempo para seleccionar productos en un carrito vs. confirmación del pedido).
+   - Diagrama de Estados: Representa las transiciones de estado de un proceso transaccional hasta su finalización.
+
+3. Modelo de Arquitectura C4 (Jerarquía de 4 Niveles):
+   - Reemplaza a los diagramas de componentes o paquetes UML tradicionales.
+   - Estructura jerárquica mediante la técnica de "Zoom-in":
+     * Nivel 1: Diagrama de Contexto (Vista general del sistema, usuarios y sistemas externos).
+     * Nivel 2: Diagrama de Contenedores (Aplicación Web, Aplicación Móvil, Base de Datos, APIs, Servidores Nube).
+     * Nivel 3: Diagrama de Componentes (Módulos internos dentro de cada contenedor).
+     * Nivel 4: Diagrama de Código / Clases (Diagrama de clases UML detallado para la implementación).
+   - Advierte no utilizar notación UML estándar ni actores erróneos dentro de las herramientas del Modelo C4.
+
+4. Comprensión de la Metodología Scrum:
+   - Exige que todos los integrantes del grupo dominen las responsabilidades de los roles de Scrum:
+     * Product Owner: Voz del cliente, responsable de definir y priorizar el Product Backlog.
+     * Scrum Master: Facilitador del equipo de desarrollo, remueve obstáculos.
+     * Developers: Equipo técnico de desarrollo.
+
+5. Retroalimentación a Grupos Específicos y Errores Habituales:
+   - Proyecto Blockchain / Trazabilidad: Destaca un buen alcance de módulos en el índice, pero señala errores graves de desconfiguración del formato y falta de contenido en el Sprint 2 por entregas apresuradas.
+   - Errores comunes detectados en las entregas:
+     * Duplicación innecesaria de historias de usuario y casos de uso.
+     * Falta de diferenciación explícita entre funcionalidades Web y Móvil.
+     * Falta de diagramas de tiempo, estado y pruebas unitarias/de software.
+     * Elaboración de documentos a última hora (2 horas antes del límite).
+
+6. Demostración Práctica del Administrador SaaS y Multi-tenancy:
+   - Cada grupo debe actuar como un Administrador SaaS con múltiples empresas cliente (Tenants) del mismo rubro creadas y operativas.
+   - Se debe cargar información realista mediante datasets de varios meses (mínimo 6 meses) en cada tenant para demostrar la escalabilidad y el aislamiento de datos.
+   - Analogía del edificio: Las áreas comunes (ascensor, mantenimiento) representan la infraestructura compartida, mientras que cada departamento representa la información privada de cada tenant.
+
+===============================================================================

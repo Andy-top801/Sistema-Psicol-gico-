@@ -1,0 +1,55 @@
+===============================================================================
+TRANSCRIPCIÓN DETALLADA Y EXPLICACIÓN DEL AUDIO M2 (M2.m4a)
+===============================================================================
+
+1. NUEVAS TECNOLOGÍAS PARA EL SPRINT 3 Y SEGUNDO PARCIAL (PWA Y OFFLINE)
+-------------------------------------------------------------------------------
+- PWA (Progressive Web App): La plataforma web debe ser progresiva. Si el usuario pierde la conexión a internet, la aplicación debe continuar funcionando y permitiendo la navegación en segundo plano de manera fluida.
+- Modo Offline en App Móvil: Para dispositivos móviles es obligatorio el soporte offline. Si el usuario realiza acciones sin internet (dar clic varias veces), los datos se almacenan localmente y, al reconectarse, se sincronizan e introducen una sola vez al servidor sin duplicados.
+- Desarrollo Híbrido: Compilación para Android e iOS a partir de una única base de código usando frameworks como Flutter o React Native.
+- Sincronización Cloud: Los cambios realizados en la App Móvil deben reflejarse en tiempo real en la plataforma Web y viceversa.
+
+2. TIPOS DE INTELIGENCIA ARTIFICIAL EN EL SOFTWARE Y QUALIDAD DE DATOS
+-------------------------------------------------------------------------------
+- Clasificación de IA en Proyectos:
+  1. Machine Learning (Aprendizaje Automático): Modelos predictivos que aprenden de datos históricos (sistemas de recomendación, CRM inteligente, mantenimiento predictivo).
+  2. Procesamiento del Lenguaje Natural (PLN / NLP): Chatbots, asistentes virtuales e interpretación de texto/voz.
+  3. Visión por Computadora: Reconocimiento facial, análisis de video y clasificación de documentos.
+  4. Sistemas Expertos: Diagnóstico basado en reglas de negocio (médico, legal).
+  5. RPA (Automatización Robótica de Procesos): Automatización de tareas repetitivas.
+  6. IA Generativa: Modelos LLM / GPT para generación de código, texto y multimedia.
+- Calidad de Datos (Data Cleaning): La IA depende de datos limpios, estructurados y representativos. Si los datos iniciales son deficientes, las predicciones o recomendaciones no serán válidas. Requiere mantenimiento y reentrenamiento continuo.
+
+3. CRÍTICA Y EXIGENCIAS STRICTAS EN DIAGRAMAS DE SECUENCIA (UML)
+-------------------------------------------------------------------------------
+- Error Frecuente de la IA: La docente critica que los diagramas de secuencia generados por IA colocan una sola caja rígida llamada "Base de Datos", lo cual es incorrecto para el diseño detallado.
+- Estructura Obligatoria por Capas:
+  a) Clase Interfaz (Boundary): Debe distinguir el formulario de entrada (ej. registrar venta) y la interfaz de salida (ej. factura PDF, vista de comprobante con código QR).
+  b) Clase Control (Controller): Clase encargada de la lógica de negocio en el Backend (ej. RegistrarVenta, RetirarDinero).
+  c) Clases Entidad (Entities): Separación explícita de las tablas/entidades afectadas (ej. Cliente, Cuenta, Producto, Venta, DetalleVenta).
+- Uso Correcto de Fragmentos Combinados:
+  - Fragmentos ALT (Alternativa) y OPT (Opcional): DEBEN iniciar desde la Clase Interfaz, ya que representan interacciones del usuario en la pantalla.
+  - Fragmentos LOOP (Bucle): Válidos en el área de la Clase Control y Entidades para procesamiento iterativo de datos.
+- Ejemplo del Retiro Bancario: Ilustra el flujo completo entre Cliente -> Interfaz Formulario -> Controlador de Retiro/Firma -> Entidades Cliente, Cuenta, Retiro.
+
+4. LOS CINCO VALORES FUNDAMENTALES DE SCRUM Y SU APLICACIÓN EN EVENTOS
+-------------------------------------------------------------------------------
+- Los 5 Valores de Scrum:
+  1. Compromiso: Responsabilidad compartida con los objetivos del sprint.
+  2. Coraje: Valentía para expresar fallas, admitir errores y probar nuevas herramientas.
+  3. Foco: Concentración exclusiva en las historias del Sprint Backlog.
+  4. Apertura: Transparencia u honestidad en el avance e impedimentos.
+  5. Respeto: Puntualidad (reuniones de 15 min), respeto por el tiempo ajeno y por los acuerdos.
+- Aplicación en los Eventos de Scrum:
+  - Sprint Planning: Compromiso, Foco y Respeto.
+  - Daily Scrum (Reunión Diaria 10-15 min): Apertura, Foco y Coraje (3 preguntas: ¿Qué hice ayer?, ¿Qué haré hoy?, ¿Qué impedimentos tengo?).
+  - Sprint Review (30-45 min): Compromiso y Foco (demostración del incremento).
+  - Sprint Retrospective (30 min): Coraje, Apertura y Respeto (3 columnas: qué salió bien, qué salió mal, qué mejorar/evitar).
+  - Backlog Refinement: Compromiso y Foco (liderado por el Product Owner).
+
+5. MODELO DE ARQUITECTURA C4 Y METODOLOGÍA ICONIX
+-------------------------------------------------------------------------------
+- Reemplazo de Diagramas UML Tradicionales: Para el Sprint 2 se debe utilizar el Modelo C4 en lugar de diagramas de componentes o despliegue tradicionales. (El diagrama de despliegue regresará en el Sprint 3 junto con PWA/Offline).
+- Introducción a la Metodología ICONIX: Metodología ligera orientada al análisis y diseño que conecta los Casos de Uso con el diseño mediante el Análisis de Robustez (Diagramas de Robustez) y Diagramas de Secuencia. Se evaluará su inclusión para el Parcial 2.
+- Rotación Obligatoria de Roles: Cada estudiante debe haber ejercido un rol distinto en cada sprint (Sprint 0, Sprint 1, Sprint 2) entre Product Owner, Scrum Master y Developer.
+===============================================================================

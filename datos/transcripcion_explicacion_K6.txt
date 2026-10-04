@@ -1,0 +1,29 @@
+===============================================================================
+AUDIO K6.m4a - TRANSCRIPCIÓN Y EXPLICACIÓN DETALLADA
+===============================================================================
+
+TEMA PRINCIPAL:
+Retrospectiva en Scrum, pautas finales para la entrega de documentos y defensa del Examen Parcial y Proyecto.
+
+RESUMEN GENERAL:
+La docente explica la estructura obligatoria de la tabla de retrospectiva de Scrum y brinda las instrucciones finales y advertencias académicas para la defensa del examen parcial y la continuidad del proyecto.
+
+PUNTOS DETALLADOS Y EXPLICACIÓN DE CONTENIDO:
+
+1. Artefacto de Retrospectiva de Scrum:
+   - Obligatoriedad de incluir la tabla de retrospectiva estructurada en 3 columnas por cada integrante del equipo:
+     1. Qué salió bien (prácticas exitosas a mantener).
+     2. Qué no salió bien (fallas o problemas detectados).
+     3. Qué se debe repetir o mejorar para el próximo sprint.
+   - La tabla debe especificar: Nombre de los integrantes, fecha, objetivo del sprint y facilitador de la reunión.
+
+2. Instrucciones para la Defensa del Examen Parcial:
+   - Entrega final de la documentación del examen parcial: Domingo.
+   - Defensa presencial del examen: Martes a las 7:00 AM en el auditorio para todos los alumnos.
+   - Exige haber completado exhaustivamente todas las fases del proceso unificado de desarrollo (Análisis, Diseño, Implementación, Pruebas). Si la documentación enviada no cumple con estos requisitos, la nota máxima asignable será del 50%.
+
+3. Recomendación Final sobre la Gestión del Proyecto:
+   - Exhorta a los estudiantes a no concentrarse de manera exclusiva en el examen descuidando el proyecto de software.
+   - Advierte sobre las consecuencias negativas de realizar entregas a última hora y remarca la necesidad de mantener un ritmo de trabajo diario y disciplinado.
+
+===============================================================================

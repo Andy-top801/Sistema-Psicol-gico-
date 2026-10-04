@@ -57,3 +57,52 @@ class TenantViewSet(viewsets.ModelViewSet):
         tenant = self.get_object()
         tenant.activar()
         return Response({"mensaje": f"Centro '{tenant.nombre}' reactivado exitosamente.", "activo": True})
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # CU28: GESTIONAR COPIAS DE SEGURIDAD Y RESTAURACIÓN (CRITERIO 6)
+    # ══════════════════════════════════════════════════════════════════════════
+    @action(detail=True, methods=['get', 'post'], permission_classes=[EsSuperAdmin])
+    def backup(self, request, pk=None):
+        """
+        CU28: Generar respaldo bajo demanda para el esquema de este centro clínico o listar respaldos.
+        """
+        from .backup_service import crear_backup, listar_backups
+        tenant = self.get_object()
+        if request.method == 'POST':
+            res = crear_backup(schema_name=tenant.schema_name)
+            return Response(res, status=status.HTTP_201_CREATED)
+        else:
+            backups = listar_backups(schema_name=tenant.schema_name)
+            return Response(backups)
+
+    @action(detail=True, methods=['post'], permission_classes=[EsSuperAdmin])
+    def restore(self, request, pk=None):
+        """
+        CU28: Restaurar base de datos del centro clínico desde un archivo de respaldo.
+        """
+        from .backup_service import restaurar_backup
+        tenant = self.get_object()
+        archivo = request.data.get('archivo')
+        if not archivo:
+            return Response({"error": "Debe especificar el nombre del archivo de respaldo a restaurar."}, status=400)
+        from django.conf import settings
+        from pathlib import Path
+        filepath = Path(settings.BASE_DIR) / "backups" / archivo
+        try:
+            res = restaurar_backup(filepath, schema_name=tenant.schema_name)
+            return Response(res)
+        except Exception as e:
+            return Response({"error": str(e)}, status=400)
+
+    @action(detail=False, methods=['get', 'post'], permission_classes=[EsSuperAdmin], url_path='backups-globales')
+    def backups_globales(self, request):
+        """
+        CU28: Generar o listar respaldos globales de toda la base de datos PostgreSQL.
+        """
+        from .backup_service import crear_backup, listar_backups
+        if request.method == 'POST':
+            res = crear_backup(schema_name=None)
+            return Response(res, status=status.HTTP_201_CREATED)
+        else:
+            backups = listar_backups(schema_name=None)
+            return Response(backups)

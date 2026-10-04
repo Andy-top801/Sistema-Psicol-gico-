@@ -82,7 +82,8 @@ class Command(BaseCommand):
                 ]
 
                 for email, pwd, nom, ape, r_nom, tel in usuarios_demo:
-                    if not Usuario.objects.filter(email=email).exists():
+                    user = Usuario.objects.filter(email=email).first()
+                    if not user:
                         u = Usuario.objects.create_user(
                             email=email,
                             password=pwd,
@@ -93,6 +94,14 @@ class Command(BaseCommand):
                             activo=True
                         )
                         self.stdout.write(self.style.SUCCESS(f"  [OK] Usuario creado en '{tenant_obj.slug}': {email} [{r_nom}]"))
+                    else:
+                        user.nombre = nom
+                        user.apellido = ape
+                        user.rol = roles_map[r_nom]
+                        user.activo = True
+                        user.set_password(pwd)
+                        user.save()
+                        self.stdout.write(self.style.SUCCESS(f"  [OK] Usuario actualizado en '{tenant_obj.slug}': {email} [{r_nom}]"))
 
         # 3. Crear Centro Demo 1: Centro Psicológico Esperanza
         with schema_context(get_public_schema_name()):

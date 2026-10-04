@@ -1,0 +1,61 @@
+===============================================================================
+TRANSCRIPCIÓN DETALLADA Y EXPLICACIÓN DEL AUDIO M1 (M1.m4a)
+===============================================================================
+
+1. EVALUACIÓN DEL SPRINT 2 Y EXIGENCIA DE RITMO CONSTANTE
+-------------------------------------------------------------------------------
+- Avance y Verificación del Sprint 2: La docente señala que este Sprint estaba programado para durar aproximadamente un mes según el calendario académico. Sin embargo, en revisiones previas se evidenció que la mayoría de los equipos tenían la documentación incompleta o poco trabajada.
+- No descuidar el proyecto por el examen parcial: Se enfatiza que rendir un examen parcial no justifica detener o abandonar el desarrollo del proyecto. El marco de trabajo Scrum exige mantener un ritmo constante de avance, auto-evaluando diariamente lo que se hace bien, lo que se hace mal y los impedimentos encontrados.
+- Consolidación de 8 Puntos Obligatorios: Para la presentación final del Sprint 2, los 8 puntos o características requeridas deben estar consolidados al 100%.
+- Cronograma de Defensa y Entrega: El documento completo debe subirse a la plataforma hasta el DOMINGO a última hora. Con esta entrega quedan habilitados para la defensa presencial, la cual se programará para el día martes o jueves según el rol publicado.
+
+2. ARQUITECTURA SAAS MULTI-TENANT Y CARGA MASIVA DE DATOS (DATASETS)
+-------------------------------------------------------------------------------
+- Múltiples Empresas (Tenants): Ya no se permite presentar el software configurado para una sola empresa. El sistema es de tipo SaaS (Software as a Service) desplegado en la nube.
+- Aislamiento y Configuración: Cada empresa creada debe contar con sus propios usuarios, permisos, autenticación, autorización y base de datos independiente (o esquema multitenant según el modelo elegido).
+- Carga Masiva de Datos (Datasets): La información de las distintas empresas no debe ingresarse de forma manual. Se exige el uso de herramientas o técnicas de carga masiva de datos (Datasets) que simulen operaciones de 4 meses, 6 meses o hasta 1 año de historial.
+- Demostración del Administrador SaaS: En la defensa, el equipo actuará como Administrador SaaS y deberá mostrar un catálogo de 10 a 15 empresas registradas, ingresando a cualquiera de ellas para demostrar su aislamiento y funcionamiento.
+
+3. MODELOS DE INTELIGENCIA ARTIFICIAL (IA) Y CHATBOTS
+-------------------------------------------------------------------------------
+- Justificación basada en Datos: Si el alcance del proyecto incluye modelos de IA, Machine Learning, predicciones o recomendaciones, estos deben estar respaldados por datos históricos reales. No es posible entrenar o justificar un modelo predictivo/recomendador sin una base de datos amplia (datasets).
+- Implementación de Chatbots: Si el equipo propuso la integración de un Chatbot como objetivo del Sprint 2, este debe ser demostrado en funcionamiento real durante la defensa.
+
+4. POLÍTICAS DE BACKUP Y RESTAURACIÓN EN LA NUBE
+-------------------------------------------------------------------------------
+- Dos Modalidades de Backup:
+  a) Automático: Configurado en el servidor en la nube para ejecutarse periódicamente de manera programada (ej. cada 3 días o cada semana a las 3:00 AM).
+  b) Manual: Ejecutado a demanda por el usuario/administrador seleccionando origen y destino de la copia.
+- Gestión de Servicios Cloud: Tener en cuenta los límites de espacio y costos de los proveedores en la nube al almacenar las copias de seguridad.
+
+5. TRES TIPOS OBLIGATORIOS DE REPORTES
+-------------------------------------------------------------------------------
+- Tipo 1 - Reporte Estándar/Normal: Salida estructurada convencional.
+- Tipo 2 - Reporte Query by Example (QBE): Reporte dinámico donde el usuario establece parámetros/filtros directamente en la interfaz (ej. por código, rango de fechas, categoría) para personalizar el resultado.
+- Tipo 3 - Reporte por Comando de Voz: Generación de informes mediante instrucciones habladas (ej. "Mostrar informe de ventas del 1 al 15 de septiembre para el producto X").
+
+6. INTEGRACIÓN Y DESPLIEGUE CONTINUO
+-------------------------------------------------------------------------------
+- Control de Versiones con Git: Cada integrante debe trabajar en su propia rama en GitHub/GitLab. Posteriormente, el código se integra y se verifica la coherencia entre Backend, Frontend, App Móvil y Base de Datos.
+- Contenedores (Docker): Se recomienda encarecidamente empaquetar la solución en contenedores para facilitar su despliegue organizado en la nube.
+
+7. CONCEPTOS TEÓRICOS DE TI, ERPS Y INTELIGENCIA DE NEGOCIOS (BI)
+-------------------------------------------------------------------------------
+- Explotación del Software Empresarial: El software debe ser una herramienta estratégica para la empresa. Ejemplos como el módulo CRM con calificaciones de 1 a 5 permiten obtener feedback constante del cliente.
+- Control de Inventarios e Infraestructura: Ilustró con el caso de estaciones de servicio (gasolineras), donde primero se debe estructurar la capacidad física de los depósitos/tanques (5,000L, 10,000L, bombas) antes de controlar las ventas.
+- Inteligencia de Negocios (BI): Surge de los datos estadísticos acumulados para responder preguntas clave de la gerencia (quién compró, dónde, productos estrella, productos de baja rotación en oferta para evitar vencimientos).
+- Pirámide Organizacional de Sistemas:
+  1. Nivel Operacional (ERP): Registro transaccional diario (ej. control biométrico de asistencia).
+  2. Nivel Táctico (Gerentes de Línea): Monitoreo de eficiencia por área/departamento.
+  3. Nivel Estratégico (Alta Gerencia / BI): Análisis de tendencias, minería de datos (Data Mining), Data Warehouse y Data Marts para la toma de decisiones 24/7.
+- Microservicios y Escalabilidad: La arquitectura modular por microservicios (con bases de datos independientes por módulo) permite que el software sea escalable para pequeñas, medianas y grandes empresas.
+
+8. COMPONENTES DE TI Y PRUEBAS DE RECLUTAMIENTO LABORAL
+-------------------------------------------------------------------------------
+- Componentes de TI: Hardware (servidores cloud), Software (licencias), Redes/Seguridad, Bases de Datos, Servicios Cloud (PaaS, SaaS en AWS/Azure), Ciberseguridad y Personal Especializado (DBA, Administrador SaaS).
+- Exámenes Laborales en la Industria: Las empresas evalúan 4 aspectos clave:
+  1. Pruebas de código en vivo sin IA (para evaluar la capacidad lógica pura).
+  2. Exámenes psicométricos (evaluación de hábitos, concentración y uso del tiempo).
+  3. Entrevistas psicológicas.
+  4. Perfil integral (académico, adaptabilidad, proyectos reales y actividades complementarias).
+===============================================================================

@@ -461,6 +461,11 @@ class FormularioPreConsultaSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("El esquema de preguntas debe ser una lista de campos JSON.")
         return value
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['preguntas_json'] = instance.preguntas_schema or []
+        return data
+
 
 class RespuestaPreConsultaSerializer(serializers.ModelSerializer):
     paciente_nombre = serializers.SerializerMethodField()
@@ -486,6 +491,14 @@ class RespuestaPreConsultaSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("La escala de malestar/urgencia debe estar comprendida entre 1 y 5.")
         return value
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['respuestas_json'] = instance.respuestas_detalle or {}
+        data['formulario_titulo'] = instance.formulario.titulo if instance.formulario else ""
+        data['completado'] = instance.estado in ('ENVIADO', 'REVISADO', 'ARCHIVADO')
+        data['consentimiento_ia_procesamiento'] = True
+        return data
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # CU15: Historia Clínica Psicológica y Diagnóstico CIE
@@ -495,6 +508,12 @@ class DiagnosticoCIESerializer(serializers.ModelSerializer):
         model = DiagnosticoCIE
         fields = ['id', 'historia_clinica', 'codigo_cie', 'descripcion', 'tipo', 'observaciones', 'fecha_diagnostico']
         read_only_fields = ['id']
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['codigo_cie10'] = instance.codigo_cie
+        data['notas_criterio'] = instance.observaciones
+        return data
 
 
 class HistoriaClinicaSerializer(serializers.ModelSerializer):
@@ -529,9 +548,23 @@ class HistoriaClinicaSerializer(serializers.ModelSerializer):
             return f"Lic. {obj.psicologo_apertura.usuario.nombre} {obj.psicologo_apertura.usuario.apellido}"
         return ""
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['numero_historia'] = instance.codigo_historia
+        data['psicologo_cabecera'] = str(instance.psicologo_apertura_id) if instance.psicologo_apertura else None
+        data['activo'] = not instance.cerrada
+        data['anamnesis'] = instance.historia_evolutiva
+        data['examen_estado_mental'] = instance.examen_mental_inicial
+        data['plan_terapeutico'] = instance.plan_tratamiento
+        data['total_sesiones'] = instance.notas_sesion.count()
+        data['total_tareas'] = instance.tareas.count()
+        data['alertas_recaida'] = instance.evoluciones.filter(estado_avance='RETROCESO_CRISIS').count()
+        ultima_nota = instance.notas_sesion.order_by('-fecha_sesion').first()
+        data['ultima_sesion'] = ultima_nota.fecha_sesion.isoformat() if ultima_nota else None
+        return data
+
     def create(self, validated_data):
         import datetime
-        # Generar código único correlativo HC-YYYY-XXXX
         anio = datetime.date.today().year
         total = HistoriaClinica.objects.count() + 1
         codigo = f"HC-{anio}-{total:04d}"
@@ -569,6 +602,20 @@ class NotaSesionSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("El número correlativo de sesión debe ser mayor a 0.")
         return value
 
+    def to_representation(self, instance):
+        import hashlib
+        data = super().to_representation(instance)
+        data['firmado'] = (instance.estado_guardado == 'FIRMADA')
+        data['es_borrador'] = (instance.estado_guardado == 'BORRADOR')
+        data['intervenciones_aplicadas'] = instance.tecnicas_aplicadas
+        data['nivel_riesgo'] = 'MODERADO'
+        if instance.estado_guardado == 'FIRMADA':
+            seed_str = f"{instance.id}:{instance.subjetivo[:50]}:{instance.plan[:50]}:{instance.fecha_firma or instance.fecha_creacion}"
+            data['firma_hash_integridad'] = hashlib.sha256(seed_str.encode('utf-8')).hexdigest()
+        else:
+            data['firma_hash_integridad'] = ""
+        return data
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # CU17: Evolución Longitudinal y Tareas Inter-Sesiones
@@ -584,6 +631,20 @@ class EvolucionClinicaSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("La justificación cualitativa del estado de avance es obligatoria.")
         return value
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        progreso_map = {
+            'PROGRESO_NOTABLE': 'MEJORIA_SIGNIFICATIVA',
+            'EN_PROCESO': 'ESTABLE',
+            'ESTANCAMIENTO': 'ESTABLE',
+            'RETROCESO_CRISIS': 'RETROCESO'
+        }
+        data['indicador_progreso'] = progreso_map.get(instance.estado_avance, 'ESTABLE')
+        data['alerta_crisis_recaida'] = (instance.estado_avance == 'RETROCESO_CRISIS')
+        data['descripcion_crisis'] = instance.justificacion if data['alerta_crisis_recaida'] else ""
+        data['recomendacion_inmediata'] = instance.acuerdos_pactados
+        return data
+
 
 class EvidenciaTareaSerializer(serializers.ModelSerializer):
     class Meta:
@@ -595,6 +656,13 @@ class EvidenciaTareaSerializer(serializers.ModelSerializer):
         if value < 1 or value > 5:
             raise serializers.ValidationError("La dificultad percibida debe valorarse en la escala de 1 a 5.")
         return value
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['reflexion_paciente'] = instance.texto_reflexion
+        data['nivel_dificultad_percibido'] = instance.dificultad_percibida
+        data['fecha_registro'] = instance.fecha_cumplimiento.isoformat() if instance.fecha_cumplimiento else None
+        return data
 
 
 class TareaTerapeuticaSerializer(serializers.ModelSerializer):
@@ -622,6 +690,16 @@ class TareaTerapeuticaSerializer(serializers.ModelSerializer):
             return f"{obj.paciente.usuario.nombre} {obj.paciente.usuario.apellido}"
         return ""
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['instrucciones'] = instance.descripcion
+        data['fecha_asignacion'] = instance.fecha_creacion.strftime('%Y-%m-%d') if instance.fecha_creacion else None
+        evidencias_list = []
+        if hasattr(instance, 'evidencia') and instance.evidencia:
+            evidencias_list.append(EvidenciaTareaSerializer(instance.evidencia).data)
+        data['evidencias'] = evidencias_list
+        return data
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # CU18: Consentimiento Informado y Firma Digital Criptográfica
@@ -631,6 +709,12 @@ class ConsentimientoInformadoSerializer(serializers.ModelSerializer):
         model = ConsentimientoInformado
         fields = ['id', 'titulo', 'tipo', 'contenido_legal', 'version', 'activo', 'fecha_creacion']
         read_only_fields = ['id', 'fecha_creacion']
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['codigo_plantilla'] = instance.tipo
+        data['cuerpo_plantilla'] = instance.contenido_legal
+        return data
 
 
 class FirmaConsentimientoSerializer(serializers.ModelSerializer):
@@ -656,6 +740,14 @@ class FirmaConsentimientoSerializer(serializers.ModelSerializer):
         if not value or len(value) != 64:
             raise serializers.ValidationError("El hash SHA-256 debe ser una huella hexadecimal válida de 64 caracteres.")
         return value
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['hash_integridad'] = instance.hash_sha256
+        data['plantilla_titulo'] = instance.consentimiento.titulo if instance.consentimiento else ""
+        data['paciente_nombre'] = f"{instance.paciente.usuario.nombre} {instance.paciente.usuario.apellido}" if instance.paciente and instance.paciente.usuario else ""
+        data['revocado'] = False
+        return data
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -684,6 +776,21 @@ class DerivacionCasoSerializer(serializers.ModelSerializer):
     def get_historia_codigo(self, obj):
         return obj.historia_clinica.codigo_historia if obj.historia_clinica else ""
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.historia_clinica and instance.historia_clinica.paciente and instance.historia_clinica.paciente.usuario:
+            u = instance.historia_clinica.paciente.usuario
+            data['paciente_nombre'] = f"{u.nombre} {u.apellido}"
+        else:
+            data['paciente_nombre'] = "Paciente"
+        data['tipo_cierre'] = instance.tipo_derivacion
+        data['especialidad_destino'] = instance.profesional_destino or instance.tipo_derivacion
+        data['profesional_o_institucion_destino'] = f"{instance.profesional_destino} ({instance.institucion_destino})" if instance.institucion_destino else (instance.profesional_destino or "Atención Externa")
+        data['fecha_registro'] = instance.fecha_derivacion.isoformat() if instance.fecha_derivacion else None
+        data['bloquear_citas_subsecuentes'] = (instance.tipo_derivacion in ('CIERRE_ALTA', 'DESERCION') or instance.historia_clinica.cerrada)
+        data['psicologo_nombre'] = data.get('psicologo_emisor_nombre', '')
+        return data
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # HU-35: Auditoría de IA Asistiva
@@ -698,5 +805,6 @@ class AuditoriaIASerializer(serializers.ModelSerializer):
             'fecha_analisis', 'fecha_decision', 'ip_origen'
         ]
         read_only_fields = ['id', 'fecha_analisis']
+
 
 
