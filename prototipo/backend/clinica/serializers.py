@@ -6,7 +6,9 @@
 # DESCRIPCIÓN: Serializers DRF que implementan los pasos 3-4 (validación) y
 #              5-6 (persistencia) de los Diagramas de Comunicación BCE.
 # ==============================================================================
+import hashlib
 from datetime import date
+from django.utils import timezone
 from rest_framework import serializers
 from django.db import transaction
 from accounts.models import Usuario, Rol
@@ -720,19 +722,50 @@ class EvolucionClinicaSerializer(serializers.ModelSerializer):
         fields = ['id', 'historia_clinica', 'nota_sesion', 'estado_avance', 'justificacion', 'acuerdos_pactados', 'fecha_registro']
         read_only_fields = ['id', 'fecha_registro']
 
-    def validate_justificacion(self, value):
-        if not value or len(value.strip()) < 5:
-            raise serializers.ValidationError("La justificación cualitativa del estado de avance es obligatoria.")
-        return value
+    def to_internal_value(self, data):
+        data = data.copy() if hasattr(data, 'copy') else dict(data)
+        if 'estado_avance' not in data and 'indicador_progreso' in data:
+            progreso_map = {
+                'MEJORIA_SIGNIFICATIVA': 'PROGRESO_NOTABLE',
+                'AVANCE': 'PROGRESO_NOTABLE',
+                'ESTABLE': 'EN_PROCESO',
+                'ESTANCAMIENTO': 'ESTANCAMIENTO',
+                'RETROCESO': 'RETROCESO_CRISIS',
+                'CRISIS': 'RETROCESO_CRISIS'
+            }
+            data['estado_avance'] = progreso_map.get(data['indicador_progreso'], 'EN_PROCESO')
+        if 'justificacion' not in data and 'descripcion_crisis' in data:
+            data['justificacion'] = data['descripcion_crisis']
+        if 'acuerdos_pactados' not in data and 'recomendacion_inmediata' in data:
+            data['acuerdos_pactados'] = data['recomendacion_inmediata']
+        return super().to_internal_value(data)
+
+    def validate(self, data):
+        estado_avance = data.get('estado_avance', getattr(self.instance, 'estado_avance', None))
+        justificacion = data.get('justificacion', getattr(self.instance, 'justificacion', ''))
+
+        # Regla BDD HU-28 Paso 2 & Criterio d:
+        # Bloqueo estricto si se omite justificación cualitativa o factor de crisis
+        if estado_avance == 'RETROCESO_CRISIS':
+            if not justificacion or len(str(justificacion).strip()) < 5:
+                raise serializers.ValidationError({
+                    "justificacion": "Debe justificar cualitativamente el retroceso o factor de crisis detectado"
+                })
+        elif not justificacion or len(str(justificacion).strip()) < 5:
+            raise serializers.ValidationError({
+                "justificacion": "La justificación cualitativa del estado de avance es obligatoria."
+            })
+        return data
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
         progreso_map = {
             'PROGRESO_NOTABLE': 'MEJORIA_SIGNIFICATIVA',
             'EN_PROCESO': 'ESTABLE',
-            'ESTANCAMIENTO': 'ESTABLE',
+            'ESTANCAMIENTO': 'ESTANCAMIENTO',
             'RETROCESO_CRISIS': 'RETROCESO'
         }
+        data['estado_avance_display'] = instance.get_estado_avance_display()
         data['indicador_progreso'] = progreso_map.get(instance.estado_avance, 'ESTABLE')
         data['alerta_crisis_recaida'] = (instance.estado_avance == 'RETROCESO_CRISIS')
         data['descripcion_crisis'] = instance.justificacion if data['alerta_crisis_recaida'] else ""
@@ -799,10 +832,38 @@ class TareaTerapeuticaSerializer(serializers.ModelSerializer):
 # CU18: Consentimiento Informado y Firma Digital Criptográfica
 # ──────────────────────────────────────────────────────────────────────────────
 class ConsentimientoInformadoSerializer(serializers.ModelSerializer):
+    codigo_plantilla = serializers.CharField(write_only=True, required=False)
+    cuerpo_plantilla = serializers.CharField(write_only=True, required=False)
+
     class Meta:
         model = ConsentimientoInformado
-        fields = ['id', 'titulo', 'tipo', 'contenido_legal', 'version', 'activo', 'fecha_creacion']
+        fields = ['id', 'titulo', 'tipo', 'contenido_legal', 'version', 'activo', 'fecha_creacion', 'codigo_plantilla', 'cuerpo_plantilla']
         read_only_fields = ['id', 'fecha_creacion']
+        extra_kwargs = {
+            'tipo': {'required': False},
+            'contenido_legal': {'required': False},
+            'version': {'required': False}
+        }
+
+    def validate(self, attrs):
+        if 'codigo_plantilla' in attrs and 'tipo' not in attrs:
+            attrs['tipo'] = attrs.pop('codigo_plantilla')
+        elif 'codigo_plantilla' in attrs:
+            attrs.pop('codigo_plantilla')
+        if not attrs.get('tipo'):
+            attrs['tipo'] = 'ATENCION_GENERAL'
+
+        if 'cuerpo_plantilla' in attrs and 'contenido_legal' not in attrs:
+            attrs['contenido_legal'] = attrs.pop('cuerpo_plantilla')
+        elif 'cuerpo_plantilla' in attrs:
+            attrs.pop('cuerpo_plantilla')
+        if not attrs.get('contenido_legal'):
+            attrs['contenido_legal'] = ""
+
+        if not attrs.get('version'):
+            attrs['version'] = 'v1.0'
+
+        return attrs
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -814,15 +875,24 @@ class ConsentimientoInformadoSerializer(serializers.ModelSerializer):
 class FirmaConsentimientoSerializer(serializers.ModelSerializer):
     consentimiento_titulo = serializers.SerializerMethodField()
     consentimiento_tipo = serializers.SerializerMethodField()
+    plantilla = serializers.PrimaryKeyRelatedField(queryset=ConsentimientoInformado.objects.all(), write_only=True, required=False)
+    firma_imagen = serializers.CharField(write_only=True, required=False)
+    contenido_final_renderizado = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         model = FirmaConsentimiento
         fields = [
-            'id', 'consentimiento', 'consentimiento_titulo', 'consentimiento_tipo',
+            'id', 'consentimiento', 'plantilla', 'consentimiento_titulo', 'consentimiento_tipo',
             'paciente', 'firmado_por', 'es_menor_edad', 'tutor_nombre', 'tutor_ci',
-            'hash_sha256', 'ip_origen', 'user_agent', 'firma_canvas_url', 'fecha_firma'
+            'hash_sha256', 'ip_origen', 'user_agent', 'firma_canvas_url', 'firma_imagen',
+            'contenido_final_renderizado', 'fecha_firma'
         ]
         read_only_fields = ['id', 'fecha_firma']
+        extra_kwargs = {
+            'consentimiento': {'required': False},
+            'hash_sha256': {'required': False},
+            'firmado_por': {'required': False}
+        }
 
     def get_consentimiento_titulo(self, obj):
         return obj.consentimiento.titulo if obj.consentimiento else ""
@@ -830,10 +900,57 @@ class FirmaConsentimientoSerializer(serializers.ModelSerializer):
     def get_consentimiento_tipo(self, obj):
         return obj.consentimiento.tipo if obj.consentimiento else ""
 
-    def validate_hash_sha256(self, value):
-        if not value or len(value) != 64:
-            raise serializers.ValidationError("El hash SHA-256 debe ser una huella hexadecimal válida de 64 caracteres.")
-        return value
+    def validate(self, attrs):
+        if 'plantilla' in attrs and 'consentimiento' not in attrs:
+            attrs['consentimiento'] = attrs.pop('plantilla')
+        elif 'plantilla' in attrs:
+            attrs.pop('plantilla')
+
+        if not attrs.get('consentimiento'):
+            raise serializers.ValidationError({"consentimiento": "Debe especificar la plantilla de consentimiento a firmar."})
+
+        if 'firma_imagen' in attrs and 'firma_canvas_url' not in attrs:
+            attrs['firma_canvas_url'] = attrs.pop('firma_imagen')
+        elif 'firma_imagen' in attrs:
+            attrs.pop('firma_imagen')
+
+        paciente = attrs.get('paciente')
+        es_menor = attrs.get('es_menor_edad', False)
+
+        # Detectar menor de 18 años para tutores legales (HU-31 Criterio b)
+        if paciente:
+            edad = paciente.edad
+            if edad is None and paciente.fecha_nacimiento:
+                hoy = timezone.localdate()
+                fn = paciente.fecha_nacimiento
+                edad = hoy.year - fn.year - ((hoy.month, hoy.day) < (fn.month, fn.day))
+            if edad is not None and edad < 18:
+                es_menor = True
+                attrs['es_menor_edad'] = True
+                if not attrs.get('tutor_nombre'):
+                    attrs['tutor_nombre'] = paciente.tutor_legal_nombre or "Tutor Legal"
+                if not attrs.get('tutor_ci'):
+                    attrs['tutor_ci'] = paciente.tutor_legal_ci or ""
+
+        if not attrs.get('firmado_por'):
+            if es_menor and attrs.get('tutor_nombre'):
+                pac_nom = f"{paciente.usuario.nombre} {paciente.usuario.apellido}" if paciente and paciente.usuario else ""
+                attrs['firmado_por'] = f"{attrs['tutor_nombre']} (Tutor de {pac_nom})"
+            elif paciente and paciente.usuario:
+                attrs['firmado_por'] = f"{paciente.usuario.nombre} {paciente.usuario.apellido}"
+            else:
+                attrs['firmado_por'] = "Firmante Registrado"
+
+        # Generar huella SHA-256 si no viene provista
+        raw_hash = attrs.get('hash_sha256')
+        if not raw_hash or len(raw_hash) != 64:
+            seed = f"{attrs.get('paciente')}:{attrs.get('consentimiento')}:{timezone.now().isoformat()}:{attrs.get('contenido_final_renderizado', '')}"
+            attrs['hash_sha256'] = hashlib.sha256(seed.encode('utf-8')).hexdigest()
+
+        if 'contenido_final_renderizado' in attrs:
+            attrs.pop('contenido_final_renderizado')
+
+        return attrs
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

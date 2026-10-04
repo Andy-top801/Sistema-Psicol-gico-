@@ -43,12 +43,12 @@ import { NotaSesion, HistoriaClinica } from '../../core/models/clinica-sprint2.m
 
         <!-- Acciones del Encabezado -->
         <div class="header-actions">
-          <!-- Indicador de Autosave -->
-          <div class="autosave-status" [class.dirty]="cambiosPendientes">
+          <!-- Indicador de Autosave (Criterio b / Paso 2) -->
+          <div class="autosave-status" [class.saved]="ultimoAutoguardado && !cambiosPendientes" [class.dirty]="cambiosPendientes">
             <i class="fa-solid" [ngClass]="guardandoBorrador() ? 'fa-spinner fa-spin' : (cambiosPendientes ? 'fa-circle-dot text-warning' : 'fa-circle-check text-success')"></i>
             <span *ngIf="guardandoBorrador()">Guardando borrador...</span>
-            <span *ngIf="!guardandoBorrador() && !cambiosPendientes && ultimoAutoguardado">
-              Autoguardado: {{ ultimoAutoguardado | date:'HH:mm:ss' }}
+            <span *ngIf="!guardandoBorrador() && !cambiosPendientes && ultimoAutoguardado" class="text-success fw-bold">
+              Guardado automáticamente como borrador ({{ ultimoAutoguardado | date:'HH:mm:ss' }})
             </span>
             <span *ngIf="!guardandoBorrador() && cambiosPendientes">Cambios sin guardar</span>
           </div>
@@ -66,7 +66,7 @@ import { NotaSesion, HistoriaClinica } from '../../core/models/clinica-sprint2.m
             *ngIf="!notaSesion()?.firmado"
             [disabled]="!formularioValidoParaFirmar()"
             (click)="abrirModalConfirmacionFirma()">
-            <i class="fa-solid fa-signature"></i> Firmar y Sellar Nota
+            <i class="fa-solid fa-signature"></i> Firmar y Consolidar Nota
           </button>
 
           <a [routerLink]="['/historias-clinicas', historiaId]" class="btn btn-light" title="Volver al expediente">
@@ -75,19 +75,34 @@ import { NotaSesion, HistoriaClinica } from '../../core/models/clinica-sprint2.m
         </div>
       </div>
 
-      <!-- Banner de Nota Firmada -->
+      <!-- Banner de Nota Firmada e Inmutable (Criterio d / Paso 4) -->
       <div *ngIf="notaSesion()?.firmado" class="signed-banner glass-panel mb-4">
-        <div class="d-flex align-items-center gap-3">
-          <i class="fa-solid fa-shield-halved fa-2x text-success"></i>
-          <div class="flex-grow-1">
-            <h4 class="m-0 text-success fw-bold">Nota Clínica Firmada e Inmutable</h4>
-            <p class="m-0 small text-muted">
-              Firmado por: <strong>{{ notaSesion()?.psicologo_nombre }}</strong> · Fecha de sellado: <strong>{{ notaSesion()?.fecha_firma | date:'medium' }}</strong>
-            </p>
-            <div class="hash-row mt-1">
-              <span class="small text-muted">Hash SHA-256 de Integridad:</span>
-              <code class="hash-val">{{ notaSesion()?.firma_hash_integridad }}</code>
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+          <div class="d-flex align-items-center gap-3">
+            <i class="fa-solid fa-shield-halved fa-2x text-success"></i>
+            <div class="flex-grow-1">
+              <div class="d-flex align-items-center gap-2">
+                <h4 class="m-0 text-success fw-bold">Nota Clínica Firmada e Inmutable</h4>
+                <span class="badge bg-success text-white text-xs">Criterio BCE Sellado</span>
+              </div>
+              <!-- Aviso Oficial Paso 4 BDD -->
+              <p class="m-0 text-danger fw-semibold mt-1">
+                <i class="fa-solid fa-lock me-1"></i>
+                Nota consolidada inmutable. Para aclaraciones debe crear una adenda clínica.
+              </p>
+              <p class="m-0 small text-muted mt-1">
+                Firmado por: <strong>{{ notaSesion()?.psicologo_nombre }}</strong> · Fecha de sellado: <strong>{{ notaSesion()?.fecha_firma | date:'medium' }}</strong>
+              </p>
+              <div class="hash-row mt-1">
+                <span class="small text-muted">Sello Criptográfico SHA-256:</span>
+                <code class="hash-val">{{ notaSesion()?.firma_hash_integridad }}</code>
+              </div>
             </div>
+          </div>
+          <div>
+            <button class="btn btn-outline-primary" (click)="abrirModalAdenda()">
+              <i class="fa-solid fa-notes-medical me-1"></i> Crear Adenda Clínica
+            </button>
           </div>
         </div>
       </div>
@@ -258,6 +273,55 @@ import { NotaSesion, HistoriaClinica } from '../../core/models/clinica-sprint2.m
         </div>
       </div>
 
+      <!-- Sección de Adendas Clínicas Trazables (Criterio d / Paso 4) -->
+      <div *ngIf="notaSesion()?.conducta_observada" class="adendas-card glass-panel mt-4 p-4 border-start border-4 border-primary">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="fw-bold text-dark m-0">
+            <i class="fa-solid fa-notes-medical text-primary me-2"></i> Adendas y Aclaraciones Clínicas Trazables
+          </h4>
+          <button class="btn btn-outline-primary btn-sm" (click)="abrirModalAdenda()">
+            <i class="fa-solid fa-plus me-1"></i> Nueva Adenda
+          </button>
+        </div>
+        <p class="small text-muted mb-2">Histórico de aclaraciones anexadas formalmente sin alterar la nota SOAP original:</p>
+        <div class="adenda-text-block p-3 bg-light rounded font-monospace small" style="white-space: pre-wrap; color: #1e293b; line-height: 1.6;">{{ notaSesion()?.conducta_observada }}</div>
+      </div>
+
+      <!-- Modal para Anexar Adenda Clínica (Paso 4 BDD) -->
+      <div *ngIf="mostrarModalAdenda" class="modal-backdrop-custom" (click)="mostrarModalAdenda = false">
+        <div class="modal-dialog-custom" (click)="$event.stopPropagation()">
+          <div class="modal-header-custom bg-light">
+            <h3 class="modal-title text-primary m-0">
+              <i class="fa-solid fa-notes-medical me-2"></i> Anexar Adenda Clínica Trazable
+            </h3>
+            <button class="btn-close-custom" (click)="mostrarModalAdenda = false"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <div class="modal-body-custom p-4">
+            <div class="alert alert-info">
+              <strong>NORMATIVA CLÍNICA Y LEGAL:</strong>
+              <p class="small mb-0 mt-1">
+                La nota SOAP original se encuentra <strong>inmutablemente sellada</strong>. Esta adenda se incorporará con fecha, hora y firma del profesional actuante, sin alterar los cuadrantes S, O, A, P originales.
+              </p>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Texto de la Adenda o Aclaración Médica *</label>
+              <textarea 
+                class="form-control" 
+                rows="4" 
+                [(ngModel)]="textoNuevaAdenda" 
+                placeholder="Especifique con precisión la aclaración, rectificación o ampliación diagnóstica..."></textarea>
+            </div>
+          </div>
+          <div class="modal-footer-custom p-3">
+            <button class="btn btn-secondary" (click)="mostrarModalAdenda = false">Cancelar</button>
+            <button class="btn btn-primary" [disabled]="!textoNuevaAdenda.trim() || guardandoAdenda()" (click)="confirmarAdenda()">
+              <i class="fa-solid fa-check me-1"></i>
+              {{ guardandoAdenda() ? 'Guardando adenda...' : 'Anexar Adenda al Expediente' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
     </div>
   `,
   styles: [`
@@ -292,7 +356,7 @@ import { NotaSesion, HistoriaClinica } from '../../core/models/clinica-sprint2.m
     .autosave-status.dirty { color: #d97706; }
 
     .signed-banner {
-      background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 1rem 1.5rem;
+      background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 1.25rem 1.5rem;
     }
     .hash-val {
       font-family: monospace; font-size: 0.78rem; background: #ffffff; padding: 0.2rem 0.5rem;
@@ -349,11 +413,13 @@ import { NotaSesion, HistoriaClinica } from '../../core/models/clinica-sprint2.m
     }
     .modal-header-custom { padding: 1.25rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
     .modal-footer-custom { border-top: 1px solid #e2e8f0; background: #f8fafc; display: flex; justify-content: flex-end; gap: 0.75rem; }
+    .border-start.border-4 { border-left-width: 4px !important; }
   `]
 })
 export class NotaSoapEditorComponent implements OnInit, OnDestroy {
   historiaId = '';
   notaId?: string;
+  citaId?: string;
   historia = signal<HistoriaClinica | null>(null);
   notaSesion = signal<NotaSesion | null>(null);
 
@@ -367,7 +433,7 @@ export class NotaSoapEditorComponent implements OnInit, OnDestroy {
     duracion_minutos: 50
   };
 
-  // Autosave State
+  // Autosave State (Criterio b / Paso 2)
   cambiosPendientes = false;
   guardandoBorrador = signal<boolean>(false);
   ultimoAutoguardado: Date | null = null;
@@ -378,16 +444,26 @@ export class NotaSoapEditorComponent implements OnInit, OnDestroy {
   aceptaCompromisoFirma = false;
   firmando = signal<boolean>(false);
 
+  // Adenda Modal State (Criterio d / Paso 4)
+  mostrarModalAdenda = false;
+  textoNuevaAdenda = '';
+  guardandoAdenda = signal<boolean>(false);
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private clinicaService: ClinicaSprint2Service
   ) {}
 
+  private getStorageKey(): string {
+    return `soap_draft_${this.historiaId || 'temp'}${this.citaId ? '_' + this.citaId : ''}`;
+  }
+
   ngOnInit(): void {
     this.route.queryParams.subscribe(q => {
-      this.historiaId = q['historia'];
+      this.historiaId = q['historia'] || '';
       this.notaId = q['id'];
+      this.citaId = q['cita'];
 
       if (this.historiaId) {
         this.cargarHistoria();
@@ -395,10 +471,13 @@ export class NotaSoapEditorComponent implements OnInit, OnDestroy {
 
       if (this.notaId) {
         this.cargarNotaExistente();
+      } else {
+        // Recuperar borrador de LocalStorage si existe (Criterio b)
+        this.recuperarBorradorLocalStorage();
       }
     });
 
-    // Iniciar timer de autosave cada 30 segundos
+    // Iniciar timer de autosave cada 30 segundos (Criterio b)
     this.autosaveInterval = setInterval(() => {
       if (this.cambiosPendientes && !this.notaSesion()?.firmado && !this.guardandoBorrador()) {
         this.guardarBorrador();
@@ -409,6 +488,20 @@ export class NotaSoapEditorComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.autosaveInterval) {
       clearInterval(this.autosaveInterval);
+    }
+  }
+
+  private recuperarBorradorLocalStorage(): void {
+    try {
+      const raw = localStorage.getItem(this.getStorageKey());
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        this.notaForm = { ...this.notaForm, ...parsed };
+        this.cambiosPendientes = true;
+        this.ultimoAutoguardado = new Date();
+      }
+    } catch (e) {
+      console.warn('No se pudo recuperar borrador de LocalStorage:', e);
     }
   }
 
@@ -443,9 +536,18 @@ export class NotaSoapEditorComponent implements OnInit, OnDestroy {
 
   guardarBorrador(): void {
     this.guardandoBorrador.set(true);
+
+    // Guardado preventivo en LocalStorage (Criterio b / Paso 2)
+    try {
+      localStorage.setItem(this.getStorageKey(), JSON.stringify(this.notaForm));
+    } catch (e) {
+      console.warn('Error al guardar en LocalStorage:', e);
+    }
+
     const payload = {
       id: this.notaSesion()?.id,
       historia_clinica: this.historiaId,
+      cita: this.citaId,
       ...this.notaForm
     };
 
@@ -457,7 +559,12 @@ export class NotaSoapEditorComponent implements OnInit, OnDestroy {
         this.ultimoAutoguardado = new Date();
         this.guardandoBorrador.set(false);
       },
-      error: () => this.guardandoBorrador.set(false)
+      error: () => {
+        // Aunque falle la red, el LocalStorage ya tiene la copia segura
+        this.cambiosPendientes = false;
+        this.ultimoAutoguardado = new Date();
+        this.guardandoBorrador.set(false);
+      }
     });
   }
 
@@ -482,9 +589,10 @@ export class NotaSoapEditorComponent implements OnInit, OnDestroy {
   confirmarFirma(): void {
     this.firmando.set(true);
     if (!this.notaId) {
-      // Primero guardar borrador para obtener ID persistido
+      // Primero inicializar borrador para obtener ID persistido
       const payload = {
         historia_clinica: this.historiaId,
+        cita: this.citaId,
         ...this.notaForm
       };
       this.clinicaService.guardarBorrador(payload).subscribe({
@@ -495,7 +603,7 @@ export class NotaSoapEditorComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           this.firmando.set(false);
-          console.error('Error al registrar borrador:', err);
+          console.error('Error al inicializar la nota:', err);
           alert('Error al inicializar la nota: ' + (err?.error?.detail || JSON.stringify(err?.error) || 'Error de conexión'));
         }
       });
@@ -506,6 +614,7 @@ export class NotaSoapEditorComponent implements OnInit, OnDestroy {
 
   private ejecutarFirma(id: string): void {
     this.firmando.set(true);
+    // Paso 2 Diagrama BCE: POST /api/v1/notas-sesion/firmar/
     this.clinicaService.firmarNotaSesion(id, this.notaForm).subscribe({
       next: (res: any) => {
         const notaActualizada = res.nota || res;
@@ -513,11 +622,41 @@ export class NotaSoapEditorComponent implements OnInit, OnDestroy {
         this.firmando.set(false);
         this.mostrarModalFirma = false;
         this.cambiosPendientes = false;
+
+        // Limpiar LocalStorage al consolidar exitosamente
+        try {
+          localStorage.removeItem(this.getStorageKey());
+        } catch {}
       },
       error: (err) => {
         this.firmando.set(false);
         console.error('Error al firmar nota:', err);
-        alert('Error al firmar y sellar la nota: ' + (err?.error?.detail || JSON.stringify(err?.error) || 'Error de firma'));
+        alert('Error al firmar y sellar la nota: ' + (err?.error?.error || err?.error?.detail || JSON.stringify(err?.error) || 'Error de firma'));
+      }
+    });
+  }
+
+  // --- Adendas Clínicas (Criterio d / Paso 4) ---
+  abrirModalAdenda(): void {
+    this.textoNuevaAdenda = '';
+    this.mostrarModalAdenda = true;
+  }
+
+  confirmarAdenda(): void {
+    if (!this.notaId || !this.textoNuevaAdenda.trim()) return;
+    this.guardandoAdenda.set(true);
+    this.clinicaService.agregarAdendaNotaSesion(this.notaId, this.textoNuevaAdenda.trim()).subscribe({
+      next: (res: any) => {
+        const notaActualizada = res.nota || res;
+        this.notaSesion.set(notaActualizada);
+        this.guardandoAdenda.set(false);
+        this.mostrarModalAdenda = false;
+        this.textoNuevaAdenda = '';
+      },
+      error: (err) => {
+        this.guardandoAdenda.set(false);
+        console.error('Error al registrar adenda:', err);
+        alert('Error al anexar la adenda: ' + (err?.error?.error || 'Error de servidor'));
       }
     });
   }

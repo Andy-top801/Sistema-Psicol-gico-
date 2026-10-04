@@ -39,6 +39,7 @@ class CitaSerializer(serializers.ModelSerializer):
     teleconsulta = TeleconsultaSerializer(read_only=True)
     formulario_pendiente = serializers.SerializerMethodField(read_only=True)
     intake_id = serializers.SerializerMethodField(read_only=True)
+    nota_soap_id = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Cita
@@ -49,19 +50,28 @@ class CitaSerializer(serializers.ModelSerializer):
             'modalidad', 'estado', 'motivo_consulta',
             'costo', 'motivo_cancelacion',
             'fecha_creacion', 'fecha_modificacion',
-            'teleconsulta', 'formulario_pendiente', 'intake_id'
+            'teleconsulta', 'formulario_pendiente', 'intake_id',
+            'nota_soap_id'
         ]
-        read_only_fields = ['id', 'fecha_creacion', 'fecha_modificacion', 'formulario_pendiente', 'intake_id']
+        read_only_fields = ['id', 'fecha_creacion', 'fecha_modificacion', 'formulario_pendiente', 'intake_id', 'nota_soap_id']
 
     def get_paciente_datos(self, obj):
         u = obj.paciente.usuario
+        hc = obj.paciente.historias_clinicas.first() if hasattr(obj.paciente, 'historias_clinicas') else None
         return {
             "id": str(obj.paciente.id),
             "nombre": f"{u.nombre} {u.apellido}".strip(),
             "ci": obj.paciente.ci,
             "telefono": u.telefono,
-            "codigo_expediente": obj.paciente.codigo_expediente
+            "codigo_expediente": obj.paciente.codigo_expediente,
+            "historia_id": str(hc.id) if hc else None
         }
+
+    def get_nota_soap_id(self, obj):
+        """Retorna el ID de la nota SOAP asociada si la cita ya fue documentada."""
+        if hasattr(obj, 'nota_soap') and obj.nota_soap:
+            return str(obj.nota_soap.id)
+        return None
 
     def get_psicologo_datos(self, obj):
         u = obj.psicologo.usuario

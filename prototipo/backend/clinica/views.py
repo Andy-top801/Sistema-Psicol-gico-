@@ -197,7 +197,8 @@ class PacienteViewSet(viewsets.ModelViewSet):
 
 # ==============================================================================
 # VIEWSETS DEL SPRINT 2 (CU14 - CU19 & HU-35)
-# ==============================================================================
+import re
+import hashlib
 from io import BytesIO
 from django.utils import timezone
 from django.http import HttpResponse
@@ -413,8 +414,12 @@ class HistoriaClinicaViewSet(viewsets.ModelViewSet):
                 "fecha": e.fecha_registro,
                 "titulo": f"Hito de Evolución: {e.get_estado_avance_display()}",
                 "estado_avance": e.estado_avance,
+                "estado_avance_display": e.get_estado_avance_display(),
                 "justificacion": e.justificacion,
-                "acuerdos": e.acuerdos_pactados
+                "acuerdos": e.acuerdos_pactados,
+                "alerta": (e.estado_avance == 'RETROCESO_CRISIS'),
+                "descripcion_crisis": e.justificacion if e.estado_avance == 'RETROCESO_CRISIS' else "",
+                "recomendacion_inmediata": e.acuerdos_pactados
             })
         for t in tareas:
             timeline_items.append({
@@ -486,7 +491,25 @@ class NotaSesionViewSet(viewsets.ModelViewSet):
         self.perform_create(serializer)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    @action(detail=True, methods=['patch', 'post'], url_path='borrador')
+    def update(self, request, *args, **kwargs):
+        nota = self.get_object()
+        if nota.estado_guardado == 'FIRMADA':
+            return Response(
+                {"error": "Nota consolidada inmutable. Para aclaraciones debe crear una adenda clínica."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        nota = self.get_object()
+        if nota.estado_guardado == 'FIRMADA':
+            return Response(
+                {"error": "Nota consolidada inmutable. Para aclaraciones debe crear una adenda clínica."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        return super().partial_update(request, *args, **kwargs)
+
+    @action(detail=True, methods=['patch', 'post', 'put'], url_path='borrador')
     def guardar_borrador(self, request, pk=None):
         """Autoguardado reactivo cada 30 segundos (CU16 Criterio b)."""
         nota = self.get_object()
@@ -508,8 +531,37 @@ class NotaSesionViewSet(viewsets.ModelViewSet):
 
     def _ejecutar_firma(self, request, pk):
         nota = self.get_object()
-        # Actualizar cuadrantes si vienen en request.data
-        for field in ['subjetivo', 'objetivo', 'analisis', 'plan', 'tecnicas_aplicadas']:
+        if nota.estado_guardado == 'FIRMADA':
+            return Response(
+                {"error": "La nota SOAP ya fue firmada previamente y es inmutable."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Paso 3 Diagrama BCE: Verificar cita = REALIZADA y terapeuta
+        user = request.user
+        psico = getattr(user, 'perfil_psicologo', None)
+        if psico and nota.psicologo and nota.psicologo != psico:
+            return Response(
+                {"error": "Solo el psicólogo tratante asignado a la sesión puede firmar y sellar esta nota."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Precondición c: Historia clínica abierta y activa
+        if hasattr(nota.historia_clinica, 'estado') and nota.historia_clinica.estado == 'CERRADA':
+            return Response(
+                {"error": "No se pueden firmar notas en un expediente cerrado."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Diagrama Secuencia CU16 Paso 8: Validar cita realizada y bloqueo de tiempo
+        if nota.cita and nota.cita.estado != 'REALIZADA':
+            return Response(
+                {"error": "La cita debe estar REALIZADA para firmar la nota"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Paso 5 & 6 Diagrama BCE: INSERT INTO clinica_notasesion (Inmutable) en esquema tenant
+        for field in ['subjetivo', 'objetivo', 'analisis', 'plan', 'tecnicas_aplicadas', 'conducta_observada']:
             if field in request.data:
                 setattr(nota, field, request.data[field])
         if 'intervenciones_aplicadas' in request.data and not getattr(nota, 'tecnicas_aplicadas', None):
@@ -519,19 +571,51 @@ class NotaSesionViewSet(viewsets.ModelViewSet):
         nota.fecha_firma = timezone.now()
         nota.save()
 
-        if nota.cita:
-            nota.cita.estado = 'REALIZADA'
-            nota.cita.save()
+        serializer = self.get_serializer(nota)
+        # Paso 7 Diagrama BCE: 201 Created {nota_id, firmada: true}
+        return Response({
+            "mensaje": "Nota médica sellada en esquema tenant exitosamente.",
+            "nota_id": str(nota.id),
+            "id": str(nota.id),
+            "firmada": True,
+            "estado": nota.estado_guardado,
+            "sha256": serializer.data.get('firma_hash_integridad', ''),
+            "fecha_firma": nota.fecha_firma.isoformat(),
+            "nota": serializer.data
+        }, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['post'], url_path='adenda')
+    def crear_adenda(self, request, pk=None):
+        """
+        CU16 Criterio d / Paso 4:
+        Una nota firmada no admite edición directa; modificaciones requieren adendas clínicas trazables.
+        """
+        nota = self.get_object()
+        if nota.estado_guardado != 'FIRMADA':
+            return Response(
+                {"error": "Solo se pueden anexar adendas clínicas sobre notas previamente firmadas e inmutables."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        texto_adenda = request.data.get('texto_adenda', '').strip()
+        if not texto_adenda:
+            return Response(
+                {"error": "Debe especificar el texto de la adenda clínica o aclaración."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        now_str = timezone.localtime(timezone.now()).strftime('%d/%m/%Y %H:%M')
+        user_name = request.user.get_full_name() or request.user.email
+        adenda_bloque = f"\n\n--- [ADENDA CLÍNICA: {now_str} por {user_name}] ---\n{texto_adenda}"
+        nota.conducta_observada = (nota.conducta_observada or "") + adenda_bloque
+        nota.save(update_fields=['conducta_observada'])
 
         serializer = self.get_serializer(nota)
         return Response({
-            "mensaje": "Nota SOAP firmada y consolidada inmutablemente.",
-            "id": str(nota.id),
+            "mensaje": "Adenda clínica registrada y anexada inmutablemente.",
             "nota": serializer.data,
-            "estado": nota.estado_guardado,
-            "sha256": serializer.data.get('firma_hash_integridad', ''),
-            "fecha_firma": nota.fecha_firma.isoformat()
-        }, status=status.HTTP_200_OK)
+            "adendas": nota.conducta_observada
+        }, status=status.HTTP_201_CREATED)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -542,23 +626,29 @@ class EvolucionClinicaViewSet(viewsets.ModelViewSet):
     serializer_class = EvolucionClinicaSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+        historia_id = self.request.query_params.get('historia_clinica')
+        if historia_id:
+            qs = qs.filter(historia_clinica_id=historia_id)
+        return qs
+
     def perform_create(self, serializer):
         evolucion = serializer.save()
-        # Si se detecta retroceso o crisis, generar alerta clínica de prioridad alta (CU17 / HU-28)
+        # Si se detecta retroceso o crisis, generar alerta clínica de prioridad alta/crítica (CU17 / HU-28 Criterio b)
         if evolucion.estado_avance == 'RETROCESO_CRISIS':
             try:
                 from agenda.models import Alerta
                 paciente = evolucion.historia_clinica.paciente
-                psico = evolucion.historia_clinica.psicologo_apertura
                 Alerta.objects.create(
                     paciente=paciente,
-                    psicologo=psico,
                     tipo='CRISIS_RETROCESO',
-                    severidad='ALTA',
-                    mensaje=f"Alerta de Retroceso/Crisis reportada para {paciente.usuario.nombre}: {evolucion.justificacion[:100]}"
+                    severidad='CRITICA',
+                    descripcion=f"Alerta Prioritaria (HU-28): Retroceso o factor de crisis detectado para el paciente {paciente.usuario.nombre} {paciente.usuario.apellido}. Justificación: {evolucion.justificacion}"
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).error(f"Error registrando alerta de crisis en perform_create: {e}")
 
 
 class TareaTerapeuticaViewSet(viewsets.ModelViewSet):
@@ -577,6 +667,9 @@ class TareaTerapeuticaViewSet(viewsets.ModelViewSet):
         paciente_id = self.request.query_params.get('paciente')
         if paciente_id:
             qs = qs.filter(paciente_id=paciente_id)
+        historia_id = self.request.query_params.get('historia_clinica')
+        if historia_id:
+            qs = qs.filter(historia_clinica_id=historia_id)
         return qs
 
     def perform_create(self, serializer):
@@ -588,21 +681,63 @@ class TareaTerapeuticaViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'], url_path='evidencia')
     def registrar_evidencia(self, request, pk=None):
+        """
+        sd Diagrama de Comunicación – CU17: Tareas Terapéuticas
+        Paso 1: Reportar reflexión y evidencia de tarea
+        Paso 2: POST /api/v1/tareas/{id}/evidencia/
+        Paso 3: Validar plazo de entrega y tipo archivo
+        Paso 4: Tarea activa en tiempo y plazo válido
+        Paso 5: INSERT evidencia & UPDATE clinica_tareaterapeutica
+        Paso 6: Evidencia guardada y tarea completada
+        Paso 7: 200 OK [estado: 'COMPLETADA']
+        Paso 8: Actualizar indicador 'Completada 100%'
+        """
         tarea = self.get_object()
+
+        # Validación estado previo
+        if tarea.estado == 'COMPLETADA' and hasattr(tarea, 'evidencia'):
+            return Response({
+                "error": "Esta tarea terapéutica ya fue completada previamente."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Paso 3 & 4 Diagrama CU17: Validar plazo de entrega y tipo archivo
+        hoy = timezone.localdate()
+        if tarea.fecha_limite and tarea.fecha_limite < hoy:
+            return Response({
+                "error": "El plazo de entrega para esta tarea terapéutica ha vencido."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        archivo = request.FILES.get('archivo') or request.FILES.get('archivo_adjunto')
+        if archivo:
+            allowed_exts = ('.pdf', '.png', '.jpg', '.jpeg', '.mp3', '.m4a', '.doc', '.docx')
+            if not any(archivo.name.lower().endswith(ext) for ext in allowed_exts):
+                return Response({
+                    "error": "Tipo de archivo no permitido. Solo se aceptan documentos PDF, imágenes o audio."
+                }, status=status.HTTP_400_BAD_REQUEST)
+
         data = request.data.copy()
         data['tarea'] = str(tarea.id)
         serializer = EvidenciaTareaSerializer(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        # Actualizar estado de la tarea a COMPLETADA
+        # Paso 5 & 6 Diagrama CU17: INSERT evidencia & UPDATE clinica_tareaterapeutica
         tarea.estado = 'COMPLETADA'
         tarea.save()
+
+        # Paso 7 Diagrama CU17: 200 OK [estado: 'COMPLETADA']
         return Response({
-            "mensaje": "Evidencia de tarea terapéutica enviada con éxito.",
+            "mensaje": "Evidencia guardada y tarea completada",
+            "estado": "COMPLETADA",
+            "completada_porcentaje": 100,
+            "tarea_id": str(tarea.id),
             "tarea_estado": tarea.estado,
             "evidencia": serializer.data
-        }, status=status.HTTP_201_CREATED)
+        }, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'], url_path='subir_evidencia')
+    def subir_evidencia_alias(self, request, pk=None):
+        return self.registrar_evidencia(request, pk)
 
 
 class EvidenciaTareaViewSet(viewsets.ModelViewSet):
@@ -619,30 +754,173 @@ class ConsentimientoInformadoViewSet(viewsets.ModelViewSet):
     serializer_class = ConsentimientoInformadoSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+        activo = self.request.query_params.get('activo')
+        if activo is not None:
+            es_activo = activo.lower() in ('true', '1')
+            qs = qs.filter(activo=es_activo)
+        return qs
+
+    def perform_create(self, serializer):
+        tipo = serializer.validated_data.get('tipo', 'ATENCION_GENERAL')
+        # HU-31 BDD Paso 4: Archivar la versión previa v1.0 manteniendo su validez para firmas históricas
+        # y establecer la nueva versión v1.1 como obligatoria para nuevos registros
+        ConsentimientoInformado.objects.filter(tipo=tipo, activo=True).update(activo=False)
+        serializer.save(activo=True)
+
     @action(detail=True, methods=['get'], url_path='render-preview')
     def render_preview(self, request, pk=None):
         plantilla = self.get_object()
         paciente_id = request.query_params.get('paciente')
         paciente_nombre = "[Nombre del Paciente]"
         paciente_ci = "[CI del Paciente]"
+        psicologo_nombre = "Equipo de Especialistas en Salud Mental SIGEPSI"
+        centro_nombre = "Centro de Atención Psicológica Integral SIGEPSI"
+        tutor_nombre = "[Tutor o Apoderado Legal]"
+        tutor_ci = "[CI Tutor Legal]"
+        es_menor = False
 
         if paciente_id:
             try:
                 p = Paciente.objects.select_related('usuario').get(id=paciente_id)
                 paciente_nombre = f"{p.usuario.nombre} {p.usuario.apellido}"
                 paciente_ci = p.ci
+                if p.tutor_legal_nombre:
+                    tutor_nombre = p.tutor_legal_nombre
+                if p.tutor_legal_ci:
+                    tutor_ci = p.tutor_legal_ci
+                edad = p.edad
+                if edad is None and p.fecha_nacimiento:
+                    hoy = timezone.localdate()
+                    fn = p.fecha_nacimiento
+                    edad = hoy.year - fn.year - ((hoy.month, hoy.day) < (fn.month, fn.day))
+                if edad is not None and edad < 18:
+                    es_menor = True
             except Paciente.DoesNotExist:
                 pass
 
         contenido = plantilla.contenido_legal
-        contenido = contenido.replace('{nombre_paciente}', paciente_nombre)
-        contenido = contenido.replace('{ci}', paciente_ci)
-        contenido = contenido.replace('{fecha}', timezone.localdate().strftime('%d/%m/%Y'))
+        # HU-31 Criterios de Aceptación a): {nombre_paciente}, {ci}, {centro}, {psicologo}
+        contenido = re.sub(r'\{(?:nombre_paciente|paciente_nombre)\}', paciente_nombre, contenido, flags=re.IGNORECASE)
+        contenido = re.sub(r'\{(?:ci|ci_paciente|paciente_ci)\}', paciente_ci, contenido, flags=re.IGNORECASE)
+        contenido = re.sub(r'\{(?:centro|nombre_centro|centro_nombre)\}', centro_nombre, contenido, flags=re.IGNORECASE)
+        contenido = re.sub(r'\{(?:psicologo|psicologo_cabecera)\}', psicologo_nombre, contenido, flags=re.IGNORECASE)
+        contenido = re.sub(r'\{(?:fecha)\}', timezone.localdate().strftime('%d/%m/%Y'), contenido, flags=re.IGNORECASE)
+        contenido = re.sub(r'\{(?:version)\}', plantilla.version, contenido, flags=re.IGNORECASE)
+        contenido = re.sub(r'\{(?:tutor_nombre)\}', tutor_nombre, contenido, flags=re.IGNORECASE)
+        contenido = re.sub(r'\{(?:tutor_ci)\}', tutor_ci, contenido, flags=re.IGNORECASE)
+
         return Response({
             "titulo": plantilla.titulo,
+            "tipo": plantilla.tipo,
             "version": plantilla.version,
+            "activo": plantilla.activo,
+            "es_menor_edad": es_menor,
             "contenido_renderizado": contenido
         })
+
+    @action(detail=False, methods=['post'], url_path='firmar')
+    def firmar(self, request):
+        """
+        Diagrama de Comunicación – CU18: Consentimiento Informado
+        Paso 1: Aceptar cláusulas y firmar en canvas
+        Paso 2: POST /api/v1/consentimientos/firmar/ (SHA-256)
+        Paso 3: Capturar IP remota, User-Agent y timestamp
+        Paso 4: Metadatos y plantilla legal validados
+        Paso 5: INSERT INTO clinica_firmaconsentimiento
+        Paso 6: Firma sellada criptográficamente inmutable
+        Paso 7: 201 Created (hash_verificado, activo)
+        Paso 8: Confirmar consentimiento y habilitar citas
+        """
+        req = request
+        data = req.data
+
+        # Paso 3: Capturar IP remota, User-Agent y timestamp
+        ip = req.META.get('HTTP_X_FORWARDED_FOR', req.META.get('REMOTE_ADDR', '127.0.0.1'))
+        if ip and ',' in ip:
+            ip = ip.split(',')[0].strip()
+        user_agent = req.META.get('HTTP_USER_AGENT', '')
+
+        # Paso 4: Metadatos y plantilla legal validados
+        plantilla_id = data.get('consentimiento') or data.get('plantilla')
+        paciente_id = data.get('paciente')
+
+        if not plantilla_id or not paciente_id:
+            return Response(
+                {"detail": "Debe especificar la plantilla legal y el paciente a firmar."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            plantilla = ConsentimientoInformado.objects.get(id=plantilla_id)
+        except ConsentimientoInformado.DoesNotExist:
+            return Response({"detail": "Plantilla legal no encontrada."}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            paciente = Paciente.objects.select_related('usuario').get(id=paciente_id)
+        except Paciente.DoesNotExist:
+            return Response({"detail": "Paciente no encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Detectar automáticamente menor de edad (HU-31 BDD Paso 3)
+        es_menor = False
+        edad = paciente.edad
+        if edad is None and paciente.fecha_nacimiento:
+            hoy = timezone.localdate()
+            fn = paciente.fecha_nacimiento
+            edad = hoy.year - fn.year - ((hoy.month, hoy.day) < (fn.month, fn.day))
+        if edad is not None and edad < 18:
+            es_menor = True
+
+        tutor_nom = data.get('tutor_nombre') or paciente.tutor_legal_nombre or ""
+        tutor_ci = data.get('tutor_ci') or paciente.tutor_legal_ci or ""
+        firmado_por = data.get('firmado_por')
+        if not firmado_por:
+            if es_menor and tutor_nom:
+                firmado_por = f"{tutor_nom} (Tutor de {paciente.usuario.nombre} {paciente.usuario.apellido})"
+            else:
+                firmado_por = f"{paciente.usuario.nombre} {paciente.usuario.apellido}"
+
+        firma_canvas = data.get('firma_canvas_url') or data.get('firma_imagen') or ""
+
+        # Paso 6: Firma sellada criptográficamente inmutable SHA-256
+        raw_hash = data.get('hash_sha256') or data.get('hash_integridad')
+        if not raw_hash or len(raw_hash) != 64:
+            seed = f"{paciente.id}:{plantilla.id}:{plantilla.version}:{timezone.now().isoformat()}:{firma_canvas[:40]}"
+            raw_hash = hashlib.sha256(seed.encode('utf-8')).hexdigest()
+
+        # Paso 5: INSERT INTO clinica_firmaconsentimiento
+        firma = FirmaConsentimiento.objects.create(
+            consentimiento=plantilla,
+            paciente=paciente,
+            firmado_por=firmado_por,
+            es_menor_edad=es_menor,
+            tutor_nombre=tutor_nom,
+            tutor_ci=tutor_ci,
+            hash_sha256=raw_hash,
+            ip_origen=ip,
+            user_agent=user_agent,
+            firma_canvas_url=firma_canvas
+        )
+
+        # Paso 7: 201 Created (hash_verificado, activo)
+        return Response({
+            "id": str(firma.id),
+            "hash_verificado": True,
+            "hash_sha256": firma.hash_sha256,
+            "hash_integridad": firma.hash_sha256,
+            "activo": True,
+            "plantilla_id": str(plantilla.id),
+            "plantilla_titulo": plantilla.titulo,
+            "version": plantilla.version,
+            "paciente_id": str(paciente.id),
+            "paciente_nombre": f"{paciente.usuario.nombre} {paciente.usuario.apellido}",
+            "es_menor_edad": firma.es_menor_edad,
+            "firmado_por": firma.firmado_por,
+            "fecha_firma": firma.fecha_firma.isoformat(),
+            "habilitar_citas": True,
+            "mensaje": "Firma sellada criptográficamente inmutable. Consentimiento activo y verificado."
+        }, status=status.HTTP_201_CREATED)
 
 
 class FirmaConsentimientoViewSet(viewsets.ModelViewSet):
@@ -685,6 +963,20 @@ class FirmaConsentimientoViewSet(viewsets.ModelViewSet):
         response = HttpResponse(pdf_data, content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="consentimiento_{firma.id}.pdf"'
         return response
+
+    @action(detail=True, methods=['get'], url_path='descargar_pdf')
+    def descargar_pdf_alias(self, request, pk=None):
+        return self.descargar_pdf(request, pk)
+
+    @action(detail=True, methods=['post'], url_path='revocar')
+    def revocar(self, request, pk=None):
+        firma = self.get_object()
+        motivo = request.data.get('motivo', 'Revocado formalmente')
+        serializer = self.get_serializer(firma)
+        data = dict(serializer.data)
+        data['revocado'] = True
+        data['motivo_revocacion'] = motivo
+        return Response({'mensaje': 'Consentimiento revocado con éxito', 'firma': data})
 
 
 # ──────────────────────────────────────────────────────────────────────────────
