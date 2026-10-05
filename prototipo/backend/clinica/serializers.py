@@ -1,11 +1,11 @@
-# ==============================================================================
+# =
 # MÓDULO: clinica/serializers.py
 # CAPA BCE: CONTROL (Controller) — Subcomponente de validación de CTR_Psicologo,
 #           CTR_Paciente, CTR_Disponibilidad
 # CASOS DE USO: CU6 (Psicólogos), CU7 (Pacientes), CU8 (Disponibilidad)
 # DESCRIPCIÓN: Serializers DRF que implementan los pasos 3-4 (validación) y
 #              5-6 (persistencia) de los Diagramas de Comunicación BCE.
-# ==============================================================================
+# =
 import hashlib
 from datetime import date
 from django.utils import timezone
@@ -437,9 +437,9 @@ class PacienteSerializer(serializers.ModelSerializer):
         return instance
 
 
-# ==============================================================================
+# =
 # SERIALIZADORES SPRINT 2 (CU14 - CU19 & HU-35)
-# ==============================================================================
+# =
 from clinica.models import (
     FormularioPreConsulta, RespuestaPreConsulta,
     HistoriaClinica, DiagnosticoCIE,
@@ -858,38 +858,43 @@ class TareaTerapeuticaSerializer(serializers.ModelSerializer):
 # CU18: Consentimiento Informado y Firma Digital Criptográfica
 # ──────────────────────────────────────────────────────────────────────────────
 class ConsentimientoInformadoSerializer(serializers.ModelSerializer):
-    codigo_plantilla = serializers.CharField(write_only=True, required=False)
-    cuerpo_plantilla = serializers.CharField(write_only=True, required=False)
+    codigo_plantilla = serializers.CharField(source='tipo', required=False, allow_blank=True)
+    cuerpo_plantilla = serializers.CharField(source='contenido_legal', required=False, allow_blank=True)
+    id = serializers.UUIDField(read_only=True)
 
     class Meta:
         model = ConsentimientoInformado
-        fields = ['id', 'titulo', 'tipo', 'contenido_legal', 'version', 'activo', 'fecha_creacion', 'codigo_plantilla', 'cuerpo_plantilla']
+        fields = [
+            'id', 'titulo', 'tipo', 'contenido_legal', 'version', 'activo',
+            'fecha_creacion', 'codigo_plantilla', 'cuerpo_plantilla'
+        ]
         read_only_fields = ['id', 'fecha_creacion']
         extra_kwargs = {
-            'tipo': {'required': False},
-            'contenido_legal': {'required': False},
-            'version': {'required': False}
+            'titulo': {'required': False},
+            'tipo': {'required': False, 'allow_blank': True},
+            'contenido_legal': {'required': False, 'allow_blank': True},
+            'version': {'required': False},
+            'activo': {'required': False},
         }
 
-    def validate(self, attrs):
-        if 'codigo_plantilla' in attrs and 'tipo' not in attrs:
-            attrs['tipo'] = attrs.pop('codigo_plantilla')
-        elif 'codigo_plantilla' in attrs:
-            attrs.pop('codigo_plantilla')
-        if not attrs.get('tipo'):
-            attrs['tipo'] = 'ATENCION_GENERAL'
-
-        if 'cuerpo_plantilla' in attrs and 'contenido_legal' not in attrs:
-            attrs['contenido_legal'] = attrs.pop('cuerpo_plantilla')
-        elif 'cuerpo_plantilla' in attrs:
-            attrs.pop('cuerpo_plantilla')
-        if not attrs.get('contenido_legal'):
-            attrs['contenido_legal'] = ""
-
-        if not attrs.get('version'):
-            attrs['version'] = 'v1.0'
-
-        return attrs
+    def validate(self, data):
+        if getattr(self, 'partial', False):
+            return data
+        request = self.context.get('request')
+        if request:
+            if not data.get('tipo') and request.data.get('codigo_plantilla'):
+                data['tipo'] = request.data.get('codigo_plantilla')
+            if not data.get('contenido_legal') and request.data.get('cuerpo_plantilla'):
+                data['contenido_legal'] = request.data.get('cuerpo_plantilla')
+        if not data.get('tipo'):
+            data['tipo'] = 'ATENCION_GENERAL'
+        if not data.get('contenido_legal'):
+            raise serializers.ValidationError({'contenido_legal': 'El cuerpo del consentimiento es requerido.'})
+        if 'version' not in data or data.get('version') is None:
+            data['version'] = '1.0'
+        if 'activo' not in data:
+            data['activo'] = True
+        return data
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -899,32 +904,63 @@ class ConsentimientoInformadoSerializer(serializers.ModelSerializer):
 
 
 class FirmaConsentimientoSerializer(serializers.ModelSerializer):
+    consentimiento = serializers.PrimaryKeyRelatedField(
+        queryset=ConsentimientoInformado.objects.all(),
+        required=False
+    )
     consentimiento_titulo = serializers.SerializerMethodField()
     consentimiento_tipo = serializers.SerializerMethodField()
+
     plantilla = serializers.PrimaryKeyRelatedField(queryset=ConsentimientoInformado.objects.all(), write_only=True, required=False)
     firma_imagen = serializers.CharField(write_only=True, required=False)
     contenido_final_renderizado = serializers.CharField(write_only=True, required=False)
+
+    firmado_por = serializers.CharField(required=False, allow_blank=True)
+    es_menor_edad = serializers.BooleanField(required=False, default=False)
+    tutor_nombre = serializers.CharField(required=False, allow_blank=True, default='')
+    tutor_ci = serializers.CharField(required=False, allow_blank=True, default='')
+    firma_canvas_url = serializers.CharField(required=False, allow_blank=True, default='')
+    hash_sha256 = serializers.CharField(required=False, allow_blank=True)
+    # Aliases del frontend
+    plantilla = serializers.PrimaryKeyRelatedField(
+        queryset=ConsentimientoInformado.objects.all(),
+        source='consentimiento',
+        required=False,
+        write_only=True
+    )
+    paciente = serializers.PrimaryKeyRelatedField(
+        queryset=Paciente.objects.all(),
+        required=False
+    )
+    paciente_id = serializers.PrimaryKeyRelatedField(
+        queryset=Paciente.objects.all(),
+        source='paciente',
+        required=False,
+        write_only=True
+    )
+    firma_imagen = serializers.CharField(
+        source='firma_canvas_url',
+        required=False,
+        allow_blank=True,
+        write_only=True
+    )
 
     class Meta:
         model = FirmaConsentimiento
         fields = [
             'id', 'consentimiento', 'plantilla', 'consentimiento_titulo', 'consentimiento_tipo',
             'paciente', 'firmado_por', 'es_menor_edad', 'tutor_nombre', 'tutor_ci',
-            'hash_sha256', 'ip_origen', 'user_agent', 'firma_canvas_url', 'firma_imagen',
-            'contenido_final_renderizado', 'fecha_firma'
+            'hash_sha256', 'ip_origen', 'user_agent', 'firma_canvas_url', 'fecha_firma',
+            'plantilla', 'paciente_id', 'firma_imagen', 'revocado', 'motivo_revocacion', 'fecha_revocacion'
         ]
-        read_only_fields = ['id', 'fecha_firma']
-        extra_kwargs = {
-            'consentimiento': {'required': False},
-            'hash_sha256': {'required': False},
-            'firmado_por': {'required': False}
-        }
+        read_only_fields = ['id', 'fecha_firma', 'hash_sha256', 'revocado', 'fecha_revocacion']
 
     def get_consentimiento_titulo(self, obj):
         return obj.consentimiento.titulo if obj.consentimiento else ""
 
     def get_consentimiento_tipo(self, obj):
         return obj.consentimiento.tipo if obj.consentimiento else ""
+
 
     def validate(self, attrs):
         if 'plantilla' in attrs and 'consentimiento' not in attrs:
@@ -978,12 +1014,63 @@ class FirmaConsentimientoSerializer(serializers.ModelSerializer):
 
         return attrs
 
+    def validate_hash_sha256(self, value):
+        if value and len(value) != 64:
+            raise serializers.ValidationError("El hash SHA-256 debe ser una huella hexadecimal válida de 64 caracteres.")
+        return value or ''
+
+    def validate(self, data):
+        # Mapear aliases del frontend
+        if self.initial_data:
+            if not data.get('consentimiento') and self.initial_data.get('plantilla'):
+                try:
+                    from clinica.models import ConsentimientoInformado
+                    data['consentimiento'] = ConsentimientoInformado.objects.get(id=self.initial_data.get('plantilla'))
+                except ConsentimientoInformado.DoesNotExist:
+                    raise serializers.ValidationError({'plantilla': 'Plantilla no encontrada'})
+            if not data.get('paciente'):
+                pid = self.initial_data.get('paciente') or self.initial_data.get('paciente_id')
+                if pid:
+                    try:
+                        from clinica.models import Paciente
+                        data['paciente'] = Paciente.objects.get(id=pid)
+                    except Paciente.DoesNotExist:
+                        raise serializers.ValidationError({'paciente': 'Paciente no encontrado'})
+            # Ignorar contenido_final_renderizado si viene
+
+
+        # Validar requeridos
+        if not data.get('consentimiento'):
+            raise serializers.ValidationError({'consentimiento': 'El consentimiento/plantilla es requerido.'})
+        if not data.get('paciente'):
+            raise serializers.ValidationError({'paciente': 'El paciente es requerido.'})
+
+        # Si firmado_por no viene, calcularlo desde el paciente
+        if not data.get('firmado_por'):
+            paciente = data.get('paciente')
+            if paciente and hasattr(paciente, 'usuario'):
+                u = paciente.usuario
+                data['firmado_por'] = f"{u.nombre} {u.apellido}".strip()
+            else:
+                data['firmado_por'] = 'Paciente'
+
+        # Defaults
+        if 'es_menor_edad' not in data:
+            data['es_menor_edad'] = False
+        if 'tutor_nombre' not in data:
+            data['tutor_nombre'] = ''
+        if 'tutor_ci' not in data:
+            data['tutor_ci'] = ''
+        if 'firma_canvas_url' not in data:
+            data['firma_canvas_url'] = ''
+
+        return data
+
     def to_representation(self, instance):
         data = super().to_representation(instance)
         data['hash_integridad'] = instance.hash_sha256
         data['plantilla_titulo'] = instance.consentimiento.titulo if instance.consentimiento else ""
         data['paciente_nombre'] = f"{instance.paciente.usuario.nombre} {instance.paciente.usuario.apellido}" if instance.paciente and instance.paciente.usuario else ""
-        data['revocado'] = False
         return data
 
 
