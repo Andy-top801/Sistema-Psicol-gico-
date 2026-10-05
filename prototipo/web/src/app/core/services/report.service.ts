@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -22,6 +22,12 @@ export interface FuenteMetadata {
   label: string;
   columnas: ColumnaDef[];
   filtros: FiltroDef[];
+}
+
+function developerKeyOptions(fuente: string, developerKey?: string): { headers?: Record<string, string> } | Observable<never> {
+  if (fuente !== 'bitacora') return {};
+  if (!developerKey?.trim()) return throwError(() => new Error('Se requiere la clave de desarrollador para consultar la bitácora.'));
+  return { headers: { 'X-Developer-Key': developerKey.trim() } };
 }
 
 export interface ReporteResultado {
@@ -47,7 +53,7 @@ export class ReportService {
   /**
    * Obtiene el reporte predefinido o filtrado para una fuente específica.
    */
-  getReporte(fuente: string, filtros: Record<string, any> = {}, columnas?: string[], orden?: { columna: string; direccion: string }): Observable<ReporteResultado> {
+  getReporte(fuente: string, filtros: Record<string, any> = {}, columnas?: string[], orden?: { columna: string; direccion: string }, developerKey?: string): Observable<ReporteResultado> {
     let params = new HttpParams();
     Object.keys(filtros).forEach(key => {
       const val = filtros[key];
@@ -65,7 +71,9 @@ export class ReportService {
       params = params.set('orden_dir', orden.direccion || 'ASC');
     }
 
-    return this.http.get<ReporteResultado>(`${this.apiUrl}/${fuente}/`, { params });
+    const keyOptions = developerKeyOptions(fuente, developerKey);
+    if (keyOptions instanceof Observable) return keyOptions;
+    return this.http.get<ReporteResultado>(`${this.apiUrl}/${fuente}/`, { params, ...keyOptions });
   }
 
   /**
@@ -76,8 +84,10 @@ export class ReportService {
     columnas?: string[];
     filtros?: Record<string, any>;
     orden?: { columna: string; direccion: string };
-  }): Observable<ReporteResultado> {
-    return this.http.post<ReporteResultado>(`${this.apiUrl}/personalizado/`, payload);
+  }, developerKey?: string): Observable<ReporteResultado> {
+    const keyOptions = developerKeyOptions(payload.fuente, developerKey);
+    if (keyOptions instanceof Observable) return keyOptions;
+    return this.http.post<ReporteResultado>(`${this.apiUrl}/personalizado/`, payload, keyOptions);
   }
 
   /**
@@ -89,14 +99,16 @@ export class ReportService {
     asunto?: string;
     filtros?: Record<string, any>;
     columnas?: string[];
-  }): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/email/`, payload);
+  }, developerKey?: string): Observable<any> {
+    const keyOptions = developerKeyOptions(payload.fuente, developerKey);
+    if (keyOptions instanceof Observable) return keyOptions;
+    return this.http.post<any>(`${this.apiUrl}/email/`, payload, keyOptions);
   }
 
   /**
    * Descarga directa en Excel (.xlsx con estilos) desde el servidor Django.
    */
-  descargarExcelServer(fuente: string, filtros: Record<string, any> = {}, columnas?: string[]): Observable<Blob> {
+  descargarExcelServer(fuente: string, filtros: Record<string, any> = {}, columnas?: string[], developerKey?: string): Observable<Blob> {
     let params = new HttpParams();
     Object.keys(filtros).forEach(key => {
       const val = filtros[key];
@@ -107,13 +119,15 @@ export class ReportService {
     if (columnas && columnas.length > 0) {
       params = params.set('columnas', columnas.join(','));
     }
-    return this.http.get(`${this.apiUrl}/${fuente}/export/excel/`, { params, responseType: 'blob' });
+    const keyOptions = developerKeyOptions(fuente, developerKey);
+    if (keyOptions instanceof Observable) return keyOptions;
+    return this.http.get(`${this.apiUrl}/${fuente}/export/excel/`, { params, responseType: 'blob', ...keyOptions });
   }
 
   /**
    * Descarga directa en CSV desde el servidor.
    */
-  descargarCSVServer(fuente: string, filtros: Record<string, any> = {}): Observable<Blob> {
+  descargarCSVServer(fuente: string, filtros: Record<string, any> = {}, developerKey?: string): Observable<Blob> {
     let params = new HttpParams();
     Object.keys(filtros).forEach(key => {
       const val = filtros[key];
@@ -121,13 +135,15 @@ export class ReportService {
         params = params.set(key, String(val));
       }
     });
-    return this.http.get(`${this.apiUrl}/${fuente}/export/csv/`, { params, responseType: 'blob' });
+    const keyOptions = developerKeyOptions(fuente, developerKey);
+    if (keyOptions instanceof Observable) return keyOptions;
+    return this.http.get(`${this.apiUrl}/${fuente}/export/csv/`, { params, responseType: 'blob', ...keyOptions });
   }
 
   /**
    * Descarga directa en HTML desde el servidor.
    */
-  descargarHTMLServer(fuente: string, filtros: Record<string, any> = {}, columnas?: string[]): Observable<Blob> {
+  descargarHTMLServer(fuente: string, filtros: Record<string, any> = {}, columnas?: string[], developerKey?: string): Observable<Blob> {
     let params = new HttpParams();
     Object.keys(filtros).forEach(key => {
       const val = filtros[key];
@@ -138,7 +154,9 @@ export class ReportService {
     if (columnas && columnas.length > 0) {
       params = params.set('columnas', columnas.join(','));
     }
-    return this.http.get(`${this.apiUrl}/${fuente}/export/html/`, { params, responseType: 'blob' });
+    const keyOptions = developerKeyOptions(fuente, developerKey);
+    if (keyOptions instanceof Observable) return keyOptions;
+    return this.http.get(`${this.apiUrl}/${fuente}/export/html/`, { params, responseType: 'blob', ...keyOptions });
   }
 
   // ═══════════════════════════════════════════════════════════════════════════

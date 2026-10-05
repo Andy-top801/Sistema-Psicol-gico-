@@ -357,13 +357,39 @@ export class ClinicaSprint2Service {
     motivo_derivacion: string;
     resumen_evolucion: string;
     recomendaciones_tratamiento?: string;
-    bloquear_citas_subsecuentes?: boolean;
+    logros_alcanzados?: string;
+    recomendaciones_mantenimiento?: string;
   }): Observable<DerivacionCaso> {
-    return this.http.post<DerivacionCaso>(`${this.apiUrl}/derivaciones/`, data);
+    const tipoMap: Record<string, string> = {
+      DERIVACION_PSIQUIATRIA: 'EXTERNA_PSIQUIATRIA',
+      DERIVACION_MEDICA: 'EXTERNA_NEUROLOGIA',
+      ALTA_TERAPEUTICA: 'CIERRE_ALTA',
+      ABANDONO: 'DESERCION',
+      MUTUO_ACUERDO: 'MUTUO_ACUERDO'
+    };
+    const notas = [
+      data.resumen_evolucion && `Evolución: ${data.resumen_evolucion}`,
+      data.recomendaciones_tratamiento && `Recomendaciones: ${data.recomendaciones_tratamiento}`
+    ].filter(Boolean).join('\n');
+    const closure = ['ALTA_TERAPEUTICA', 'ABANDONO', 'MUTUO_ACUERDO'].includes(data.tipo_cierre);
+    return this.http.post<DerivacionCaso>(`${this.apiUrl}/derivaciones/`, {
+      historia_clinica: data.historia_clinica,
+      tipo_derivacion: tipoMap[data.tipo_cierre] || data.tipo_cierre,
+      motivo_clinico: closure ? data.motivo_derivacion : [data.motivo_derivacion, notas].filter(Boolean).join('\n\n'),
+      logros_alcanzados: data.logros_alcanzados || '',
+      recomendaciones_mantenimiento: data.recomendaciones_mantenimiento || '',
+      sintomatologia_relevante: '',
+      profesional_destino: data.especialidad_destino || '',
+      institucion_destino: data.profesional_o_institucion_destino || ''
+    });
+  }
+
+  reactivarHistoriaClinica(id: string, motivo_clinico: string): Observable<DerivacionCaso> {
+    return this.http.post<DerivacionCaso>(`${this.apiUrl}/historias-clinicas/${id}/reactivar/`, { motivo_clinico });
   }
 
   descargarOrdenDerivacionPdf(derivacionId: string): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}/derivaciones/${derivacionId}/descargar_orden_pdf/`, {
+    return this.http.get(`${this.apiUrl}/derivaciones/${derivacionId}/descargar-pdf/`, {
       responseType: 'blob'
     });
   }

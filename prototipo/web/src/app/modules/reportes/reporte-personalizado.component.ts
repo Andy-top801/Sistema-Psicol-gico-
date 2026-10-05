@@ -1,9 +1,10 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ReportService, ColumnaDef, FiltroDef, ReporteResultado, FuenteMetadata } from '../../core/services/report.service';
 import { AuthService } from '../../core/services/auth.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-reporte-personalizado',
@@ -63,6 +64,12 @@ import { AuthService } from '../../core/services/auth.service';
             <option value="usuarios">👥 Catálogo de Usuarios del Sistema</option>
             <option *ngIf="authService.isSuperAdmin()" value="bitacora">📜 Bitácora de Auditoría (Cifrada)</option>
           </select>
+          <div *ngIf="fuenteSeleccionada === 'bitacora'" class="filter-field">
+            <label for="custom-audit-key">Clave de desarrollador</label>
+            <input id="custom-audit-key" type="password" autocomplete="off" [(ngModel)]="developerKey" (ngModelChange)="keyChanged()">
+            <p *ngIf="accessError" role="alert">{{ accessError }}</p>
+            <button type="button" class="btn-clear" (click)="lockAudit()">Bloquear</button>
+          </div>
         </div>
 
         <!-- Paso 2: Selección de Columnas -->
@@ -991,7 +998,7 @@ import { AuthService } from '../../core/services/auth.service';
     }
   `]
 })
-export class ReportePersonalizadoComponent implements OnInit {
+export class ReportePersonalizadoComponent implements OnInit, OnDestroy {
   fuenteSeleccionada = 'citas';
   metadataFuentes: Record<string, FuenteMetadata> = {};
 
@@ -1019,11 +1026,17 @@ export class ReportePersonalizadoComponent implements OnInit {
   enviandoEmail = false;
   emailMensaje = '';
   emailError = '';
+  developerKey = '';
+  accessError = '';
+  private requests = new Subscription();
+  private configuredSource = 'citas';
 
   constructor(
     private reportService: ReportService,
     public authService: AuthService
-  ) {}
+  ) {
+    effect(() => { if (!this.authService.isAuthenticated()) this.clearAuditState(); });
+  }
 
   ngOnInit(): void {
     this.cargarMetadata();
@@ -1040,6 +1053,11 @@ export class ReportePersonalizadoComponent implements OnInit {
   }
 
   onFuenteCambiada(): void {
+    if (this.configuredSource !== this.fuenteSeleccionada) {
+      this.clearAuditState();
+      this.resultado = null;
+      this.configuredSource = this.fuenteSeleccionada;
+    }
     this.filtrosValores = {};
     this.columnaOrden = '';
     this.resultado = null;
@@ -1081,26 +1099,59 @@ export class ReportePersonalizadoComponent implements OnInit {
   }
 
   generarReportePersonalizado(): void {
+    if (this.fuenteSeleccionada === 'bitacora' && !this.developerKey.trim()) {
+      this.clearAuditResult();
+      this.accessError = 'Ingresá la clave de desarrollador para consultar la bitácora.';
+      return;
+    }
+    this.accessError = '';
+    if (this.fuenteSeleccionada === 'bitacora') this.clearAuditRequest();
     this.generando = true;
+    const fuenteConsultada = this.fuenteSeleccionada;
+    const keyConsultada = fuenteConsultada === 'bitacora' ? this.developerKey : undefined;
     const orden = this.columnaOrden ? { columna: this.columnaOrden, direccion: this.direccionOrden } : undefined;
 
-    this.reportService.generarPersonalizado({
-      fuente: this.fuenteSeleccionada,
+    const request = this.reportService.generarPersonalizado({
+      fuente: fuenteConsultada,
       columnas: this.columnasSeleccionadas,
       filtros: this.filtrosValores,
       orden: orden
-    }).subscribe({
+    }, keyConsultada);
+    this.requests.add(request.subscribe({
       next: (res) => {
+        if (fuenteConsultada !== this.fuenteSeleccionada || (fuenteConsultada === 'bitacora' && (keyConsultada !== this.developerKey || !this.authService.isAuthenticated()))) return;
         this.resultado = res;
         this.generando = false;
         this.paginaActual = 1;
       },
       error: (err) => {
-        console.error('Error generando reporte personalizado:', err);
+        if (fuenteConsultada !== this.fuenteSeleccionada || (fuenteConsultada === 'bitacora' && (keyConsultada !== this.developerKey || !this.authService.isAuthenticated()))) return;
+        if (fuenteConsultada === 'bitacora') this.accessError = err.status === 401 || err.status === 403
+          ? 'Acceso denegado. Verificá la clave de desarrollador y tu sesión de SuperAdmin.'
+          : 'No se pudo generar la bitácora. Verificá la clave e intentá nuevamente.';
         this.generando = false;
       }
-    });
+    }));
   }
+
+  keyChanged(): void { this.clearAuditResult(); this.accessError = ''; }
+  private clearAuditRequest(): void { this.requests.unsubscribe(); this.requests = new Subscription(); }
+  private clearAuditResult(): void {
+    this.clearAuditRequest();
+    this.resultado = null;
+    this.generando = false;
+    this.modalEmailAbierto = false;
+    this.enviandoEmail = false;
+    this.emailMensaje = '';
+    this.emailError = '';
+  }
+  private clearAuditState(): void {
+    this.clearAuditResult();
+    this.developerKey = '';
+    this.accessError = '';
+  }
+  lockAudit(): void { this.clearAuditState(); }
+  ngOnDestroy(): void { this.clearAuditState(); this.requests.unsubscribe(); }
 
   getFuenteLabel(): string {
     return this.metadataFuentes[this.fuenteSeleccionada]?.label || this.fuenteSeleccionada;
@@ -1189,14 +1240,17 @@ export class ReportePersonalizadoComponent implements OnInit {
     this.emailMensaje = '';
     this.emailError = '';
 
-    this.reportService.enviarEmail({
+    const fuenteEnviada = this.fuenteSeleccionada;
+    const keyEnviada = fuenteEnviada === 'bitacora' ? this.developerKey : undefined;
+    this.requests.add(this.reportService.enviarEmail({
       email: this.emailDestino,
       fuente: this.fuenteSeleccionada,
       asunto: this.emailAsunto,
       filtros: this.filtrosValores,
       columnas: this.columnasSeleccionadas
-    }).subscribe({
+    }, keyEnviada).subscribe({
       next: (res) => {
+        if (fuenteEnviada !== this.fuenteSeleccionada || (fuenteEnviada === 'bitacora' && (keyEnviada !== this.developerKey || !this.authService.isAuthenticated()))) return;
         this.enviandoEmail = false;
         this.emailMensaje = res.mensaje || 'Reporte enviado exitosamente.';
         setTimeout(() => {
@@ -1204,9 +1258,12 @@ export class ReportePersonalizadoComponent implements OnInit {
         }, 2000);
       },
       error: (err) => {
+        if (fuenteEnviada !== this.fuenteSeleccionada || (fuenteEnviada === 'bitacora' && keyEnviada !== this.developerKey)) return;
         this.enviandoEmail = false;
-        this.emailError = err.error?.error || 'Error enviando el reporte.';
+        this.emailError = fuenteEnviada === 'bitacora' && (err.status === 401 || err.status === 403)
+          ? 'Acceso denegado. Verificá la clave de desarrollador y tu sesión de SuperAdmin.'
+          : err.error?.error || 'Error enviando el reporte.';
       }
-    });
+    }));
   }
 }

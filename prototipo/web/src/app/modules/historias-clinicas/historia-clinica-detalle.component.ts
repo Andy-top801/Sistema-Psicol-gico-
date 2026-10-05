@@ -51,6 +51,7 @@ import { HistoriaClinica, DiagnosticoCIE, CieItem } from '../../core/models/clin
               <span class="hc-badge">{{ historia()?.numero_historia }}</span>
               <span class="status-pill active" *ngIf="historia()?.activo">EN TRATAMIENTO</span>
               <span class="status-pill closed" *ngIf="!historia()?.activo">CASO CERRADO</span>
+              <button *ngIf="historia()?.puede_reactivar" class="btn btn-sm btn-outline-warning" (click)="reactivarCaso()">Reactivar caso</button>
             </div>
             <p class="patient-meta">
               <span><i class="fa-solid fa-user-doctor text-primary"></i> Terapeuta: {{ historia()?.psicologo_nombre }}</span>
@@ -62,13 +63,13 @@ import { HistoriaClinica, DiagnosticoCIE, CieItem } from '../../core/models/clin
 
         <!-- Acciones Rápidas -->
         <div class="header-action-buttons">
-          <a [routerLink]="['/notas-soap/nueva']" [queryParams]="{ historia: historia()?.id }" class="btn btn-primary">
+          <a *ngIf="!historia()?.cerrada" [routerLink]="['/notas-soap/nueva']" [queryParams]="{ historia: historia()?.id }" class="btn btn-primary">
             <i class="fa-solid fa-file-signature"></i> Nueva Nota SOAP
           </a>
-          <button class="btn btn-outline-primary" (click)="abrirModalTarea()">
+          <button *ngIf="!historia()?.cerrada" class="btn btn-outline-primary" (click)="abrirModalTarea()">
             <i class="fa-solid fa-list-check"></i> Asignar Tarea
           </button>
-          <a [routerLink]="['/derivaciones/nueva']" [queryParams]="{ historia: historia()?.id }" class="btn btn-outline-secondary">
+          <a *ngIf="historia()?.puede_cerrar" [routerLink]="['/derivaciones/nueva']" [queryParams]="{ historia: historia()?.id }" class="btn btn-outline-secondary">
             <i class="fa-solid fa-share-from-square"></i> Cierre / Derivación
           </a>
           <a routerLink="/historias-clinicas" class="btn btn-light" title="Volver al padrón">
@@ -104,10 +105,10 @@ import { HistoriaClinica, DiagnosticoCIE, CieItem } from '../../core/models/clin
         <div class="section-card glass-panel mb-4">
           <div class="section-header">
             <h3 class="section-heading"><i class="fa-solid fa-clipboard-question text-primary me-2"></i>Motivo de Consulta Inicial</h3>
-            <button class="btn btn-sm btn-outline-primary" *ngIf="!editandoAnamnesis" (click)="editandoAnamnesis = true">
+            <button class="btn btn-sm btn-outline-primary" *ngIf="!historia()?.cerrada && !editandoAnamnesis" (click)="editandoAnamnesis = true">
               <i class="fa-solid fa-pen"></i> Editar
             </button>
-            <button class="btn btn-sm btn-success" *ngIf="editandoAnamnesis" (click)="guardarCambiosAnamnesis()">
+            <button class="btn btn-sm btn-success" *ngIf="editandoAnamnesis && !historia()?.cerrada" (click)="guardarCambiosAnamnesis()">
               <i class="fa-solid fa-check"></i> Guardar Cambios
             </button>
           </div>
@@ -267,7 +268,7 @@ import { HistoriaClinica, DiagnosticoCIE, CieItem } from '../../core/models/clin
                 <div class="field-button">
                   <button 
                     class="btn btn-primary w-100 btn-assign-action" 
-                    [disabled]="!nuevoDiagnostico.codigo_cie10"
+                    [disabled]="historia()?.cerrada || !nuevoDiagnostico.codigo_cie10"
                     (click)="agregarDiagnostico()">
                     <i class="fa-solid fa-plus-circle me-1"></i> Asignar al Expediente
                   </button>
@@ -320,7 +321,7 @@ import { HistoriaClinica, DiagnosticoCIE, CieItem } from '../../core/models/clin
                   <td>{{ diag.fecha_diagnostico | date:'dd/MM/yyyy' }}</td>
                   <td><span class="text-muted small">{{ diag.notas_criterio || 'Sin notas.' }}</span></td>
                   <td class="text-end">
-                    <button class="btn btn-sm btn-outline-danger" (click)="removerDiagnostico(diag.id)" title="Remover diagnóstico">
+                    <button *ngIf="!historia()?.cerrada" class="btn btn-sm btn-outline-danger" (click)="removerDiagnostico(diag.id)" title="Remover diagnóstico">
                       <i class="fa-solid fa-trash"></i>
                     </button>
                   </td>
@@ -336,10 +337,10 @@ import { HistoriaClinica, DiagnosticoCIE, CieItem } from '../../core/models/clin
         <div class="section-card glass-panel mb-4">
           <div class="section-header">
             <h3 class="section-heading"><i class="fa-solid fa-bullseye text-primary me-2"></i>Estrategia y Plan Terapéutico</h3>
-            <button class="btn btn-sm btn-outline-primary" *ngIf="!editandoPlan" (click)="editandoPlan = true">
+            <button class="btn btn-sm btn-outline-primary" *ngIf="!historia()?.cerrada && !editandoPlan" (click)="editandoPlan = true">
               <i class="fa-solid fa-pen"></i> Editar Plan
             </button>
-            <button class="btn btn-sm btn-success" *ngIf="editandoPlan" (click)="guardarCambiosPlan()">
+            <button class="btn btn-sm btn-success" *ngIf="editandoPlan && !historia()?.cerrada" (click)="guardarCambiosPlan()">
               <i class="fa-solid fa-check"></i> Guardar
             </button>
           </div>
@@ -368,10 +369,10 @@ import { HistoriaClinica, DiagnosticoCIE, CieItem } from '../../core/models/clin
               </p>
             </div>
             <div class="d-flex align-items-center gap-2">
-              <button class="btn btn-primary" (click)="abrirModalEvolucion()" id="btn-registrar-hito">
+              <button *ngIf="!historia()?.cerrada" class="btn btn-primary" (click)="abrirModalEvolucion()" id="btn-registrar-hito">
                 <i class="fa-solid fa-plus-circle me-1"></i> Registrar Hito de Evaluación
               </button>
-              <button class="btn btn-outline-primary" (click)="abrirModalTarea()" id="btn-asignar-tarea">
+              <button *ngIf="!historia()?.cerrada" class="btn btn-outline-primary" (click)="abrirModalTarea()" id="btn-asignar-tarea">
                 <i class="fa-solid fa-list-check me-1"></i> Asignar Tarea Inter-Sesión
               </button>
             </div>
@@ -1060,6 +1061,8 @@ export class HistoriaClinicaDetalleComponent implements OnInit {
     this.clinicaService.getHistoriaClinicaById(this.historiaId).subscribe({
       next: (hc) => {
         this.historia.set(hc);
+        this.editandoAnamnesis = false;
+        this.editandoPlan = false;
         this.anamnesisForm = {
           motivo_consulta_inicial: hc.motivo_consulta_inicial || '',
           antecedentes_personales: hc.antecedentes_personales || '',
@@ -1083,7 +1086,17 @@ export class HistoriaClinicaDetalleComponent implements OnInit {
     });
   }
 
+  reactivarCaso(): void {
+    const motivo = window.prompt('Motivo obligatorio de reactivación:');
+    if (!motivo?.trim() || !window.confirm('¿Confirmás reactivar este caso?')) return;
+    this.clinicaService.reactivarHistoriaClinica(this.historiaId, motivo).subscribe({
+      next: () => this.cargarHistoria(),
+      error: (error) => this.feedbackMensaje.set(error?.error?.historia_clinica || 'No se pudo reactivar el caso.')
+    });
+  }
+
   guardarCambiosAnamnesis(): void {
+    if (this.historia()?.cerrada) return;
     this.clinicaService.actualizarHistoriaClinica(this.historiaId, this.anamnesisForm).subscribe({
       next: (actualizada) => {
         this.historia.set(actualizada);
@@ -1094,6 +1107,7 @@ export class HistoriaClinicaDetalleComponent implements OnInit {
   }
 
   guardarCambiosPlan(): void {
+    if (this.historia()?.cerrada) return;
     this.clinicaService.actualizarHistoriaClinica(this.historiaId, this.planForm).subscribe({
       next: (actualizada) => {
         this.historia.set(actualizada);
@@ -1141,7 +1155,7 @@ export class HistoriaClinicaDetalleComponent implements OnInit {
   }
 
   agregarDiagnostico(): void {
-    if (!this.nuevoDiagnostico.codigo_cie10) return;
+    if (this.historia()?.cerrada || !this.nuevoDiagnostico.codigo_cie10) return;
     const codigo = this.nuevoDiagnostico.codigo_cie10;
     this.clinicaService.agregarDiagnostico(this.historiaId, this.nuevoDiagnostico).subscribe({
       next: () => {
@@ -1164,6 +1178,7 @@ export class HistoriaClinicaDetalleComponent implements OnInit {
   }
 
   removerDiagnostico(diagId: string): void {
+    if (this.historia()?.cerrada) return;
     this.clinicaService.removerDiagnostico(this.historiaId, diagId).subscribe({
       next: () => {
         this.mostrarFeedback('Diagnóstico removido del expediente');

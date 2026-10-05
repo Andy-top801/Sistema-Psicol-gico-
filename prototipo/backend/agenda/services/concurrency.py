@@ -20,6 +20,7 @@ from datetime import date, time
 from django.db import transaction
 from rest_framework.exceptions import ValidationError
 from clinica.models import Paciente, Psicologo
+from clinica.lifecycle import lock_history, ensure_history_open
 from agenda.models import Cita, Teleconsulta
 from agenda.services.availability import AvailabilityValidator
 
@@ -66,6 +67,10 @@ class ConflictResolutionService:
         # ====================================================================
         atomic_tx: Any = transaction.atomic()
         with atomic_tx:
+            # The history row is the shared lock with case closure.
+            history = getattr(paciente, 'historia_clinica', None)
+            if history is not None:
+                ensure_history_open(lock_history(history.pk))
             # CU11 Paso 3c: SELECT FOR UPDATE – Bloqueo pesimista sobre citas del psicólogo
             # Se obtienen TODAS las citas activas del psicólogo para esa fecha con
             # bloqueo exclusivo a nivel de fila en PostgreSQL.

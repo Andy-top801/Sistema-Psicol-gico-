@@ -92,3 +92,41 @@ class IsTreatingPsychologistOrAdmin(BasePermission):
             return False
 
         return False
+
+
+class IsReferralParticipant(IsTreatingPsychologistOrAdmin):
+    """Scope referrals to linked clinicians and read-only clinical observers."""
+
+    def has_permission(self, request, view):
+        user = getattr(request, 'user', None)
+        role = (getattr(getattr(user, 'rol', None), 'nombre', '') or '').lower()
+        if not user or not getattr(user, 'is_authenticated', False) or not role:
+            return False
+        if view.action in ('create', 'update', 'partial_update', 'destroy'):
+            return 'psic' in role and getattr(user, 'perfil_psicologo', None) is not None
+        return super().has_permission(request, view)
+
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+        role = (getattr(getattr(user, 'rol', None), 'nombre', '') or '').lower()
+        if not role:
+            return False
+        if 'admin' in role or 'coordinador' in role:
+            return True
+        if 'paciente' in role:
+            return hasattr(user, 'perfil_paciente') and obj.historia_clinica.paciente == user.perfil_paciente
+        if 'psic' not in role or not hasattr(user, 'perfil_psicologo'):
+            return False
+        psico = user.perfil_psicologo
+        historia = obj.historia_clinica
+        linked = historia.psicologo_apertura == psico or historia.paciente.citas.filter(psicologo=psico).exists()
+        if not linked:
+            try:
+                write_event({
+                    'action': 'RBAC_CLINICO_BLOQUEADO', 'user': getattr(user, 'email', ''),
+                    'target': str(getattr(obj, 'id', 'desconocido')),
+                    'motivo': 'Intento de acceso a derivación de paciente no asignado'
+                })
+            except Exception:
+                pass
+        return linked

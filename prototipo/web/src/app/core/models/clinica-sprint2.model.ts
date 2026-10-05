@@ -63,6 +63,10 @@ export interface HistoriaClinica {
   plan_terapeutico?: string;
   objetivos_terapeuticos?: string[];
   activo: boolean;
+  cerrada?: boolean;
+  fecha_cierre?: string | null;
+  puede_cerrar?: boolean;
+  puede_reactivar?: boolean;
   diagnosticos: DiagnosticoCIE[];
   total_sesiones?: number;
   total_tareas?: number;
@@ -159,12 +163,14 @@ export interface DerivacionCaso {
   paciente_nombre?: string;
   psicologo_derivante: string;
   psicologo_nombre?: string;
-  tipo_cierre: 'ALTA_TERAPEUTICA' | 'DERIVACION_PSIQUIATRIA' | 'DERIVACION_MEDICA' | 'ABANDONO' | 'ADMINISTRATIVO';
+  tipo_cierre: 'ALTA_TERAPEUTICA' | 'DERIVACION_PSIQUIATRIA' | 'DERIVACION_MEDICA' | 'ABANDONO' | 'MUTUO_ACUERDO' | 'ADMINISTRATIVO';
   especialidad_destino?: string;
   profesional_o_institucion_destino?: string;
   motivo_derivacion: string;
   resumen_evolucion: string;
   recomendaciones_tratamiento?: string;
+  logros_alcanzados?: string;
+  recomendaciones_mantenimiento?: string;
   bloquear_citas_subsecuentes: boolean;
   fecha_registro: string;
   documento_orden_pdf?: string;

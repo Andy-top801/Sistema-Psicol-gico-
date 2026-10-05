@@ -187,6 +187,7 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
     'x-tenant-id',
     'x-tenant-slug',
     'x-requested-with',
+    'x-developer-key',
 ]
 
 # -----------------------------------------------------------------------------
@@ -197,6 +198,7 @@ TIME_ZONE = 'America/La_Paz'
 USE_I18N = True
 USE_TZ = True
 AUDIT_LOG_KEY = os.environ.get('AUDIT_LOG_KEY', '')
+AUDIT_DEVELOPER_KEY = os.environ.get('AUDIT_DEVELOPER_KEY', '')
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'

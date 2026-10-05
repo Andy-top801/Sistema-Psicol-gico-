@@ -7,7 +7,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-from accounts.permissions import EsSuperAdmin, EsAdminCentro
+from accounts.permissions import EsAdminCentro
+from audit.permissions import AuditDeveloperPermission
 from .services import ReportEngine, FUENTES_DISPONIBLES
 
 
@@ -42,12 +43,12 @@ class ReporteGenericoView(ReportesPermission, APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Bitácora sólo para SuperAdmin
+        # Audit records require SuperAdmin and the dedicated key.
         if fuente == "bitacora":
-            perm = EsSuperAdmin()
+            perm = AuditDeveloperPermission()
             if not perm.has_permission(request, self):
                 return Response(
-                    {"error": "La bitácora solo es accesible para SuperAdmin."},
+                    {"error": perm.message},
                     status=status.HTTP_403_FORBIDDEN,
                 )
 
@@ -102,12 +103,9 @@ class ReportePersonalizadoView(ReportesPermission, APIView):
             )
 
         if fuente == "bitacora":
-            perm = EsSuperAdmin()
+            perm = AuditDeveloperPermission()
             if not perm.has_permission(request, self):
-                return Response(
-                    {"error": "La bitácora solo es accesible para SuperAdmin."},
-                    status=status.HTTP_403_FORBIDDEN,
-                )
+                return Response({"error": perm.message}, status=status.HTTP_403_FORBIDDEN)
 
         columnas = request.data.get("columnas")
         filtros = request.data.get("filtros", {})
@@ -139,9 +137,9 @@ class ReporteExportCSVView(ReportesPermission, APIView):
             return Response({"error": "Fuente no reconocida."}, status=status.HTTP_400_BAD_REQUEST)
 
         if fuente == "bitacora":
-            perm = EsSuperAdmin()
+            perm = AuditDeveloperPermission()
             if not perm.has_permission(request, self):
-                return Response({"error": "Acceso denegado."}, status=status.HTTP_403_FORBIDDEN)
+                return Response({"error": perm.message}, status=status.HTTP_403_FORBIDDEN)
 
         filtros = {}
         for f_def in FUENTES_DISPONIBLES[fuente]["filtros"]:
@@ -173,9 +171,9 @@ class ReporteExportExcelView(ReportesPermission, APIView):
             return Response({"error": "Fuente no reconocida."}, status=status.HTTP_400_BAD_REQUEST)
 
         if fuente == "bitacora":
-            perm = EsSuperAdmin()
+            perm = AuditDeveloperPermission()
             if not perm.has_permission(request, self):
-                return Response({"error": "Acceso denegado."}, status=status.HTTP_403_FORBIDDEN)
+                return Response({"error": perm.message}, status=status.HTTP_403_FORBIDDEN)
 
         filtros = {}
         for f_def in FUENTES_DISPONIBLES[fuente]["filtros"]:
@@ -211,9 +209,9 @@ class ReporteExportHTMLView(ReportesPermission, APIView):
             return Response({"error": "Fuente no reconocida."}, status=status.HTTP_400_BAD_REQUEST)
 
         if fuente == "bitacora":
-            perm = EsSuperAdmin()
+            perm = AuditDeveloperPermission()
             if not perm.has_permission(request, self):
-                return Response({"error": "Acceso denegado."}, status=status.HTTP_403_FORBIDDEN)
+                return Response({"error": perm.message}, status=status.HTTP_403_FORBIDDEN)
 
         filtros = {}
         for f_def in FUENTES_DISPONIBLES[fuente]["filtros"]:
@@ -259,9 +257,9 @@ class ReporteEmailView(ReportesPermission, APIView):
             return Response({"error": "Fuente requerida y válida."}, status=status.HTTP_400_BAD_REQUEST)
 
         if fuente == "bitacora":
-            perm = EsSuperAdmin()
+            perm = AuditDeveloperPermission()
             if not perm.has_permission(request, self):
-                return Response({"error": "Acceso denegado a bitácora."}, status=status.HTTP_403_FORBIDDEN)
+                return Response({"error": perm.message}, status=status.HTTP_403_FORBIDDEN)
 
         asunto = request.data.get("asunto", f"Reporte SIGEPSI: {FUENTES_DISPONIBLES[fuente]['label']}")
         filtros = request.data.get("filtros", {})

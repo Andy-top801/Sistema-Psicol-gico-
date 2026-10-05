@@ -26,15 +26,17 @@ import { DerivacionCaso, HistoriaClinica } from '../../core/models/clinica-sprin
             <i class="fa-solid fa-share-from-square text-primary"></i> Cierre de Caso y Órdenes de Derivación
           </h1>
           <p class="page-subtitle">
-            Emisión de órdenes de interconsulta psiquiátrica/médica, alta formal y bloqueo preventivo de citas (Sprint 2 - HU-33, HU-34).
+            Registro de derivaciones y cierres clínicos (Sprint 2 - HU-33, HU-34).
           </p>
         </div>
         <div class="header-actions">
-          <button class="btn btn-primary" (click)="abrirModalNuevaDerivacion()">
+          <button *ngIf="puedeRegistrarCierre()" class="btn btn-primary" (click)="abrirModalNuevaDerivacion()">
             <i class="fa-solid fa-file-medical"></i> Registrar Cierre / Derivación
           </button>
         </div>
       </div>
+
+      <div *ngIf="mensajeError()" class="alert alert-danger mb-4">{{ mensajeError() }}</div>
 
       <!-- Banner de Feedback -->
       <div *ngIf="mensajeAviso()" class="alert alert-success d-flex align-items-center mb-4">
@@ -64,7 +66,6 @@ import { DerivacionCaso, HistoriaClinica } from '../../core/models/clinica-sprin
               <th>Tipo de Cierre</th>
               <th>Destino / Especialidad</th>
               <th>Fecha de Registro</th>
-              <th>Bloqueo de Citas</th>
               <th>Psicólogo Emisor</th>
               <th class="text-end">Orden PDF</th>
             </tr>
@@ -87,12 +88,6 @@ import { DerivacionCaso, HistoriaClinica } from '../../core/models/clinica-sprin
                 <div *ngIf="!d.especialidad_destino" class="text-muted small">N/A (Cierre Interno)</div>
               </td>
               <td>{{ d.fecha_registro | date:'dd/MM/yyyy HH:mm' }}</td>
-              <td>
-                <span class="badge" [class.bg-danger]="d.bloquear_citas_subsecuentes" [class.bg-light]="!d.bloquear_citas_subsecuentes" [class.text-dark]="!d.bloquear_citas_subsecuentes">
-                  <i class="fa-solid" [class.fa-lock]="d.bloquear_citas_subsecuentes" [class.fa-lock-open]="!d.bloquear_citas_subsecuentes"></i>
-                  {{ d.bloquear_citas_subsecuentes ? 'Agenda Bloqueada' : 'Permitidas' }}
-                </span>
-              </td>
               <td>{{ d.psicologo_nombre }}</td>
               <td class="text-end">
                 <button class="btn btn-sm btn-outline-danger" (click)="descargarPdf(d.id)" title="Descargar Orden Médica en PDF">
@@ -121,7 +116,7 @@ import { DerivacionCaso, HistoriaClinica } from '../../core/models/clinica-sprin
                 <label class="form-label">Historia Clínica del Paciente *</label>
                 <select class="form-select" [(ngModel)]="nuevaDerivacion.historia_clinica">
                   <option value="" disabled selected>-- Seleccione expediente --</option>
-                  <option *ngFor="let h of historias()" [value]="h.id">
+                  <option *ngFor="let h of historias()" [disabled]="h.cerrada || h.puede_cerrar === false" [value]="h.id">
                     {{ h.numero_historia }} - {{ h.paciente_nombre }}
                   </option>
                 </select>
@@ -130,11 +125,15 @@ import { DerivacionCaso, HistoriaClinica } from '../../core/models/clinica-sprin
               <div class="col-md-6">
                 <label class="form-label">Tipo de Cierre o Derivación *</label>
                 <select class="form-select" [(ngModel)]="nuevaDerivacion.tipo_cierre">
-                  <option value="DERIVACION_PSIQUIATRIA">Derivación a Psiquiatría (Interconsulta)</option>
-                  <option value="DERIVACION_MEDICA">Derivación Médica General / Neurología</option>
-                  <option value="ALTA_TERAPEUTICA">Alta Terapéutica (Objetivos Cumplidos)</option>
-                  <option value="ABANDONO">Cierre por Deserción / Abandono</option>
-                  <option value="ADMINISTRATIVO">Cierre Administrativo</option>
+                  <optgroup label="Derivación clínica">
+                    <option value="DERIVACION_PSIQUIATRIA">Derivación externa a Psiquiatría</option>
+                    <option value="DERIVACION_MEDICA">Derivación externa a Neurología</option>
+                  </optgroup>
+                  <optgroup label="Cierre clínico">
+                    <option value="ALTA_TERAPEUTICA">Metas alcanzadas</option>
+                    <option value="MUTUO_ACUERDO">Mutuo acuerdo</option>
+                    <option value="ABANDONO">Cierre por deserción</option>
+                  </optgroup>
                 </select>
               </div>
             </div>
@@ -154,9 +153,14 @@ import { DerivacionCaso, HistoriaClinica } from '../../core/models/clinica-sprin
             </div>
 
             <div class="mb-3">
-              <label class="form-label">Motivo de la Derivación o Cierre *</label>
+              <label class="form-label">{{ ['ALTA_TERAPEUTICA', 'MUTUO_ACUERDO', 'ABANDONO'].includes(nuevaDerivacion.tipo_cierre) ? 'Resumen de egreso *' : 'Motivo de la Derivación *' }}</label>
               <textarea class="form-control" rows="2" [(ngModel)]="nuevaDerivacion.motivo_derivacion"
                         placeholder="Fundamentación clínica del motivo de la derivación o circunstancias del cierre..."></textarea>
+            </div>
+
+            <div class="mb-3" *ngIf="['ALTA_TERAPEUTICA', 'MUTUO_ACUERDO', 'ABANDONO'].includes(nuevaDerivacion.tipo_cierre)">
+              <label class="form-label">Logros alcanzados *</label>
+              <textarea class="form-control" rows="2" [(ngModel)]="nuevaDerivacion.logros_alcanzados"></textarea>
             </div>
 
             <div class="mb-3">
@@ -165,29 +169,25 @@ import { DerivacionCaso, HistoriaClinica } from '../../core/models/clinica-sprin
                         placeholder="Síntesis de sesiones realizadas, respuesta al tratamiento e hipótesis diagnósticas trabajadas..."></textarea>
             </div>
 
-            <div class="mb-3">
+            <div class="mb-3" *ngIf="['ALTA_TERAPEUTICA', 'MUTUO_ACUERDO', 'ABANDONO'].includes(nuevaDerivacion.tipo_cierre)">
+              <label class="form-label">Recomendaciones de mantenimiento *</label>
+              <textarea class="form-control" rows="2" [(ngModel)]="nuevaDerivacion.recomendaciones_mantenimiento"
+                        placeholder="Pautas de mantenimiento y seguimiento posterior al cierre..."></textarea>
+            </div>
+
+            <div class="mb-3" *ngIf="!['ALTA_TERAPEUTICA', 'MUTUO_ACUERDO', 'ABANDONO'].includes(nuevaDerivacion.tipo_cierre)">
               <label class="form-label">Recomendaciones y Sugerencias de Tratamiento</label>
               <textarea class="form-control" rows="2" [(ngModel)]="nuevaDerivacion.recomendaciones_tratamiento"
                         placeholder="Pautas sugeridas para el equipo receptor (ej. valoración psicofarmacológica complementaria)..."></textarea>
             </div>
 
-            <!-- HU-33: Bloqueo de Citas Subsecuentes -->
-            <div class="form-check form-switch p-3 rounded glass-panel mb-2">
-              <input class="form-check-input ms-0 me-2" type="checkbox" [(ngModel)]="nuevaDerivacion.bloquear_citas_subsecuentes" id="chkBloqueo" />
-              <label class="form-check-label fw-bold text-dark" for="chkBloqueo">
-                Bloquear reserva de citas subsecuentes en la agenda (HU-33)
-              </label>
-              <div class="small text-muted ms-4">
-                Impide que el paciente o recepcionista agenden nuevas sesiones estándar tras el alta o derivación definitiva.
-              </div>
-            </div>
 
           </div>
 
           <div class="modal-footer-custom p-3">
             <button class="btn btn-secondary" (click)="mostrarModal = false">Cancelar</button>
-            <button class="btn btn-primary" [disabled]="!nuevaDerivacion.historia_clinica || !nuevaDerivacion.motivo_derivacion" (click)="guardarDerivacion()">
-              <i class="fa-solid fa-file-medical me-1"></i> Generar Orden Oficial & Sellar Cierre
+            <button class="btn btn-primary" [disabled]="guardando || !nuevaDerivacion.historia_clinica || !nuevaDerivacion.motivo_derivacion" (click)="guardarDerivacion()">
+              <i class="fa-solid fa-file-medical me-1"></i> {{ ['ALTA_TERAPEUTICA', 'MUTUO_ACUERDO', 'ABANDONO'].includes(nuevaDerivacion.tipo_cierre) ? 'Cerrar caso' : 'Registrar derivación' }}
             </button>
           </div>
         </div>
@@ -226,6 +226,8 @@ export class DerivacionFormComponent implements OnInit {
   derivaciones = signal<DerivacionCaso[]>([]);
   historias = signal<HistoriaClinica[]>([]);
   mensajeAviso = signal<string | null>(null);
+  mensajeError = signal<string | null>(null);
+  guardando = false;
 
   mostrarModal = false;
   nuevaDerivacion = {
@@ -236,7 +238,8 @@ export class DerivacionFormComponent implements OnInit {
     motivo_derivacion: '',
     resumen_evolucion: '',
     recomendaciones_tratamiento: '',
-    bloquear_citas_subsecuentes: true
+    logros_alcanzados: '',
+    recomendaciones_mantenimiento: '',
   };
 
   constructor(
@@ -266,11 +269,21 @@ export class DerivacionFormComponent implements OnInit {
             this.historias.set(hs);
             this.cargando.set(false);
           },
-          error: () => this.cargando.set(false)
+          error: () => {
+            this.mensajeError.set('No se pudieron cargar las historias clínicas.');
+            this.cargando.set(false);
+          }
         });
       },
-      error: () => this.cargando.set(false)
+      error: () => {
+        this.mensajeError.set('No se pudieron cargar los registros. Verificá tu acceso e intentá nuevamente.');
+        this.cargando.set(false);
+      }
     });
+  }
+
+  puedeRegistrarCierre(): boolean {
+    return this.historias().some(h => h.puede_cerrar === true);
   }
 
   abrirModalNuevaDerivacion(): void {
@@ -282,17 +295,31 @@ export class DerivacionFormComponent implements OnInit {
       motivo_derivacion: '',
       resumen_evolucion: '',
       recomendaciones_tratamiento: '',
-      bloquear_citas_subsecuentes: true
+      logros_alcanzados: '',
+      recomendaciones_mantenimiento: ''
     };
     this.mostrarModal = true;
   }
 
   guardarDerivacion(): void {
+    const cierre = ['ALTA_TERAPEUTICA', 'MUTUO_ACUERDO', 'ABANDONO'].includes(this.nuevaDerivacion.tipo_cierre);
+    if (cierre && (!this.nuevaDerivacion.motivo_derivacion.trim() || !this.nuevaDerivacion.logros_alcanzados.trim() || !this.nuevaDerivacion.recomendaciones_mantenimiento.trim())) {
+      this.mensajeError.set('Para cerrar el caso completá resumen, logros y recomendaciones de mantenimiento.');
+      return;
+    }
+    if (typeof window !== 'undefined' && !window.confirm(cierre ? '¿Confirmás el cierre del caso? Esta acción quedará registrada.' : '¿Confirmás registrar la derivación?')) return;
+    this.guardando = true;
+    this.mensajeError.set(null);
     this.clinicaService.crearDerivacion(this.nuevaDerivacion).subscribe({
       next: (d) => {
+        this.guardando = false;
         this.mostrarModal = false;
-        this.mostrarFeedback(`Orden de derivación ${d.id.substring(0, 8)} generada con éxito`);
+        this.mostrarFeedback(`Registro ${d.id.substring(0, 8)} creado con éxito`);
         this.cargarDatos();
+      },
+      error: (error) => {
+        this.guardando = false;
+        this.mensajeError.set(error?.error?.historia_clinica || error?.error?.detail || 'No se pudo guardar el registro. Revisá los datos e intentá nuevamente.');
       }
     });
   }
@@ -306,7 +333,8 @@ export class DerivacionFormComponent implements OnInit {
         a.download = `Orden_Derivacion_${derivacionId.substring(0, 8)}.pdf`;
         a.click();
         window.URL.revokeObjectURL(url);
-      }
+      },
+      error: () => this.mensajeError.set('No se pudo descargar el PDF. Intentá nuevamente.')
     });
   }
 

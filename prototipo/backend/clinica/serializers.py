@@ -572,6 +572,8 @@ class DiagnosticoCIESerializer(serializers.ModelSerializer):
 
 class HistoriaClinicaSerializer(serializers.ModelSerializer):
     diagnosticos = DiagnosticoCIESerializer(many=True, read_only=True)
+    puede_cerrar = serializers.SerializerMethodField()
+    puede_reactivar = serializers.SerializerMethodField()
     paciente_nombre = serializers.SerializerMethodField()
     paciente_ci = serializers.SerializerMethodField()
     psicologo_nombre = serializers.SerializerMethodField()
@@ -596,11 +598,15 @@ class HistoriaClinicaSerializer(serializers.ModelSerializer):
             'historia_evolutiva', 'examen_mental_inicial', 'plan_tratamiento',
             'anamnesis', 'examen_estado_mental', 'plan_terapeutico',
             'cerrada', 'fecha_apertura', 'fecha_cierre', 'fecha_actualizacion',
-            'diagnosticos'
+            'diagnosticos', 'puede_cerrar', 'puede_reactivar'
         ]
-        read_only_fields = ['id', 'codigo_historia', 'fecha_apertura', 'fecha_actualizacion']
+        read_only_fields = ['id', 'codigo_historia', 'fecha_apertura', 'fecha_actualizacion', 'cerrada', 'fecha_cierre', 'puede_cerrar', 'puede_reactivar']
 
     def validate(self, attrs):
+        if self.instance:
+            for field in ('cerrada', 'fecha_cierre', 'paciente', 'psicologo_apertura'):
+                if field in attrs:
+                    raise serializers.ValidationError({field: 'El estado y la identidad de la historia son administrados por su ciclo de vida.'})
         if 'anamnesis' in attrs and 'historia_evolutiva' not in attrs:
             attrs['historia_evolutiva'] = attrs.pop('anamnesis')
         else:
@@ -617,6 +623,21 @@ class HistoriaClinicaSerializer(serializers.ModelSerializer):
             attrs.pop('plan_terapeutico', None)
 
         return attrs
+
+    def _linked_psychologist(self, obj):
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        role = (getattr(getattr(user, 'rol', None), 'nombre', '') or '').lower()
+        psico = getattr(user, 'perfil_psicologo', None)
+        return bool(getattr(user, 'is_authenticated', False) and 'psic' in role and psico and (
+            obj.psicologo_apertura_id == psico.id or obj.paciente.citas.filter(psicologo=psico).exists()
+        ))
+
+    def get_puede_cerrar(self, obj):
+        return not obj.cerrada and self._linked_psychologist(obj)
+
+    def get_puede_reactivar(self, obj):
+        return obj.cerrada and self._linked_psychologist(obj)
 
     def get_paciente_nombre(self, obj):
         if obj.paciente and obj.paciente.usuario:
@@ -692,6 +713,11 @@ class NotaSesionSerializer(serializers.ModelSerializer):
         if obj.psicologo and obj.psicologo.usuario:
             return f"Lic. {obj.psicologo.usuario.nombre} {obj.psicologo.usuario.apellido}"
         return ""
+
+    def validate(self, attrs):
+        if self.instance and 'historia_clinica' in attrs and attrs['historia_clinica'] != self.instance.historia_clinica:
+            raise serializers.ValidationError({'historia_clinica': 'La historia clínica de una nota no puede modificarse.'})
+        return attrs
 
     def validate_numero_sesion(self, value):
         if value is not None and value <= 0:
@@ -975,9 +1001,24 @@ class DerivacionCasoSerializer(serializers.ModelSerializer):
             'psicologo_emisor', 'psicologo_emisor_nombre',
             'tipo_derivacion', 'motivo_clinico', 'sintomatologia_relevante',
             'profesional_destino', 'institucion_destino', 'nivel_riesgo',
+            'logros_alcanzados', 'recomendaciones_mantenimiento',
             'fecha_derivacion', 'aceptada', 'documento_pdf_url'
         ]
-        read_only_fields = ['id', 'fecha_derivacion']
+        read_only_fields = ['id', 'fecha_derivacion', 'psicologo_emisor']
+
+    def validate(self, attrs):
+        if attrs.get('tipo_derivacion') == 'REACTIVACION' and not self.context.get('allow_reactivation_action'):
+            raise serializers.ValidationError({'tipo_derivacion': 'La reactivación requiere el endpoint explícito de historia clínica.'})
+        if attrs.get('tipo_derivacion') in ('CIERRE_ALTA', 'DESERCION', 'MUTUO_ACUERDO'):
+            for field in ('motivo_clinico', 'logros_alcanzados', 'recomendaciones_mantenimiento'):
+                if not str(attrs.get(field, '')).strip():
+                    raise serializers.ValidationError({field: 'Este campo es obligatorio para cerrar el caso.'})
+        if self.instance:
+            if 'historia_clinica' in attrs and attrs['historia_clinica'] != self.instance.historia_clinica:
+                raise serializers.ValidationError({'historia_clinica': 'La historia clínica no puede modificarse.'})
+            if 'tipo_derivacion' in attrs and attrs['tipo_derivacion'] != self.instance.tipo_derivacion:
+                raise serializers.ValidationError({'tipo_derivacion': 'El tipo de derivación no puede modificarse.'})
+        return attrs
 
     def get_psicologo_emisor_nombre(self, obj):
         if obj.psicologo_emisor and obj.psicologo_emisor.usuario:
@@ -994,7 +1035,14 @@ class DerivacionCasoSerializer(serializers.ModelSerializer):
             data['paciente_nombre'] = f"{u.nombre} {u.apellido}"
         else:
             data['paciente_nombre'] = "Paciente"
-        data['tipo_cierre'] = instance.tipo_derivacion
+        tipo_alias = {
+            'INTERNA_COLEGA': 'Derivación interna',
+            'EXTERNA_PSIQUIATRIA': 'DERIVACION_PSIQUIATRIA',
+            'EXTERNA_NEUROLOGIA': 'DERIVACION_MEDICA',
+            'CIERRE_ALTA': 'ALTA_TERAPEUTICA',
+            'DESERCION': 'ABANDONO',
+        }
+        data['tipo_cierre'] = tipo_alias.get(instance.tipo_derivacion, instance.tipo_derivacion)
         data['especialidad_destino'] = instance.profesional_destino or instance.tipo_derivacion
         data['profesional_o_institucion_destino'] = f"{instance.profesional_destino} ({instance.institucion_destino})" if instance.institucion_destino else (instance.profesional_destino or "Atención Externa")
         data['fecha_registro'] = instance.fecha_derivacion.isoformat() if instance.fecha_derivacion else None
