@@ -12,6 +12,7 @@ import uuid
 from datetime import date
 from django.db import models
 from django.utils import timezone
+from django.core.exceptions import ValidationError
 from accounts.models import Usuario
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -319,6 +320,11 @@ class HistoriaClinica(models.Model):
             models.Index(fields=['codigo_historia'], name='idx_historia_codigo'),
         ]
 
+    def delete(self, *args, **kwargs):
+        if self.derivaciones.exists():
+            raise ValidationError("No se puede eliminar una historia con eventos de ciclo de vida archivados.")
+        return super().delete(*args, **kwargs)
+
     def __str__(self):
         return f"HC {self.codigo_historia} - {self.paciente.usuario.nombre} {self.paciente.usuario.apellido}"
 
@@ -548,6 +554,8 @@ class DerivacionCaso(models.Model):
         ('EXTERNA_NEUROLOGIA', 'Referencia Externa a Neurología'),
         ('CIERRE_ALTA', 'Alta Terapéutica por Cumplimiento de Metas'),
         ('DESERCION', 'Cierre por Abandono / Deserción'),
+        ('MUTUO_ACUERDO', 'Cierre por Mutuo Acuerdo'),
+        ('REACTIVACION', 'Reactivación de Caso'),
     ]
 
     NIVEL_RIESGO_CHOICES = [
@@ -558,10 +566,12 @@ class DerivacionCaso(models.Model):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    historia_clinica = models.ForeignKey(HistoriaClinica, on_delete=models.CASCADE, related_name="derivaciones", verbose_name="Historia Clínica")
+    historia_clinica = models.ForeignKey(HistoriaClinica, on_delete=models.PROTECT, related_name="derivaciones", verbose_name="Historia Clínica")
     psicologo_emisor = models.ForeignKey(Psicologo, on_delete=models.RESTRICT, related_name="derivaciones_emitidas", verbose_name="Psicólogo Emisor")
     tipo_derivacion = models.CharField(max_length=30, choices=TIPO_CHOICES, verbose_name="Tipo de Derivación / Cierre")
     motivo_clinico = models.TextField(verbose_name="Motivo Clínico de Egreso o Interconsulta")
+    logros_alcanzados = models.TextField(blank=True, default="", verbose_name="Logros Alcanzados")
+    recomendaciones_mantenimiento = models.TextField(blank=True, default="", verbose_name="Recomendaciones de Mantenimiento")
     sintomatologia_relevante = models.TextField(blank=True, default="", verbose_name="Sintomatología Predominante")
     profesional_destino = models.CharField(max_length=150, blank=True, default="", verbose_name="Profesional Destinatario")
     institucion_destino = models.CharField(max_length=150, blank=True, default="", verbose_name="Institución / Centro Destino")
@@ -578,6 +588,16 @@ class DerivacionCaso(models.Model):
         indexes = [
             models.Index(fields=['historia_clinica'], name='idx_deriv_historia'),
         ]
+
+    def save(self, *args, **kwargs):
+        if self.pk and DerivacionCaso.objects.filter(pk=self.pk).exclude(tipo_derivacion__in=('INTERNA_COLEGA', 'EXTERNA_PSIQUIATRIA', 'EXTERNA_NEUROLOGIA')).exists():
+            raise ValidationError("Los eventos de ciclo de vida son inmutables.")
+        return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        if self.tipo_derivacion in ('CIERRE_ALTA', 'DESERCION', 'MUTUO_ACUERDO', 'REACTIVACION'):
+            raise ValidationError("Los eventos de ciclo de vida no se pueden eliminar.")
+        return super().delete(*args, **kwargs)
 
     def __str__(self):
         return f"{self.tipo_derivacion} - {self.historia_clinica.codigo_historia} ({self.nivel_riesgo})"

@@ -11,6 +11,7 @@
 # ==============================================================================
 from datetime import datetime, date
 from django.utils import timezone
+from django.db import transaction
 from django.db.models import Q
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
@@ -19,6 +20,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from clinica.models import Psicologo, Paciente
+from clinica.lifecycle import ensure_history_open, lock_history
 from agenda.models import Cita, Teleconsulta, Alerta
 from agenda.serializers import (
     CitaSerializer,
@@ -90,8 +92,24 @@ class CitaViewSet(viewsets.ModelViewSet):
         return qs.order_by('fecha', 'hora_inicio')
 
     def update(self, request, *args, **kwargs):
+        cita = self.get_object()
+        history = getattr(cita.paciente, 'historia_clinica', None)
+        if history:
+            ensure_history_open(lock_history(history.pk))
+        if request.data.get('paciente'):
+            target = Paciente.objects.get(pk=request.data['paciente'])
+            target_history = getattr(target, 'historia_clinica', None)
+            if target_history:
+                ensure_history_open(lock_history(target_history.pk))
         kwargs['partial'] = True
         return super().update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        cita = self.get_object()
+        history = getattr(cita.paciente, 'historia_clinica', None)
+        if history:
+            ensure_history_open(lock_history(history.pk))
+        return super().destroy(request, *args, **kwargs)
 
     # ================================================================
     # HU-17: Cancelación de citas con validación de anticipación
@@ -102,9 +120,13 @@ class CitaViewSet(viewsets.ModelViewSet):
     #   Paso 7: CTR → IU: 200 OK con confirmación
     # ================================================================
     @action(detail=True, methods=['post'], url_path='cancelar')
+    @transaction.atomic
     def cancelar(self, request, pk=None):
         """Cancela la cita validando anticipación y registrando el motivo."""
         cita = self.get_object()
+        history = getattr(cita.paciente, 'historia_clinica', None)
+        if history:
+            ensure_history_open(lock_history(history.pk))
         serializer = CancelarCitaSerializer(data=request.data, context={'cita': cita, 'request': request})
         serializer.is_valid(raise_exception=True)
 
@@ -208,12 +230,16 @@ class TeleconsultaAccessView(APIView):
     """
     permission_classes = [IsAuthenticated]
 
+    @transaction.atomic
     def get(self, request, cita_id):
         try:
-            cita = Cita.objects.select_related('psicologo__usuario', 'paciente__usuario').get(id=cita_id)
+            cita = Cita.objects.select_for_update().select_related('psicologo__usuario', 'paciente__usuario').get(id=cita_id)
         except Cita.DoesNotExist:
             return Response({"error": "Cita no encontrada."}, status=status.HTTP_404_NOT_FOUND)
 
+        history = getattr(cita.paciente, 'historia_clinica', None)
+        if history:
+            ensure_history_open(lock_history(history.pk))
         if cita.modalidad != 'VIRTUAL':
             cita.modalidad = 'VIRTUAL'
             cita.save(update_fields=['modalidad'])
@@ -244,12 +270,16 @@ class TeleconsultaFinishView(APIView):
     """
     permission_classes = [IsAuthenticated]
 
+    @transaction.atomic
     def post(self, request, cita_id):
         try:
-            cita = Cita.objects.select_related('teleconsulta', 'psicologo__usuario').get(id=cita_id)
+            cita = Cita.objects.select_for_update().select_related('teleconsulta', 'psicologo__usuario', 'paciente__usuario').get(id=cita_id)
         except Cita.DoesNotExist:
             return Response({"error": "Cita no encontrada."}, status=status.HTTP_404_NOT_FOUND)
 
+        history = getattr(cita.paciente, 'historia_clinica', None)
+        if history:
+            ensure_history_open(lock_history(history.pk))
         serializer = TeleconsultaFinishSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 

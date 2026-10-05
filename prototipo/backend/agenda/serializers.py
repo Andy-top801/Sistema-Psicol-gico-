@@ -15,6 +15,7 @@ from clinica.serializers import PacienteSerializer, PsicologoSerializer
 from agenda.models import Cita, Teleconsulta, Alerta
 from agenda.services.concurrency import ConflictResolutionService
 from agenda.services.alerts import AlertService
+from clinica.lifecycle import lock_history, ensure_history_open
 
 class TeleconsultaSerializer(serializers.ModelSerializer):
     class Meta:
@@ -147,6 +148,13 @@ class CitaSerializer(serializers.ModelSerializer):
         )
 
     def update(self, instance, validated_data):
+        history = getattr(instance.paciente, 'historia_clinica', None)
+        if history:
+            ensure_history_open(lock_history(history.pk))
+        target = validated_data.get('paciente', instance.paciente)
+        target_history = getattr(target, 'historia_clinica', None)
+        if target_history:
+            ensure_history_open(lock_history(target_history.pk))
         """
         CU11 Paso 5 (actualización de estado):
         Si el estado cambia a 'INASISTENCIA', dispara CU10 Paso 3

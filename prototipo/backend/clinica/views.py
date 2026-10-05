@@ -12,6 +12,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from django.db import transaction
 from django.db.models import Q
 from clinica.models import Especialidad, Psicologo, Disponibilidad, Paciente
 from clinica.serializers import (
@@ -202,7 +203,7 @@ import hashlib
 from io import BytesIO
 from django.utils import timezone
 from django.http import HttpResponse
-from clinica.permissions import IsTreatingPsychologistOrAdmin
+from clinica.permissions import IsTreatingPsychologistOrAdmin, IsReferralParticipant
 from clinica.cie_catalog import search_cie10
 from clinica.ia_rules_engine import PreconsultaRulesEngine
 from clinica.models import (
@@ -224,6 +225,7 @@ from clinica.serializers import (
     ConversacionChatbotSerializer, MensajeChatbotSerializer
 )
 from clinica.chatbot_service import ChatbotEngine
+from clinica.lifecycle import ensure_object_history_open, lock_history, close_history, reactivate_history
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
 
@@ -374,6 +376,12 @@ class HistoriaClinicaViewSet(viewsets.ModelViewSet):
             psico = Psicologo.objects.filter(activo=True).first()
         serializer.save(psicologo_apertura=serializer.validated_data.get('psicologo_apertura') or psico)
 
+    def perform_update(self, serializer):
+        if lock_history(self.get_object().pk).cerrada:
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError({'historia_clinica': 'El expediente está cerrado.'})
+        serializer.save()
+
     @action(detail=True, methods=['get', 'post'], url_path='diagnosticos')
     def diagnosticos(self, request, pk=None):
         historia = self.get_object()
@@ -381,12 +389,19 @@ class HistoriaClinicaViewSet(viewsets.ModelViewSet):
             serializer = DiagnosticoCIESerializer(historia.diagnosticos.all(), many=True)
             return Response(serializer.data)
         elif request.method == 'POST':
+            from clinica.lifecycle import ensure_history_open
+            ensure_history_open(lock_history(historia.pk))
             data = request.data.copy()
             data['historia_clinica'] = str(historia.id)
             serializer = DiagnosticoCIESerializer(data=data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['post'], url_path='reactivar')
+    def reactivar(self, request, pk=None):
+        event = reactivate_history(history_id=pk, user=request.user, reason=request.data.get('motivo_clinico'))
+        return Response(DerivacionCasoSerializer(event).data, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['get'], url_path='timeline')
     def timeline(self, request, pk=None):
@@ -442,6 +457,20 @@ class DiagnosticoCIEViewSet(viewsets.ModelViewSet):
     serializer_class = DiagnosticoCIESerializer
     permission_classes = [IsAuthenticated]
 
+    def perform_create(self, serializer):
+        history = lock_history(serializer.validated_data['historia_clinica'].pk)
+        from clinica.lifecycle import ensure_history_open
+        ensure_history_open(history)
+        serializer.save()
+
+    def perform_update(self, serializer):
+        ensure_object_history_open(self.get_object())
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        ensure_object_history_open(instance)
+        instance.delete()
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # CU16: Notas Clínicas SOAP (Autoguardado y Firma Inmutable)
@@ -452,6 +481,7 @@ class NotaSesionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsTreatingPsychologistOrAdmin]
 
     def perform_create(self, serializer):
+        ensure_object_history_open(serializer.validated_data.get('historia_clinica'))
         user = self.request.user
         psico = getattr(user, 'perfil_psicologo', None)
         if not psico and not serializer.validated_data.get('psicologo'):
@@ -470,13 +500,19 @@ class NotaSesionViewSet(viewsets.ModelViewSet):
             numero_sesion=num_sesion
         )
 
+    def perform_destroy(self, instance):
+        ensure_object_history_open(instance)
+        instance.delete()
+
+    @transaction.atomic
     @action(detail=False, methods=['post'], url_path='guardar_borrador')
     def guardar_borrador_endpoint(self, request):
         """Crear o actualizar borrador de nota SOAP (CU16)."""
         nota_id = request.data.get('id')
         if nota_id:
             try:
-                nota = NotaSesion.objects.get(id=nota_id)
+                nota = NotaSesion.objects.select_for_update().get(id=nota_id)
+                ensure_object_history_open(nota)
                 serializer = self.get_serializer(nota, data=request.data, partial=True)
                 serializer.is_valid(raise_exception=True)
                 serializer.save(estado_guardado='BORRADOR')
@@ -492,6 +528,7 @@ class NotaSesionViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
+        ensure_object_history_open(self.get_object())
         nota = self.get_object()
         if nota.estado_guardado == 'FIRMADA':
             return Response(
@@ -501,6 +538,7 @@ class NotaSesionViewSet(viewsets.ModelViewSet):
         return super().update(request, *args, **kwargs)
 
     def partial_update(self, request, *args, **kwargs):
+        ensure_object_history_open(self.get_object())
         nota = self.get_object()
         if nota.estado_guardado == 'FIRMADA':
             return Response(
@@ -513,6 +551,7 @@ class NotaSesionViewSet(viewsets.ModelViewSet):
     def guardar_borrador(self, request, pk=None):
         """Autoguardado reactivo cada 30 segundos (CU16 Criterio b)."""
         nota = self.get_object()
+        ensure_object_history_open(nota)
         if nota.estado_guardado == 'FIRMADA':
             return Response({"error": "La nota ya se encuentra consolidada y firmada de manera inmutable."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -529,8 +568,10 @@ class NotaSesionViewSet(viewsets.ModelViewSet):
     def firmar_nota_alias(self, request, pk=None):
         return self._ejecutar_firma(request, pk)
 
+    @transaction.atomic
     def _ejecutar_firma(self, request, pk):
-        nota = self.get_object()
+        nota = NotaSesion.objects.select_for_update().get(pk=pk)
+        ensure_object_history_open(nota)
         if nota.estado_guardado == 'FIRMADA':
             return Response(
                 {"error": "La nota SOAP ya fue firmada previamente y es inmutable."},
@@ -547,7 +588,7 @@ class NotaSesionViewSet(viewsets.ModelViewSet):
             )
 
         # Precondición c: Historia clínica abierta y activa
-        if hasattr(nota.historia_clinica, 'estado') and nota.historia_clinica.estado == 'CERRADA':
+        if nota.historia_clinica.cerrada:
             return Response(
                 {"error": "No se pueden firmar notas en un expediente cerrado."},
                 status=status.HTTP_400_BAD_REQUEST
@@ -584,13 +625,15 @@ class NotaSesionViewSet(viewsets.ModelViewSet):
             "nota": serializer.data
         }, status=status.HTTP_201_CREATED)
 
+    @transaction.atomic
     @action(detail=True, methods=['post'], url_path='adenda')
     def crear_adenda(self, request, pk=None):
         """
         CU16 Criterio d / Paso 4:
         Una nota firmada no admite edición directa; modificaciones requieren adendas clínicas trazables.
         """
-        nota = self.get_object()
+        nota = NotaSesion.objects.select_for_update().get(pk=pk)
+        ensure_object_history_open(nota)
         if nota.estado_guardado != 'FIRMADA':
             return Response(
                 {"error": "Solo se pueden anexar adendas clínicas sobre notas previamente firmadas e inmutables."},
@@ -634,8 +677,8 @@ class EvolucionClinicaViewSet(viewsets.ModelViewSet):
         return qs
 
     def perform_create(self, serializer):
-        evolucion = serializer.save()
-        # Si se detecta retroceso o crisis, generar alerta clínica de prioridad alta/crítica (CU17 / HU-28 Criterio b)
+        ensure_object_history_open(serializer.validated_data.get('historia_clinica'))
+        evolucion = serializer.save()        # Si se detecta retroceso o crisis, generar alerta clínica de prioridad alta/crítica (CU17 / HU-28 Criterio b)
         if evolucion.estado_avance == 'RETROCESO_CRISIS':
             try:
                 from agenda.models import Alerta
@@ -650,11 +693,33 @@ class EvolucionClinicaViewSet(viewsets.ModelViewSet):
                 import logging
                 logging.getLogger(__name__).error(f"Error registrando alerta de crisis en perform_create: {e}")
 
+    def perform_update(self, serializer):
+        ensure_object_history_open(self.get_object())
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        ensure_object_history_open(instance)
+        instance.delete()
+
 
 class TareaTerapeuticaViewSet(viewsets.ModelViewSet):
     queryset = TareaTerapeutica.objects.select_related('historia_clinica', 'psicologo__usuario', 'paciente__usuario').prefetch_related('evidencia').all().order_by('fecha_limite')
     serializer_class = TareaTerapeuticaSerializer
     permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        ensure_object_history_open(serializer.validated_data.get('historia_clinica'))
+        user = self.request.user
+        psico = getattr(user, 'perfil_psicologo', None) or Psicologo.objects.filter(activo=True).first()
+        serializer.save(psicologo=serializer.validated_data.get('psicologo') or psico)
+
+    def perform_update(self, serializer):
+        ensure_object_history_open(self.get_object())
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        ensure_object_history_open(instance)
+        instance.delete()
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -673,6 +738,7 @@ class TareaTerapeuticaViewSet(viewsets.ModelViewSet):
         return qs
 
     def perform_create(self, serializer):
+        ensure_object_history_open(serializer.validated_data.get('historia_clinica'))
         user = self.request.user
         psico = getattr(user, 'perfil_psicologo', None)
         if not psico and not serializer.validated_data.get('psicologo'):
@@ -693,6 +759,7 @@ class TareaTerapeuticaViewSet(viewsets.ModelViewSet):
         Paso 8: Actualizar indicador 'Completada 100%'
         """
         tarea = self.get_object()
+        ensure_object_history_open(tarea)
 
         # Validación estado previo
         if tarea.estado == 'COMPLETADA' and hasattr(tarea, 'evidencia'):
@@ -744,6 +811,18 @@ class EvidenciaTareaViewSet(viewsets.ModelViewSet):
     queryset = EvidenciaTarea.objects.select_related('tarea').all()
     serializer_class = EvidenciaTareaSerializer
     permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        ensure_object_history_open(serializer.validated_data['tarea'])
+        serializer.save()
+
+    def perform_update(self, serializer):
+        ensure_object_history_open(self.get_object())
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        ensure_object_history_open(instance)
+        instance.delete()
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -985,21 +1064,63 @@ class FirmaConsentimientoViewSet(viewsets.ModelViewSet):
 class DerivacionCasoViewSet(viewsets.ModelViewSet):
     queryset = DerivacionCaso.objects.select_related('historia_clinica__paciente__usuario', 'psicologo_emisor__usuario').all().order_by('-fecha_derivacion')
     serializer_class = DerivacionCasoSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsReferralParticipant]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        user = self.request.user
+        if user.is_superuser:
+            return qs
+        role = (getattr(getattr(user, 'rol', None), 'nombre', '') or '').lower()
+        if 'admin' in role or 'coordinador' in role:
+            return qs
+        if 'paciente' in role and hasattr(user, 'perfil_paciente'):
+            return qs.filter(historia_clinica__paciente=user.perfil_paciente)
+        if 'psic' in role and hasattr(user, 'perfil_psicologo'):
+            psico = user.perfil_psicologo
+            return qs.filter(
+                Q(historia_clinica__psicologo_apertura=psico) |
+                Q(historia_clinica__paciente__citas__psicologo=psico)
+            ).distinct()
+        return qs.none()
 
     def perform_create(self, serializer):
-        user = self.request.user
-        psico = getattr(user, 'perfil_psicologo', None)
-        if not psico and not serializer.validated_data.get('psicologo_emisor'):
-            psico = Psicologo.objects.filter(activo=True).first()
-        derivacion = serializer.save(psicologo_emisor=serializer.validated_data.get('psicologo_emisor') or psico)
+        historia = serializer.validated_data.get('historia_clinica')
+        tipo = serializer.validated_data.get('tipo_derivacion')
+        if tipo in ('CIERRE_ALTA', 'DESERCION', 'MUTUO_ACUERDO'):
+            event = close_history(
+                history_id=historia.pk,
+                user=self.request.user,
+                tipo_derivacion=tipo,
+                motivo_clinico=serializer.validated_data.get('motivo_clinico', ''),
+                logros_alcanzados=serializer.validated_data.get('logros_alcanzados', ''),
+                recomendaciones_mantenimiento=serializer.validated_data.get('recomendaciones_mantenimiento', ''),
+                sintomatologia_relevante=serializer.validated_data.get('sintomatologia_relevante', ''),
+                profesional_destino=serializer.validated_data.get('profesional_destino', ''),
+                institucion_destino=serializer.validated_data.get('institucion_destino', ''),
+                nivel_riesgo=serializer.validated_data.get('nivel_riesgo', 'MEDIO'),
+            )
+            self._closure_event = event
+            return
+        psico = getattr(self.request.user, 'perfil_psicologo', None)
+        if psico is None:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied('Se requiere un perfil de psicólogo autenticado.')
+        if historia.psicologo_apertura_id != psico.id and not historia.paciente.citas.filter(psicologo=psico).exists():
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied('La historia clínica no está vinculada al psicólogo autenticado.')
+        ensure_object_history_open(historia)
+        serializer.save(psicologo_emisor=psico)
 
-        # Si es cierre de caso o alta, marcar historia clínica como cerrada (CU19 Criterio b)
-        if derivacion.tipo_derivacion in ('CIERRE_ALTA', 'DESERCION'):
-            hc = derivacion.historia_clinica
-            hc.cerrada = True
-            hc.fecha_cierre = timezone.now()
-            hc.save()
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+        if hasattr(self, '_closure_event'):
+            response.data = self.get_serializer(self._closure_event).data
+        return response
+
+    @action(detail=False, methods=['post'], url_path='noop')
+    def noop(self, request):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     @action(detail=True, methods=['get'], url_path='descargar-pdf')
     def descargar_pdf(self, request, pk=None):
