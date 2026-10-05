@@ -85,16 +85,42 @@ class ReporteGenericoView(ReportesPermission, APIView):
             )
 
 
-# ─────────────────────────────────────────────────────────────
-# Reporte personalizado (POST con body JSON)
-# ─────────────────────────────────────────────────────────────
+# ==============================================================================
+# MÓDULO: reportes/views.py — CU25: Constructor de Reportes Personalizados (QBE), Exportación y Voz (HU-38)
+# CAPA BCE: CONTROL (Controller) — CTR_ReportEngineController
+# DIAGRAMA DE SECUENCIA CU25 (sprint2.md):
+#   alt Modo 1: Comandos de Voz (Web Speech API)
+#     Actor → IU_ConstructorReportesQBE: 1a: presionar_boton_microfono()
+#     Actor → CTR_SpeechParserService: 2a: dictar_instruccion(...)
+#     CTR_SpeechParserService → CTR_SpeechParserService: 3a: web_speech_recognition_y_nlp_parse()
+#     CTR_SpeechParserService --> IU_ConstructorReportesQBE: 4a: parametros_extraidos(fuente, filtros)
+#     IU_ConstructorReportesQBE --> Actor: 5a: actualizar_formulario_qbe_reactivo(filtros_detectados)
+#   else Modo 2: Configuración Manual QBE
+#     Actor → IU_ConstructorReportesQBE: 1b: seleccionar_columnas_y_filtros(fuente, columnas[], filtros[], orden)
+#   end
+#   Actor → IU_ConstructorReportesQBE: 6: solicitar_ejecucion_y_exportacion(formato='EXCEL')
+#   IU_ConstructorReportesQBE → CTR_ReportEngineController: 7: POST /api/v1/reportes/personalizado/ (payload_qbe, formato='EXCEL')
+#   CTR_ReportEngineController → CTR_ReportEngineController: 8: construir_query_dinamico_con_aislamiento_tenant()
+#   CTR_ReportEngineController → CE_CitaAgenda / CE_HistoriaClinica: 9-11: SELECT columnas FROM ... WHERE tenant_id=...
+#   CE --> CTR_ReportEngineController: 12: dataset_relacional_proyectado()
+#   alt Canal Excel (.xlsx con OpenPyXL)
+#     CTR_ReportEngineController → CTR_OpenPyXLExporter: 13a: generar_libro_excel(dataset, encabezados)
+#     CTR_OpenPyXLExporter --> CTR_ReportEngineController: 15a: archivo_binario_xlsx_bytes()
+#     CTR_ReportEngineController --> IU_VisorReporteExportador: 16a: HTTP 200 OK (Content-Disposition: attachment; filename=reporte.xlsx)
+#     IU_VisorReporteExportador --> Actor: 17a: disparar_descarga_automatica_en_navegador("reporte.xlsx")
+#   else Canal Correo Electrónico (SMTP)
+#     CTR_ReportEngineController → CTR_ReportEngineController: 13b: adjuntar_documento_y_enviar_smtp(email_destino, dataset)
+#     CTR_ReportEngineController --> IU_VisorReporteExportador: 14b: HTTP 200 OK ("Reporte enviado exitosamente por eMail")
+#   end
+# ==============================================================================
 class ReportePersonalizadoView(ReportesPermission, APIView):
     """
-    POST /api/reportes/personalizado/
-    Body: { "fuente": "citas", "columnas": ["fecha", "estado"], "filtros": {...}, "orden": {...} }
+    CTR_ReportEngineController:
+    Controlador para el procesamiento dinámico de consultas QBE y exportación multiformato.
     """
 
     def post(self, request):
+        # CU25 Paso 7: POST /api/v1/reportes/personalizado/ (payload_qbe, formato)
         fuente = request.data.get("fuente")
         if not fuente or fuente not in FUENTES_DISPONIBLES:
             return Response(
@@ -113,9 +139,10 @@ class ReportePersonalizadoView(ReportesPermission, APIView):
         formato = (request.data.get("formato") or "").upper()
 
         try:
+            # CU25 Pasos 8 a 12: construir_query_dinamico y proyectar dataset relacional
             resultado = ReportEngine.generar(fuente, columnas, filtros, orden)
 
-            # Canal Descarga Directa Excel (.xlsx con OpenPyXL)
+            # CU25 Pasos 13a a 17a: Canal Descarga Directa Excel (.xlsx con OpenPyXL)
             if formato in ["EXCEL", "XLSX"]:
                 from .exporters import ExcelExporter
                 tenant_obj = getattr(request, 'tenant', None)
@@ -140,7 +167,7 @@ class ReportePersonalizadoView(ReportesPermission, APIView):
                 return response
 
             # Canal Correo Electrónico (SMTP)
-            if formato in ["EMAIL", "SMTP"] or request.data.get("email"):
+            if formato in ["EMAIL", "SMTP"]:
                 destinatario = request.data.get("email")
                 if not destinatario:
                     return Response(

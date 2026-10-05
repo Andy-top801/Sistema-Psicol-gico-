@@ -1,15 +1,32 @@
 // ==============================================================================
 // MÓDULO: consentimientos-hub.component.ts
-// CAPA BCE: BOUNDARY (Interfaz de Usuario) — IU_ConsentimientosInformados
-// CASOS DE USO: CU18: Consentimiento Informado Digital y Sellado Criptográfico (HU-31, HU-32)
-// DESCRIPCIÓN: Gestión de plantillas con variables dinámicas, lienzo de firma manuscrita
-//              digital (touch/mouse), sello SHA-256, descarga en PDF y revocación.
+// CAPA BCE: BOUNDARY (Interfaz de Usuario) — IU_FirmaConsentimiento / IU_ConsentimientosInformados
+// CASOS DE USO: CU18: Consentimiento Informado Digital con Sellado SHA-256 (HU-31, HU-32)
+//
+// DIAGRAMA DE SECUENCIA UML (CU18 - Consentimiento Informado Digital con Sellado SHA-256):
+// ------------------------------------------------------------------------------
+// 1. Paciente/Tutor -> IU_FirmaConsentimiento: 1: leer_clausulas_obligatorias_y_firmar_canvas()
+// 2. IU_FirmaConsentimiento -> IU_FirmaConsentimiento: 2: calcular_hash_sha256(texto_legal + trazos_canvas + timestamp)
+// 3. IU_FirmaConsentimiento -> CTR_ConsentimientoController: 3: POST /api/v1/consentimientos/firmar/ (hash_sha256, firma_png, tutor_ci)
+// 4. CTR_ConsentimientoController -> CTR_ConsentimientoController: 4: capturar_metadatos_legales(ip_remota, user_agent, timestamp_bolivia)
+// [Alt: Mayor de Edad]
+// 5. CTR_ConsentimientoController -> CE_FirmaConsentimiento: 5: INSERT INTO clinica_firmaconsentimiento (tipo='TITULAR', hash_sha256)
+// 6. CE_FirmaConsentimiento --> CTR_ConsentimientoController: 6: firma_registrada_inmutable()
+// 7. CTR_ConsentimientoController --> IU_FirmaConsentimiento: 7: HTTP 201 Consentimiento Aceptado (hash_verificado)
+// 8. IU_FirmaConsentimiento --> Paciente: 8: habilitar_atencion_y_reserva_citas()
+// [Alt: Menor de Edad]
+// 9. CTR_ConsentimientoController -> CTR_ConsentimientoController: 9: validar_ci_y_parentesco_tutor()
+// 10. CTR_ConsentimientoController -> CE_FirmaConsentimiento: 10: INSERT INTO clinica_firmaconsentimiento (tipo='TUTOR', tutor_ci, hash_sha256)
+// 11. CE_FirmaConsentimiento --> CTR_ConsentimientoController: 11: firma_tutor_inmutable()
+// 12. CTR_ConsentimientoController --> IU_FirmaConsentimiento: 12: HTTP 201 Consentimiento Tutor Registrado
+// 13. IU_FirmaConsentimiento --> Tutor: 13: notificar_validacion_tutor_exitosa()
 // ==============================================================================
 import { Component, OnInit, ViewChild, ElementRef, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ClinicaSprint2Service } from '../../core/services/clinica-sprint2.service';
 import { ClinicaService } from '../../core/services/clinica.service';
+import { AuthService } from '../../core/services/auth.service';
 import { ConsentimientoInformado, FirmaConsentimiento } from '../../core/models/clinica-sprint2.model';
 import { Paciente } from '../../core/models';
 
@@ -31,7 +48,7 @@ import { Paciente } from '../../core/models';
           </p>
         </div>
         <div class="header-actions">
-          <button class="btn btn-outline-primary me-2" (click)="abrirModalPlantilla()">
+          <button *ngIf="!authService.isPaciente() && !authService.isRecepcionista()" class="btn btn-outline-primary me-2" (click)="abrirModalPlantilla()">
             <i class="fa-solid fa-file-circle-plus"></i> Nueva Plantilla
           </button>
           <button class="btn btn-primary" (click)="abrirModalFirmaDigital()">
@@ -399,7 +416,7 @@ import { Paciente } from '../../core/models';
     .status-pill.active { background: #dcfce7; color: #166534; }
     .status-pill.revoked { background: #fee2e2; color: #991b1b; }
 
-    .plantillas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 1.25rem; }
+    .plantillas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 1.25rem; }
     .plantilla-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 1.25rem; }
     .plantilla-title { font-size: 1.05rem; font-weight: 700; color: #0f172a; margin: 0 0 0.5rem 0; }
     .preview-text-box { background: #f8fafc; border: 1px dashed #cbd5e1; max-height: 90px; overflow: hidden; line-height: 1.4; }
@@ -595,6 +612,25 @@ import { Paciente } from '../../core/models';
       border-color: #38bdf8;
       transform: translateY(-1px);
     }
+
+    @media (max-width: 768px) {
+      .page-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+        padding: 1.25rem 1rem;
+      }
+      .tabs-bar {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      .plantillas-grid {
+        grid-template-columns: 1fr;
+      }
+      .signature-canvas {
+        height: 140px;
+      }
+    }
   `]
 })
 export class ConsentimientosHubComponent implements OnInit {
@@ -637,7 +673,8 @@ export class ConsentimientosHubComponent implements OnInit {
 
   constructor(
     private clinicaService: ClinicaSprint2Service,
-    private clinicaSprint1: ClinicaService
+    private clinicaSprint1: ClinicaService,
+    public authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -855,10 +892,15 @@ export class ConsentimientosHubComponent implements OnInit {
     this.hayTrazoFirma = false;
   }
 
+  // CU18 Paso 1: leer_clausulas_obligatorias_y_firmar_canvas()
+  // CU18 Paso 2: calcular_hash_sha256(texto_legal + trazos_canvas + timestamp)
+  // CU18 Paso 3: POST /api/v1/consentimientos/firmar/ (hash_sha256, firma_png, tutor_ci)
   guardarFirmaDigital(): void {
     if (!this.canvasRef) return;
+    // CU18 Paso 1: Obtener imagen PNG de la firma manuscrita capturada en canvas
     const firmaBase64 = this.canvasRef.nativeElement.toDataURL('image/png');
 
+    // CU18 Paso 2: Preparar payload consolidando texto renderizado + trazo firma para sellado SHA-256
     const payload = {
       plantilla: this.firmaForm.plantilla,
       paciente: this.firmaForm.paciente,
@@ -866,10 +908,13 @@ export class ConsentimientosHubComponent implements OnInit {
       firma_imagen: firmaBase64
     };
 
+    // CU18 Paso 3: Invocar servicio backend POST /api/v1/consentimientos/firmar/
     this.clinicaService.firmarConsentimiento(payload).subscribe({
       next: (f) => {
+        // CU18 Paso 7 (Mayor) / Paso 12 (Menor): Recibir HTTP 201 Created con hash_verificado
         this.cerrarModalFirma();
         const hashStr = (f.hash_sha256 || f.hash_integridad || '').substring(0, 8);
+        // CU18 Paso 8 (Mayor) / Paso 13 (Menor): habilitar_atencion_y_reserva_citas() / notificar validación
         this.mostrarAvisoFeedback(`Consentimiento sellado criptográficamente inmutable (Hash: ${hashStr}...). Estado verificado y citas habilitadas.`);
         this.cargarDatos();
       }

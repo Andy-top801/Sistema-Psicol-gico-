@@ -19,18 +19,12 @@ class AuditDeveloperPermission(BasePermission):
         log_key = (getattr(settings, "AUDIT_LOG_KEY", "") or "").strip()
         supplied = request.headers.get("X-Developer-Key", "").strip()
 
-        if not supplied:
+        if not supplied or not dev_key or (log_key and dev_key == log_key):
             return False
 
-        valid_keys = list(set(k for k in [
-            dev_key,
-            log_key,
-            "sigepsi-developer-master-audit-key-2026",
-            "sigepsi-audit-secret-key-2026-very-confidential-dev"
-        ] if k))
         try:
             supplied_bytes = supplied.encode("utf-8")
-            return any(hmac.compare_digest(supplied_bytes, k.encode("utf-8")) for k in valid_keys)
+            return hmac.compare_digest(supplied_bytes, dev_key.encode("utf-8"))
         except Exception:
             return False
 

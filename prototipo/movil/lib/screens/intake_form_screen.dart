@@ -1,19 +1,24 @@
 // ==============================================================================
 // MÓDULO: intake_form_screen.dart
-// CAPA BCE: BOUNDARY (Interfaz de Usuario Móvil – Flutter)
-// CASO DE USO: CU14 – Gestionar Formulario Previo a la Consulta (Intake Digital)
-// HISTORIA: HU-24 – Diligenciamiento de formulario previo en App Móvil
-// DESCRIPCIÓN: Stepper interactivo de 4 pasos para que el paciente complete su
-//              formulario pre-consulta desde la app móvil. Incluye validación por
-//              paso, barra de progreso porcentual y bloqueo tras envío exitoso.
-// DIAGRAMA DE SECUENCIA CU14 (Flujo Móvil):
-//   1. Paciente abre IntakeFormScreen → Sprint2Service.getFormularioActivo()
-//   2. Paciente completa Paso 1 (Motivo) → Validación local
-//   3. Paciente completa Paso 2 (Síntomas) → Validación multi-selección
-//   4. Paciente completa Paso 3 (Malestar) → Slider 1-5
-//   5. Paciente completa Paso 4 (Antecedentes) → Texto libre
-//   6. Paciente presiona 'Enviar' → Sprint2Service.enviarRespuestaIntake()
-//   7. Backend retorna 201 Created → UI bloquea ediciones y muestra confirmación
+// CAPA BCE: BOUNDARY (Interfaz de Usuario Móvil – Flutter) — IU_FormularioPreConsulta
+// CASO DE USO: CU14 – Ficha Previa e Intake Digital (HU-23, HU-24)
+//
+// DIAGRAMA DE SECUENCIA UML (CU14 - Ficha Previa e Intake Digital):
+// ------------------------------------------------------------------------------
+// 1. Paciente -> IU_FormularioPreConsulta: 1: ingresar_respuestas(sintomas, escala_malestar, antecedentes)
+// 2. IU_FormularioPreConsulta -> IU_FormularioPreConsulta: 2: validar_campos_requeridos()
+// 3. IU_FormularioPreConsulta -> CTR_IntakeController: 3: POST /api/v1/intake/respuestas/ (Bearer JWT, payload JSONB)
+// 4. CTR_IntakeController -> CTR_IntakeController: 4: validar_esquema_json_y_urgencia(malestar >= 4)
+// [Alt: Malestar >= 4 (Urgencia Alta)]
+// 5. CTR_IntakeController -> CE_RespuestaPreConsulta: 5: INSERT INTO clinica_respuestapreconsulta (prioridad='ALTA')
+// 6. CE_RespuestaPreConsulta --> CTR_IntakeController: 6: 201 Created (uuid, timestamp, prioridad_flag=true)
+// 7. CTR_IntakeController --> IU_FormularioPreConsulta: 7: HTTP 201 Created {id, prioridad='ALTA', protocolo_urgencia=true}
+// 8. IU_FormularioPreConsulta --> Paciente: 8: mostrar_alerta_urgencia_prioritaria('Caso clasificado para atencion inmediata')
+// [Alt: Malestar Normal]
+// 9. CTR_IntakeController -> CE_RespuestaPreConsulta: 9: INSERT INTO clinica_respuestapreconsulta (prioridad='NORMAL')
+// 10. CE_RespuestaPreConsulta --> CTR_IntakeController: 10: 201 Created (uuid, timestamp, prioridad_flag=false)
+// 11. CTR_IntakeController --> IU_FormularioPreConsulta: 11: HTTP 201 Created {id, prioridad='NORMAL', status='ENVIADO'}
+// 12. IU_FormularioPreConsulta --> Paciente: 12: confirmacion_envio_exitosa(badge_prioridad)
 // ==============================================================================
 import 'package:flutter/material.dart';
 import '../core/theme/app_theme.dart';
@@ -141,7 +146,11 @@ class _IntakeFormScreenState extends State<IntakeFormScreen> with TickerProvider
     });
   }
 
+  // CU14 Paso 1: ingresar_respuestas(sintomas, escala_malestar, antecedentes)
+  // CU14 Paso 2: validar_campos_requeridos()
+  // CU14 Paso 3: POST /api/v1/intake/respuestas/ (Bearer JWT, payload JSONB)
   Future<void> _submitIntake() async {
+    // CU14 Paso 2: validar_campos_requeridos()
     if (!_validateCurrentStep()) {
       setState(() => _errorMsg = _getStepValidationError());
       return;
@@ -152,6 +161,7 @@ class _IntakeFormScreenState extends State<IntakeFormScreen> with TickerProvider
       _errorMsg = null;
     });
 
+    // CU14 Paso 1: Empaquetar respuestas ingresadas por el paciente
     final data = {
       if (_formulario != null) 'formulario': _formulario!['id'],
       'motivo_consulta': _motivoController.text.trim(),
@@ -164,6 +174,7 @@ class _IntakeFormScreenState extends State<IntakeFormScreen> with TickerProvider
       'estado': 'ENVIADO',
     };
 
+    // CU14 Paso 3: POST /api/v1/intake/respuestas/
     final result = await _sprint2Service.enviarRespuestaIntake(data);
 
     if (mounted) {

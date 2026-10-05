@@ -1,3 +1,39 @@
+// ==============================================================================
+// MÓDULO: backup-restore-console.component.ts
+// CAPA BCE: BOUNDARY (Interfaz de Usuario) — IU_ConsolaBackupRestore / IU_ComprobanteBackup
+// CASOS DE USO: CU28: Copias de Seguridad y Restauración (Backup / Restore) en la Nube (HU-39)
+//
+// DIAGRAMA DE SECUENCIA UML (CU28 - Copias de Seguridad y Restauración):
+// ------------------------------------------------------------------------------
+// [Operación 1: Generación de Backup Manual (Global o Tenant)]
+// 1a. SuperAdmin -> IU_ConsolaBackupRestore: 1a: solicitar_backup_manual(ambito, tenant_id)
+// 2a. IU_ConsolaBackupRestore -> CTR_BackupRestoreOrchestrator: 2a: POST /api/v1/backups/manual/ (ambito, tenant_id)
+// 3a. CTR_BackupRestoreOrchestrator -> CTR_PgEngine: 3a: ejecutar_pg_dump(esquema, formato)
+// 4a. CTR_PgEngine -> CE_TenantDatabaseSchema: 4a: LOCK SCHEMA IN SHARE MODE & EXTRACT TABLES
+// 5a. CE_TenantDatabaseSchema --> CTR_PgEngine: 5a: stream_tablas_y_datos_relacionales()
+// 6a. CTR_PgEngine --> CTR_BackupRestoreOrchestrator: 6a: archivo_dump_generado(dump)
+// 7a. CTR_BackupRestoreOrchestrator -> CTR_BackupRestoreOrchestrator: 7a: calcular_checksum_sha256_y_comprimir_gzip()
+// 8a. CTR_BackupRestoreOrchestrator -> CE_BackupLogRegistro: 8a: INSERT INTO backups_registro (archivo, tamano, checksum)
+// 9a. CE_BackupLogRegistro --> CTR_BackupRestoreOrchestrator: 9a: confirmacion_persistencia_metadatos()
+// 10a. CTR_BackupRestoreOrchestrator --> IU_ComprobanteBackup: 10a: HTTP 201 Created (url_descarga, checksum_sha256)
+// 11a. IU_ComprobanteBackup --> SuperAdmin: 11a: renderizar_tarjeta_descarga_backup("Descarga lista - Checksum OK")
+// [Operación 2: Restauración de Base de Datos (Restore desde Archivo)]
+// 1b. SuperAdmin -> IU_ConsolaBackupRestore: 1b: cargar_archivo_respaldo(archivo_dump, tenant_destino)
+// 2b. IU_ConsolaBackupRestore -> IU_ConsolaBackupRestore: 2b: validar_extension_y_tamano_archivo(.dump / .sql.gz)
+// 3b. IU_ConsolaBackupRestore -> CTR_BackupRestoreOrchestrator: 3b: POST /api/v1/backups/restaurar/ (multipart_dump_file)
+// 4b. CTR_BackupRestoreOrchestrator -> CTR_BackupRestoreOrchestrator: 4b: verificar_integridad_checksum_y_compatibilidad()
+// [Alt: Checksum y Estructura Válida]
+// 5b. CTR_BackupRestoreOrchestrator -> CTR_PgEngine: 5b: ejecutar_pg_restore(flag='--clean --if-exists')
+// 6b. CTR_PgEngine -> CE_TenantDatabaseSchema: 6b: BEGIN; RESTORE TABLES; COMMIT;
+// 7b. CE_TenantDatabaseSchema --> CTR_PgEngine: 7b: restauracion_esquema_completada()
+// 8b. CTR_PgEngine --> CTR_BackupRestoreOrchestrator: 8b: status_code_0_restore_ok()
+// 9b. CTR_BackupRestoreOrchestrator -> CE_BackupLogRegistro: 9b: INSERT INTO auditoria_restauracion (estado='EXITO')
+// 10b. CTR_BackupRestoreOrchestrator --> IU_ComprobanteBackup: 10b: HTTP 200 OK ("Restauración ejecutada exitosamente")
+// 11b. IU_ComprobanteBackup --> SuperAdmin: 11b: alerta_modal_exito("El centro fue restaurado íntegramente")
+// [Alt: Archivo Corrupto]
+// 12b. CTR_BackupRestoreOrchestrator --> IU_ConsolaBackupRestore: 12b: HTTP 400 Bad Request ("Fallo de integridad")
+// 13b. IU_ConsolaBackupRestore --> SuperAdmin: 13b: alerta_error_restauracion("Abortada restauración")
+// ==============================================================================
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -5,15 +41,6 @@ import { RouterModule } from '@angular/router';
 import { BackupService, BackupItem, BackupResult, CronStatus } from '../../core/services/backup.service';
 import { TenantService } from '../../core/services/tenant.service';
 import { AuthService } from '../../core/services/auth.service';
-
-/**
- * IU_ConsolaBackupRestore & IU_ComprobanteBackup
- * Cumple con Caso de Uso HU-39 (CU28) y Diagramas de Secuencia y Comunicación:
- * - Paso 1: Verificación de tarea cron periódica cloud (03:00 AM hora boliviana).
- * - Paso 2: Generación manual de backup (Global o Tenant Específico: Centro Esperanza) con SHA-256.
- * - Paso 3: Validación criptográfica en dropzone detectando archivos corruptos o alterados.
- * - Paso 4: Restauración asistida transaccional atómica (--clean --if-exists) con alerta modal de éxito.
- */
 @Component({
   selector: 'app-backup-restore-console',
   standalone: true,

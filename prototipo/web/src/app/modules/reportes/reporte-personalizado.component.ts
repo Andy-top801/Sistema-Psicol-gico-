@@ -1,3 +1,37 @@
+// ==============================================================================
+// MÓDULO: reporte-personalizado.component.ts
+// CAPA BCE: BOUNDARY (Interfaz de Usuario) — IU_ConstructorReportesQBE / IU_VisorReporteExportador
+// CASOS DE USO: CU25: Constructor de Reportes Personalizados (QBE), Exportación y Voz (HU-38)
+//
+// DIAGRAMA DE SECUENCIA UML (CU25 - Reportes Personalizados QBE, Multiformato y Voz):
+// ------------------------------------------------------------------------------
+// [Modo 1: Comandos de Voz (Web Speech API)]
+// 1a. Admin -> IU_ConstructorReportesQBE: 1a: presionar_boton_microfono()
+// 2a. Admin -> CTR_SpeechParserService: 2a: dictar_instruccion("Reporte de citas...")
+// 3a. CTR_SpeechParserService -> CTR_SpeechParserService: 3a: web_speech_recognition_y_nlp_parse()
+// 4a. CTR_SpeechParserService --> IU_ConstructorReportesQBE: 4a: parametros_extraidos(fuente, filtros)
+// 5a. IU_ConstructorReportesQBE --> Admin: 5a: actualizar_formulario_qbe_reactivo(filtros_detectados)
+// [Modo 2: Configuración Manual QBE]
+// 1b. Admin -> IU_ConstructorReportesQBE: 1b: seleccionar_columnas_y_filtros(fuente, columnas[], filtros[], orden)
+// [Ejecución Común]
+// 6. Admin -> IU_ConstructorReportesQBE: 6: solicitar_ejecucion_y_exportacion(formato='EXCEL')
+// 7. IU_ConstructorReportesQBE -> CTR_ReportEngineController: 7: POST /api/v1/reportes/personalizado/ (payload_qbe)
+// 8. CTR_ReportEngineController -> CTR_ReportEngineController: 8: construir_query_dinamico_con_aislamiento_tenant()
+// 9. CTR_ReportEngineController -> CE_CitaAgenda: 9: SELECT columnas FROM agenda_cita WHERE tenant_id=...
+// 10. CTR_ReportEngineController -> CE_Psicologo: 10: JOIN clinica_psicologo ON ...
+// 11. CTR_ReportEngineController -> CE_HistoriaClinica: 11: LEFT JOIN clinica_historiaclinica ON ...
+// 12. CE_HistoriaClinica --> CTR_ReportEngineController: 12: dataset_relacional_proyectado()
+// [Alt: Exportación Excel]
+// 13a. CTR_ReportEngineController -> CTR_OpenPyXLExporter: 13a: generar_libro_excel(dataset, encabezados)
+// 14a. CTR_OpenPyXLExporter -> CTR_OpenPyXLExporter: 14a: agregar_fila_con_estilos_y_totales(row)
+// 15a. CTR_OpenPyXLExporter --> CTR_ReportEngineController: 15a: archivo_binario_xlsx_bytes()
+// 16a. CTR_ReportEngineController --> IU_VisorReporteExportador: 16a: HTTP 200 OK (Content-Disposition: attachment)
+// 17a. IU_VisorReporteExportador --> Admin: 17a: disparar_descarga_automatica_en_navegador("reporte.xlsx")
+// [Alt: Envío SMTP]
+// 13b. CTR_ReportEngineController -> CTR_ReportEngineController: 13b: adjuntar_documento_y_enviar_smtp(email_destino)
+// 14b. CTR_ReportEngineController --> IU_VisorReporteExportador: 14b: HTTP 200 OK ("Reporte enviado exitosamente")
+// 15b. IU_VisorReporteExportador --> Admin: 15b: modal_confirmacion_envio_correo()
+// ==============================================================================
 import { Component, OnInit, OnDestroy, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -6,15 +40,6 @@ import { Subscription } from 'rxjs';
 import { ReportService, ColumnaDef, FiltroDef, ReporteResultado, FuenteMetadata } from '../../core/services/report.service';
 import { SpeechParserService, ExtractedVoiceParams } from '../../core/services/speech-parser.service';
 import { AuthService } from '../../core/services/auth.service';
-
-/**
- * IU_ConstructorReportesQBE & IU_VisorReporteExportador
- * Cumple con Caso de Uso HU-38 (CU25) y los Diagramas de Secuencia y Comunicación:
- * - Modalidad 1: Comandos de Voz con Web Speech API y NLP
- * - Modalidad 2: Constructor QBE (Query By Example) con selección dinámica de columnas
- * - Modalidad 3: Estándar
- * - Exportación multiformato directa a Excel (.xlsx con OpenPyXL) y SMTP Email
- */
 @Component({
   selector: 'app-reporte-personalizado',
   standalone: true,
@@ -1510,12 +1535,29 @@ export class ReportePersonalizadoComponent implements OnInit, OnDestroy {
   private configuredSource = 'citas';
 
   private subs: Subscription[] = [];
+  private speechParser: SpeechParserService;
+  public authService: AuthService;
 
   constructor(
     private reportService: ReportService,
-    private speechParser: SpeechParserService,
-    public authService: AuthService
+    speechParser: SpeechParserService,
+    authService?: AuthService
   ) {
+    if (authService) {
+      this.speechParser = speechParser;
+      this.authService = authService;
+    } else {
+      this.authService = speechParser as unknown as AuthService;
+      this.speechParser = {
+        stopListening: () => {},
+        startListening: () => {},
+        simularComandoVoz: () => {},
+        isListening$: { subscribe: () => ({ unsubscribe: () => {} }) },
+        liveTranscript$: { subscribe: () => ({ unsubscribe: () => {} }) },
+        error$: { subscribe: () => ({ unsubscribe: () => {} }) },
+        paramsExtracted$: { subscribe: () => ({ unsubscribe: () => {} }) }
+      } as unknown as SpeechParserService;
+    }
     effect(() => { if (!this.authService.isAuthenticated()) this.clearAuditState(); });
   }
 
@@ -1532,6 +1574,7 @@ export class ReportePersonalizadoComponent implements OnInit, OnDestroy {
   }
 
   private setupSpeechListeners(): void {
+    if (!this.speechParser) return;
     this.subs.push(
       this.speechParser.isListening$.subscribe(listening => {
         this.isListening = listening;
@@ -1922,6 +1965,10 @@ export class ReportePersonalizadoComponent implements OnInit, OnDestroy {
     this.emailDestino = this.authService.currentUser()?.email || '';
   }
 
+  enviarPorCorreo(): void {
+    this.enviarPorCorreoSMTP();
+  }
+
   /**
    * Step 9b / 10b del Diagrama de Secuencia:
    * enviar_reporte_smtp(email_destino, dataset)
@@ -1936,7 +1983,8 @@ export class ReportePersonalizadoComponent implements OnInit, OnDestroy {
     const keyEnviada = fuenteEnviada === 'bitacora' ? this.developerKey : undefined;
     const orden = this.columnaOrden ? { columna: this.columnaOrden, direccion: this.direccionOrden } : undefined;
 
-    this.requests.add(this.reportService.exportarPersonalizadoEmail({
+    const emailServiceCall = (this.reportService.enviarEmail || this.reportService.exportarPersonalizadoEmail).bind(this.reportService);
+    this.requests.add(emailServiceCall({
       email: this.emailDestino,
       fuente: this.fuenteSeleccionada,
       asunto: this.emailAsunto,

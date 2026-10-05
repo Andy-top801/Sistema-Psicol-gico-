@@ -1,9 +1,24 @@
 // ==============================================================================
 // MÓDULO: derivacion-form.component.ts
-// CAPA BCE: BOUNDARY (Interfaz de Usuario) — IU_CierreYDerivacionCaso
-// CASOS DE USO: CU19: Protocolo de Cierre e Interconsulta Médica/Psiquiátrica (HU-33, HU-34)
-// DESCRIPCIÓN: Formulario formal para emisión de orden de derivación médica/psiquiátrica,
-//              protocolo de alta terapéutica, bloqueo de agenda y descarga de orden en PDF.
+// CAPA BCE: BOUNDARY (Interfaz de Usuario) — IU_DerivacionCierre / IU_CierreYDerivacionCaso
+// CASOS DE USO: CU19: Cierre de Proceso Terapéutico y Derivación Médica a Psiquiatría (HU-33, HU-34)
+//
+// DIAGRAMA DE SECUENCIA UML (CU19 - Cierre de Proceso Terapéutico y Derivación):
+// ------------------------------------------------------------------------------
+// 1. Psicólogo Tratante -> IU_DerivacionCierre: 1: emitir_orden_interconsulta(motivo, riesgo, sintomatologia)
+// 2. IU_DerivacionCierre -> CTR_DerivacionController: 2: POST /api/v1/derivaciones/ (paciente_id, profesional_destino, nivel_urgencia)
+// [Alt: Interconsulta Externa Psiquiatría (Riesgo Alto)]
+// 3. CTR_DerivacionController -> CTR_DerivacionController: 3: compilar_pdf_interconsulta_con_sello_profesional()
+// 4. CTR_DerivacionController -> CE_DerivacionCaso: 4: INSERT INTO clinica_derivacioncaso (estado='DERIVADO', tipo='PSIQUIATRIA')
+// 5. CE_DerivacionCaso --> CTR_DerivacionController: 5: registro_derivacion_creado(id)
+// 6. CTR_DerivacionController --> IU_DerivacionCierre: 6: HTTP 201 Created {pdf_url, notificacion_coordinador_enviada}
+// 7. IU_DerivacionCierre --> Psicólogo Tratante: 7: mostrar_comprobante_interconsulta(descarga_pdf)
+// [Alt: Alta Terapéutica / Cierre de Caso por Objetivos]
+// 8. CTR_DerivacionController -> CTR_DerivacionController: 8: compilar_resumen_clinico_egreso()
+// 9. CTR_DerivacionController -> CE_HistoriaClinica: 9: UPDATE clinica_historiaclinica SET estado='ALTA', cerrada=true
+// 10. CE_HistoriaClinica --> CTR_DerivacionController: 10: alta_registrada()
+// 11. CTR_DerivacionController --> IU_DerivacionCierre: 11: HTTP 200 OK (comprobante_alta)
+// 12. IU_DerivacionCierre --> Psicólogo Tratante: 12: mostrar_comprobante_alta('Tratamiento culminado y expediente archivado')
 // ==============================================================================
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -216,9 +231,26 @@ import { DerivacionCaso, HistoriaClinica } from '../../core/models/clinica-sprin
     .modal-dialog-custom {
       width: 100%; max-width: 800px; background: #ffffff; border-radius: 16px;
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); overflow: hidden;
+      max-height: 92vh; display: flex; flex-direction: column;
     }
-    .modal-header-custom { padding: 1.25rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
-    .modal-footer-custom { border-top: 1px solid #e2e8f0; background: #f8fafc; display: flex; justify-content: flex-end; gap: 0.75rem; }
+    .modal-body { overflow-y: auto; flex: 1; padding: 1.25rem 1.5rem; }
+    .modal-header-custom { padding: 1.25rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    .modal-footer-custom { border-top: 1px solid #e2e8f0; background: #f8fafc; display: flex; justify-content: flex-end; gap: 0.75rem; flex-shrink: 0; }
+
+    @media (max-width: 768px) {
+      .page-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+        padding: 1.25rem 1rem;
+      }
+      .page-title {
+        font-size: 1.25rem;
+      }
+      .modal-backdrop-custom {
+        padding: 8px;
+      }
+    }
   `]
 })
 export class DerivacionFormComponent implements OnInit {
@@ -301,6 +333,8 @@ export class DerivacionFormComponent implements OnInit {
     this.mostrarModal = true;
   }
 
+  // CU19 Paso 1: emitir_orden_interconsulta(motivo, riesgo, sintomatologia) [o alta terapéutica]
+  // CU19 Paso 2: POST /api/v1/derivaciones/ (paciente_id, profesional_destino, nivel_urgencia)
   guardarDerivacion(): void {
     const cierre = ['ALTA_TERAPEUTICA', 'MUTUO_ACUERDO', 'ABANDONO'].includes(this.nuevaDerivacion.tipo_cierre);
     if (cierre && (!this.nuevaDerivacion.motivo_derivacion.trim() || !this.nuevaDerivacion.logros_alcanzados.trim() || !this.nuevaDerivacion.recomendaciones_mantenimiento.trim())) {
@@ -310,10 +344,13 @@ export class DerivacionFormComponent implements OnInit {
     if (typeof window !== 'undefined' && !window.confirm(cierre ? '¿Confirmás el cierre del caso? Esta acción quedará registrada.' : '¿Confirmás registrar la derivación?')) return;
     this.guardando = true;
     this.mensajeError.set(null);
+    // CU19 Paso 2: Enviar payload estructurado al controlador de derivaciones/cierre
     this.clinicaService.crearDerivacion(this.nuevaDerivacion).subscribe({
       next: (d) => {
         this.guardando = false;
         this.mostrarModal = false;
+        // CU19 Paso 6 (Derivación) / Paso 11 (Alta): HTTP 201 Created / HTTP 200 OK
+        // CU19 Paso 7 / Paso 12: Notificar culminación y recargar lista de expedientes
         this.mostrarFeedback(`Registro ${d.id.substring(0, 8)} creado con éxito`);
         this.cargarDatos();
       },
@@ -324,6 +361,7 @@ export class DerivacionFormComponent implements OnInit {
     });
   }
 
+  // CU19 Paso 7: mostrar_comprobante_interconsulta(descarga_pdf con sello profesional)
   descargarPdf(derivacionId: string): void {
     this.clinicaService.descargarOrdenDerivacionPdf(derivacionId).subscribe({
       next: (blob) => {

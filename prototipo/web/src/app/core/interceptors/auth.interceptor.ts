@@ -9,7 +9,7 @@ export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, ne
 
   let headers = req.headers;
 
-  if (token) {
+  if (token && !req.url.includes('/auth/login') && !req.url.includes('/auth/register')) {
     headers = headers.set('Authorization', `Bearer ${token}`);
   }
 

@@ -443,6 +443,39 @@ import { AnalisisIAResponse, ReglaDisparada, RespuestaPreConsulta } from '../../
     .discard-reason-panel {
       padding: 1rem; background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px;
     }
+
+    @media (max-width: 768px) {
+      .modal-backdrop-custom { padding: 8px; }
+      .modal-dialog-custom { max-height: 96vh; border-radius: 14px; width: 100%; max-width: 100%; }
+      .modal-header-ia { padding: 1rem; }
+      .safety-banner { padding: 0.75rem 1rem; flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+      .modal-body-ia { padding: 1rem; gap: 1rem; }
+      .summary-cards-grid { grid-template-columns: 1fr; }
+      .modal-footer-ia {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 1rem;
+        gap: 0.75rem;
+      }
+      .footer-actions {
+        flex-direction: column;
+        width: 100%;
+        gap: 0.5rem;
+      }
+      .footer-actions button {
+        width: 100%;
+        justify-content: center;
+      }
+      .footer-left {
+        width: 100%;
+        justify-content: center;
+      }
+      .section-header-action {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+    }
   `]
 })
 export class IaAsistenteModalComponent implements OnInit {

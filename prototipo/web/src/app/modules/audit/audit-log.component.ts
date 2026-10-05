@@ -1,3 +1,27 @@
+// ==============================================================================
+// MÓDULO: audit-log.component.ts
+// CAPA BCE: BOUNDARY (Interfaz de Usuario) — IU_VisorBitacora / IU_ModalLlaveDesarrollador / IU_VisorBitacoraForense
+// CASOS DE USO: CU5: Bitácora Confidencial y Llave Única del Desarrollador (HU-37)
+//
+// DIAGRAMA DE SECUENCIA UML (CU5 - Bitácora Confidencial y Llave de Desarrollador):
+// ------------------------------------------------------------------------------
+// 1. SuperAdmin / Developer -> IU_ModalLlaveDesarrollador: 1: ingresar_llave_maestra(developer_key, fecha_consulta, tenant_filtro)
+// 2. IU_ModalLlaveDesarrollador -> CTR_AuditLogController: 2: GET /api/v1/audit/log/?date=... (Header: X-Developer-Key)
+// 3. CTR_AuditLogController -> CTR_FernetDecryptor: 3: validar_firma_hmac_sha256(developer_key)
+// 4. CTR_FernetDecryptor --> CTR_AuditLogController: 4: resultado_validacion_clave(es_valida)
+// [Alt: Llave Inválida]
+// 5a. CTR_AuditLogController --> IU_ModalLlaveDesarrollador: 5a: HTTP 403 Forbidden ("Llave de Desarrollador Inválida")
+// 6a. IU_ModalLlaveDesarrollador --> Developer: 6a: mostrar_alerta_seguridad_bloqueo("Intento auditado y bloqueado")
+// [Alt: Llave Válida]
+// 5b. CTR_AuditLogController -> CE_EncryptedLogFile: 5b: abrir_archivo_cifrado(audit-YYYY-MM-DD.log.enc, modo=0600)
+// 6b. CE_EncryptedLogFile --> CTR_AuditLogController: 6b: stream_lineas_cifradas_bytes()
+// 7b. CTR_AuditLogController -> CTR_FernetDecryptor: 7b: decrypt_payload_fernet(linea_cifrada, derived_aes_key)
+// 8b. CTR_FernetDecryptor --> CTR_AuditLogController: 8b: json_payload_en_claro(ip, user_id, action, timestamp)
+// 9b. CTR_AuditLogController -> CE_Usuario: 9b: resolver_email_y_rol(user_id)
+// 10b. CE_Usuario --> CTR_AuditLogController: 10b: datos_usuario(email, rol_tenant)
+// 11b. CTR_AuditLogController --> IU_VisorBitacoraForense: 11b: HTTP 200 OK [eventos_descifrados_auditados]
+// 12b. IU_VisorBitacoraForense --> Developer: 12b: renderizar_tabla_forense(ip, usuario, accion, hora_gmt4_bolivia)
+// ==============================================================================
 import { Component, OnInit, OnDestroy, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -120,6 +144,23 @@ import { Subscription } from 'rxjs';
       .filter-actions { grid-column: 1 / -1; grid-row: 3; grid-template-columns: repeat(3, max-content); grid-template-rows: 38px; justify-content: end; padding-top: 0; }
       .filter-actions .btn-primary { grid-column: 1; }
     }
+    @media (max-width: 520px) {
+      .filters-bar { grid-template-columns: 1fr; }
+      .key-filter { grid-column: 1; }
+      .date-filter { grid-column: 1; grid-row: auto; }
+      .tenant-filter { grid-column: 1; grid-row: auto; }
+      .filter-actions {
+        grid-column: 1;
+        grid-row: auto;
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+        gap: 8px;
+      }
+      .filter-actions .btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
   `]
 })
 export class AuditLogComponent implements OnInit, OnDestroy {
@@ -140,6 +181,8 @@ export class AuditLogComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {}
 
+  // CU5 Paso 1: ingresar_llave_maestra(developer_key, fecha_consulta, tenant_filtro)
+  // CU5 Paso 2: GET /api/v1/audit/log/?date=... (Header: X-Developer-Key)
   loadLogs(): void {
     if (!this.developerKey.trim()) {
       this.events.set([]);
@@ -149,11 +192,20 @@ export class AuditLogComponent implements OnInit, OnDestroy {
     this.request?.unsubscribe();
     this.loading.set(true);
     this.errorMessage.set(null);
+    // CU5 Paso 2: Invocar servicio con Header X-Developer-Key
     this.request = this.auditService.getLogs(this.date, this.tenant, this.developerKey).subscribe({
-      next: events => { if (!this.developerKey || !this.authService.isAuthenticated()) return; this.events.set(events); this.loading.set(false); },
+      next: events => {
+        if (!this.developerKey || !this.authService.isAuthenticated()) return;
+        // CU5 Paso 11b: Recibir HTTP 200 OK [eventos_descifrados_auditados]
+        // CU5 Paso 12b: renderizar_tabla_forense(ip, usuario, accion, hora_gmt4_bolivia)
+        this.events.set(events);
+        this.loading.set(false);
+      },
       error: (error: HttpErrorResponse) => {
         this.events.set([]);
         this.loading.set(false);
+        // CU5 Paso 5a: HTTP 403 Forbidden ("Llave de Desarrollador Inválida - Acceso Denegado")
+        // CU5 Paso 6a: mostrar_alerta_seguridad_bloqueo("Intento de acceso auditado y bloqueado")
         this.errorMessage.set(error.status === 401 || error.status === 403
           ? 'Acceso denegado. Verificá la clave de desarrollador y tu sesión de SuperAdmin.'
           : error.status === 400

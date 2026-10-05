@@ -137,6 +137,7 @@ export class ReportService {
     asunto?: string;
     filtros?: Record<string, any>;
     columnas?: string[];
+    orden?: { columna: string; direccion: string };
   }, developerKey?: string): Observable<any> {
     const keyOptions = developerKeyOptions(payload.fuente, developerKey);
     if (keyOptions instanceof Observable) return keyOptions;

@@ -128,7 +128,7 @@ import { ChatbotWidgetComponent } from './chatbot-widget.component';
               <span>{{ authService.isPaciente() ? 'Pre-Consulta (Intake)' : 'Intake Digital & IA' }}</span>
             </a>
             
-            <a routerLink="/tareas-terapeuticas" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
+            <a *ngIf="!authService.isRecepcionista()" routerLink="/tareas-terapeuticas" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
               <i class="fa-solid fa-list-check nav-icon"></i>
               <span>{{ authService.isPaciente() ? 'Mis Tareas Terapéuticas' : 'Tareas Terapéuticas' }}</span>
             </a>
@@ -390,6 +390,9 @@ import { ChatbotWidgetComponent } from './chatbot-widget.component';
       display: flex;
       flex-direction: column;
       min-width: 0;
+      max-width: 100%;
+      overflow-x: hidden;
+      width: 100%;
     }
     .app-header {
       padding: 16px 32px;
@@ -398,6 +401,7 @@ import { ChatbotWidgetComponent } from './chatbot-widget.component';
       justify-content: space-between;
       border-bottom: 1px solid var(--border-light);
       background: transparent;
+      max-width: 100%;
     }
     .tenant-context-pill {
       display: flex;
@@ -456,6 +460,10 @@ import { ChatbotWidgetComponent } from './chatbot-widget.component';
     .content-body {
       padding: 28px 32px;
       flex: 1;
+      min-width: 0;
+      max-width: 100%;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     /* Mobile Hamburger & Controls */
@@ -564,6 +572,9 @@ import { ChatbotWidgetComponent } from './chatbot-widget.component';
       }
       .header-right {
         margin-left: auto;
+      }
+      .content-body {
+        padding: 14px 10px;
       }
     }
   `]

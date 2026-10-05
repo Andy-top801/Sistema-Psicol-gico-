@@ -1,3 +1,33 @@
+// ==============================================================================
+// MÓDULO: chatbot-widget.component.ts
+// CAPA BCE: BOUNDARY (Interfaz de Usuario) — IU_ChatbotWidget / IU_ChatbotClinico
+// CASOS DE USO: CU20: Interacción con el Chatbot de Orientación Clínica y Derivación a Operador (HU-36)
+//
+// DIAGRAMA DE SECUENCIA UML (CU20 - Chatbot de Orientación Clínica y Derivación):
+// ------------------------------------------------------------------------------
+// 1. Paciente / Usuario -> IU_ChatbotWidget: 1: enviar_mensaje_o_consulta(texto, session_token)
+// 2. IU_ChatbotWidget -> CTR_ChatbotController: 2: POST /api/v1/chatbot/mensaje/
+// 3. CTR_ChatbotController -> CTR_ChatbotController: 3: sanitizar_y_clasificar_intencion(texto)
+// 4. CTR_ChatbotController -> CE_ConversacionChatbot: 4: INSERT INTO clinica_mensajechatbot (emisor='PACIENTE', texto)
+// 5. CE_ConversacionChatbot --> CTR_ChatbotController: 5: mensaje_registrado()
+// 6. CTR_ChatbotController -> CTR_ChatbotController: 6: evaluar_umbral_de_confianza_o_riesgo_de_crisis()
+// [Alt 1: Detección de Crisis Emocional Aguda]
+// 7. CTR_ChatbotController --> IU_ChatbotWidget: 7: HTTP 200 (alerta_crisis=true, lineas_auxilio_800_11_3040)
+// 8. IU_ChatbotWidget --> Paciente: 8: desplegar_modal_urgencias_con_telefonos()
+// [Alt 2: Intención FAQ Clara (Confianza >= 80%)]
+// 9. CTR_ChatbotController -> CE_ConversacionChatbot: 9: INSERT INTO clinica_mensajechatbot (emisor='BOT', respuesta_faq)
+// 10. CE_ConversacionChatbot --> CTR_ChatbotController: 10: respuesta_faq_almacenada()
+// 11. CTR_ChatbotController --> IU_ChatbotWidget: 11: HTTP 200 OK (tipo='BOT_FAQ', respuesta, botones_accion)
+// 12. IU_ChatbotWidget --> Paciente: 12: renderizar_mensaje_de_orientacion(botones_accion)
+// [Alt 3: Solicitud Asesor o Intención No Resuelta (Escalamiento)]
+// 13. CTR_ChatbotController -> CE_ConversacionChatbot: 13: UPDATE clinica_conversacionchatbot (estado='ESCALADA_HUMANO')
+// 14. CE_ConversacionChatbot --> CTR_ChatbotController: 14: estado_actualizado()
+// 15. CTR_ChatbotController -> Recepcionista: 15: emitir_notificacion_websocket_de_transferencia(conversacion_id)
+// 16. CTR_ChatbotController --> IU_ChatbotWidget: 16: HTTP 200 (tipo='TRANSFERENCIA_HUMANA', status='EN_ESPERA_ASESOR')
+// 17. IU_ChatbotWidget --> Paciente: 17: mostrar_estado_espera('Conectando con un asesor en vivo...')
+// 18. Recepcionista -> IU_ChatbotWidget: 18: tomar_control_del_chat_y_responder(mensaje_operador)
+// 19. IU_ChatbotWidget --> Paciente: 19: conexion_en_vivo_con_soporte_del_centro(mensaje_operador)
+// ==============================================================================
 import { Component, ElementRef, ViewChild, AfterViewChecked, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -766,6 +796,24 @@ import { ChatbotService, ChatbotMessage, ChatbotBotonAccion } from '../core/serv
       margin-top: 8px;
       line-height: 1.25;
     }
+
+    @media (max-width: 576px) {
+      .chatbot-launcher-container {
+        bottom: 16px;
+        right: 16px;
+      }
+      .chatbot-window {
+        position: fixed;
+        bottom: 74px;
+        left: 10px;
+        right: 10px;
+        width: auto;
+        max-width: none;
+        height: calc(100vh - 90px);
+        max-height: 82vh;
+        border-radius: 16px;
+      }
+    }
   `]
 })
 export class ChatbotWidgetComponent implements AfterViewChecked {
@@ -787,20 +835,26 @@ export class ChatbotWidgetComponent implements AfterViewChecked {
     }
   }
 
+  // CU20 Paso 1: enviar_mensaje_o_consulta(texto, session_token)
+  // Delega en CTR_ChatbotController vía ChatbotService (POST /api/v1/chatbot/mensaje/)
   enviar(event: Event): void {
     event.preventDefault();
     const texto = this.mensajeInput.trim();
     if (!texto || this.chatService.isLoading()) return;
 
     this.mensajeInput = '';
+    // CU20 Paso 1 -> 2: Enviar consulta del paciente
     this.chatService.enviarMensaje(texto).subscribe();
   }
 
   seleccionarOpcion(opcion: string): void {
     if (this.chatService.isLoading()) return;
+    // CU20 Paso 1 -> 2: Enviar opción seleccionada por el paciente
     this.chatService.enviarMensaje(opcion).subscribe();
   }
 
+  // CU20 Paso 12: renderizar_mensaje_de_orientacion(botones_accion)
+  // El usuario acciona los botones de respuesta del bot (ej. agendar, derivar)
   ejecutarBotonAccion(btn: ChatbotBotonAccion): void {
     if (this.chatService.isLoading()) return;
 
@@ -818,6 +872,7 @@ export class ChatbotWidgetComponent implements AfterViewChecked {
     }
   }
 
+  // CU20 Paso 16/17: Solicitud Asesor o Intención No Resuelta (Escalamiento a Recepción)
   solicitarAsesor(): void {
     this.chatService.solicitarHumano().subscribe();
   }

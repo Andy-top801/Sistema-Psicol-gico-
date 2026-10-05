@@ -1,8 +1,15 @@
 // ==============================================================================
 // MÓDULO: intake-config.component.ts
-// CAPA BCE: BOUNDARY (Interfaz de Usuario) — IU_IntakeDigital
-// CASOS DE USO: CU14: Configuración y Revisión de Cuestionarios Pre-Consulta (HU-23, HU-24)
-//              HU-35: Asistente Piloto de Preconsulta con IA (Supervisión Humana)
+// CAPA BCE: BOUNDARY (Interfaz de Usuario) — IU_FormularioPreConsulta / IU_IntakeDigital
+// CASOS DE USO:
+//   CU14: Ficha Previa e Intake Digital (HU-23, HU-24)
+//   HU-35: Asistente Ético de IA para Preconsulta con Salvaguarda Humana
+// DIAGRAMA DE SECUENCIA CU14 (sprint2.md):
+//   1. Paciente ingresa respuestas (síntomas, escala malestar, antecedentes)
+//   2. IU valida campos requeridos locales
+//   3. POST /api/v1/intake/respuestas/ (payload JSONB)
+//   4-7. Backend valida urgencia y persiste entidad CE_RespuestaPreConsulta
+//   8/12. UI renderiza alerta de urgencia prioritaria o confirmación exitosa
 // ==============================================================================
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -759,7 +766,7 @@ import { IaAsistenteModalComponent } from './ia-asistente-modal.component';
 
     .cards-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
       gap: 1.75rem;
       align-items: stretch;
     }
@@ -1753,6 +1760,54 @@ import { IaAsistenteModalComponent } from './ia-asistente-modal.component';
       border: 1px solid #e2e8f0;
       border-radius: 10px;
     }
+
+    @media (max-width: 900px) {
+      .page-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+        padding: 1.25rem 1rem;
+      }
+      .header-actions {
+        width: 100%;
+        flex-wrap: wrap;
+      }
+      .header-actions .btn {
+        flex: 1 1 auto;
+        justify-content: center;
+      }
+      .cards-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+      .questionnaire-card {
+        padding: 1.25rem;
+      }
+      .card-actions {
+        grid-template-columns: 1fr;
+      }
+      .tabs-bar {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .page-title {
+        font-size: 1.25rem;
+      }
+      .btn-formal-submit {
+        width: 100%;
+        padding: 0.85rem 1.5rem;
+      }
+      .urgency-range-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .boolean-pill {
+        max-width: none;
+      }
+    }
   `]
 })
 export class IntakeConfigComponent implements OnInit {
@@ -1885,6 +1940,7 @@ export class IntakeConfigComponent implements OnInit {
   }
 
   enviarIntakePaciente(): void {
+    // CU14 Paso 2: validar_campos_requeridos()
     this.errorEnvioPaciente = null;
     const f = this.getFormularioActivo();
     const pac = this.pacienteActual();
@@ -1897,6 +1953,7 @@ export class IntakeConfigComponent implements OnInit {
       return;
     }
 
+    // CU14 Paso 1: ingresar_respuestas(sintomas, escala_malestar, antecedentes)
     this.enviandoRespuesta.set(true);
     const payload = {
       formulario: f.id,
@@ -1909,9 +1966,11 @@ export class IntakeConfigComponent implements OnInit {
       consentimiento_ia_procesamiento: this.consentimientoIAPaciente
     };
 
+    // CU14 Paso 3: POST /api/v1/intake/respuestas/ (Bearer JWT, payload JSONB)
     this.clinicaSprint2Service.enviarRespuestaPreconsulta(payload).subscribe({
-      next: () => {
+      next: (resp) => {
         this.enviandoRespuesta.set(false);
+        // CU14 Pasos 8 y 12: confirmación de envío y badge de prioridad
         this.mostrarFeedback('¡Cuestionario de Pre-Consulta enviado con éxito! Tu psicólogo ya dispone de tus respuestas.');
         this.cargarDatos();
       },

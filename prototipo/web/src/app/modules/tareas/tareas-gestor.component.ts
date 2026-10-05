@@ -1,12 +1,19 @@
 // ==============================================================================
 // MÓDULO: tareas-gestor.component.ts
-// CAPA BCE: BOUNDARY (Interfaz de Usuario) — IU_GestionTareasTerapeuticas
-// CASOS DE USO: CU17: Tareas Terapéuticas Inter-Sesión y Adherencia (HU-29, HU-30)
+// CAPA BCE: BOUNDARY (Interfaz de Usuario) — IU_GestionTareas
+// CASOS DE USO: CU17: Asignación y Cumplimiento de Tareas Terapéuticas Inter-Sesiones (HU-29, HU-30)
+// DIAGRAMA DE SECUENCIA CU17 (sprint2.md):
+//   1. Paciente reporta cumplimiento (tarea_id, texto_reflexion, archivo_adjunto)
+//   2. POST /api/v1/tareas/{id}/evidencia/ (Multipart Form-Data)
+//   3. Backend valida plazo límite y tipo archivo
+//   4-7. En plazo -> INSERT evidencia & UPDATE tarea (estado='COMPLETADA'), 200 OK, progreso 100%
+//   8-11. Fuera de plazo -> UPDATE tarea (estado='COMPLETADA_CON_RETRASO'), 200 OK (warning_retraso)
 // ==============================================================================
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ClinicaSprint2Service } from '../../core/services/clinica-sprint2.service';
+import { AuthService } from '../../core/services/auth.service';
 import { TareaTerapeutica, HistoriaClinica } from '../../core/models/clinica-sprint2.model';
 
 @Component({
@@ -27,7 +34,7 @@ import { TareaTerapeutica, HistoriaClinica } from '../../core/models/clinica-spr
           </p>
         </div>
         <div class="header-actions">
-          <button class="btn btn-primary" (click)="abrirModalNuevaTarea()">
+          <button *ngIf="!authService.isPaciente()" class="btn btn-primary" (click)="abrirModalNuevaTarea()">
             <i class="fa-solid fa-plus"></i> Prescribir Tarea
           </button>
         </div>
@@ -114,7 +121,7 @@ import { TareaTerapeutica, HistoriaClinica } from '../../core/models/clinica-spr
             </button>
 
             <!-- Acción de Terapeuta -->
-            <button class="btn btn-sm btn-primary" *ngIf="t.estado === 'COMPLETADA' || (t.evidencias && t.evidencias.length > 0)" (click)="abrirModalRevisar(t)">
+            <button class="btn btn-sm btn-primary" *ngIf="!authService.isPaciente() && (t.estado === 'COMPLETADA' || (t.evidencias && t.evidencias.length > 0))" (click)="abrirModalRevisar(t)">
               <i class="fa-solid fa-user-check"></i> Revisar y Dar Feedback
             </button>
           </div>
@@ -272,7 +279,7 @@ import { TareaTerapeutica, HistoriaClinica } from '../../core/models/clinica-spr
     .filters-bar { padding: 0.75rem 1rem; background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; }
 
     .tareas-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 1.25rem;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 1.25rem;
     }
     .tarea-card {
       background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 1.25rem;
@@ -318,6 +325,21 @@ import { TareaTerapeutica, HistoriaClinica } from '../../core/models/clinica-spr
     .modal-header-custom { padding: 1rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
     .modal-body-custom { padding: 1.25rem 1.5rem; overflow-y: auto; flex: 1 1 auto; }
     .modal-footer-custom { padding: 0.85rem 1.5rem; border-top: 1px solid #e2e8f0; background: #f8fafc; display: flex; justify-content: flex-end; gap: 0.75rem; flex-shrink: 0; }
+
+    @media (max-width: 768px) {
+      .page-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+        padding: 1.25rem 1rem;
+      }
+      .filters-bar .d-flex {
+        flex-wrap: wrap;
+      }
+      .tareas-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   `]
 })
 export class TareasGestorComponent implements OnInit {
@@ -353,7 +375,10 @@ export class TareasGestorComponent implements OnInit {
   tareaParaRevisar: TareaTerapeutica | null = null;
   feedbackTexto = '';
 
-  constructor(private clinicaService: ClinicaSprint2Service) {}
+  constructor(
+    private clinicaService: ClinicaSprint2Service,
+    public authService: AuthService
+  ) {}
 
   ngOnInit(): void {
     this.cargarDatos();
@@ -470,8 +495,11 @@ export class TareasGestorComponent implements OnInit {
 
   enviarEvidencia(): void {
     if (!this.tareaParaEvidencia) return;
+    // CU17 Paso 1: reportar_cumplimiento(tarea_id, texto_reflexion, archivo_adjunto)
+    // CU17 Paso 2: POST /api/v1/tareas/{id}/evidencia/ (Multipart Form-Data)
     this.clinicaService.subirEvidenciaTarea(this.tareaParaEvidencia.id, this.evidenciaForm).subscribe({
       next: (res) => {
+        // CU17 Pasos 6 y 7: HTTP 200 OK & actualizar_indicador_progreso(100% completado)
         this.tareaParaEvidencia = null;
         this.mostrarAviso("Evidencia guardada y tarea completada. Indicador actualizado a 'Completada 100%'.");
         this.cargarDatos();

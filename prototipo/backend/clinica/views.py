@@ -229,10 +229,29 @@ from clinica.lifecycle import ensure_object_history_open, lock_history, close_hi
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# CU14: Formulario Pre-Consulta e Intake Digital
-# ──────────────────────────────────────────────────────────────────────────────
+# ==============================================================================
+# MÓDULO: clinica/views.py — CU14: Ficha Previa e Intake Digital (HU-23, HU-24)
+# CAPA BCE: CONTROL (Controller) — CTR_IntakeController
+# DIAGRAMA DE SECUENCIA CU14 (sprint2.md):
+#   Actor (Paciente) → IU_FormularioPreConsulta: 1: ingresar_respuestas(sintomas, escala_malestar, antecedentes)
+#   IU_FormularioPreConsulta → IU_FormularioPreConsulta: 2: validar_campos_requeridos()
+#   IU_FormularioPreConsulta → CTR_IntakeController: 3: POST /api/v1/intake/respuestas/ (Bearer JWT, payload JSONB)
+#   CTR_IntakeController → CTR_IntakeController: 4: validar_esquema_json_y_urgencia(malestar >= 4)
+#   alt Malestar >= 4 (Urgencia Alta)
+#     CTR_IntakeController → CE_RespuestaPreConsulta: 5: INSERT INTO clinica_respuestapreconsulta (prioridad='ALTA')
+#     CE_RespuestaPreConsulta --> CTR_IntakeController: 6: 201 Created (uuid, timestamp, prioridad_flag=true)
+#     CTR_IntakeController --> IU_FormularioPreConsulta: 7: HTTP 201 Created {id, prioridad='ALTA', protocolo_urgencia=true}
+#     IU_FormularioPreConsulta --> Paciente: 8: mostrar_alerta_urgencia_prioritaria('Caso clasificado para atencion inmediata')
+#   else Malestar Normal (Rango Habitual)
+#     CTR_IntakeController → CE_RespuestaPreConsulta: 9: INSERT INTO clinica_respuestapreconsulta (prioridad='NORMAL')
+#     CE_RespuestaPreConsulta --> CTR_IntakeController: 10: 201 Created (uuid, timestamp, prioridad_flag=false)
+#     CTR_IntakeController --> IU_FormularioPreConsulta: 11: HTTP 201 Created {id, prioridad='NORMAL', status='ENVIADO'}
+#     IU_FormularioPreConsulta --> Paciente: 12: confirmacion_envio_exitosa(badge_prioridad)
+# ==============================================================================
 class FormularioPreConsultaViewSet(viewsets.ModelViewSet):
+    """
+    Controlador para la configuración y consulta de formularios institucionales de intake pre-consulta.
+    """
     queryset = FormularioPreConsulta.objects.all().order_by('-fecha_creacion')
     serializer_class = FormularioPreConsultaSerializer
     permission_classes = [IsAuthenticated]
@@ -258,6 +277,10 @@ class FormularioPreConsultaViewSet(viewsets.ModelViewSet):
 
 
 class RespuestaPreConsultaViewSet(viewsets.ModelViewSet):
+    """
+    CTR_IntakeController:
+    Gestiona la recepción, validación y persistencia de las respuestas de pre-consulta (CU14).
+    """
     queryset = RespuestaPreConsulta.objects.select_related('formulario', 'paciente__usuario', 'cita').all().order_by('-fecha_envio')
     serializer_class = RespuestaPreConsultaSerializer
     permission_classes = [IsAuthenticated]
@@ -289,6 +312,8 @@ class RespuestaPreConsultaViewSet(viewsets.ModelViewSet):
         return qs
 
     def perform_create(self, serializer):
+        # CU14 Paso 4: Validar esquema y urgencia (delegado al serializer/modelo)
+        # CU14 Paso 5 o 9: INSERT INTO clinica_respuestapreconsulta (prioridad='ALTA' si malestar >= 4, sino 'NORMAL')
         user = self.request.user
         # Si el usuario es un paciente autenticado y no se indicó paciente, asignar el suyo
         if hasattr(user, 'perfil_paciente') and not serializer.validated_data.get('paciente'):
@@ -335,15 +360,35 @@ class CIE10ViewSet(viewsets.ViewSet):
         return Response(resultados)
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# CU15: Historia Clínica Psicológica Electrónica (RBAC Clínico)
-# ──────────────────────────────────────────────────────────────────────────────
+# ==============================================================================
+# MÓDULO: clinica/views.py — CU15: Apertura de Historia Clínica y Control de Acceso RBAC (HU-25, HU-26)
+# CAPA BCE: CONTROL (Controller) — CTR_HistoriaClinicaController
+# DIAGRAMA DE SECUENCIA CU15 (sprint2.md):
+#   Actor (Psicólogo Tratante) → IU_HistoriaClinica: 1: solicitar_apertura_historia(paciente_id)
+#   IU_HistoriaClinica → CTR_HistoriaClinicaController: 2: POST /api/v1/historias-clinicas/ (paciente_id, anamnesis_inicial)
+#   CTR_HistoriaClinicaController → CTR_HistoriaClinicaController: 3: verificar_permiso_rbac(role='PSICOLOGO', terapeuta_asignado=true)
+#   alt RBAC: Terapeuta Asignado (Autorizado)
+#     CTR_HistoriaClinicaController → CE_HistoriaClinica: 4: INSERT INTO clinica_historiaclinica (codigo_expediente, fecha_apertura)
+#     CE_HistoriaClinica --> CTR_HistoriaClinicaController: 5: expediente_registrado(id, codigo_historia)
+#     CTR_HistoriaClinicaController --> IU_HistoriaClinica: 6: HTTP 201 Created {codigo_historia, anamnesis, cerrada=false}
+#     IU_HistoriaClinica --> Psicólogo Tratante: 7: renderizar_pestanas_historia(anamnesis, examen_mental, cie11)
+#   else Sin Asignacion RBAC (Denegado)
+#     CTR_HistoriaClinicaController --> IU_HistoriaClinica: 8: HTTP 403 Forbidden ('Acceso denegado: Terapeuta no asignado al paciente')
+#     IU_HistoriaClinica --> Psicólogo Tratante: 9: mostrar_error_seguridad_rbac('Acceso no autorizado a historia ajena')
+# ==============================================================================
 class HistoriaClinicaViewSet(viewsets.ModelViewSet):
+    """
+    CTR_HistoriaClinicaController:
+    Controlador central del expediente clínico psicológico electrónico (EHR).
+    Aplica RBAC estricto validando psicólogo tratante o administrador con auditoría.
+    """
     queryset = HistoriaClinica.objects.select_related('paciente__usuario', 'psicologo_apertura__usuario').prefetch_related('diagnosticos').all().order_by('-fecha_apertura')
     serializer_class = HistoriaClinicaSerializer
+    # CU15 Paso 3: verificar_permiso_rbac (si no asignado -> Paso 8: 403 Forbidden)
     permission_classes = [IsTreatingPsychologistOrAdmin]
 
     def get_queryset(self):
+        # CU15 Paso 3: Filtrar historias clínicas según asignación terapéutica y rol
         qs = super().get_queryset()
         user = self.request.user
         if user.is_superuser:
@@ -369,6 +414,8 @@ class HistoriaClinicaViewSet(viewsets.ModelViewSet):
         return qs.none()
 
     def perform_create(self, serializer):
+        # CU15 Paso 4: INSERT INTO clinica_historiaclinica (codigo_expediente, fecha_apertura)
+        # CU15 Paso 5: expediente_registrado(id, codigo_historia)
         user = self.request.user
         psico = getattr(user, 'perfil_psicologo', None)
         if not psico and not serializer.validated_data.get('psicologo_apertura'):
@@ -377,6 +424,7 @@ class HistoriaClinicaViewSet(viewsets.ModelViewSet):
         serializer.save(psicologo_apertura=serializer.validated_data.get('psicologo_apertura') or psico)
 
     def perform_update(self, serializer):
+        # CU19: Prevenir ediciones si el expediente está formalmente cerrado
         if lock_history(self.get_object().pk).cerrada:
             from rest_framework.exceptions import ValidationError
             raise ValidationError({'historia_clinica': 'El expediente está cerrado.'})
@@ -472,10 +520,35 @@ class DiagnosticoCIEViewSet(viewsets.ModelViewSet):
         instance.delete()
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# CU16: Notas Clínicas SOAP (Autoguardado y Firma Inmutable)
-# ──────────────────────────────────────────────────────────────────────────────
+# ==============================================================================
+# MÓDULO: clinica/views.py — CU16: Registro de Notas SOAP, Autoguardado Reactivo e Inmutabilidad (HU-27, HU-28)
+# CAPA BCE: CONTROL (Controller) — CTR_NotaSesionController
+# DIAGRAMA DE SECUENCIA CU16 (sprint2.md):
+#   Actor (Psicólogo Tratante) → IU_EditorNotasSOAP: 1: redactar_nota_soap(subjetivo, objetivo, analisis, plan)
+#   opt Autoguardado Reactivo en Borrador (debounce 30s)
+#     IU_EditorNotasSOAP → CTR_NotaSesionController: 2: PATCH /api/v1/notas-sesion/{id}/borrador/ (payload_parcial)
+#     CTR_NotaSesionController → CE_NotaSesion: 3: UPDATE clinica_notasesion SET estado='BORRADOR'
+#     CE_NotaSesion --> CTR_NotaSesionController: 4: borrador_actualizado()
+#     CTR_NotaSesionController --> IU_EditorNotasSOAP: 5: HTTP 200 OK (guardado_automatico_confirmado)
+#   end
+#   Actor (Psicólogo Tratante) → IU_EditorNotasSOAP: 6: formalizar_y_firmar_nota()
+#   IU_EditorNotasSOAP → CTR_NotaSesionController: 7: POST /api/v1/notas-sesion/firmar/ (cita_id, payload_completo)
+#   CTR_NotaSesionController → CTR_NotaSesionController: 8: validar_cita_realizada_y_bloqueo_tiempo()
+#   alt Cita Realizada (Firma Inmutable Concedida)
+#     CTR_NotaSesionController → CE_NotaSesion: 9: INSERT/UPDATE clinica_notasesion (firmada=true, estado='INMUTABLE')
+#     CE_NotaSesion --> CTR_NotaSesionController: 10: nota_inmutable_consolidada()
+#     CTR_NotaSesionController --> IU_EditorNotasSOAP: 11: HTTP 201 Nota Firmada Inmutable
+#     IU_EditorNotasSOAP --> Psicólogo Tratante: 12: bloquear_editor_y_actualizar_timeline(badge_firmado_legal)
+#   else Cita No Concluida (Bloqueo Legal)
+#     CTR_NotaSesionController --> IU_EditorNotasSOAP: 13: HTTP 400 Bad Request ('La cita debe estar REALIZADA para firmar la nota')
+#     IU_EditorNotasSOAP --> Psicólogo Tratante: 14: mostrar_alerta_bloqueo_legal('No se puede sellar nota de sesion no concluida')
+#   end
+# ==============================================================================
 class NotaSesionViewSet(viewsets.ModelViewSet):
+    """
+    CTR_NotaSesionController:
+    Controlador para el registro de evolución estructurada SOAP, autoguardado y firma inmutable.
+    """
     queryset = NotaSesion.objects.select_related('historia_clinica__paciente__usuario', 'psicologo__usuario', 'cita').all().order_by('-fecha_sesion')
     serializer_class = NotaSesionSerializer
     permission_classes = [IsTreatingPsychologistOrAdmin]
@@ -507,7 +580,7 @@ class NotaSesionViewSet(viewsets.ModelViewSet):
     @transaction.atomic
     @action(detail=False, methods=['post'], url_path='guardar_borrador')
     def guardar_borrador_endpoint(self, request):
-        """Crear o actualizar borrador de nota SOAP (CU16)."""
+        """CU16 Pasos 2-5: Crear o actualizar borrador de nota SOAP."""
         nota_id = request.data.get('id')
         if nota_id:
             try:
@@ -549,15 +622,17 @@ class NotaSesionViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['patch', 'post', 'put'], url_path='borrador')
     def guardar_borrador(self, request, pk=None):
-        """Autoguardado reactivo cada 30 segundos (CU16 Criterio b)."""
+        """CU16 Pasos 2-5: Autoguardado reactivo cada 30 segundos (CU16 Criterio b)."""
         nota = self.get_object()
         ensure_object_history_open(nota)
         if nota.estado_guardado == 'FIRMADA':
             return Response({"error": "La nota ya se encuentra consolidada y firmada de manera inmutable."}, status=status.HTTP_400_BAD_REQUEST)
 
+        # CU16 Paso 3: UPDATE clinica_notasesion SET estado='BORRADOR'
         serializer = self.get_serializer(nota, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save(estado_guardado='BORRADOR')
+        # CU16 Paso 5: HTTP 200 OK (guardado_automatico_confirmado)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post', 'patch'], url_path='firmar')
@@ -570,6 +645,7 @@ class NotaSesionViewSet(viewsets.ModelViewSet):
 
     @transaction.atomic
     def _ejecutar_firma(self, request, pk):
+        # CU16 Paso 7: POST /api/v1/notas-sesion/firmar/
         nota = NotaSesion.objects.select_for_update().get(pk=pk)
         ensure_object_history_open(nota)
         if nota.estado_guardado == 'FIRMADA':
@@ -578,7 +654,7 @@ class NotaSesionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Paso 3 Diagrama BCE: Verificar cita = REALIZADA y terapeuta
+        # CU16: Verificar terapeuta tratante
         user = request.user
         psico = getattr(user, 'perfil_psicologo', None)
         if psico and nota.psicologo and nota.psicologo != psico:
@@ -594,7 +670,7 @@ class NotaSesionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Diagrama Secuencia CU16 Paso 8: Validar cita realizada y bloqueo de tiempo
+        # CU16 Paso 8: Validar cita realizada y bloqueo de tiempo (si no realizada -> Paso 13: 400 Bad Request)
         if nota.cita and nota.cita.estado != 'REALIZADA':
             return Response(
                 {"error": "La cita debe estar REALIZADA para firmar la nota"},
@@ -702,7 +778,30 @@ class EvolucionClinicaViewSet(viewsets.ModelViewSet):
         instance.delete()
 
 
+# ==============================================================================
+# MÓDULO: clinica/views.py — CU17: Asignación y Cumplimiento de Tareas Terapéuticas Inter-Sesiones (HU-29, HU-30)
+# CAPA BCE: CONTROL (Controller) — CTR_TareasController
+# DIAGRAMA DE SECUENCIA CU17 (sprint2.md):
+#   Actor (Paciente Móvil) → IU_GestionTareas: 1: reportar_cumplimiento(tarea_id, texto_reflexion, archivo_adjunto)
+#   IU_GestionTareas → CTR_TareasController: 2: POST /api/v1/tareas/{id}/evidencia/ (Multipart Form-Data)
+#   CTR_TareasController → CTR_TareasController: 3: validar_plazo_limite_y_tipo_archivo()
+#   alt Entrega en Plazo (Cumplimiento Exitoso)
+#     CTR_TareasController → CE_TareaTerapeutica: 4: INSERT clinica_evidenciatarea & UPDATE clinica_tareaterapeutica (estado='COMPLETADA')
+#     CE_TareaTerapeutica --> CTR_TareasController: 5: evidencia_persistida()
+#     CTR_TareasController --> IU_GestionTareas: 6: HTTP 200 OK {estado: 'COMPLETADA', fecha_cumplimiento}
+#     IU_GestionTareas --> Paciente Móvil: 7: actualizar_indicador_progreso(100% completado)
+#   else Fuera de Plazo (Entrega Extemporánea)
+#     CTR_TareasController → CE_TareaTerapeutica: 8: UPDATE clinica_tareaterapeutica SET estado='COMPLETADA_CON_RETRASO'
+#     CE_TareaTerapeutica --> CTR_TareasController: 9: tarea_actualizada_con_retraso()
+#     CTR_TareasController --> IU_GestionTareas: 10: HTTP 200 OK (warning_retraso=true)
+#     IU_GestionTareas --> Paciente Móvil: 11: mostrar_aviso_retraso('Tarea entregada fuera de plazo')
+#   end
+# ==============================================================================
 class TareaTerapeuticaViewSet(viewsets.ModelViewSet):
+    """
+    CTR_TareasController:
+    Controlador para la prescripción clínica, entrega de evidencias y feedback inter-sesiones.
+    """
     queryset = TareaTerapeutica.objects.select_related('historia_clinica', 'psicologo__usuario', 'paciente__usuario').prefetch_related('evidencia').all().order_by('fecha_limite')
     serializer_class = TareaTerapeuticaSerializer
     permission_classes = [IsAuthenticated]
@@ -737,26 +836,13 @@ class TareaTerapeuticaViewSet(viewsets.ModelViewSet):
             qs = qs.filter(historia_clinica_id=historia_id)
         return qs
 
-    def perform_create(self, serializer):
-        ensure_object_history_open(serializer.validated_data.get('historia_clinica'))
-        user = self.request.user
-        psico = getattr(user, 'perfil_psicologo', None)
-        if not psico and not serializer.validated_data.get('psicologo'):
-            psico = Psicologo.objects.filter(activo=True).first()
-        serializer.save(psicologo=serializer.validated_data.get('psicologo') or psico)
-
     @action(detail=True, methods=['post'], url_path='evidencia')
     def registrar_evidencia(self, request, pk=None):
         """
-        sd Diagrama de Comunicación – CU17: Tareas Terapéuticas
-        Paso 1: Reportar reflexión y evidencia de tarea
-        Paso 2: POST /api/v1/tareas/{id}/evidencia/
-        Paso 3: Validar plazo de entrega y tipo archivo
-        Paso 4: Tarea activa en tiempo y plazo válido
-        Paso 5: INSERT evidencia & UPDATE clinica_tareaterapeutica
-        Paso 6: Evidencia guardada y tarea completada
-        Paso 7: 200 OK [estado: 'COMPLETADA']
-        Paso 8: Actualizar indicador 'Completada 100%'
+        CU17 Paso 2: POST /api/v1/tareas/{id}/evidencia/ (Multipart Form-Data)
+        CU17 Paso 3: Validar plazo límite y tipo archivo
+        CU17 Pasos 4-7: Entrega en plazo -> INSERT evidencia & UPDATE clinica_tareaterapeutica (estado='COMPLETADA')
+        CU17 Pasos 8-11: Fuera de plazo -> UPDATE clinica_tareaterapeutica (estado='COMPLETADA_CON_RETRASO')
         """
         tarea = self.get_object()
         ensure_object_history_open(tarea)
@@ -767,7 +853,7 @@ class TareaTerapeuticaViewSet(viewsets.ModelViewSet):
                 "error": "Esta tarea terapéutica ya fue completada previamente."
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Paso 3 & 4 Diagrama CU17: Validar plazo de entrega y tipo archivo
+        # CU17 Paso 3: Validar plazo límite y tipo de archivo
         hoy = timezone.localdate()
         es_extemporanea = bool(tarea.fecha_limite and tarea.fecha_limite < hoy)
 
@@ -854,10 +940,32 @@ class EvidenciaTareaViewSet(viewsets.ModelViewSet):
         instance.delete()
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# CU18: Consentimiento Informado y Firma Digital
-# ──────────────────────────────────────────────────────────────────────────────
+# ==============================================================================
+# MÓDULO: clinica/views.py — CU18: Consentimiento Informado Digital con Sellado SHA-256 (HU-31, HU-32)
+# CAPA BCE: CONTROL (Controller) — CTR_ConsentimientoController
+# DIAGRAMA DE SECUENCIA CU18 (sprint2.md):
+#   Actor (Paciente o Tutor) → IU_FirmaConsentimiento: 1: leer_clausulas_obligatorias_y_firmar_canvas()
+#   IU_FirmaConsentimiento → IU_FirmaConsentimiento: 2: calcular_hash_sha256(texto_legal + trazos_canvas + timestamp)
+#   IU_FirmaConsentimiento → CTR_ConsentimientoController: 3: POST /api/v1/consentimientos/firmar/ (hash_sha256, firma_png, tutor_ci)
+#   CTR_ConsentimientoController → CTR_ConsentimientoController: 4: capturar_metadatos_legales(ip_remota, user_agent, timestamp_bolivia)
+#   alt Mayor de Edad: Firma Titular
+#     CTR_ConsentimientoController → CE_FirmaConsentimiento: 5: INSERT INTO clinica_firmaconsentimiento (tipo='TITULAR', hash_sha256)
+#     CE_FirmaConsentimiento --> CTR_ConsentimientoController: 6: firma_registrada_inmutable()
+#     CTR_ConsentimientoController --> IU_FirmaConsentimiento: 7: HTTP 201 Consentimiento Aceptado (hash_verificado)
+#     IU_FirmaConsentimiento --> Paciente o Tutor: 8: habilitar_atencion_y_reserva_citas()
+#   else Menor de Edad: Firma Tutor Legal
+#     CTR_ConsentimientoController → CTR_ConsentimientoController: 9: validar_ci_y_parentesco_tutor()
+#     CTR_ConsentimientoController → CE_FirmaConsentimiento: 10: INSERT INTO clinica_firmaconsentimiento (tipo='TUTOR', tutor_ci, hash_sha256)
+#     CE_FirmaConsentimiento --> CTR_ConsentimientoController: 11: firma_tutor_inmutable()
+#     CTR_ConsentimientoController --> IU_FirmaConsentimiento: 12: HTTP 201 Consentimiento Tutor Registrado
+#     IU_FirmaConsentimiento --> Paciente o Tutor: 13: notificar_validacion_tutor_exitosa()
+#   end
+# ==============================================================================
 class ConsentimientoInformadoViewSet(viewsets.ModelViewSet):
+    """
+    CTR_ConsentimientoController:
+    Controlador para la gestión de plantillas de consentimiento y firma digital inmutable con hash SHA-256.
+    """
     queryset = ConsentimientoInformado.objects.all().order_by('titulo')
     serializer_class = ConsentimientoInformadoSerializer
     permission_classes = [IsAuthenticated]
@@ -872,8 +980,7 @@ class ConsentimientoInformadoViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         tipo = serializer.validated_data.get('tipo', 'ATENCION_GENERAL')
-        # HU-31 BDD Paso 4: Archivar la versión previa v1.0 manteniendo su validez para firmas históricas
-        # y establecer la nueva versión v1.1 como obligatoria para nuevos registros
+        # HU-31 BDD Paso 4: Archivar la versión previa manteniendo validez y establecer la nueva como obligatoria
         ConsentimientoInformado.objects.filter(tipo=tipo, activo=True).update(activo=False)
         serializer.save(activo=True)
 
@@ -931,26 +1038,21 @@ class ConsentimientoInformadoViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'], url_path='firmar')
     def firmar(self, request):
         """
-        Diagrama de Comunicación – CU18: Consentimiento Informado
-        Paso 1: Aceptar cláusulas y firmar en canvas
-        Paso 2: POST /api/v1/consentimientos/firmar/ (SHA-256)
-        Paso 3: Capturar IP remota, User-Agent y timestamp
-        Paso 4: Metadatos y plantilla legal validados
-        Paso 5: INSERT INTO clinica_firmaconsentimiento
-        Paso 6: Firma sellada criptográficamente inmutable
-        Paso 7: 201 Created (hash_verificado, activo)
-        Paso 8: Confirmar consentimiento y habilitar citas
+        CU18 Paso 3: POST /api/v1/consentimientos/firmar/ (hash_sha256, firma_png, tutor_ci)
+        CU18 Paso 4: capturar_metadatos_legales(ip_remota, user_agent, timestamp_bolivia)
+        CU18 Pasos 5-8: Mayor de edad -> INSERT INTO clinica_firmaconsentimiento (tipo='TITULAR', hash_sha256)
+        CU18 Pasos 9-13: Menor de edad -> Validar tutor -> INSERT INTO clinica_firmaconsentimiento (tipo='TUTOR')
         """
         req = request
         data = req.data
 
-        # Paso 3: Capturar IP remota, User-Agent y timestamp
+        # CU18 Paso 4: capturar_metadatos_legales(ip_remota, user_agent, timestamp_bolivia)
         ip = req.META.get('HTTP_X_FORWARDED_FOR', req.META.get('REMOTE_ADDR', '127.0.0.1'))
         if ip and ',' in ip:
             ip = ip.split(',')[0].strip()
         user_agent = req.META.get('HTTP_USER_AGENT', '')
 
-        # Paso 4: Metadatos y plantilla legal validados
+        # Validar plantilla legal
         plantilla_id = data.get('consentimiento') or data.get('plantilla')
         paciente_id = data.get('paciente')
 
@@ -1094,10 +1196,31 @@ class FirmaConsentimientoViewSet(viewsets.ModelViewSet):
         return Response({'mensaje': 'Consentimiento revocado con éxito', 'firma': data})
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# CU19: Derivación y Cierre de Caso
-# ──────────────────────────────────────────────────────────────────────────────
+# ==============================================================================
+# MÓDULO: clinica/views.py — CU19: Cierre de Proceso Terapéutico y Derivación Médica a Psiquiatría (HU-33, HU-34)
+# CAPA BCE: CONTROL (Controller) — CTR_DerivacionController
+# DIAGRAMA DE SECUENCIA CU19 (sprint2.md):
+#   Actor (Psicólogo Tratante) → IU_DerivacionCierre: 1: emitir_orden_interconsulta(motivo, riesgo, sintomatologia)
+#   IU_DerivacionCierre → CTR_DerivacionController: 2: POST /api/v1/derivaciones/ (paciente_id, profesional_destino, nivel_urgencia)
+#   alt Interconsulta Externa Psiquiatria (Riesgo Alto)
+#     CTR_DerivacionController → CTR_DerivacionController: 3: compilar_pdf_interconsulta_con_sello_profesional()
+#     CTR_DerivacionController → CE_DerivacionCaso: 4: INSERT INTO clinica_derivacioncaso (estado='DERIVADO', tipo='PSIQUIATRIA')
+#     CE_DerivacionCaso --> CTR_DerivacionController: 5: registro_derivacion_creado(id)
+#     CTR_DerivacionController --> IU_DerivacionCierre: 6: HTTP 201 Created {pdf_url, notificacion_coordinador_enviada}
+#     IU_DerivacionCierre --> Psicólogo Tratante: 7: mostrar_comprobante_interconsulta(descarga_pdf)
+#   else Alta Terapéutica / Cierre de Caso por Objetivos
+#     CTR_DerivacionController → CTR_DerivacionController: 8: compilar_resumen_clinico_egreso()
+#     CTR_DerivacionController → CE_HistoriaClinica: 9: UPDATE clinica_historiaclinica SET estado='ALTA', cerrada=true
+#     CE_HistoriaClinica --> CTR_DerivacionController: 10: alta_registrada()
+#     CTR_DerivacionController --> IU_DerivacionCierre: 11: HTTP 200 OK (comprobante_alta)
+#     IU_DerivacionCierre --> Psicólogo Tratante: 12: mostrar_comprobante_alta('Tratamiento culminado y expediente archivado')
+#   end
+# ==============================================================================
 class DerivacionCasoViewSet(viewsets.ModelViewSet):
+    """
+    CTR_DerivacionController:
+    Controlador para la emisión de derivaciones psiquiátricas/médicas y cierre formal de historias clínicas.
+    """
     queryset = DerivacionCaso.objects.select_related('historia_clinica__paciente__usuario', 'psicologo_emisor__usuario').all().order_by('-fecha_derivacion')
     serializer_class = DerivacionCasoSerializer
     permission_classes = [IsReferralParticipant]
@@ -1121,10 +1244,13 @@ class DerivacionCasoViewSet(viewsets.ModelViewSet):
         return qs.none()
 
     def create(self, request, *args, **kwargs):
+        # CU19 Paso 2: POST /api/v1/derivaciones/
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         tipo = serializer.validated_data.get('tipo_derivacion')
         if tipo in ('CIERRE_ALTA', 'DESERCION', 'MUTUO_ACUERDO'):
+            # CU19 Flujo Alta / Cierre: Pasos 8 a 12
+            # UPDATE clinica_historiaclinica SET estado='ALTA', cerrada=true
             historia = serializer.validated_data.get('historia_clinica')
             event = close_history(
                 history_id=historia.pk,
@@ -1142,6 +1268,8 @@ class DerivacionCasoViewSet(viewsets.ModelViewSet):
             headers = self.get_success_headers(out_serializer.data)
             return Response(out_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
+        # CU19 Flujo Derivación Psiquiátrica: Pasos 3 a 7
+        # INSERT INTO clinica_derivacioncaso (estado='DERIVADO', tipo='PSIQUIATRIA')
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
@@ -1196,17 +1324,47 @@ class DerivacionCasoViewSet(viewsets.ModelViewSet):
         return response
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# HU-35: Asistente Ético de Preconsulta (Piloto IA)
-# ──────────────────────────────────────────────────────────────────────────────
+# ==============================================================================
+# MÓDULO: clinica/views.py — HU-35: Asistente Ético de IA para Preconsulta con Salvaguarda Humana
+# CAPA BCE: CONTROL (Controller) — CTR_PasarelaIAService
+# DIAGRAMA DE SECUENCIA HU-35 (sprint2.md):
+#   Actor (Psicólogo Clínico) → IU_PanelAsistenteIA: 1: solicitar_analisis_preconsulta(formulario_id)
+#   IU_PanelAsistenteIA → CTR_PasarelaIAService: 2: POST /api/v1/ia/preconsulta/analizar/ (formulario_id)
+#   alt Consentimiento Informado IA Activo
+#     CTR_PasarelaIAService → CTR_PasarelaIAService: 3: verificar_consentimiento_activo_y_anonimizar_pii()
+#     CTR_PasarelaIAService → Motor Gemini / Romero: 4: invoke_prompt_clinico_neutral(sintomas_anonimizados, escala)
+#     Motor Gemini / Romero --> CTR_PasarelaIAService: 5: response_borrador(resumen_estructurado, reglas_prioridad)
+#     CTR_PasarelaIAService → CE_AuditoriaIA: 6: INSERT INTO auditoria_ia_interaccion (hash_prompt, respuesta_raw, evaluacion_humana='PENDIENTE')
+#     CE_AuditoriaIA --> CTR_PasarelaIAService: 7: auditoria_inmutable_creada(id)
+#     CTR_PasarelaIAService --> IU_PanelAsistenteIA: 8: HTTP 200 OK (borrador_con_banner_revision_profesional)
+#     IU_PanelAsistenteIA --> Psicólogo Clínico: 9: renderizar_panel_asistivo(resumen, priorizacion_sugerida, explicacion_reglas)
+#     opt Decisión y Cierre Humano Obligatorio
+#       Psicólogo Clínico → IU_PanelAsistenteIA: 10: aceptar_descartar_o_editar(decision_profesional)
+#       IU_PanelAsistenteIA → CTR_PasarelaIAService: 11: POST /api/v1/ia/preconsulta/decision/ (auditoria_id, decision, observaciones)
+#       CTR_PasarelaIAService → CE_AuditoriaIA: 12: UPDATE auditoria_ia_interaccion SET decision_final=..., revisor_id=...
+#       CE_AuditoriaIA --> CTR_PasarelaIAService: 13: confirmacion_cierre_auditoria()
+#       CTR_PasarelaIAService --> IU_PanelAsistenteIA: 14: HTTP 200 OK (auditoria_cerrada)
+#       IU_PanelAsistenteIA --> Psicólogo Clínico: 15: notificar_incorporacion_expediente()
+#     end
+#   else Consentimiento IA Denegado / Rechazado
+#     CTR_PasarelaIAService --> IU_PanelAsistenteIA: 16: HTTP 403 Forbidden ('Paciente rechazo procesamiento asistivo por IA')
+#     IU_PanelAsistenteIA --> Psicólogo Clínico: 17: habilitar_modo_evaluacion_manual('Bloqueado motor asistivo: flujo 100% manual')
+#   end
+# ==============================================================================
 class IAPreconsultaViewSet(viewsets.ViewSet):
+    """
+    CTR_PasarelaIAService:
+    Controlador para el análisis ético asistido por IA, sanitización PII y auditoría con decisión humana obligatoria.
+    """
     permission_classes = [IsAuthenticated]
 
     @action(detail=False, methods=['post'], url_path='analizar')
     def analizar(self, request):
         """
-        HU-35: Genera un borrador asistivo de preconsulta con reglas transparentes.
-        Verifica consentimiento previo y prohíbe escrituras automáticas en historia clínica.
+        HU-35 Paso 2: POST /api/v1/ia/preconsulta/analizar/ (formulario_id)
+        HU-35 Paso 3: verificar_consentimiento_activo_y_anonimizar_pii()
+        HU-35 Pasos 4-7: Motor Romero -> INSERT INTO auditoria_ia_interaccion
+        HU-35 Paso 8: HTTP 200 OK (borrador asistivo con reglas transparentes)
         """
         respuesta_id = request.data.get('respuesta_id')
         if not respuesta_id:
@@ -1217,7 +1375,7 @@ class IAPreconsultaViewSet(viewsets.ViewSet):
         except RespuestaPreConsulta.DoesNotExist:
             return Response({"error": "Respuesta pre-consulta no encontrada."}, status=status.HTTP_404_NOT_FOUND)
 
-        # Criterio d: Verificar consentimiento informado activo (Firma legal O autorización en Intake)
+        # HU-35 Paso 3 / Pasos 16-17: Verificar consentimiento informado activo
         tiene_firma_legal = FirmaConsentimiento.objects.filter(paciente=respuesta.paciente).exists()
         consentimiento_intake = bool(
             respuesta.respuestas_detalle.get('consentimiento_ia_procesamiento', True)
@@ -1229,10 +1387,10 @@ class IAPreconsultaViewSet(viewsets.ViewSet):
                 "modo_manual_requerido": True
             }, status=status.HTTP_403_FORBIDDEN)
 
-        # Ejecutar motor de reglas clínicas SP2-54
+        # HU-35 Pasos 4 y 5: Ejecutar motor de reglas clínicas SP2-54 y sanitización PII
         resultado = PreconsultaRulesEngine.evaluar_preconsulta(respuesta)
 
-        # Registrar bitácora inmutable de auditoría
+        # HU-35 Pasos 6 y 7: INSERT INTO auditoria_ia_interaccion
         user = request.user
         psico = getattr(user, 'perfil_psicologo', None)
         auditoria = AuditoriaIA.objects.create(
@@ -1246,12 +1404,16 @@ class IAPreconsultaViewSet(viewsets.ViewSet):
             ip_origen=request.META.get('REMOTE_ADDR', '127.0.0.1')
         )
 
+        # HU-35 Paso 8: Retornar resultado asistivo con sello inmutable
         resultado["auditoria_id"] = str(auditoria.id)
         return Response(resultado, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'], url_path='decision')
     def registrar_decision(self, request):
-        """Registra la decisión profesional (Aceptar, Editar o Descartar) sobre la sugerencia de IA."""
+        """
+        HU-35 Pasos 10-14: Decisión y Cierre Humano Obligatorio
+        POST /api/v1/ia/preconsulta/decision/ -> UPDATE auditoria_ia_interaccion
+        """
         auditoria_id = request.data.get('auditoria_id')
         decision = request.data.get('decision', '').upper()
         observaciones = request.data.get('observaciones', '')
@@ -1274,11 +1436,37 @@ class IAPreconsultaViewSet(viewsets.ViewSet):
             return Response({"error": "Registro de auditoría no encontrado."}, status=status.HTTP_404_NOT_FOUND)
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# CU20: Chatbot de Orientación Clínica y Derivación Humana (HU-36)
-# ──────────────────────────────────────────────────────────────────────────────
+# ==============================================================================
+# MÓDULO: clinica/views.py — CU20: Interacción con el Chatbot de Orientación Clínica y Derivación a Operador (HU-36)
+# CAPA BCE: CONTROL (Controller) — CTR_ChatbotController
+# DIAGRAMA DE SECUENCIA CU20 (sprint2.md):
+#   Actor (Paciente / Usuario) → IU_ChatbotWidget: 1: enviar_mensaje_o_consulta(texto, session_token)
+#   IU_ChatbotWidget → CTR_ChatbotController: 2: POST /api/v1/chatbot/mensaje/
+#   CTR_ChatbotController → CTR_ChatbotController: 3: sanitizar_y_clasificar_intencion(texto)
+#   CTR_ChatbotController → CE_ConversacionChatbot: 4: INSERT INTO clinica_mensajechatbot (emisor='PACIENTE', texto)
+#   CE_ConversacionChatbot --> CTR_ChatbotController: 5: mensaje_registrado()
+#   CTR_ChatbotController → CTR_ChatbotController: 6: evaluar_umbral_de_confianza_o_riesgo_de_crisis()
+#   alt Detección de Crisis Emocional Aguda
+#     CTR_ChatbotController --> IU_ChatbotWidget: 7: HTTP 200 (alerta_crisis=true, lineas_auxilio_800_11_3040)
+#     IU_ChatbotWidget --> Paciente / Usuario: 8: desplegar_modal_urgencias_con_telefonos()
+#   else Intención FAQ Clara (Confianza >= 80%)
+#     CTR_ChatbotController → CE_ConversacionChatbot: 9: INSERT INTO clinica_mensajechatbot (emisor='BOT', respuesta_faq)
+#     CE_ConversacionChatbot --> CTR_ChatbotController: 10: respuesta_faq_almacenada()
+#     CTR_ChatbotController --> IU_ChatbotWidget: 11: HTTP 200 OK (tipo='BOT_FAQ', respuesta, botones_accion)
+#     IU_ChatbotWidget --> Paciente / Usuario: 12: renderizar_mensaje_de_orientacion(botones_accion)
+#   else Solicitud Asesor o Intención No Resuelta (Escalamiento)
+#     CTR_ChatbotController → CE_ConversacionChatbot: 13: UPDATE clinica_conversacionchatbot (estado='ESCALADA_HUMANO')
+#     CE_ConversacionChatbot --> CTR_ChatbotController: 14: estado_actualizado()
+#     CTR_ChatbotController → Recepcionista / Asesor: 15: emitir_notificacion_websocket_de_transferencia(conversacion_id)
+#     CTR_ChatbotController --> IU_ChatbotWidget: 16: HTTP 200 (tipo='TRANSFERENCIA_HUMANA', status='EN_ESPERA_ASESOR')
+#     IU_ChatbotWidget --> Paciente / Usuario: 17: mostrar_estado_espera('Conectando con un asesor en vivo...')
+#     Recepcionista / Asesor → IU_ChatbotWidget: 18: tomar_control_del_chat_y_responder(mensaje_operador)
+#     IU_ChatbotWidget --> Paciente / Usuario: 19: conexion_en_vivo_con_soporte_del_centro(mensaje_operador)
+#   end
+# ==============================================================================
 class ChatbotViewSet(viewsets.ViewSet):
     """
+    CTR_ChatbotController:
     Controlador para el Chatbot orientador del centro de salud mental (CU20 / HU-36).
     Permite interacción anónima o autenticada, contención de crisis y escalamiento a recepción.
     """
@@ -1312,14 +1500,14 @@ class ChatbotViewSet(viewsets.ViewSet):
                 conv.paciente = request.user.perfil_paciente
             conv.save(update_fields=['usuario', 'paciente', 'fecha_actualizacion'])
 
-        # 1. Registrar mensaje del usuario
+        # CU20 Pasos 3 y 4: sanitizar_y_clasificar_intencion & INSERT INTO clinica_mensajechatbot (emisor='PACIENTE')
         msg_usuario = MensajeChatbot.objects.create(
             conversacion=conv,
             remitente='USUARIO',
             texto=texto
         )
 
-        # 2. Si la conversación está en atención por operador humano, no responde el bot
+        # CU20 Pasos 18-19: Si la conversación está en atención por operador humano, no responde el bot
         if conv.estado == 'EN_ATENCION':
             conv.fecha_actualizacion = timezone.now()
             conv.save(update_fields=['fecha_actualizacion'])
@@ -1333,24 +1521,25 @@ class ChatbotViewSet(viewsets.ViewSet):
                 "esperando_operador": True
             })
 
-        # 3. Procesar con el motor de IA en Hugging Face (con memoria de historial y fallback local)
+        # CU20 Paso 6: evaluar_umbral_de_confianza_o_riesgo_de_crisis
         historial = request.data.get('historial', [])
         resultado = ChatbotEngine.procesar_mensaje(texto, session_id=session_id, historial=historial)
 
-        # 4. Actualizar estado y nivel de riesgo si corresponde
+        # CU20 Pasos 7-8: alt Detección de Crisis Emocional Aguda -> alerta_crisis=true
         es_alerta_crisis = bool(resultado.get("alerta_crisis") or resultado.get("es_crisis"))
         if es_alerta_crisis:
             conv.nivel_riesgo = 'CRISIS'
             conv.estado = 'ESCALADA_HUMANO'
             conv.save(update_fields=['nivel_riesgo', 'estado', 'fecha_actualizacion'])
         elif resultado.get("escalar_humano"):
+            # CU20 Pasos 13-16: Escalamiento a Recepcionista / Asesor
             conv.estado = 'ESCALADA_HUMANO'
             conv.save(update_fields=['estado', 'fecha_actualizacion'])
         else:
             conv.fecha_actualizacion = timezone.now()
             conv.save(update_fields=['fecha_actualizacion'])
 
-        # 5. Registrar respuesta del Bot
+        # CU20 Pasos 9 y 10: INSERT INTO clinica_mensajechatbot (emisor='BOT', respuesta_faq)
         texto_bot = resultado.get("respuesta") or resultado.get("texto", "")
         opciones_bot = resultado.get("opciones") or [
             b.get("etiqueta") for b in resultado.get("botones_accion", []) if isinstance(b, dict)

@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, superAdminGuard, adminCentroGuard } from './core/guards/auth.guard';
+import { authGuard, superAdminGuard, adminCentroGuard, clinicalStaffGuard, excludeRecepcionistaGuard } from './core/guards/auth.guard';
 import { LoginComponent } from './modules/auth/login/login.component';
 import { PasswordResetComponent } from './modules/auth/password-reset/password-reset.component';
 import { ForcePasswordChangeComponent } from './modules/auth/force-password-change/force-password-change.component';
@@ -60,16 +60,16 @@ export const routes: Routes = [
       { path: 'reportes', component: ReportesHubComponent, canActivate: [adminCentroGuard] },
       { path: 'reportes/personalizado', component: ReportePersonalizadoComponent, canActivate: [adminCentroGuard] },
       { path: 'reportes/:fuente', component: ReporteVisorComponent, canActivate: [adminCentroGuard] },
-      // Incremento Funcional Sprint 2
-      { path: 'intake', component: IntakeConfigComponent },
-      { path: 'historias-clinicas', component: HistoriaClinicaListComponent },
-      { path: 'historias-clinicas/:id', component: HistoriaClinicaDetalleComponent },
-      { path: 'notas-soap/nueva', component: NotaSoapEditorComponent },
-      { path: 'notas-soap/:id', component: NotaSoapEditorComponent },
-      { path: 'tareas-terapeuticas', component: TareasGestorComponent },
-      { path: 'consentimientos', component: ConsentimientosHubComponent },
-      { path: 'derivaciones', component: DerivacionFormComponent },
-      { path: 'derivaciones/nueva', component: DerivacionFormComponent },
+      // Incremento Funcional Sprint 2 — Rutas con RBAC Clínico (HU-26)
+      { path: 'intake', component: IntakeConfigComponent },  // Todos: Paciente responde, Psicólogo/Admin configura
+      { path: 'historias-clinicas', component: HistoriaClinicaListComponent, canActivate: [clinicalStaffGuard] },
+      { path: 'historias-clinicas/:id', component: HistoriaClinicaDetalleComponent, canActivate: [clinicalStaffGuard] },
+      { path: 'notas-soap/nueva', component: NotaSoapEditorComponent, canActivate: [clinicalStaffGuard] },
+      { path: 'notas-soap/:id', component: NotaSoapEditorComponent, canActivate: [clinicalStaffGuard] },
+      { path: 'tareas-terapeuticas', component: TareasGestorComponent, canActivate: [excludeRecepcionistaGuard] },
+      { path: 'consentimientos', component: ConsentimientosHubComponent },  // Todos: acciones controladas en el componente
+      { path: 'derivaciones', component: DerivacionFormComponent, canActivate: [clinicalStaffGuard] },
+      { path: 'derivaciones/nueva', component: DerivacionFormComponent, canActivate: [clinicalStaffGuard] },
     ]
   },
   { path: '**', redirectTo: 'landing' }

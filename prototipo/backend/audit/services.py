@@ -69,20 +69,30 @@ def log_event(**kwargs):
 
 
 def read_events(log_date=None):
+    """
+    CU5 Pasos 5b a 8b:
+    5b: abrir_archivo_cifrado(audit-YYYY-MM-DD.log.enc, modo=0600)
+    6b: stream_lineas_cifradas_bytes()
+    7b: decrypt_payload_fernet(linea_cifrada, derived_aes_key)
+    8b: json_payload_en_claro(ip, user_id, action, timestamp_bolivia)
+    """
     cipher = _cipher()
     directory = Path(settings.BASE_DIR) / "logs" / "audit"
     if not directory.exists():
         return []
 
+    # CU5 Paso 5b: abrir_archivo_cifrado en modo seguro
     paths = [_log_path(log_date)] if log_date else sorted(directory.glob("audit-*.log.enc"))
     events = []
     for path in paths:
         if not path.exists():
             continue
+        # CU5 Paso 6b: stream_lineas_cifradas_bytes
         for line_number, line in enumerate(path.read_bytes().splitlines(), start=1):
             if not line:
                 continue
             try:
+                # CU5 Pasos 7b y 8b: decrypt_payload_fernet & json_payload_en_claro
                 events.append(json.loads(cipher.decrypt(line).decode("utf-8")))
             except (InvalidToken, json.JSONDecodeError, UnicodeDecodeError) as exc:
                 raise ValueError(

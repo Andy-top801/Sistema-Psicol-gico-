@@ -15,6 +15,7 @@ import '../models/cita_model.dart';
 import 'intake_form_screen.dart';
 import 'mis_tareas_screen.dart';
 import 'consentimiento_firma_screen.dart';
+import 'chatbot_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final AuthService authService;
@@ -731,6 +732,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       );
                     },
                   ),
+                  _buildMenuCard(
+                    context,
+                    title: 'Asistente Chatbot Clínico & Crisis',
+                    subtitle: 'Orientación 24/7, contención y escalamiento a recepción',
+                    tag: 'Orientación IA • CU20 • Sprint 2',
+                    icon: Icons.chat_bubble_outline_rounded,
+                    color: const Color(0xFF0D9488),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ChatbotScreen(),
+                        ),
+                      );
+                    },
+                  ),
                 ],
 
                 // ═════════════════════════════════════════════════════════════
@@ -839,6 +856,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => ConsentimientoFirmaScreen(authService: widget.authService),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildMenuCard(
+                    context,
+                    title: 'Chatbot de Orientación y Crisis',
+                    subtitle: 'Asistente 24/7 con líneas de emergencia y soporte',
+                    tag: 'Orientación IA • CU20 • Sprint 2',
+                    icon: Icons.chat_bubble_outline_rounded,
+                    color: const Color(0xFF0D9488),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ChatbotScreen(),
                         ),
                       );
                     },
@@ -1053,6 +1086,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
           ),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab_chatbot_movil',
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const ChatbotScreen(),
+            ),
+          );
+        },
+        backgroundColor: const Color(0xFF0D9488),
+        icon: const Icon(Icons.chat_bubble_outline_rounded, color: Colors.white),
+        label: const Text(
+          'Chatbot IA',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
         ),
       ),
     );

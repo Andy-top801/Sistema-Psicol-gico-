@@ -1134,6 +1134,42 @@ import { Subscription } from 'rxjs';
       from { opacity: 0; }
       to { opacity: 1; }
     }
+
+    @media (max-width: 768px) {
+      .report-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 14px;
+        padding: 18px 14px;
+      }
+      .report-title-group {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+      .report-title {
+        font-size: 1.25rem;
+      }
+      .panel-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+      }
+      .panel-actions {
+        flex-wrap: wrap;
+        width: 100%;
+      }
+      .panel-actions .btn {
+        flex: 1 1 auto;
+        justify-content: center;
+      }
+      .columns-checkbox-grid {
+        grid-template-columns: 1fr;
+      }
+      .kpi-summary-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   `]
 })
 export class ReporteVisorComponent implements OnInit, OnDestroy {

@@ -308,6 +308,21 @@ import { Paciente } from '../../core/models';
       padding: 1rem 1.5rem; border-top: 1px solid #e2e8f0; background: #f8fafc;
       display: flex; justify-content: flex-end; gap: 0.75rem;
     }
+
+    @media (max-width: 768px) {
+      .page-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+        padding: 1.25rem 1rem;
+      }
+      .page-title {
+        font-size: 1.25rem;
+      }
+      .modal-backdrop-custom {
+        padding: 8px;
+      }
+    }
   `]
 })
 export class HistoriaClinicaListComponent implements OnInit {

@@ -1,17 +1,23 @@
 // ==============================================================================
 // MÓDULO: mis_tareas_screen.dart
-// CAPA BCE: BOUNDARY (Interfaz de Usuario Móvil – Flutter)
-// CASO DE USO: CU17 – Gestionar Evolución, Tareas y Seguimiento Terapéutico
-// HISTORIA: HU-30 – Visualización y Reporte de Avance de Tareas en App Móvil
-// DESCRIPCIÓN: Pantalla para que el paciente visualice sus tareas terapéuticas
-//              inter-sesiones, con cards de estado, badge de progreso y modal de
-//              reporte de cumplimiento con reflexión y dificultad percibida.
-// DIAGRAMA DE SECUENCIA CU17 (Flujo Móvil):
-//   1. Paciente abre MisTareasScreen → Sprint2Service.getMisTareas()
-//   2. Paciente ve lista con badges de estado y fecha límite
-//   3. Paciente presiona 'Reportar Cumplimiento' → Modal con reflexión + slider
-//   4. Paciente envía reporte → Sprint2Service.enviarEvidenciaTarea()
-//   5. Backend retorna 201 + actualiza estado → UI refleja COMPLETADA
+// CAPA BCE: BOUNDARY (Interfaz de Usuario Móvil – Flutter) — IU_GestionTareas
+// CASO DE USO: CU17 – Asignación y Cumplimiento de Tareas Terapéuticas Inter-Sesiones (HU-29, HU-30)
+//
+// DIAGRAMA DE SECUENCIA UML (CU17 - Tareas Terapéuticas y Cumplimiento):
+// ------------------------------------------------------------------------------
+// 1. Paciente Móvil -> IU_GestionTareas: 1: reportar_cumplimiento(tarea_id, texto_reflexion, archivo_adjunto)
+// 2. IU_GestionTareas -> CTR_TareasController: 2: POST /api/v1/tareas/{id}/evidencia/ (Multipart Form-Data)
+// 3. CTR_TareasController -> CTR_TareasController: 3: validar_plazo_limite_y_tipo_archivo()
+// [Alt: Entrega en Plazo (Cumplimiento Exitoso)]
+// 4. CTR_TareasController -> CE_TareaTerapeutica: 4: INSERT clinica_evidenciatarea & UPDATE clinica_tareaterapeutica (estado='COMPLETADA')
+// 5. CE_TareaTerapeutica --> CTR_TareasController: 5: evidencia_persistida()
+// 6. CTR_TareasController --> IU_GestionTareas: 6: HTTP 200 OK {estado: 'COMPLETADA', fecha_cumplimiento}
+// 7. IU_GestionTareas --> Paciente Móvil: 7: actualizar_indicador_progreso(100% completado)
+// [Alt: Fuera de Plazo (Entrega Extemporánea)]
+// 8. CTR_TareasController -> CE_TareaTerapeutica: 8: UPDATE clinica_tareaterapeutica SET estado='COMPLETADA_CON_RETRASO'
+// 9. CE_TareaTerapeutica --> CTR_TareasController: 9: tarea_actualizada_con_retraso()
+// 10. CTR_TareasController --> IU_GestionTareas: 10: HTTP 200 OK (warning_retraso=true)
+// 11. IU_GestionTareas --> Paciente Móvil: 11: mostrar_aviso_retraso('Tarea entregada fuera de plazo')
 // ==============================================================================
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -263,10 +269,13 @@ class _MisTareasScreenState extends State<MisTareasScreen> with TickerProviderSt
                         isSubmitting ? 'Enviando...' : 'Enviar a mi Psicólogo/a',
                         style: const TextStyle(fontWeight: FontWeight.w800),
                       ),
+                      // CU17 Paso 1: reportar_cumplimiento(tarea_id, texto_reflexion, archivo_adjunto)
+                      // CU17 Paso 2: POST /api/v1/tareas/{id}/evidencia/ (Multipart Form-Data)
                       onPressed: isSubmitting
                           ? null
                           : () async {
                               setModalState(() => isSubmitting = true);
+                              // CU17 Paso 1 y 2: Invocar servicio enviando payload de reflexión y dificultad
                               final result = await _sprint2Service.enviarEvidenciaTarea(
                                 tarea['id'].toString(),
                                 {
@@ -281,6 +290,8 @@ class _MisTareasScreenState extends State<MisTareasScreen> with TickerProviderSt
                                   final bool warningRetraso = data['warning_retraso'] == true ||
                                       (data['estado'] ?? '').toString().toUpperCase() == 'COMPLETADA_CON_RETRASO';
                                   if (warningRetraso) {
+                                    // CU17 Paso 10: HTTP 200 OK (warning_retraso=true)
+                                    // CU17 Paso 11: mostrar_aviso_retraso('Tarea entregada fuera de plazo')
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
                                         content: Text('⚠️ Tarea entregada fuera de plazo (completada con retraso)'),
@@ -289,6 +300,8 @@ class _MisTareasScreenState extends State<MisTareasScreen> with TickerProviderSt
                                       ),
                                     );
                                   } else {
+                                    // CU17 Paso 6: HTTP 200 OK {estado: 'COMPLETADA', fecha_cumplimiento}
+                                    // CU17 Paso 7: actualizar_indicador_progreso(100% completado)
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
                                         content: Text('✅ Reporte enviado exitosamente (100% completado)'),
@@ -297,7 +310,7 @@ class _MisTareasScreenState extends State<MisTareasScreen> with TickerProviderSt
                                       ),
                                     );
                                   }
-                                  _loadTareas(); // Refresh list
+                                  _loadTareas(); // Refresh list y actualizar_indicador_progreso
 
                                 } else {
                                   ScaffoldMessenger.of(context).showSnackBar(

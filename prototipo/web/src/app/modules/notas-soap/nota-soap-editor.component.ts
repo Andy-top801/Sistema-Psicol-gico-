@@ -1,9 +1,14 @@
 // ==============================================================================
 // MÓDULO: nota-soap-editor.component.ts
-// CAPA BCE: BOUNDARY (Interfaz de Usuario) — IU_RegistroNotaSesionSOAP
-// CASOS DE USO: CU16: Modelado y Registro de Sesiones Clínicas SOAP (HU-27)
-// DESCRIPCIÓN: Editor estructurado en 4 cuadrantes (S, O, A, P) con guardado automático
-//              de borrador debounced (30s) y firma digital inmutable sellada con SHA-256.
+// CAPA BCE: BOUNDARY (Interfaz de Usuario) — IU_EditorNotasSOAP
+// CASOS DE USO: CU16: Registro de Notas SOAP, Autoguardado Reactivo e Inmutabilidad (HU-27, HU-28)
+// DIAGRAMA DE SECUENCIA CU16 (sprint2.md):
+//   1. Psicólogo redacta nota SOAP (subjetivo, objetivo, análisis, plan)
+//   2-5. Autoguardado reactivo en borrador (debounce 30s) -> PATCH /api/v1/notas-sesion/{id}/borrador/
+//   6-7. Psicólogo formaliza y firma -> POST /api/v1/notas-sesion/firmar/
+//   8. Backend valida cita REALIZADA y bloqueo de tiempo
+//   9-12. Firma concedida -> HTTP 201 Inmutable, bloquear editor y actualizar timeline
+//   13-14. Cita no concluida -> HTTP 400 Bad Request, alerta de bloqueo legal
 // ==============================================================================
 import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -422,6 +427,40 @@ import { NotaSesion, HistoriaClinica } from '../../core/models/clinica-sprint2.m
     .modal-header-custom { padding: 1.25rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
     .modal-footer-custom { border-top: 1px solid #e2e8f0; background: #f8fafc; display: flex; justify-content: flex-end; gap: 0.75rem; }
     .border-start.border-4 { border-left-width: 4px !important; }
+
+    @media (max-width: 900px) {
+      .editor-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+        padding: 1.25rem 1rem;
+      }
+      .header-actions {
+        flex-wrap: wrap;
+        width: 100%;
+      }
+      .header-actions .btn {
+        flex: 1 1 auto;
+        justify-content: center;
+      }
+      .soap-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .header-left {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .editor-title {
+        font-size: 1.15rem;
+      }
+      .soap-textarea {
+        min-height: 140px;
+      }
+    }
   `]
 })
 export class NotaSoapEditorComponent implements OnInit, OnDestroy {
@@ -561,7 +600,7 @@ export class NotaSoapEditorComponent implements OnInit, OnDestroy {
   guardarBorrador(): void {
     this.guardandoBorrador.set(true);
 
-    // Guardado preventivo en LocalStorage (Criterio b / Paso 2)
+    // CU16 Paso 1: Redactar nota SOAP & Guardado preventivo en LocalStorage
     try {
       localStorage.setItem(this.getStorageKey(), JSON.stringify(this.notaForm));
     } catch (e) {
@@ -575,8 +614,10 @@ export class NotaSoapEditorComponent implements OnInit, OnDestroy {
       ...this.notaForm
     };
 
+    // CU16 Paso 2: PATCH /api/v1/notas-sesion/{id}/borrador/
     this.clinicaService.guardarBorrador(payload).subscribe({
       next: (nota) => {
+        // CU16 Paso 5: HTTP 200 OK (guardado_automatico_confirmado)
         this.notaSesion.set(nota);
         this.notaId = nota.id;
         this.cambiosPendientes = false;
@@ -611,6 +652,7 @@ export class NotaSoapEditorComponent implements OnInit, OnDestroy {
   }
 
   confirmarFirma(): void {
+    // CU16 Paso 6: formalizar_y_firmar_nota()
     this.firmando.set(true);
     if (!this.notaId) {
       // Primero inicializar borrador para obtener ID persistido
@@ -638,9 +680,10 @@ export class NotaSoapEditorComponent implements OnInit, OnDestroy {
 
   private ejecutarFirma(id: string): void {
     this.firmando.set(true);
-    // Paso 2 Diagrama BCE: POST /api/v1/notas-sesion/firmar/
+    // CU16 Paso 7: POST /api/v1/notas-sesion/firmar/ (cita_id, payload_completo)
     this.clinicaService.firmarNotaSesion(id, this.notaForm).subscribe({
       next: (res: any) => {
+        // CU16 Pasos 11 y 12: HTTP 201 Nota Firmada Inmutable & bloquear editor
         const notaActualizada = res.nota || res;
         this.notaSesion.set(notaActualizada);
         this.firmando.set(false);
@@ -653,6 +696,7 @@ export class NotaSoapEditorComponent implements OnInit, OnDestroy {
         } catch {}
       },
       error: (err) => {
+        // CU16 Pasos 13 y 14: HTTP 400 Bad Request & mostrar alerta bloqueo legal
         this.firmando.set(false);
         console.error('Error al firmar nota:', err);
         alert('Error al firmar y sellar la nota: ' + (err?.error?.error || err?.error?.detail || JSON.stringify(err?.error) || 'Error de firma'));

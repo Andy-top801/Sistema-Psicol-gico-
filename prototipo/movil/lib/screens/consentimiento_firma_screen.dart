@@ -1,22 +1,25 @@
 // ==============================================================================
 // MÓDULO: consentimiento_firma_screen.dart
-// CAPA BCE: BOUNDARY (Interfaz de Usuario Móvil – Flutter)
-// CASO DE USO: CU18 – Gestionar Consentimientos Informados y Autorizaciones
-// HISTORIA: HU-32 – Lectura y Aceptación Digital Trazable en App Móvil
-// DESCRIPCIÓN: Pantalla para que el paciente/tutor lea el consentimiento informado
-//              con scroll obligatorio, marque checkboxes de aceptación, dibuje
-//              firma en canvas táctil y confirme con sello SHA-256 + IP + timestamp.
-// DIAGRAMA DE SECUENCIA CU18 (Flujo Móvil):
-//   1. Paciente abre ConsentimientoFirmaScreen → Sprint2Service.getConsentimientos()
-//   2. Sistema carga documento legal con variables resueltas
-//   3. Paciente hace scroll hasta el final → se habilitan checkboxes
-//   4. Paciente marca checkboxes obligatorios → se habilita canvas de firma
-//   5. Paciente dibuja firma en canvas táctil
-//   6. Paciente presiona 'Firmar y Aceptar'
-//   7. App calcula hash SHA-256 del contenido legal
-//   8. App envía POST con firma_canvas, hash, IP, timestamp, user_agent
-//   9. Backend valida integridad y responde 201 Created
-//  10. UI muestra confirmación y habilita citas
+// CAPA BCE: BOUNDARY (Interfaz de Usuario Móvil – Flutter) — IU_FirmaConsentimiento
+// CASO DE USO: CU18 – Consentimiento Informado Digital con Sellado SHA-256 (HU-31, HU-32)
+//
+// DIAGRAMA DE SECUENCIA UML (CU18 - Consentimiento Informado Digital con Sellado SHA-256):
+// ------------------------------------------------------------------------------
+// 1. Paciente o Tutor -> IU_FirmaConsentimiento: 1: leer_clausulas_obligatorias_y_firmar_canvas()
+// 2. IU_FirmaConsentimiento -> IU_FirmaConsentimiento: 2: calcular_hash_sha256(texto_legal + trazos_canvas + timestamp)
+// 3. IU_FirmaConsentimiento -> CTR_ConsentimientoController: 3: POST /api/v1/consentimientos/firmar/ (hash_sha256, firma_png, tutor_ci)
+// 4. CTR_ConsentimientoController -> CTR_ConsentimientoController: 4: capturar_metadatos_legales(ip_remota, user_agent, timestamp_bolivia)
+// [Alt: Mayor de Edad: Firma Titular]
+// 5. CTR_ConsentimientoController -> CE_FirmaConsentimiento: 5: INSERT INTO clinica_firmaconsentimiento (tipo='TITULAR', hash_sha256)
+// 6. CE_FirmaConsentimiento --> CTR_ConsentimientoController: 6: firma_registrada_inmutable()
+// 7. CTR_ConsentimientoController --> IU_FirmaConsentimiento: 7: HTTP 201 Consentimiento Aceptado (hash_verificado)
+// 8. IU_FirmaConsentimiento --> Paciente: 8: habilitar_atencion_y_reserva_citas()
+// [Alt: Menor de Edad: Firma Tutor Legal]
+// 9. CTR_ConsentimientoController -> CTR_ConsentimientoController: 9: validar_ci_y_parentesco_tutor()
+// 10. CTR_ConsentimientoController -> CE_FirmaConsentimiento: 10: INSERT INTO clinica_firmaconsentimiento (tipo='TUTOR', tutor_ci, hash_sha256)
+// 11. CE_FirmaConsentimiento --> CTR_ConsentimientoController: 11: firma_tutor_inmutable()
+// 12. CTR_ConsentimientoController --> IU_FirmaConsentimiento: 12: HTTP 201 Consentimiento Tutor Registrado
+// 13. IU_FirmaConsentimiento --> Tutor: 13: notificar_validacion_tutor_exitosa()
 // ==============================================================================
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
@@ -135,11 +138,15 @@ class _ConsentimientoFirmaScreenState extends State<ConsentimientoFirmaScreen>
     });
   }
 
+  // CU18 Paso 1: leer_clausulas_obligatorias_y_firmar_canvas()
+  // CU18 Paso 2: calcular_hash_sha256(texto_legal + trazos_canvas + timestamp)
+  // CU18 Paso 3: POST /api/v1/consentimientos/firmar/ (hash_sha256, firma_png, tutor_ci)
   Future<void> _firmarConsentimiento() async {
     if (!_allChecksAccepted || !_hasSignature || _selectedConsentimiento == null) return;
 
     setState(() => _isSubmitting = true);
 
+    // CU18 Paso 2: calcular_hash_sha256(texto_legal + trazos_canvas + timestamp)
     final contenido = _selectedConsentimiento!['contenido_legal']?.toString() ?? '';
     final hashSha256 = _computeSHA256(contenido);
     final user = widget.authService.currentUser;
@@ -151,6 +158,7 @@ class _ConsentimientoFirmaScreenState extends State<ConsentimientoFirmaScreen>
       pacienteId = user.id;
     }
 
+    // CU18 Paso 3: Empaquetar payload para POST /api/v1/consentimientos/firmar/
     final data = {
       'consentimiento': _selectedConsentimiento!['id'],
       if (pacienteId != null) 'paciente': pacienteId,
@@ -166,6 +174,8 @@ class _ConsentimientoFirmaScreenState extends State<ConsentimientoFirmaScreen>
     if (mounted) {
       setState(() => _isSubmitting = false);
       if (result['success'] == true) {
+        // CU18 Paso 7/12: HTTP 201 Consentimiento Aceptado (hash_verificado)
+        // CU18 Paso 8/13: habilitar_atencion_y_reserva_citas()
         setState(() => _isSigned = true);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

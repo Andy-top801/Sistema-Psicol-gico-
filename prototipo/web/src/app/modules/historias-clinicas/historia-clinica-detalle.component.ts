@@ -1,9 +1,16 @@
 // ==============================================================================
 // MÓDULO: historia-clinica-detalle.component.ts
-// CAPA BCE: BOUNDARY (Interfaz de Usuario) — IU_DetalleHistoriaClinica
-// CASOS DE USO: CU15: Codificación CIE-10 y Expediente Psicológico (HU-25, HU-26)
-//              CU16: Visualización de Sesiones SOAP vinculadas
-//              CU17: Línea de Tiempo Longitudinal y Alertas de Crisis
+// CAPA BCE: BOUNDARY (Interfaz de Usuario) — IU_HistoriaClinica
+// CASOS DE USO:
+//   CU15: Apertura de Historia Clínica y Control de Acceso RBAC (HU-25, HU-26)
+//   CU16: Visualización de Sesiones SOAP vinculadas
+//   CU17: Línea de Tiempo Longitudinal y Alertas de Crisis
+// DIAGRAMA DE SECUENCIA CU15 (sprint2.md):
+//   1. Psicólogo solicita apertura/consulta de historia
+//   2. GET /api/v1/historias-clinicas/{id}/
+//   3. Backend verifica permiso RBAC (terapeuta asignado)
+//   6-7. Si autorizado: Renderizar pestañas de historia (anamnesis, examen mental, CIE-10)
+//   8-9. Si denegado (403): Renderizar pantalla de seguridad RBAC de acceso restringido
 // ==============================================================================
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -956,6 +963,45 @@ import { HistoriaClinica, DiagnosticoCIE, CieItem } from '../../core/models/clin
     .modal-header-custom { padding: 1rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
     .modal-body-custom { padding: 1.25rem 1.5rem; overflow-y: auto; flex: 1 1 auto; }
     .modal-footer-custom { padding: 0.85rem 1.5rem; border-top: 1px solid #e2e8f0; background: #f8fafc; display: flex; justify-content: flex-end; gap: 0.75rem; flex-shrink: 0; }
+
+    @media (max-width: 768px) {
+      .patient-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+        padding: 1.25rem 1rem;
+      }
+      .patient-header-left {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+      }
+      .patient-meta {
+        flex-direction: column;
+        gap: 0.35rem;
+      }
+      .header-action-buttons {
+        flex-wrap: wrap;
+        width: 100%;
+      }
+      .header-action-buttons .btn {
+        flex: 1 1 auto;
+        justify-content: center;
+      }
+      .tabs-nav {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      .summary-metric-bar {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+      }
+      .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+    }
   `]
 })
 export class HistoriaClinicaDetalleComponent implements OnInit {
@@ -1060,9 +1106,11 @@ export class HistoriaClinicaDetalleComponent implements OnInit {
   }
 
   cargarHistoria(): void {
+    // CU15 Paso 1 y 2: solicitar_apertura_historia / GET /api/v1/historias-clinicas/{id}/
     this.accesoRestringido.set(false);
     this.clinicaService.getHistoriaClinicaById(this.historiaId).subscribe({
       next: (hc) => {
+        // CU15 Paso 7: renderizar_pestanas_historia(anamnesis, examen_mental, cie10)
         this.historia.set(hc);
         this.editandoAnamnesis = false;
         this.editandoPlan = false;
@@ -1075,6 +1123,7 @@ export class HistoriaClinicaDetalleComponent implements OnInit {
         this.planForm = { plan_terapeutico: hc.plan_terapeutico || '' };
       },
       error: (err) => {
+        // CU15 Pasos 8 y 9: HTTP 403 Forbidden -> mostrar_error_seguridad_rbac
         if (err.status === 403) {
           this.accesoRestringido.set(true);
           this.errorMensajeAcceso.set(

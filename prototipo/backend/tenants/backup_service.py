@@ -1,3 +1,38 @@
+# ==============================================================================
+# MÓDULO: tenants/backup_service.py — CU28: Copias de Seguridad y Restauración (HU-39)
+# CAPA BCE: CONTROL (Controller) — CTR_BackupRestoreOrchestrator / CTR_PgEngine
+# DIAGRAMA DE SECUENCIA CU28 (sprint2.md):
+#   alt Operación 1: Generación de Backup Manual (Global o Tenant)
+#     SuperAdmin → IU_ConsolaBackupRestore: 1a: solicitar_backup_manual(ambito, tenant_id)
+#     IU_ConsolaBackupRestore → CTR_BackupRestoreOrchestrator: 2a: POST /api/v1/backups/manual/ (ambito, tenant_id)
+#     CTR_BackupRestoreOrchestrator → CTR_PgEngine: 3a: ejecutar_pg_dump(esquema, formato='custom_compressed')
+#     CTR_PgEngine → CE_TenantDatabaseSchema: 4a: LOCK SCHEMA IN SHARE MODE & EXTRACT TABLES
+#     CE_TenantDatabaseSchema --> CTR_PgEngine: 5a: stream_tablas_y_datos_relacionales()
+#     CTR_PgEngine --> CTR_BackupRestoreOrchestrator: 6a: archivo_dump_generado(sigepsi_backup.dump)
+#     CTR_BackupRestoreOrchestrator → CTR_BackupRestoreOrchestrator: 7a: calcular_checksum_sha256_y_comprimir_gzip()
+#     CTR_BackupRestoreOrchestrator → CE_BackupLogRegistro: 8a: INSERT INTO backups_registro (archivo, tamano, checksum, fecha_bolivia)
+#     CE_BackupLogRegistro --> CTR_BackupRestoreOrchestrator: 9a: confirmacion_persistencia_metadatos()
+#     CTR_BackupRestoreOrchestrator --> IU_ComprobanteBackup: 10a: HTTP 201 Created (url_descarga_segura, checksum_sha256, tamano_mb)
+#     IU_ComprobanteBackup --> SuperAdmin: 11a: renderizar_tarjeta_descarga_backup("Descarga lista: Checksum OK")
+#   else Operación 2: Restauración de Base de Datos (Restore desde Archivo)
+#     SuperAdmin → IU_ConsolaBackupRestore: 1b: cargar_archivo_respaldo(archivo_dump, tenant_destino)
+#     IU_ConsolaBackupRestore → IU_ConsolaBackupRestore: 2b: validar_extension_y_tamano_archivo(.dump / .sql.gz)
+#     IU_ConsolaBackupRestore → CTR_BackupRestoreOrchestrator: 3b: POST /api/v1/backups/restaurar/ (multipart_dump_file)
+#     CTR_BackupRestoreOrchestrator → CTR_BackupRestoreOrchestrator: 4b: verificar_integridad_checksum_y_compatibilidad_version()
+#     alt Checksum y Estructura Válida
+#       CTR_BackupRestoreOrchestrator → CTR_PgEngine: 5b: ejecutar_pg_restore(archivo_dump, esquema_destino)
+#       CTR_PgEngine → CE_TenantDatabaseSchema: 6b: BEGIN TRANSACTION; RESTORE TABLES & CONSTRAINTS; COMMIT;
+#       CE_TenantDatabaseSchema --> CTR_PgEngine: 7b: restauracion_esquema_completada()
+#       CTR_PgEngine --> CTR_BackupRestoreOrchestrator: 8b: status_code_0_restore_ok()
+#       CTR_BackupRestoreOrchestrator → CE_BackupLogRegistro: 9b: INSERT INTO auditoria_restauracion (estado='EXITO', timestamp)
+#       CTR_BackupRestoreOrchestrator --> IU_ComprobanteBackup: 10b: HTTP 200 OK ("Restauración ejecutada exitosamente")
+#       IU_ComprobanteBackup --> SuperAdmin: 11b: alerta_modal_exito("El centro fue restaurado íntegramente a su estado previo")
+#     else Archivo Corrupto o Checksum Inválido
+#       CTR_BackupRestoreOrchestrator --> IU_ConsolaBackupRestore: 12b: HTTP 400 Bad Request ("Fallo de integridad: Archivo modificado o corrupto")
+#       IU_ConsolaBackupRestore --> SuperAdmin: 13b: alerta_error_restauracion("Abortada restauración para proteger datos actuales")
+#     end
+#   end
+# ==============================================================================
 import gzip
 import hashlib
 import os
@@ -27,10 +62,10 @@ def crear_backup(schema_name=None, tenant=None, origen='MANUAL'):
     Genera copia de seguridad (Backup) automática o manual.
     Sigue el Diagrama de Comunicación y Secuencia de HU-39 (CU28).
     
-    1. Ejecuta pg_dump por esquema (o fallback relacional) con compresión gzip.
-    2. Calcula Checksum criptográfico SHA-256.
-    3. INSERT INTO backups_registro (archivo, sha256, tamano, fecha).
-    4. Retorna metadatos estructurados con URL de descarga.
+    CU28 Paso 3a: Ejecuta pg_dump por esquema (o fallback relacional) con compresión gzip.
+    CU28 Paso 7a: Calcula Checksum criptográfico SHA-256.
+    CU28 Paso 8a: INSERT INTO backups_registro (archivo, sha256, tamano, fecha).
+    CU28 Paso 10a: Retorna metadatos estructurados con URL de descarga segura.
     """
     from .models import BackupRegistro, Tenant
     

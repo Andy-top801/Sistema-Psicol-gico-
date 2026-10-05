@@ -1,3 +1,33 @@
+// ==============================================================================
+// MÓDULO: chatbot_screen.dart
+// CAPA BCE: BOUNDARY (Interfaz de Usuario Móvil – Flutter) — IU_ChatbotClinico / IU_ChatbotWidget
+// CASO DE USO: CU20 – Interacción con el Chatbot de Orientación Clínica y Derivación a Operador (HU-36)
+//
+// DIAGRAMA DE SECUENCIA UML (CU20 - Chatbot de Orientación Clínica y Derivación):
+// ------------------------------------------------------------------------------
+// 1. Paciente / Usuario -> IU_ChatbotWidget: 1: enviar_mensaje_o_consulta(texto, session_token)
+// 2. IU_ChatbotWidget -> CTR_ChatbotController: 2: POST /api/v1/chatbot/mensaje/
+// 3. CTR_ChatbotController -> CTR_ChatbotController: 3: sanitizar_y_clasificar_intencion(texto)
+// 4. CTR_ChatbotController -> CE_ConversacionChatbot: 4: INSERT INTO clinica_mensajechatbot (emisor='PACIENTE', texto)
+// 5. CE_ConversacionChatbot --> CTR_ChatbotController: 5: mensaje_registrado()
+// 6. CTR_ChatbotController -> CTR_ChatbotController: 6: evaluar_umbral_de_confianza_o_riesgo_de_crisis()
+// [Alt 1: Detección de Crisis Emocional Aguda]
+// 7. CTR_ChatbotController --> IU_ChatbotWidget: 7: HTTP 200 (alerta_crisis=true, lineas_auxilio_800_11_3040)
+// 8. IU_ChatbotWidget --> Paciente: 8: desplegar_modal_urgencias_con_telefonos()
+// [Alt 2: Intención FAQ Clara (Confianza >= 80%)]
+// 9. CTR_ChatbotController -> CE_ConversacionChatbot: 9: INSERT INTO clinica_mensajechatbot (emisor='BOT', respuesta_faq)
+// 10. CE_ConversacionChatbot --> CTR_ChatbotController: 10: respuesta_faq_almacenada()
+// 11. CTR_ChatbotController --> IU_ChatbotWidget: 11: HTTP 200 OK (tipo='BOT_FAQ', respuesta, botones_accion)
+// 12. IU_ChatbotWidget --> Paciente: 12: renderizar_mensaje_de_orientacion(botones_accion)
+// [Alt 3: Solicitud Asesor o Intención No Resuelta (Escalamiento)]
+// 13. CTR_ChatbotController -> CE_ConversacionChatbot: 13: UPDATE clinica_conversacionchatbot (estado='ESCALADA_HUMANO')
+// 14. CE_ConversacionChatbot --> CTR_ChatbotController: 14: estado_actualizado()
+// 15. CTR_ChatbotController -> Recepcionista: 15: emitir_notificacion_websocket_de_transferencia(conversacion_id)
+// 16. CTR_ChatbotController --> IU_ChatbotWidget: 16: HTTP 200 (tipo='TRANSFERENCIA_HUMANA', status='EN_ESPERA_ASESOR')
+// 17. IU_ChatbotWidget --> Paciente: 17: mostrar_estado_espera('Conectando con un asesor en vivo...')
+// 18. Recepcionista -> IU_ChatbotWidget: 18: tomar_control_del_chat_y_responder(mensaje_operador)
+// 19. IU_ChatbotWidget --> Paciente: 19: conexion_en_vivo_con_soporte_del_centro(mensaje_operador)
+// ==============================================================================
 import 'package:flutter/material.dart';
 import '../services/chatbot_service.dart';
 
@@ -90,13 +120,15 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     }).toList();
   }
 
+  // CU20 Paso 1: enviar_mensaje_o_consulta(texto, session_token)
+  // CU20 Paso 2: POST /api/v1/chatbot/mensaje/
   Future<void> _enviarTexto(String texto) async {
     final limpio = texto.trim();
     if (limpio.isEmpty || _estaCargando) return;
 
     _textController.clear();
 
-    // 1. Mensaje optimista del usuario
+    // CU20 Paso 1: Mensaje del usuario en IU_ChatbotWidget
     setState(() {
       _mensajes.add(
         MensajeUI(
@@ -111,7 +143,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
     final historial = _obtenerHistorial();
 
-    // 2. Llamada a la API
+    // CU20 Paso 2: Enviar al servicio / API
     final resp = await _chatbotService.enviarMensaje(
       sessionId: _sessionId,
       mensaje: limpio,
@@ -120,7 +152,8 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
     if (!mounted) return;
 
-    // 3. Registrar respuesta del Bot
+    // CU20 Paso 7/8 (Crisis): HTTP 200 (alerta_crisis=true, lineas_auxilio) -> desplegar banner
+    // CU20 Paso 11/12 (FAQ): HTTP 200 OK (tipo='BOT_FAQ', respuesta, botones_accion) -> renderizar_mensaje_de_orientacion
     setState(() {
       _estaCargando = false;
       _mensajes.add(
@@ -137,6 +170,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     _scrollHaciaAbajo();
   }
 
+  // CU20 Paso 12: Usuario pulsa botón de acción sugerido por el bot
   void _manejarBotonAccion(ChatbotBotonAccion boton) {
     if (_estaCargando) return;
     _enviarTexto(boton.etiqueta);
