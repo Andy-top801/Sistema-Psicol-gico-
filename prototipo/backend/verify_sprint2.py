@@ -76,26 +76,37 @@ def run_tests():
             email='psicologo_test_sp2@sigepsi.com',
             defaults={'nombre': 'Lic. Gabriel', 'apellido': 'Montes', 'rol': rol_psico, 'activo': True}
         )
-        esp, _ = Especialidad.objects.get_or_create(nombre='Psicología Clínica y Cognitiva')
-        psicologo, _ = Psicologo.objects.get_or_create(
-            usuario=u_psico,
-            defaults={'numero_colegiado': 'COL-SP2-9988', 'modalidad': 'MIXTA', 'tarifa_base': 180.0}
-        )
-        psicologo.especialidades.add(esp)
+        psicologo = Psicologo.objects.filter(usuario=u_psico).first()
+        if not psicologo:
+            psicologo = Psicologo.objects.filter(numero_colegiado='COL-SP2-TEST').first()
+            if not psicologo:
+                psicologo = Psicologo.objects.create(
+                    usuario=u_psico,
+                    numero_colegiado='COL-SP2-TEST',
+                    modalidad='MIXTA',
+                    tarifa_base=180.0
+                )
+        esp = Especialidad.objects.filter(nombre='Psicología Clínica y Cognitiva').first()
+        if not esp:
+            esp = Especialidad.objects.first()
+        if esp:
+            psicologo.especialidades.add(esp)
 
         u_paciente, _ = Usuario.objects.get_or_create(
             email='paciente_test_sp2@sigepsi.com',
             defaults={'nombre': 'Sofía', 'apellido': 'Valdivia', 'rol': rol_paciente, 'activo': True}
         )
-        paciente, _ = Paciente.objects.get_or_create(
-            usuario=u_paciente,
-            defaults={
-                'ci': '9876543-SP2',
-                'codigo_expediente': 'EXP-SP2-001',
-                'fecha_nacimiento': date(1995, 8, 20),
-                'genero': 'F'
-            }
-        )
+        paciente = Paciente.objects.filter(usuario=u_paciente).first()
+        if not paciente:
+            paciente = Paciente.objects.filter(ci='9876543-SP2').first()
+            if not paciente:
+                paciente = Paciente.objects.create(
+                    usuario=u_paciente,
+                    ci='9876543-SP2',
+                    codigo_expediente='EXP-SP2-001',
+                    fecha_nacimiento=date(1995, 8, 20),
+                    genero='F'
+                )
 
         cita, _ = Cita.objects.get_or_create(
             paciente=paciente,
@@ -197,6 +208,10 @@ def run_tests():
         # ----------------------------------------------------------------------
         print("\n[CP-25-01]: Apertura de Historia Clínica Electrónica (EHR)")
         # Clean previous test HC for this patient if any
+        NotaSesion.objects.filter(historia_clinica__paciente=paciente).delete()
+        DerivacionCaso.objects.filter(historia_clinica__paciente=paciente).delete()
+        DiagnosticoCIE.objects.filter(historia_clinica__paciente=paciente).delete()
+        EvolucionClinica.objects.filter(historia_clinica__paciente=paciente).delete()
         HistoriaClinica.objects.filter(paciente=paciente).delete()
 
         hc = HistoriaClinica.objects.create(

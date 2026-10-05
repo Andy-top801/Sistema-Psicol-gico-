@@ -1,6 +1,16 @@
 {
   "venvPath": "prototipo/backend",
   "venv": "venv",
+  "include": [
+    "prototipo/backend"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__",
+    "prototipo/backend/venv",
+    "prototipo/movil",
+    "prototipo/web"
+  ],
   "extraPaths": [
     "prototipo/backend",
     "prototipo/backend/venv/Lib/site-packages"

@@ -1,7 +1,8 @@
 import { Component, ElementRef, ViewChild, AfterViewChecked, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ChatbotService, ChatbotMessage } from '../core/services/chatbot.service';
+import { Router } from '@angular/router';
+import { ChatbotService, ChatbotMessage, ChatbotBotonAccion } from '../core/services/chatbot.service';
 
 @Component({
   selector: 'app-chatbot-widget',
@@ -122,11 +123,38 @@ import { ChatbotService, ChatbotMessage } from '../core/services/chatbot.service
                 </div>
 
                 <div class="msg-bubble" [class.bubble-crisis]="msg.es_alerta_crisis">
+                  <!-- Insignia de Crisis si se detecta riesgo -->
+                  <div class="crisis-badge" *ngIf="msg.es_alerta_crisis">
+                    <i class="fa-solid fa-triangle-exclamation"></i> PROTOCOLO DE CONTENCIÓN ACTIVO
+                  </div>
                   <div class="msg-text">{{ msg.texto }}</div>
+
+                  <!-- Líneas Oficiales de Auxilio Inmediato (Requerimiento 3) -->
+                  <div class="msg-lineas-auxilio" *ngIf="msg.lineas_auxilio && msg.lineas_auxilio.length > 0">
+                    <div class="lineas-title">
+                      <i class="fa-solid fa-phone-volume"></i> <strong>Líneas Oficiales de Emergencia (24/7 Gratis):</strong>
+                    </div>
+                    <div class="lineas-pills-list">
+                      <a *ngFor="let tel of msg.lineas_auxilio" [href]="'tel:' + tel" class="linea-call-btn">
+                        <i class="fa-solid fa-phone"></i> Llamar al {{ tel }}
+                      </a>
+                    </div>
+                  </div>
                 </div>
 
-                <!-- Opciones / Quick reply chips -->
-                <div class="quick-options" *ngIf="msg.opciones_sugeridas && msg.opciones_sugeridas.length > 0">
+                <!-- Botones de Acción Rápida (Requerimiento 4) -->
+                <div class="action-buttons-list" *ngIf="msg.botones_accion && msg.botones_accion.length > 0">
+                  <button 
+                    *ngFor="let btn of msg.botones_accion" 
+                    type="button" 
+                    class="action-btn-pill"
+                    (click)="ejecutarBotonAccion(btn)">
+                    <i class="fa-solid fa-bolt-lightning"></i> {{ btn.etiqueta }}
+                  </button>
+                </div>
+
+                <!-- Opciones / Quick reply chips alternativas -->
+                <div class="quick-options" *ngIf="(!msg.botones_accion || msg.botones_accion.length === 0) && msg.opciones_sugeridas && msg.opciones_sugeridas.length > 0">
                   <button 
                     *ngFor="let opt of msg.opciones_sugeridas" 
                     type="button" 
@@ -525,11 +553,101 @@ import { ChatbotService, ChatbotMessage } from '../core/services/chatbot.service
 
     .bubble-crisis {
       background: #fef2f2 !important;
-      border-color: #fca5a5 !important;
-      color: #7f1d1d !important;
+      border: 1.5px solid #f87171 !important;
+      color: #991b1b !important;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.18) !important;
     }
 
-    /* Opciones rápidas */
+    .crisis-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #dc2626;
+      background: #fee2e2;
+      padding: 3px 8px;
+      border-radius: 6px;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Líneas de Auxilio (Requerimiento 3) */
+    .msg-lineas-auxilio {
+      margin-top: 10px;
+      padding: 10px;
+      background: #ffffff;
+      border: 1px solid #fca5a5;
+      border-radius: 8px;
+    }
+
+    .lineas-title {
+      font-size: 0.76rem;
+      color: #b91c1c;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .lineas-pills-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .linea-call-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #dc2626;
+      color: #ffffff;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3);
+    }
+
+    .linea-call-btn:hover {
+      background: #b91c1c;
+      transform: translateY(-1px);
+    }
+
+    /* Botones de Acción Rápida sugeridos por la IA (Requerimiento 4) */
+    .action-buttons-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .action-btn-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #0f766e;
+      color: #ffffff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 16px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(15, 118, 110, 0.25);
+      transition: all 0.15s ease;
+    }
+
+    .action-btn-pill:hover {
+      background: #0d9488;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(15, 118, 110, 0.3);
+    }
+
+    /* Opciones rápidas alternativas */
     .quick-options {
       display: flex;
       flex-wrap: wrap;
@@ -652,6 +770,7 @@ import { ChatbotService, ChatbotMessage } from '../core/services/chatbot.service
 })
 export class ChatbotWidgetComponent implements AfterViewChecked {
   chatService = inject(ChatbotService);
+  router = inject(Router);
   mensajeInput: string = '';
 
   @ViewChild('scrollContainer') private scrollContainer?: ElementRef;
@@ -680,6 +799,23 @@ export class ChatbotWidgetComponent implements AfterViewChecked {
   seleccionarOpcion(opcion: string): void {
     if (this.chatService.isLoading()) return;
     this.chatService.enviarMensaje(opcion).subscribe();
+  }
+
+  ejecutarBotonAccion(btn: ChatbotBotonAccion): void {
+    if (this.chatService.isLoading()) return;
+
+    // Manejo de acciones contextuales del centro
+    if (btn.accion === 'AGENDAR_CITA') {
+      this.router.navigate(['/agenda']);
+      this.chatService.enviarMensaje(btn.etiqueta).subscribe();
+    } else if (btn.accion === 'IR_INTAKE' || btn.accion === 'FORMULARIO_PREVIO') {
+      this.router.navigate(['/intake']);
+      this.chatService.enviarMensaje(btn.etiqueta).subscribe();
+    } else if (btn.accion === 'SOLICITAR_HUMANO') {
+      this.solicitarAsesor();
+    } else {
+      this.chatService.enviarMensaje(btn.etiqueta).subscribe();
+    }
   }
 
   solicitarAsesor(): void {

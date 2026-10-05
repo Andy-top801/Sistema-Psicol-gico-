@@ -60,6 +60,8 @@ class _IntakeFormScreenState extends State<IntakeFormScreen> with TickerProvider
     'Problemas de autoestima',
   ];
   final Set<String> _sintomasSeleccionados = {};
+  bool _isUrgenciaAlta = false;
+
 
   @override
   void initState() {
@@ -167,18 +169,134 @@ class _IntakeFormScreenState extends State<IntakeFormScreen> with TickerProvider
     if (mounted) {
       setState(() => _isSubmitting = false);
       if (result['success'] == true) {
-        setState(() => _isSubmitted = true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ Formulario previo enviado exitosamente'),
-            backgroundColor: AppTheme.success,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        final resData = result['data'] is Map ? result['data'] as Map<String, dynamic> : <String, dynamic>{};
+        final bool urgenciaAlta = _nivelMalestar >= 4 ||
+            resData['prioridad'] == 'ALTA' ||
+            resData['protocolo_urgencia'] == true;
+
+        setState(() {
+          _isSubmitted = true;
+          _isUrgenciaAlta = urgenciaAlta;
+        });
+
+        if (urgenciaAlta) {
+          // Paso 8 Diagrama de Secuencia CU14:
+          // iu --> pac : 8: mostrar_alerta_urgencia_prioritaria('Caso clasificado para atencion inmediata')
+          await _mostrarAlertaUrgenciaPrioritaria();
+        } else {
+          // Paso 12 Diagrama de Secuencia CU14:
+          // iu --> pac : 12: confirmacion_envio_exitosa(badge_prioridad)
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✅ Formulario previo enviado exitosamente (Prioridad Habitual)'),
+              backgroundColor: AppTheme.success,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
       } else {
         setState(() => _errorMsg = result['error'] ?? 'Error al enviar formulario.');
       }
     }
+  }
+
+  Future<void> _mostrarAlertaUrgenciaPrioritaria() async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: AppTheme.cardBg,
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppTheme.danger.withOpacity(0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.warning_amber_rounded, color: AppTheme.danger, size: 28),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Atención Inmediata',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.textMain),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppTheme.danger.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppTheme.danger.withOpacity(0.3)),
+              ),
+              child: const Text(
+                'ALERTA: Caso clasificado para atención inmediata',
+                style: TextStyle(color: AppTheme.danger, fontWeight: FontWeight.bold, fontSize: 12),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Has indicado un nivel alto de malestar emocional (escala ${_nivelMalestar.round()}/5). Tu terapeuta y el equipo clínico han sido notificados con máxima prioridad.',
+              style: const TextStyle(fontSize: 14, color: AppTheme.textMain, height: 1.4),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Líneas de apoyo y auxilio en crisis (24/7):',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.textMuted),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppTheme.background,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppTheme.borderSubtle),
+              ),
+              child: Column(
+                children: const [
+                  Row(
+                    children: [
+                      Icon(Icons.phone_in_talk_rounded, color: AppTheme.primary, size: 18),
+                      SizedBox(width: 8),
+                      Text('Apoyo Emocional: ', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                      Text('800-11-3040', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppTheme.primary)),
+                    ],
+                  ),
+                  SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(Icons.local_hospital_rounded, color: AppTheme.danger, size: 18),
+                      SizedBox(width: 8),
+                      Text('Emergencias: ', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                      Text('911 / 160', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppTheme.danger)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Entendido y Continuar', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
   }
 
   Color _getMalestarColor(double value) {
@@ -233,24 +351,53 @@ class _IntakeFormScreenState extends State<IntakeFormScreen> with TickerProvider
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [AppTheme.success.withOpacity(0.2), AppTheme.success.withOpacity(0.05)],
+                    colors: [
+                      (_isUrgenciaAlta ? AppTheme.danger : AppTheme.success).withOpacity(0.2),
+                      (_isUrgenciaAlta ? AppTheme.danger : AppTheme.success).withOpacity(0.05)
+                    ],
                   ),
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppTheme.success.withOpacity(0.4)),
+                  border: Border.all(color: (_isUrgenciaAlta ? AppTheme.danger : AppTheme.success).withOpacity(0.4)),
                 ),
-                child: const Icon(Icons.check_circle_rounded, size: 64, color: AppTheme.success),
+                child: Icon(
+                  _isUrgenciaAlta ? Icons.warning_rounded : Icons.check_circle_rounded,
+                  size: 64,
+                  color: _isUrgenciaAlta ? AppTheme.danger : AppTheme.success,
+                ),
               ),
               const SizedBox(height: 24),
-              const Text(
-                'Formulario Enviado',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppTheme.textMain),
+              Text(
+                _isUrgenciaAlta ? 'Formulario Recibido (Prioridad Alta)' : 'Formulario Enviado',
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppTheme.textMain),
+                textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
               Text(
-                'Tu formulario previo a la consulta ha sido recibido.\nTu psicólogo/a lo revisará antes de la sesión.',
+                _isUrgenciaAlta
+                    ? 'Tu caso ha sido clasificado para atención inmediata por el nivel de malestar indicado.\nTu psicólogo/a ha recibido notificación de urgencia.'
+                    : 'Tu formulario previo a la consulta ha sido recibido.\nTu psicólogo/a lo revisará antes de la sesión.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: AppTheme.textMuted, height: 1.5),
+                style: const TextStyle(fontSize: 14, color: AppTheme.textMuted, height: 1.5),
               ),
+              if (_isUrgenciaAlta) ...[
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.danger.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppTheme.danger.withOpacity(0.2)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(Icons.phone_in_talk_rounded, color: AppTheme.danger, size: 18),
+                      SizedBox(width: 8),
+                      Text('Línea de Crisis: 800-11-3040', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.danger)),
+                    ],
+                  ),
+                ),
+              ],
               const SizedBox(height: 32),
               Container(
                 padding: const EdgeInsets.all(16),
@@ -263,7 +410,7 @@ class _IntakeFormScreenState extends State<IntakeFormScreen> with TickerProvider
                   children: [
                     Icon(Icons.lock_outline_rounded, size: 20, color: AppTheme.textSubtle),
                     const SizedBox(width: 12),
-                    Expanded(
+                    const Expanded(
                       child: Text(
                         'El formulario ya no puede ser editado para preservar la integridad clínica.',
                         style: TextStyle(fontSize: 12, color: AppTheme.textSubtle),
@@ -291,6 +438,7 @@ class _IntakeFormScreenState extends State<IntakeFormScreen> with TickerProvider
   }
 
   Widget _buildStepperForm() {
+
     final progress = (_currentStep + 1) / 4;
     final stepLabels = ['Motivo', 'Síntomas', 'Malestar', 'Antecedentes'];
 

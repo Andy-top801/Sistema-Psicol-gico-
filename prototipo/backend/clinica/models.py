@@ -440,6 +440,7 @@ class TareaTerapeutica(models.Model):
         ('PENDIENTE', 'Pendiente'),
         ('EN_REVISION', 'En Revisión'),
         ('COMPLETADA', 'Completada'),
+        ('COMPLETADA_CON_RETRASO', 'Completada con Retraso'),
         ('VENCIDA', 'Vencida'),
         ('NO_REALIZADA', 'No Realizada'),
     ]
@@ -452,7 +453,7 @@ class TareaTerapeutica(models.Model):
     descripcion = models.TextField(verbose_name="Instrucciones Detalladas")
     categoria = models.CharField(max_length=50, choices=CATEGORIA_CHOICES, default='COGNITIVA', verbose_name="Categoría")
     fecha_limite = models.DateField(verbose_name="Fecha Límite de Entrega")
-    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='PENDIENTE', verbose_name="Estado de la Tarea")
+    estado = models.CharField(max_length=30, choices=ESTADO_CHOICES, default='PENDIENTE', verbose_name="Estado de la Tarea")
     archivo_adjunto_url = models.CharField(max_length=255, blank=True, default="", verbose_name="Guía o Plantilla Adjunta (URL)")
     fecha_creacion = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Asignación")
 

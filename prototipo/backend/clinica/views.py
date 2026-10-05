@@ -762,17 +762,14 @@ class TareaTerapeuticaViewSet(viewsets.ModelViewSet):
         ensure_object_history_open(tarea)
 
         # Validación estado previo
-        if tarea.estado == 'COMPLETADA' and hasattr(tarea, 'evidencia'):
+        if tarea.estado in ('COMPLETADA', 'COMPLETADA_CON_RETRASO') and hasattr(tarea, 'evidencia'):
             return Response({
                 "error": "Esta tarea terapéutica ya fue completada previamente."
             }, status=status.HTTP_400_BAD_REQUEST)
 
         # Paso 3 & 4 Diagrama CU17: Validar plazo de entrega y tipo archivo
         hoy = timezone.localdate()
-        if tarea.fecha_limite and tarea.fecha_limite < hoy:
-            return Response({
-                "error": "El plazo de entrega para esta tarea terapéutica ha vencido."
-            }, status=status.HTTP_400_BAD_REQUEST)
+        es_extemporanea = bool(tarea.fecha_limite and tarea.fecha_limite < hoy)
 
         archivo = request.FILES.get('archivo') or request.FILES.get('archivo_adjunto')
         if archivo:
@@ -789,22 +786,54 @@ class TareaTerapeuticaViewSet(viewsets.ModelViewSet):
         serializer.save()
 
         # Paso 5 & 6 Diagrama CU17: INSERT evidencia & UPDATE clinica_tareaterapeutica
-        tarea.estado = 'COMPLETADA'
-        tarea.save()
+        if es_extemporanea:
+            # Flujo alternativo: Fuera de Plazo (Entrega Extemporánea)
+            # UPDATE clinica_tareaterapeutica SET estado='COMPLETADA_CON_RETRASO'
+            tarea.estado = 'COMPLETADA_CON_RETRASO'
+            tarea.save()
+            return Response({
+                "mensaje": "Tarea entregada fuera de plazo",
+                "estado": "COMPLETADA_CON_RETRASO",
+                "warning_retraso": True,
+                "completada_porcentaje": 100,
+                "tarea_id": str(tarea.id),
+                "tarea_estado": tarea.estado,
+                "fecha_cumplimiento": timezone.now().isoformat(),
+                "evidencia": serializer.data
+            }, status=status.HTTP_200_OK)
+        else:
+            # Flujo principal: Entrega en Plazo (Cumplimiento Exitoso)
+            # UPDATE clinica_tareaterapeutica SET estado='COMPLETADA'
+            tarea.estado = 'COMPLETADA'
+            tarea.save()
+            return Response({
+                "mensaje": "Evidencia guardada y tarea completada",
+                "estado": "COMPLETADA",
+                "warning_retraso": False,
+                "completada_porcentaje": 100,
+                "tarea_id": str(tarea.id),
+                "tarea_estado": tarea.estado,
+                "fecha_cumplimiento": timezone.now().isoformat(),
+                "evidencia": serializer.data
+            }, status=status.HTTP_200_OK)
 
-        # Paso 7 Diagrama CU17: 200 OK [estado: 'COMPLETADA']
-        return Response({
-            "mensaje": "Evidencia guardada y tarea completada",
-            "estado": "COMPLETADA",
-            "completada_porcentaje": 100,
-            "tarea_id": str(tarea.id),
-            "tarea_estado": tarea.estado,
-            "evidencia": serializer.data
-        }, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'], url_path='subir_evidencia')
     def subir_evidencia_alias(self, request, pk=None):
         return self.registrar_evidencia(request, pk)
+
+    @action(detail=True, methods=['post'], url_path='revisar_tarea')
+    def revisar_tarea(self, request, pk=None):
+        tarea = self.get_object()
+        feedback = request.data.get('feedback', '')
+        if tarea.estado in ('PENDIENTE', 'EN_REVISION'):
+            tarea.estado = 'COMPLETADA'
+            tarea.save()
+        return Response({
+            "mensaje": "Feedback clínico registrado y tarea marcada como revisada con éxito.",
+            "feedback": feedback,
+            "tarea": TareaTerapeuticaSerializer(tarea).data
+        }, status=status.HTTP_200_OK)
 
 
 class EvidenciaTareaViewSet(viewsets.ModelViewSet):
@@ -925,9 +954,9 @@ class ConsentimientoInformadoViewSet(viewsets.ModelViewSet):
         plantilla_id = data.get('consentimiento') or data.get('plantilla')
         paciente_id = data.get('paciente')
 
-        if not plantilla_id or not paciente_id:
+        if not plantilla_id:
             return Response(
-                {"detail": "Debe especificar la plantilla legal y el paciente a firmar."},
+                {"detail": "Debe especificar la plantilla legal a firmar."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -936,10 +965,17 @@ class ConsentimientoInformadoViewSet(viewsets.ModelViewSet):
         except ConsentimientoInformado.DoesNotExist:
             return Response({"detail": "Plantilla legal no encontrada."}, status=status.HTTP_404_NOT_FOUND)
 
-        try:
-            paciente = Paciente.objects.select_related('usuario').get(id=paciente_id)
-        except Paciente.DoesNotExist:
-            return Response({"detail": "Paciente no encontrado."}, status=status.HTTP_404_NOT_FOUND)
+        paciente = None
+        if paciente_id:
+            paciente = Paciente.objects.select_related('usuario').filter(id=paciente_id).first()
+            if not paciente:
+                paciente = Paciente.objects.select_related('usuario').filter(usuario_id=paciente_id).first()
+        if not paciente and req.user.is_authenticated:
+            paciente = Paciente.objects.select_related('usuario').filter(usuario=req.user).first()
+
+        if not paciente:
+            return Response({"detail": "Debe especificar el paciente o estar autenticado como tal."}, status=status.HTTP_400_BAD_REQUEST)
+
 
         # Detectar automáticamente menor de edad (HU-31 BDD Paso 3)
         es_menor = False
@@ -1084,10 +1120,12 @@ class DerivacionCasoViewSet(viewsets.ModelViewSet):
             ).distinct()
         return qs.none()
 
-    def perform_create(self, serializer):
-        historia = serializer.validated_data.get('historia_clinica')
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         tipo = serializer.validated_data.get('tipo_derivacion')
         if tipo in ('CIERRE_ALTA', 'DESERCION', 'MUTUO_ACUERDO'):
+            historia = serializer.validated_data.get('historia_clinica')
             event = close_history(
                 history_id=historia.pk,
                 user=self.request.user,
@@ -1100,8 +1138,16 @@ class DerivacionCasoViewSet(viewsets.ModelViewSet):
                 institucion_destino=serializer.validated_data.get('institucion_destino', ''),
                 nivel_riesgo=serializer.validated_data.get('nivel_riesgo', 'MEDIO'),
             )
-            self._closure_event = event
-            return
+            out_serializer = self.get_serializer(event)
+            headers = self.get_success_headers(out_serializer.data)
+            return Response(out_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def perform_create(self, serializer):
+        historia = serializer.validated_data.get('historia_clinica')
         psico = getattr(self.request.user, 'perfil_psicologo', None)
         if psico is None:
             from rest_framework.exceptions import PermissionDenied
@@ -1111,12 +1157,6 @@ class DerivacionCasoViewSet(viewsets.ModelViewSet):
             raise PermissionDenied('La historia clínica no está vinculada al psicólogo autenticado.')
         ensure_object_history_open(historia)
         serializer.save(psicologo_emisor=psico)
-
-    def create(self, request, *args, **kwargs):
-        response = super().create(request, *args, **kwargs)
-        if hasattr(self, '_closure_event'):
-            response.data = self.get_serializer(self._closure_event).data
-        return response
 
     @action(detail=False, methods=['post'], url_path='noop')
     def noop(self, request):
@@ -1293,11 +1333,13 @@ class ChatbotViewSet(viewsets.ViewSet):
                 "esperando_operador": True
             })
 
-        # 3. Procesar con el motor de reglas y FAQ de SIGEPSI
-        resultado = ChatbotEngine.procesar_mensaje(texto)
+        # 3. Procesar con el motor de IA en Hugging Face (con memoria de historial y fallback local)
+        historial = request.data.get('historial', [])
+        resultado = ChatbotEngine.procesar_mensaje(texto, session_id=session_id, historial=historial)
 
         # 4. Actualizar estado y nivel de riesgo si corresponde
-        if resultado.get("es_crisis"):
+        es_alerta_crisis = bool(resultado.get("alerta_crisis") or resultado.get("es_crisis"))
+        if es_alerta_crisis:
             conv.nivel_riesgo = 'CRISIS'
             conv.estado = 'ESCALADA_HUMANO'
             conv.save(update_fields=['nivel_riesgo', 'estado', 'fecha_actualizacion'])
@@ -1309,20 +1351,35 @@ class ChatbotViewSet(viewsets.ViewSet):
             conv.save(update_fields=['fecha_actualizacion'])
 
         # 5. Registrar respuesta del Bot
+        texto_bot = resultado.get("respuesta") or resultado.get("texto", "")
+        opciones_bot = resultado.get("opciones") or [
+            b.get("etiqueta") for b in resultado.get("botones_accion", []) if isinstance(b, dict)
+        ]
         msg_bot = MensajeChatbot.objects.create(
             conversacion=conv,
             remitente='BOT',
-            texto=resultado["texto"],
-            es_alerta_crisis=resultado.get("es_crisis", False),
-            opciones_sugeridas=resultado.get("opciones", [])
+            texto=texto_bot,
+            es_alerta_crisis=es_alerta_crisis,
+            opciones_sugeridas=opciones_bot
         )
 
+        # 6. Retornar esquema de respuesta unificado (especificación técnica de la API)
         return Response({
             "session_id": conv.session_id,
+            "remitente": "BOT",
+            "respuesta": texto_bot,
+            "intencion_detectada": resultado.get("intencion_detectada", "CONVERSACION_CASUAL"),
+            "contiene_riesgo": bool(resultado.get("contiene_riesgo", False)),
+            "nivel_riesgo": resultado.get("nivel_riesgo", conv.nivel_riesgo),
+            "alerta_crisis": es_alerta_crisis,
+            "escalar_humano": bool(resultado.get("escalar_humano", False)),
+            "lineas_auxilio": resultado.get("lineas_auxilio", []),
+            "botones_accion": resultado.get("botones_accion", []),
+            "timestamp": timezone.now().isoformat(),
+            # Metadatos de trazabilidad institucional
             "conversacion_id": str(conv.id),
             "estado": conv.estado,
-            "nivel_riesgo": conv.nivel_riesgo,
-            "es_crisis": resultado.get("es_crisis", False),
+            "es_crisis": es_alerta_crisis,
             "mensaje_usuario": MensajeChatbotSerializer(msg_usuario).data,
             "mensaje_bot": MensajeChatbotSerializer(msg_bot).data
         }, status=status.HTTP_200_OK)

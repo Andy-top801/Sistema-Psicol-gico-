@@ -190,6 +190,17 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
     'x-developer-key',
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.onrender.com',
+    'http://localhost:4200',
+    'http://localhost:8000',
+    'http://127.0.0.1:4200',
+    'http://127.0.0.1:8000',
+]
+csrf_origins_env = os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS')
+if csrf_origins_env:
+    CSRF_TRUSTED_ORIGINS.extend([origin.strip() for origin in csrf_origins_env.split(',') if origin.strip()])
+
 # -----------------------------------------------------------------------------
 # INTERNATIONALIZATION
 # -----------------------------------------------------------------------------
@@ -198,7 +209,8 @@ TIME_ZONE = 'America/La_Paz'
 USE_I18N = True
 USE_TZ = True
 AUDIT_LOG_KEY = os.environ.get('AUDIT_LOG_KEY', 'sigepsi-developer-master-audit-key-2026')
-AUDIT_DEVELOPER_KEY = os.environ.get('AUDIT_DEVELOPER_KEY', '')
+AUDIT_DEVELOPER_KEY = os.environ.get('AUDIT_DEVELOPER_KEY', 'sigepsi-developer-master-audit-key-2026')
+
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'

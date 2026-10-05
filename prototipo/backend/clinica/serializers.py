@@ -518,6 +518,14 @@ class RespuestaPreConsultaSerializer(serializers.ModelSerializer):
         if formulario and respuestas_detalle is not None:
             attrs['respuestas_detalle'] = validar_respuestas_contra_esquema(formulario, respuestas_detalle)
 
+        if not attrs.get('nivel_urgencia_percibido'):
+            urg = self.initial_data.get('nivel_urgencia') or (respuestas_detalle or {}).get('nivel_malestar_emocional')
+            if urg is not None:
+                try:
+                    attrs['nivel_urgencia_percibido'] = int(urg)
+                except (ValueError, TypeError):
+                    pass
+
         # Validar consistencia si se incluye cita y paciente
         cita = attrs.get('cita')
         paciente = attrs.get('paciente')
@@ -533,7 +541,11 @@ class RespuestaPreConsultaSerializer(serializers.ModelSerializer):
         data['formulario_preguntas_total'] = len(instance.formulario.preguntas_schema) if (instance.formulario and instance.formulario.preguntas_schema) else 0
         data['completado'] = instance.estado in ('ENVIADO', 'REVISADO', 'ARCHIVADO')
         data['consentimiento_ia_procesamiento'] = True
+        data['prioridad'] = 'ALTA' if instance.tiene_urgencia_alta else 'NORMAL'
+        data['protocolo_urgencia'] = bool(instance.tiene_urgencia_alta)
+        data['status'] = instance.estado
         return data
+
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -917,8 +929,23 @@ class FirmaConsentimientoSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'consentimiento': {'required': False},
             'hash_sha256': {'required': False},
-            'firmado_por': {'required': False}
+            'firmado_por': {'required': False},
+            'paciente': {'required': False}
         }
+
+    def to_internal_value(self, data):
+        # Permitir resolución de paciente por id de Usuario si vino desde app móvil
+        mutable_data = data.copy() if hasattr(data, 'copy') else dict(data)
+        pac_val = mutable_data.get('paciente')
+        if pac_val:
+            try:
+                if not Paciente.objects.filter(id=pac_val).exists():
+                    pac_obj = Paciente.objects.filter(usuario_id=pac_val).first()
+                    if pac_obj:
+                        mutable_data['paciente'] = pac_obj.id
+            except Exception:
+                pass
+        return super().to_internal_value(mutable_data)
 
     def get_consentimiento_titulo(self, obj):
         return obj.consentimiento.titulo if obj.consentimiento else ""
@@ -941,11 +968,22 @@ class FirmaConsentimientoSerializer(serializers.ModelSerializer):
             attrs.pop('firma_imagen')
 
         paciente = attrs.get('paciente')
+        if not paciente:
+            request = self.context.get('request')
+            if request and getattr(request, 'user', None) and request.user.is_authenticated:
+                paciente = Paciente.objects.filter(usuario=request.user).first()
+                if paciente:
+                    attrs['paciente'] = paciente
+        if not attrs.get('paciente'):
+            raise serializers.ValidationError({"paciente": "Debe especificar el paciente o estar autenticado como tal."})
+
+        paciente = attrs['paciente']
         es_menor = attrs.get('es_menor_edad', False)
 
         # Detectar menor de 18 años para tutores legales (HU-31 Criterio b)
         if paciente:
             edad = paciente.edad
+
             if edad is None and paciente.fecha_nacimiento:
                 hoy = timezone.localdate()
                 fn = paciente.fecha_nacimiento
@@ -1021,15 +1059,22 @@ class DerivacionCasoSerializer(serializers.ModelSerializer):
         return attrs
 
     def get_psicologo_emisor_nombre(self, obj):
+        if isinstance(obj, dict):
+            return obj.get('psicologo_emisor_nombre', '')
         if obj.psicologo_emisor and obj.psicologo_emisor.usuario:
             return f"Lic. {obj.psicologo_emisor.usuario.nombre} {obj.psicologo_emisor.usuario.apellido}"
         return ""
 
     def get_historia_codigo(self, obj):
+        if isinstance(obj, dict):
+            h = obj.get('historia_clinica')
+            return getattr(h, 'codigo_historia', '') if h else ""
         return obj.historia_clinica.codigo_historia if obj.historia_clinica else ""
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
+        if isinstance(instance, dict):
+            return data
         if instance.historia_clinica and instance.historia_clinica.paciente and instance.historia_clinica.paciente.usuario:
             u = instance.historia_clinica.paciente.usuario
             data['paciente_nombre'] = f"{u.nombre} {u.apellido}"

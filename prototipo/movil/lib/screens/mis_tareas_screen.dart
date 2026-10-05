@@ -62,13 +62,17 @@ class _MisTareasScreenState extends State<MisTareasScreen> with TickerProviderSt
     }
   }
 
-  int get _completadas => _tareas.where((t) => (t['estado'] ?? '').toString().toUpperCase() == 'COMPLETADA').length;
+  int get _completadas => _tareas.where((t) {
+    final st = (t['estado'] ?? '').toString().toUpperCase();
+    return st == 'COMPLETADA' || st == 'COMPLETADA_CON_RETRASO';
+  }).length;
   int get _total => _tareas.length;
   double get _porcentaje => _total > 0 ? _completadas / _total : 0;
 
   Color _getEstadoColor(String estado) {
     switch (estado.toUpperCase()) {
       case 'COMPLETADA': return AppTheme.success;
+      case 'COMPLETADA_CON_RETRASO': return const Color(0xFFF97316);
       case 'PENDIENTE': return AppTheme.warning;
       case 'EN_PROGRESO': return AppTheme.primary;
       case 'VENCIDA': return AppTheme.danger;
@@ -79,12 +83,14 @@ class _MisTareasScreenState extends State<MisTareasScreen> with TickerProviderSt
   String _getEstadoLabel(String estado) {
     switch (estado.toUpperCase()) {
       case 'COMPLETADA': return 'Completada';
+      case 'COMPLETADA_CON_RETRASO': return 'Completada con retraso';
       case 'PENDIENTE': return 'Pendiente';
       case 'EN_PROGRESO': return 'En Progreso';
       case 'VENCIDA': return 'Vencida';
       default: return estado;
     }
   }
+
 
   IconData _getCategoriaIcon(String? categoria) {
     switch ((categoria ?? '').toUpperCase()) {
@@ -271,14 +277,28 @@ class _MisTareasScreenState extends State<MisTareasScreen> with TickerProviderSt
                               if (context.mounted) {
                                 Navigator.pop(context);
                                 if (result['success'] == true) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('✅ Reporte enviado exitosamente'),
-                                      backgroundColor: AppTheme.success,
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
-                                  );
+                                  final data = result['data'] is Map ? result['data'] as Map<String, dynamic> : <String, dynamic>{};
+                                  final bool warningRetraso = data['warning_retraso'] == true ||
+                                      (data['estado'] ?? '').toString().toUpperCase() == 'COMPLETADA_CON_RETRASO';
+                                  if (warningRetraso) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('⚠️ Tarea entregada fuera de plazo (completada con retraso)'),
+                                        backgroundColor: Color(0xFFF97316),
+                                        behavior: SnackBarBehavior.floating,
+                                      ),
+                                    );
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('✅ Reporte enviado exitosamente (100% completado)'),
+                                        backgroundColor: AppTheme.success,
+                                        behavior: SnackBarBehavior.floating,
+                                      ),
+                                    );
+                                  }
                                   _loadTareas(); // Refresh list
+
                                 } else {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
@@ -471,7 +491,8 @@ class _MisTareasScreenState extends State<MisTareasScreen> with TickerProviderSt
 
   Widget _buildTareaCard(Map<String, dynamic> tarea) {
     final estado = (tarea['estado'] ?? 'PENDIENTE').toString().toUpperCase();
-    final isCompletada = estado == 'COMPLETADA';
+    final isCompletada = estado == 'COMPLETADA' || estado == 'COMPLETADA_CON_RETRASO';
+
     final categoria = tarea['categoria']?.toString() ?? '';
     final categoriaColor = _getCategoriaColor(categoria);
     final estadoColor = _getEstadoColor(estado);

@@ -39,6 +39,8 @@ services:
         value: "*"
       - key: PORT
         value: "10000"
+      - key: CHATBOT_API_URL
+        value: https://antidino-iacupficct.hf.space/api/v1/chatbot/mensaje/
 
   # ----------------------------------------------------------------------------
   # FRONTEND SERVICE (Angular 17 SPA + Nginx Reverse Proxy)

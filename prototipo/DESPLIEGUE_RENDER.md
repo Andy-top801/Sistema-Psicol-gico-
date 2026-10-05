@@ -98,7 +98,8 @@ Si prefieres configurar cada componente paso a paso desde la interfaz de Render:
    - Esperar la disponibilidad de PostgreSQL.
    - Ejecutar `migrate_schemas` (esquema public y tenants).
    - Sembrar el tenant `public` y el SuperAdmin `beto.caleb.delgado.rojas@gmail.com`.
-   - Sembrar especialidades clínicas, psicólogos y pacientes demo.
+   - Sembrar especialidades clínicas, psicólogos y pacientes demo (Sprint 1).
+   - Sembrar datos clínicos avanzados Sprint 2 (Pre-consultas, Romero AI, SOAP, tareas, consentimientos con firma digital, altas, derivaciones, bitácora Fernet) en todos los tenants.
    - Recopilar estáticos (`collectstatic`) con WhiteNoise.
    - Iniciar Gunicorn en el puerto 10000.
 7. Guarda la URL pública del backend (ej: `https://sigepsi-backend.onrender.com`).

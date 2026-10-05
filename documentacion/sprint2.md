@@ -319,7 +319,7 @@ La estimación se realizó mediante **Planning Poker** (Fibonacci: 1, 2, 3, 5, 8
 
 #### Diagrama de Casos de Uso del Sprint 2 (Modelo Incremental Acumulado)
 
-![Diagrama de Casos de Uso](./imagenes/Diagrama de Casos de Uso - Sprint 2 Incremental Acumulado.bmp)
+![Diagrama de Casos de Uso](./imagenes/Diagrama%20de%20Casos%20de%20Uso%20-%20Sprint%202%20Incremental%20Acumulado.png)
 
 ```plantuml
 @startuml
@@ -2635,6 +2635,721 @@ end
 deactivate ctr
 deactivate iu_in
 deactivate sa
+@enduml
+```
+
+#### 6.2.1.3.2 Modelado Estático de Análisis (Diagramas de Clases de Análisis / Robustez BCE)
+
+En estricta conformidad con el marco metodológico del Análisis y Diseño Orientado a Objetos (metodología RUP / Jacobson y directrices de la cátedra de Sistemas de Información II bajo el estándar **UML 2.5+**), los **Diagramas de Clases de Análisis** formalizan la vista estática de clases participantes en la realización de cada caso de uso clínico y de soporte técnico. Siguiendo el estándar de entrega académica requerido:
+
+* **Marco de Interacción (`sd diagrama de clase nalisis`):** Cada caso de uso delimita su contexto mediante un marco formal de interacción UML 2.5+.
+* **Actor (Monigote / Stick Figure):** Representa el actor humano o rol institucional iniciador de la interacción a la izquierda.
+* **Clase de Interfaz (`CU...::UI_...`):** Representada como clase rectangular con prefijo del caso de uso. Al modelar la vista de presentación, no expone atributos de persistencia, sino exclusivamente los métodos de interacción con el usuario (`crear(): void`, `editar(): void`, `eliminar(): void`, `mostrar(): void`).
+* **Clase Controladora (`CU...::...Controller`):** Representada como clase rectangular con prefijo del caso de uso. Al modelar la lógica de control del caso de uso, no posee atributos de estado interno de dominio, sino los métodos de control y despacho de acciones (`destroy(): void`, `index(): void`, `store(): void`, `update(): void`).
+* **Clase Entidad (`CU...::...`):** Representada como clase rectangular con dos compartimentos: el compartimento superior con sus atributos privados de persistencia (`- atributo: tipo`) y el compartimento inferior con las operaciones básicas de persistencia (`create(): void`, `delete(): void`, `get(): void`, `update(): void`).
+* **Relaciones:** Líneas de asociación simples horizontales (`Actor -- UI -- Controller -- Entidad`).
+
+##### Diagrama de Clases de Análisis CU14: Ficha Previa de Intake Digital
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 2* → *12. Diagramas de Clases de Análisis (BCE) - Sprint 2* → *CU14 - Clases de Análisis: Intake Digital* (**Diagrama: `diagrama de clase nalisis`, ID: 213**).
+* **Participantes:**
+  * **Actor:** `Paciente`
+  * **Interfaz (`UI`):** `CU14 Intake Digital::UI_FormularioPreConsulta` (solo métodos: `crear()`, `editar()`, `eliminar()`, `mostrar()`)
+  * **Controlador (`Controller`):** `CU14 Intake Digital::IntakeController` (solo métodos: `destroy()`, `index()`, `store()`, `update()`)
+  * **Entidad (`Entity`):** `CU14 Intake Digital::RespuestaPreConsulta` (atributos de dominio + métodos CRUD)
+
+![Clases de Análisis CU14](./imagenes/diagrama_clases_analisis_cu14.png)
+
+```plantuml
+@startuml
+allowmixing
+left to right direction
+skinparam shadowing false
+skinparam roundcorner 6
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+hide circle
+hide empty fields
+
+skinparam class {
+    BackgroundColor #FFFDF0
+    BorderColor #9C6500
+    ArrowColor #2C3E50
+}
+skinparam frame {
+    BorderColor #2C3E50
+    BackgroundColor white
+}
+
+frame "sd diagrama de clase nalisis" {
+    actor "Paciente" as act
+    class "CU14 Intake Digital::UI_FormularioPreConsulta" as UI {
+        + crear(): void
+        + editar(): void
+        + eliminar(): void
+        + mostrar(): void
+    }
+    class "CU14 Intake Digital::IntakeController" as Ctrl {
+        + destroy(): void
+        + index(): void
+        + store(): void
+        + update(): void
+    }
+    class "CU14 Intake Digital::RespuestaPreConsulta" as Ent {
+        - sintomas: string
+        - escala_malestar: int
+        - antecedentes: string
+        - prioridad: string
+        + create(): void
+        + delete(): void
+        + get(): void
+        + update(): void
+    }
+
+    act -- UI
+    UI -- Ctrl
+    Ctrl -- Ent
+}
+@enduml
+```
+
+##### Diagrama de Clases de Análisis CU15: Historia Clínica y Control RBAC
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 2* → *12. Diagramas de Clases de Análisis (BCE) - Sprint 2* → *CU15 - Clases de Análisis: Historia Clínica y RBAC* (**Diagrama: `diagrama de clase nalisis`, ID: 214**).
+* **Participantes:**
+  * **Actor:** `Psicologo Tratante`
+  * **Interfaz (`UI`):** `CU15 Historia Clinica::UI_HistoriaClinica` (solo métodos: `crear()`, `editar()`, `eliminar()`, `mostrar()`)
+  * **Controlador (`Controller`):** `CU15 Historia Clinica::HistoriaClinicaController` (solo métodos: `destroy()`, `index()`, `store()`, `update()`)
+  * **Entidad (`Entity`):** `CU15 Historia Clinica::HistoriaClinica` (atributos de dominio + métodos CRUD)
+
+![Clases de Análisis CU15](./imagenes/diagrama_clases_analisis_cu15.png)
+
+```plantuml
+@startuml
+allowmixing
+left to right direction
+skinparam shadowing false
+skinparam roundcorner 6
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+hide circle
+hide empty fields
+
+skinparam class {
+    BackgroundColor #FFFDF0
+    BorderColor #9C6500
+    ArrowColor #2C3E50
+}
+skinparam frame {
+    BorderColor #2C3E50
+    BackgroundColor white
+}
+
+frame "sd diagrama de clase nalisis" {
+    actor "Psicologo Tratante" as act
+    class "CU15 Historia Clinica::UI_HistoriaClinica" as UI {
+        + crear(): void
+        + editar(): void
+        + eliminar(): void
+        + mostrar(): void
+    }
+    class "CU15 Historia Clinica::HistoriaClinicaController" as Ctrl {
+        + destroy(): void
+        + index(): void
+        + store(): void
+        + update(): void
+    }
+    class "CU15 Historia Clinica::HistoriaClinica" as Ent {
+        - diagnostico_cie10: string
+        - motivo_consulta: string
+        - estado: string
+        - fecha_apertura: string
+        + create(): void
+        + delete(): void
+        + get(): void
+        + update(): void
+    }
+
+    act -- UI
+    UI -- Ctrl
+    Ctrl -- Ent
+}
+@enduml
+```
+
+##### Diagrama de Clases de Análisis CU16: Notas SOAP y Autoguardado Reactivo
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 2* → *12. Diagramas de Clases de Análisis (BCE) - Sprint 2* → *CU16 - Clases de Análisis: Notas SOAP* (**Diagrama: `diagrama de clase nalisis`, ID: 215**).
+* **Participantes:**
+  * **Actor:** `Psicologo Tratante`
+  * **Interfaz (`UI`):** `CU16 Notas SOAP::UI_EditorNotasSOAP` (solo métodos: `crear()`, `editar()`, `eliminar()`, `mostrar()`)
+  * **Controlador (`Controller`):** `CU16 Notas SOAP::NotaSOAPController` (solo métodos: `destroy()`, `index()`, `store()`, `update()`)
+  * **Entidad (`Entity`):** `CU16 Notas SOAP::NotaSOAP` (atributos de dominio + métodos CRUD)
+
+![Clases de Análisis CU16](./imagenes/diagrama_clases_analisis_cu16.png)
+
+```plantuml
+@startuml
+allowmixing
+left to right direction
+skinparam shadowing false
+skinparam roundcorner 6
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+hide circle
+hide empty fields
+
+skinparam class {
+    BackgroundColor #FFFDF0
+    BorderColor #9C6500
+    ArrowColor #2C3E50
+}
+skinparam frame {
+    BorderColor #2C3E50
+    BackgroundColor white
+}
+
+frame "sd diagrama de clase nalisis" {
+    actor "Psicologo Tratante" as act
+    class "CU16 Notas SOAP::UI_EditorNotasSOAP" as UI {
+        + crear(): void
+        + editar(): void
+        + eliminar(): void
+        + mostrar(): void
+    }
+    class "CU16 Notas SOAP::NotaSOAPController" as Ctrl {
+        + destroy(): void
+        + index(): void
+        + store(): void
+        + update(): void
+    }
+    class "CU16 Notas SOAP::NotaSOAP" as Ent {
+        - subjetivo: string
+        - objetivo: string
+        - analisis: string
+        - plan: string
+        + create(): void
+        + delete(): void
+        + get(): void
+        + update(): void
+    }
+
+    act -- UI
+    UI -- Ctrl
+    Ctrl -- Ent
+}
+@enduml
+```
+
+##### Diagrama de Clases de Análisis CU17: Tareas Terapéuticas y Feedback
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 2* → *12. Diagramas de Clases de Análisis (BCE) - Sprint 2* → *CU17 - Clases de Análisis: Tareas Terapéuticas* (**Diagrama: `diagrama de clase nalisis`, ID: 216**).
+* **Participantes:**
+  * **Actor:** `Paciente`
+  * **Interfaz (`UI`):** `CU17 Tareas Terapeuticas::UI_GestionTareas` (solo métodos: `crear()`, `editar()`, `eliminar()`, `mostrar()`)
+  * **Controlador (`Controller`):** `CU17 Tareas Terapeuticas::TareaTerapeuticaController` (solo métodos: `destroy()`, `index()`, `store()`, `update()`)
+  * **Entidad (`Entity`):** `CU17 Tareas Terapeuticas::TareaTerapeutica` (atributos de dominio + métodos CRUD)
+
+![Clases de Análisis CU17](./imagenes/diagrama_clases_analisis_cu17.png)
+
+```plantuml
+@startuml
+allowmixing
+left to right direction
+skinparam shadowing false
+skinparam roundcorner 6
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+hide circle
+hide empty fields
+
+skinparam class {
+    BackgroundColor #FFFDF0
+    BorderColor #9C6500
+    ArrowColor #2C3E50
+}
+skinparam frame {
+    BorderColor #2C3E50
+    BackgroundColor white
+}
+
+frame "sd diagrama de clase nalisis" {
+    actor "Paciente" as act
+    class "CU17 Tareas Terapeuticas::UI_GestionTareas" as UI {
+        + crear(): void
+        + editar(): void
+        + eliminar(): void
+        + mostrar(): void
+    }
+    class "CU17 Tareas Terapeuticas::TareaTerapeuticaController" as Ctrl {
+        + destroy(): void
+        + index(): void
+        + store(): void
+        + update(): void
+    }
+    class "CU17 Tareas Terapeuticas::TareaTerapeutica" as Ent {
+        - titulo: string
+        - descripcion: string
+        - estado: string
+        - fecha_limite: string
+        + create(): void
+        + delete(): void
+        + get(): void
+        + update(): void
+    }
+
+    act -- UI
+    UI -- Ctrl
+    Ctrl -- Ent
+}
+@enduml
+```
+
+##### Diagrama de Clases de Análisis CU18: Consentimiento Informado y Firma Digital
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 2* → *12. Diagramas de Clases de Análisis (BCE) - Sprint 2* → *CU18 - Clases de Análisis: Consentimiento Informado* (**Diagrama: `diagrama de clase nalisis`, ID: 217**).
+* **Participantes:**
+  * **Actor:** `Paciente`
+  * **Interfaz (`UI`):** `CU18 Consentimiento Informado::UI_Consentimiento` (solo métodos: `crear()`, `editar()`, `eliminar()`, `mostrar()`)
+  * **Controlador (`Controller`):** `CU18 Consentimiento Informado::ConsentimientoController` (solo métodos: `destroy()`, `index()`, `store()`, `update()`)
+  * **Entidad (`Entity`):** `CU18 Consentimiento Informado::ConsentimientoInformado` (atributos de dominio + métodos CRUD)
+
+![Clases de Análisis CU18](./imagenes/diagrama_clases_analisis_cu18.png)
+
+```plantuml
+@startuml
+allowmixing
+left to right direction
+skinparam shadowing false
+skinparam roundcorner 6
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+hide circle
+hide empty fields
+
+skinparam class {
+    BackgroundColor #FFFDF0
+    BorderColor #9C6500
+    ArrowColor #2C3E50
+}
+skinparam frame {
+    BorderColor #2C3E50
+    BackgroundColor white
+}
+
+frame "sd diagrama de clase nalisis" {
+    actor "Paciente" as act
+    class "CU18 Consentimiento Informado::UI_Consentimiento" as UI {
+        + crear(): void
+        + editar(): void
+        + eliminar(): void
+        + mostrar(): void
+    }
+    class "CU18 Consentimiento Informado::ConsentimientoController" as Ctrl {
+        + destroy(): void
+        + index(): void
+        + store(): void
+        + update(): void
+    }
+    class "CU18 Consentimiento Informado::ConsentimientoInformado" as Ent {
+        - hash_sha256: string
+        - firmado: boolean
+        - ip_firmante: string
+        - timestamp: string
+        + create(): void
+        + delete(): void
+        + get(): void
+        + update(): void
+    }
+
+    act -- UI
+    UI -- Ctrl
+    Ctrl -- Ent
+}
+@enduml
+```
+
+##### Diagrama de Clases de Análisis CU19: Cierre de Caso y Derivación Psiquiátrica
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 2* → *12. Diagramas de Clases de Análisis (BCE) - Sprint 2* → *CU19 - Clases de Análisis: Derivación Psiquiátrica* (**Diagrama: `diagrama de clase nalisis`, ID: 218**).
+* **Participantes:**
+  * **Actor:** `Psicologo Tratante`
+  * **Interfaz (`UI`):** `CU19 Derivacion Psiquiatrica::UI_DerivacionPsiquiatrica` (solo métodos: `crear()`, `editar()`, `eliminar()`, `mostrar()`)
+  * **Controlador (`Controller`):** `CU19 Derivacion Psiquiatrica::DerivacionController` (solo métodos: `destroy()`, `index()`, `store()`, `update()`)
+  * **Entidad (`Entity`):** `CU19 Derivacion Psiquiatrica::DerivacionPsiquiatrica` (atributos de dominio + métodos CRUD)
+
+![Clases de Análisis CU19](./imagenes/diagrama_clases_analisis_cu19.png)
+
+```plantuml
+@startuml
+allowmixing
+left to right direction
+skinparam shadowing false
+skinparam roundcorner 6
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+hide circle
+hide empty fields
+
+skinparam class {
+    BackgroundColor #FFFDF0
+    BorderColor #9C6500
+    ArrowColor #2C3E50
+}
+skinparam frame {
+    BorderColor #2C3E50
+    BackgroundColor white
+}
+
+frame "sd diagrama de clase nalisis" {
+    actor "Psicologo Tratante" as act
+    class "CU19 Derivacion Psiquiatrica::UI_DerivacionPsiquiatrica" as UI {
+        + crear(): void
+        + editar(): void
+        + eliminar(): void
+        + mostrar(): void
+    }
+    class "CU19 Derivacion Psiquiatrica::DerivacionController" as Ctrl {
+        + destroy(): void
+        + index(): void
+        + store(): void
+        + update(): void
+    }
+    class "CU19 Derivacion Psiquiatrica::DerivacionPsiquiatrica" as Ent {
+        - motivo_derivacion: string
+        - nivel_urgencia: string
+        - estado: string
+        - medico_receptor: string
+        + create(): void
+        + delete(): void
+        + get(): void
+        + update(): void
+    }
+
+    act -- UI
+    UI -- Ctrl
+    Ctrl -- Ent
+}
+@enduml
+```
+
+##### Diagrama de Clases de Análisis CU20: Chatbot de Orientación Clínica
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 2* → *12. Diagramas de Clases de Análisis (BCE) - Sprint 2* → *CU20 - Clases de Análisis: Chatbot y Escalamiento* (**Diagrama: `diagrama de clase nalisis`, ID: 219**).
+* **Participantes:**
+  * **Actor:** `Paciente`
+  * **Interfaz (`UI`):** `CU20 Chatbot Orientacion::UI_ChatbotClinico` (solo métodos: `crear()`, `editar()`, `eliminar()`, `mostrar()`)
+  * **Controlador (`Controller`):** `CU20 Chatbot Orientacion::ChatbotController` (solo métodos: `destroy()`, `index()`, `store()`, `update()`)
+  * **Entidad (`Entity`):** `CU20 Chatbot Orientacion::MensajeChat` (atributos de dominio + métodos CRUD)
+
+![Clases de Análisis CU20](./imagenes/diagrama_clases_analisis_cu20.png)
+
+```plantuml
+@startuml
+allowmixing
+left to right direction
+skinparam shadowing false
+skinparam roundcorner 6
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+hide circle
+hide empty fields
+
+skinparam class {
+    BackgroundColor #FFFDF0
+    BorderColor #9C6500
+    ArrowColor #2C3E50
+}
+skinparam frame {
+    BorderColor #2C3E50
+    BackgroundColor white
+}
+
+frame "sd diagrama de clase nalisis" {
+    actor "Paciente" as act
+    class "CU20 Chatbot Orientacion::UI_ChatbotClinico" as UI {
+        + crear(): void
+        + editar(): void
+        + eliminar(): void
+        + mostrar(): void
+    }
+    class "CU20 Chatbot Orientacion::ChatbotController" as Ctrl {
+        + destroy(): void
+        + index(): void
+        + store(): void
+        + update(): void
+    }
+    class "CU20 Chatbot Orientacion::MensajeChat" as Ent {
+        - contenido: string
+        - remitente: string
+        - riesgo_detectado: boolean
+        - timestamp: string
+        + create(): void
+        + delete(): void
+        + get(): void
+        + update(): void
+    }
+
+    act -- UI
+    UI -- Ctrl
+    Ctrl -- Ent
+}
+@enduml
+```
+
+##### Diagrama de Clases de Análisis HU-35: Pasarela Ética de IA y Filtro de Seguridad
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 2* → *12. Diagramas de Clases de Análisis (BCE) - Sprint 2* → *HU-35 - Clases de Análisis: Pasarela Ética de IA* (**Diagrama: `diagrama de clase nalisis`, ID: 220**).
+* **Participantes:**
+  * **Actor:** `Psicologo Tratante`
+  * **Interfaz (`UI`):** `HU35 Pasarela IA::UI_AsistenteIA` (solo métodos: `crear()`, `editar()`, `eliminar()`, `mostrar()`)
+  * **Controlador (`Controller`):** `HU35 Pasarela IA::PasarelaIAController` (solo métodos: `destroy()`, `index()`, `store()`, `update()`)
+  * **Entidad (`Entity`):** `HU35 Pasarela IA::PeticionIA` (atributos de dominio + métodos CRUD)
+
+![Clases de Análisis HU-35](./imagenes/diagrama_clases_analisis_hu35.png)
+
+```plantuml
+@startuml
+allowmixing
+left to right direction
+skinparam shadowing false
+skinparam roundcorner 6
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+hide circle
+hide empty fields
+
+skinparam class {
+    BackgroundColor #FFFDF0
+    BorderColor #9C6500
+    ArrowColor #2C3E50
+}
+skinparam frame {
+    BorderColor #2C3E50
+    BackgroundColor white
+}
+
+frame "sd diagrama de clase nalisis" {
+    actor "Psicologo Tratante" as act
+    class "HU35 Pasarela IA::UI_AsistenteIA" as UI {
+        + crear(): void
+        + editar(): void
+        + eliminar(): void
+        + mostrar(): void
+    }
+    class "HU35 Pasarela IA::PasarelaIAController" as Ctrl {
+        + destroy(): void
+        + index(): void
+        + store(): void
+        + update(): void
+    }
+    class "HU35 Pasarela IA::PeticionIA" as Ent {
+        - prompt_sanitizado: string
+        - respuesta_validada: string
+        - filtro_etico_ok: boolean
+        - tokens_usados: int
+        + create(): void
+        + delete(): void
+        + get(): void
+        + update(): void
+    }
+
+    act -- UI
+    UI -- Ctrl
+    Ctrl -- Ent
+}
+@enduml
+```
+
+##### Diagrama de Clases de Análisis CU5: Bitácora Confidencial en Disco Cifrado
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 2* → *12. Diagramas de Clases de Análisis (BCE) - Sprint 2* → *CU5 - Clases de Análisis: Bitácora Confidencial* (**Diagrama: `diagrama de clase nalisis`, ID: 221**).
+* **Participantes:**
+  * **Actor:** `Administrador de Seguridad`
+  * **Interfaz (`UI`):** `CU5 Bitacora Confidencial::UI_BitacoraSeguridad` (solo métodos: `crear()`, `editar()`, `eliminar()`, `mostrar()`)
+  * **Controlador (`Controller`):** `CU5 Bitacora Confidencial::BitacoraController` (solo métodos: `destroy()`, `index()`, `store()`, `update()`)
+  * **Entidad (`Entity`):** `CU5 Bitacora Confidencial::RegistroBitacora` (atributos de dominio + métodos CRUD)
+
+![Clases de Análisis CU5](./imagenes/diagrama_clases_analisis_cu5.png)
+
+```plantuml
+@startuml
+allowmixing
+left to right direction
+skinparam shadowing false
+skinparam roundcorner 6
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+hide circle
+hide empty fields
+
+skinparam class {
+    BackgroundColor #FFFDF0
+    BorderColor #9C6500
+    ArrowColor #2C3E50
+}
+skinparam frame {
+    BorderColor #2C3E50
+    BackgroundColor white
+}
+
+frame "sd diagrama de clase nalisis" {
+    actor "Administrador de Seguridad" as act
+    class "CU5 Bitacora Confidencial::UI_BitacoraSeguridad" as UI {
+        + crear(): void
+        + editar(): void
+        + eliminar(): void
+        + mostrar(): void
+    }
+    class "CU5 Bitacora Confidencial::BitacoraController" as Ctrl {
+        + destroy(): void
+        + index(): void
+        + store(): void
+        + update(): void
+    }
+    class "CU5 Bitacora Confidencial::RegistroBitacora" as Ent {
+        - evento: string
+        - usuario_id: string
+        - payload_cifrado: string
+        - hash_integridad: string
+        + create(): void
+        + delete(): void
+        + get(): void
+        + update(): void
+    }
+
+    act -- UI
+    UI -- Ctrl
+    Ctrl -- Ent
+}
+@enduml
+```
+
+##### Diagrama de Clases de Análisis CU25: Reportes Personalizados QBE y Voz
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 2* → *12. Diagramas de Clases de Análisis (BCE) - Sprint 2* → *CU25 - Clases de Análisis: Reportes Personalizados QBE y Voz* (**Diagrama: `diagrama de clase nalisis`, ID: 222**).
+* **Participantes:**
+  * **Actor:** `Psicologo Tratante`
+  * **Interfaz (`UI`):** `CU25 Reportes QBE::UI_GeneradorReportes` (solo métodos: `crear()`, `editar()`, `eliminar()`, `mostrar()`)
+  * **Controlador (`Controller`):** `CU25 Reportes QBE::ReporteController` (solo métodos: `destroy()`, `index()`, `store()`, `update()`)
+  * **Entidad (`Entity`):** `CU25 Reportes QBE::ReporteClinico` (atributos de dominio + métodos CRUD)
+
+![Clases de Análisis CU25](./imagenes/diagrama_clases_analisis_cu25.png)
+
+```plantuml
+@startuml
+allowmixing
+left to right direction
+skinparam shadowing false
+skinparam roundcorner 6
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+hide circle
+hide empty fields
+
+skinparam class {
+    BackgroundColor #FFFDF0
+    BorderColor #9C6500
+    ArrowColor #2C3E50
+}
+skinparam frame {
+    BorderColor #2C3E50
+    BackgroundColor white
+}
+
+frame "sd diagrama de clase nalisis" {
+    actor "Psicologo Tratante" as act
+    class "CU25 Reportes QBE::UI_GeneradorReportes" as UI {
+        + crear(): void
+        + editar(): void
+        + eliminar(): void
+        + mostrar(): void
+    }
+    class "CU25 Reportes QBE::ReporteController" as Ctrl {
+        + destroy(): void
+        + index(): void
+        + store(): void
+        + update(): void
+    }
+    class "CU25 Reportes QBE::ReporteClinico" as Ent {
+        - formato: string
+        - parametros_filtro: string
+        - ruta_archivo: string
+        - estado: string
+        + create(): void
+        + delete(): void
+        + get(): void
+        + update(): void
+    }
+
+    act -- UI
+    UI -- Ctrl
+    Ctrl -- Ent
+}
+@enduml
+```
+
+##### Diagrama de Clases de Análisis CU28: Copias de Seguridad Cifradas y Restauración
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 2* → *12. Diagramas de Clases de Análisis (BCE) - Sprint 2* → *CU28 - Clases de Análisis: Copias de Seguridad y Restauración* (**Diagrama: `diagrama de clase nalisis`, ID: 223**).
+* **Participantes:**
+  * **Actor:** `Administrador del Sistema`
+  * **Interfaz (`UI`):** `CU28 Copias Seguridad::UI_GestionBackups` (solo métodos: `crear()`, `editar()`, `eliminar()`, `mostrar()`)
+  * **Controlador (`Controller`):** `CU28 Copias Seguridad::BackupController` (solo métodos: `destroy()`, `index()`, `store()`, `update()`)
+  * **Entidad (`Entity`):** `CU28 Copias Seguridad::CopiaSeguridad` (atributos de dominio + métodos CRUD)
+
+![Clases de Análisis CU28](./imagenes/diagrama_clases_analisis_cu28.png)
+
+```plantuml
+@startuml
+allowmixing
+left to right direction
+skinparam shadowing false
+skinparam roundcorner 6
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+hide circle
+hide empty fields
+
+skinparam class {
+    BackgroundColor #FFFDF0
+    BorderColor #9C6500
+    ArrowColor #2C3E50
+}
+skinparam frame {
+    BorderColor #2C3E50
+    BackgroundColor white
+}
+
+frame "sd diagrama de clase nalisis" {
+    actor "Administrador del Sistema" as act
+    class "CU28 Copias Seguridad::UI_GestionBackups" as UI {
+        + crear(): void
+        + editar(): void
+        + eliminar(): void
+        + mostrar(): void
+    }
+    class "CU28 Copias Seguridad::BackupController" as Ctrl {
+        + destroy(): void
+        + index(): void
+        + store(): void
+        + update(): void
+    }
+    class "CU28 Copias Seguridad::CopiaSeguridad" as Ent {
+        - checksum_sha256: string
+        - estado_cifrado: string
+        - tamano_mb: int
+        - timestamp: string
+        + create(): void
+        + delete(): void
+        + get(): void
+        + update(): void
+    }
+
+    act -- UI
+    UI -- Ctrl
+    Ctrl -- Ent
+}
 @enduml
 ```
 

@@ -148,12 +148,7 @@ class _ConsentimientoFirmaScreenState extends State<ConsentimientoFirmaScreen>
     // Buscar paciente_id del usuario actual
     String? pacienteId;
     if (user != null) {
-      // Obtener perfil paciente
-      try {
-        final clinicaService = _sprint2Service;
-        // Try to get patient ID from the user
-        pacienteId = user.id;
-      } catch (_) {}
+      pacienteId = user.id;
     }
 
     final data = {

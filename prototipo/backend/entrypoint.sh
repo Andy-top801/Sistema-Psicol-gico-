@@ -47,6 +47,9 @@ python manage.py seed_data || echo "Nota: seed_data ya fue ejecutado previamente
 echo "==> Sembrando datos clínicos Sprint 1 (Especialidades, psicólogos, pacientes)..."
 python manage.py seed_sprint1 || echo "Nota: seed_sprint1 ya fue ejecutado previamente."
 
+echo "==> Sembrando datos clínicos Sprint 2 (CU14-CU20, HU-23 a HU-37) en todos los tenants..."
+python manage.py seed_sprint2 --tenant all || echo "Nota: seed_sprint2 ya fue ejecutado previamente."
+
 echo "==> Recopilando archivos estáticos para WhiteNoise..."
 python manage.py collectstatic --noinput
 

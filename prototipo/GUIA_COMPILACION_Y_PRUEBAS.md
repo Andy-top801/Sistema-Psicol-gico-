@@ -1,4 +1,4 @@
-# 📘 Guía de Compilación, Ejecución y Pruebas — SIGEPSI Prototipo (Sprint 0 y Sprint 1)
+# 📘 Guía de Compilación, Ejecución y Pruebas — SIGEPSI Prototipo (Sprint 0, Sprint 1 y Sprint 2)
 
 > **Proyecto:** SIGEPSI — Sistema de Gestión para Centros Psicológicos  
 > **Arquitectura:** Backend (Django REST + Multi-Tenant PostgreSQL) · Web (Angular 17) · Móvil (Flutter)  
@@ -199,7 +199,7 @@ python manage.py migrate_schemas --tenant
 
 > **Nota:** `django-tenants` reemplaza el comando `migrate` estándar con `migrate_schemas`.
 
-### 3.5 Sembrar Datos de Prueba (Sprint 0 y Sprint 1)
+### 3.5 Sembrar Datos de Prueba (Sprint 0, Sprint 1 y Sprint 2)
 
 ```powershell
 # 1. Sembrar estructura institucional base (Sprint 0: tenants, roles, usuarios)
@@ -207,19 +207,28 @@ python manage.py seed_data
 
 # 2. Sembrar datos clínicos y agenda operativa (Sprint 1: especialidades, psicólogos, pacientes, citas)
 python manage.py seed_sprint1
+
+# 3. Sembrar datos clínicos avanzados Sprint 2 en todos los centros/tenants (HU-23 a HU-37)
+python manage.py seed_sprint2 --tenant all
 ```
 
 Estos comandos crean automáticamente:
 - ✅ **Tenant `public`** con dominio `localhost`
 - ✅ **SuperAdmin Global:** `beto.caleb.delgado.rojas@gmail.com` / `Admin1234*`
-- ✅ **Centro "Esperanza"** (tenant: `centro_esperanza`) y **Centro "MenteSana"** (tenant: `mentesana`)
+- ✅ **Centros Psicológicos Multi-Tenant:** `centro_esperanza`, `mentesana`, `dr_roberto`, `albertokl`, etc.
 - ✅ **Roles y Permisos RBAC** completos
-- ✅ **5 Especialidades Clínicas** (Cognitivo-Conductual, Clínica, Neuropsicología, etc.)
-- ✅ **Psicólogos con perfil y colegiatura:** `carlos.mendoza@centroesperanza.com` / `Psicologo123*`
-- ✅ **Franjas horarias semanales de atención** configuradas
-- ✅ **Pacientes demo** con expedientes (`EXP-YYYYMM-XXXX`) y tutores legales para menores
+- ✅ **Especialidades Clínicas** (Cognitivo-Conductual, Clínica, Neuropsicología, etc.)
+- ✅ **Psicólogos y Franjas Horarias** de atención
+- ✅ **Pacientes demo** con expedientes (`EXP-YYYYMM-XXXX`) y tutores
 - ✅ **Citas médicas con estados:** `PROGRAMADA`, `CONFIRMADA`, `REALIZADA`, `CANCELADA`
-- ✅ **Salas WebRTC Jitsi Meet** asociadas y **Alertas Clínicas** tempranas
+- ✅ **Pre-consultas / Triage Clínico (HU-23/24):** Respuestas a cuestionarios y sugerencias de Romero AI (HU-35)
+- ✅ **Historias Clínicas y Códigos CIE-10 (HU-25/26):** F41.1, F32.1 con diagnósticos formales
+- ✅ **Notas de Evolución SOAP (HU-27/28):** Subjetivo, Objetivo, Análisis, Plan inmutables
+- ✅ **Tareas Terapéuticas inter-sesión (HU-29/30):** Con estados, entregas y evidencias
+- ✅ **Consentimientos Informados con firma digital SHA-256 (HU-31/32)**
+- ✅ **Altas Terapéuticas y Derivaciones Psiquiátricas (HU-33/34):** Con exportación a PDF formal
+- ✅ **Sesiones de Chatbot Asistente IA (HU-36):** Integrado con API Hugging Face y protocolo de riesgo/crisis
+- ✅ **Bitácora de Auditoría Criptográfica Fernet (HU-37):** Logs inmutables cifrados con clave de desarrollador
 
 ### 3.6 Ejecutar el Servidor Backend
 
@@ -272,6 +281,29 @@ Ejecuta de extremo a extremo todas las Historias de Usuario (HU-01 a HU-22) y Ca
 | **CU9** | HU-20 | Dashboard clínico en tiempo real con ocupación, ausentismo e ingresos |
 | **CU10**| HU-21 | Generación de alertas clínicas por inasistencias reiteradas y resolución con notas |
 | **CU14**| HU-22 | Matriz de eventos para FullCalendar con filtrado por terapeuta |
+
+#### D. Verificación del Sprint 2 (16 Pruebas Clínicas Avanzadas: HU-23 a HU-37)
+
+```powershell
+python verify_sprint2.py
+```
+Evalúa 16 casos de prueba exhaustivos correspondientes al Sprint 2:
+- **HU-23/24 / CU14:** Pre-consulta digital y registro de motivos de consulta / triage clínico.
+- **HU-35 / CU15:** Romero AI — Evaluación y auditoría de sugerencias diagnósticas por IA.
+- **HU-25/26 / CU16:** Expediente clínico electrónico (EHR), antecedentes médicos y catálogo CIE-10.
+- **HU-27/28 / CU17:** Notas de evolución clínica bajo formato SOAP con control de inmutabilidad.
+- **HU-29/30 / CU18:** Asignación, entrega y revisión de tareas terapéuticas inter-sesión con evidencias.
+- **HU-31/32 / CU19:** Consentimientos informados con captura y verificación de firma digital criptográfica SHA-256.
+- **HU-33/34 / CU20:** Emisión de altas terapéuticas y derivaciones psiquiátricas formales (con exportación PDF).
+- **HU-36:** Asistente conversacional con IA (Hugging Face) y detección reactiva de crisis/riesgo.
+- **HU-37:** Bitácora inmutable con cifrado simétrico Fernet y consulta protegida por clave de desarrollador.
+
+#### E. Validación Multi-Tenant de Todos los Centros (Sprint 2)
+
+```powershell
+python validate_all_tenants_sprint2.py
+```
+Verifica que cada uno de los 6 esquemas/tenants registrados en la base de datos PostgreSQL (`centro_esperanza`, `mentesana`, `dr_roberto`, `albertokl`, etc.) contenga datos íntegros y válidos en todas las tablas del Sprint 2.
 
 ---
 
@@ -371,6 +403,9 @@ npm run watch
 | `/psicologos`             | Directorio Profesional     | Psicólogos, especialidades y franjas horarias    | Admin Centro, Coordinador |
 | `/agenda`                 | Agenda y Calendario        | FullCalendar interactivo, slots de 50 min        | Todos |
 | `/teleconsulta/:citaId`   | Teleconsulta WebRTC        | Sala Jitsi Meet cifrada (Moderador vs Paciente)  | Psicólogo, Paciente |
+| `/mis-tareas`             | Tareas Terapéuticas        | Listado de tareas inter-sesión y registro de entregas | Paciente, Terapeuta |
+| `/consentimientos`        | Consentimiento Digital     | Firma electrónica SHA-256 de consentimientos informados | Paciente, Tutor |
+| *(Widget Global)*         | Asistente Virtual IA       | Chatbot IA Hugging Face con detección de crisis en tiempo real | Pacientes autenticados |
 
 ---
 
@@ -393,12 +428,17 @@ movil/
 │   │   ├── login_screen.dart         # Pantalla de login con selector de centro
 │   │   ├── dashboard_screen.dart     # Dashboard principal
 │   │   ├── password_reset_screen.dart # Recuperación de contraseña
+│   │   ├── intake_form_screen.dart   # HU-24: Formulario de Pre-consulta / Intake digital
+│   │   ├── mis_tareas_screen.dart    # HU-30: Visualización y entrega de tareas inter-sesión
+│   │   ├── consentimiento_firma_screen.dart # HU-32: Firma digital SHA-256 de consentimientos
+│   │   ├── chatbot_screen.dart       # HU-36: Chatbot Asistente con IA y protocolo de crisis
 │   │   ├── users_screen.dart         # Listado de usuarios
 │   │   ├── roles_screen.dart         # Listado de roles
 │   │   ├── tenants_screen.dart       # Listado de centros (SuperAdmin)
 │   │   └── centro_config_screen.dart # Config. institucional
 │   ├── services/
-│   │   └── auth_service.dart         # Servicio de autenticación HTTP
+│   │   ├── auth_service.dart         # Servicio de autenticación HTTP
+│   │   └── chatbot_service.dart      # Servicio de chatbot IA (Hugging Face)
 │   └── main.dart                     # Punto de entrada
 └── pubspec.yaml
 ```
@@ -732,6 +772,24 @@ flutter run
 | GET    | `/api/agenda/alertas/`                      | Clínico      | Listar alertas tempranas por inasistencia reiterada |
 | POST   | `/api/agenda/alertas/{id}/resolver/`        | Clínico      | Marcar alerta como resuelta con nota de seguimiento |
 
+### Expedientes Clínicos, SOAP, Tareas y Auditoría (Sprint 2)
+
+| Método | Endpoint                                    | Acceso       | Descripción                                         |
+|--------|---------------------------------------------|--------------|-----------------------------------------------------|
+| GET/POST | `/api/clinica/pre-consultas/`             | Auth/Público | Cuestionario de pre-consulta digital y triage       |
+| GET/POST | `/api/clinica/pre-consultas/auditar-ia/`    | Terapeuta    | Romero AI: sugerencias diagnósticas auditadas       |
+| GET/POST | `/api/clinica/historias-clinicas/`          | Terapeuta    | EHR: Antecedentes, comorbilidades y catálogo CIE-10 |
+| GET/POST | `/api/clinica/notas-soap/`                  | Terapeuta    | Notas SOAP inmutables asociadas a la cita           |
+| GET/POST | `/api/clinica/tareas/`                      | Terapeuta    | Asignación de tareas inter-sesión                   |
+| GET/POST | `/api/clinica/tareas/mis-tareas/`           | Paciente     | Consulta y envío de evidencias de tareas inter-sesión |
+| GET/POST | `/api/clinica/consentimientos/`             | Terapeuta    | Registro de plantilla de consentimiento informado   |
+| POST   | `/api/clinica/consentimientos/{id}/firmar/` | Paciente     | Firma digital criptográfica SHA-256 de consentimiento |
+| GET/POST | `/api/clinica/altas/`                       | Terapeuta    | Emisión de acta de alta terapéutica formal          |
+| GET/POST | `/api/clinica/derivaciones/`                | Terapeuta    | Derivación psiquiátrica formal (exportable a PDF)   |
+| GET    | `/api/clinica/derivaciones/{id}/pdf/`       | Terapeuta    | Descarga de documento PDF firmado de la derivación  |
+| POST   | `/api/clinica/chatbot/mensaje/`             | Paciente/Auth| Chatbot Asistente con IA y detección de crisis      |
+| GET    | `/api/audit/logs/`                          | Developer    | Bitácora Fernet descifrada con clave de desarrollador |
+
 ---
 
 ## 9. Solución de Problemas Comunes
@@ -780,9 +838,12 @@ python manage.py migrate_schemas --shared      # Migraciones public
 python manage.py migrate_schemas --tenant      # Migraciones tenants (incluye clinica y agenda)
 python manage.py seed_data                     # Datos de prueba Sprint 0
 python manage.py seed_sprint1                  # Datos clínicos y citas Sprint 1
+python manage.py seed_sprint2 --tenant all     # Datos clínicos y triage Sprint 2 (todos los tenants)
 python manage.py runserver                     # Servidor → :8000
 python verify_sprint0.py                       # Verificación Sprint 0 (25 pruebas)
 python verify_sprint1.py                       # Verificación Sprint 1 (24 pruebas)
+python verify_sprint2.py                       # Verificación Sprint 2 (16 pruebas)
+python validate_all_tenants_sprint2.py         # Validación Multi-Tenant Sprint 2 (6/6 tenants)
 python scratch\verify_all_use_cases.py         # Verificación integral Casos de Uso (36/36)
 
 # ═══════════════════ WEB ═══════════════════════
