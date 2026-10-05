@@ -129,12 +129,14 @@ export interface TareaTerapeutica {
 
 export interface ConsentimientoInformado {
   id: string;
-  codigo_plantilla: string;
   titulo: string;
-  cuerpo_plantilla: string;
-  version: number;
+  tipo?: string;
+  contenido_legal?: string;
+  version: string | number;
   activo: boolean;
   fecha_creacion: string;
+  codigo_plantilla?: string;
+  cuerpo_plantilla?: string;
 }
 
 export interface FirmaConsentimiento {

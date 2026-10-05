@@ -105,11 +105,11 @@ import { Paciente } from '../../core/models';
                   </span>
                 </td>
                 <td class="text-end">
-                  <button class="btn btn-sm btn-outline-danger me-2" (click)="descargarPdf(f.id)" title="Descargar orden PDF firmada">
-                    <i class="fa-solid fa-file-pdf"></i> PDF
+                  <button class="btn btn-sm btn-success me-2" (click)="descargarPdf(f.id)" title="Descargar consentimiento PDF">
+                    <i class="fa-solid fa-file-arrow-down"></i> Descargar PDF
                   </button>
-                  <button class="btn btn-sm btn-outline-secondary" *ngIf="!f.revocado" (click)="abrirModalRevocar(f)" title="Revocar consentimiento">
-                    <i class="fa-solid fa-ban"></i>
+                  <button class="btn btn-sm btn-danger" *ngIf="!f.revocado" (click)="abrirModalRevocar(f)" title="Revocar consentimiento">
+                    <i class="fa-solid fa-lock"></i> Revocar
                   </button>
                 </td>
               </tr>
@@ -123,18 +123,34 @@ import { Paciente } from '../../core/models';
         <div class="plantillas-grid">
           <div class="plantilla-card glass-panel" *ngFor="let p of plantillas()">
             <div class="d-flex justify-content-between align-items-center mb-2">
-              <span class="badge bg-light text-dark font-monospace">{{ p.codigo_plantilla }}</span>
-              <span class="badge bg-info text-white">v{{ p.version }}.0</span>
+              <span class="badge bg-light text-dark">{{ getTipoLegible(p.codigo_plantilla || p.tipo) }}</span>
+              <span class="badge bg-info text-white">v{{ p.version }}</span>
             </div>
             <h3 class="plantilla-title">{{ p.titulo }}</h3>
             <div class="preview-text-box small text-muted p-2 rounded bg-light mb-3">
-              {{ p.cuerpo_plantilla.substring(0, 180) }}...
+              {{ (p.cuerpo_plantilla ?? '').substring(0, 160) }}...
             </div>
-            <div class="d-flex justify-content-between align-items-center">
-              <span class="small text-muted"><i class="fa-solid fa-calendar me-1"></i> {{ p.fecha_creacion | date:'dd/MM/yyyy' }}</span>
-              <button class="btn btn-sm btn-outline-primary" (click)="verPlantilla(p)">
-                <i class="fa-solid fa-eye me-1"></i> Ver Plantilla
-              </button>
+            <div class="d-flex flex-column gap-2">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="small text-muted"><i class="fa-solid fa-calendar me-1"></i> {{ p.fecha_creacion | date:'dd/MM/yyyy' }}</span>
+                <span class="small text-muted" *ngIf="p.activo"><i class="fa-solid fa-check-circle text-success me-1"></i> Activa</span>
+                <span class="small text-muted" *ngIf="!p.activo"><i class="fa-solid fa-times-circle text-danger me-1"></i> Inactiva</span>
+              </div>
+              <div class="d-flex flex-wrap gap-1 justify-content-end">
+                <button class="btn btn-sm btn-outline-primary" (click)="verPlantilla(p)">
+                  <i class="fa-solid fa-eye me-1"></i> Ver
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" (click)="editarPlantilla(p)">
+                  <i class="fa-solid fa-edit me-1"></i> Editar
+                </button>
+                <button class="btn btn-sm btn-outline-danger" (click)="eliminarPlantilla(p)">
+                  <i class="fa-solid fa-trash me-1"></i> Eliminar
+                </button>
+                <button class="btn btn-sm" [class.btn-success]="!p.activo" [class.btn-warning]="p.activo" (click)="toggleActiva(p)">
+                  <i class="fa-solid" [class.fa-toggle-on]="p.activo" [class.fa-toggle-off]="!p.activo"></i>
+                  {{ p.activo ? 'Desactivar' : 'Activar' }}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -175,9 +191,9 @@ import { Paciente } from '../../core/models';
             </div>
           </div>
           <div class="modal-footer-custom p-3">
-            <button class="btn btn-secondary" (click)="mostrarModalPlantillaForm = false">Cerrar</button>
+            <button class="btn btn-secondary" (click)="cerrarModalPlantilla()">Cerrar</button>
             <button class="btn btn-primary" [disabled]="!plantillaForm.codigo_plantilla || !plantillaForm.cuerpo_plantilla" (click)="guardarPlantilla()">
-              Guardar Plantilla
+              {{ plantillaEditando ? 'Actualizar Plantilla' : 'Guardar Plantilla' }}
             </button>
           </div>
         </div>
@@ -367,15 +383,21 @@ export class ConsentimientosHubComponent implements OnInit {
   plantillas = signal<ConsentimientoInformado[]>([]);
   pacientes = signal<Paciente[]>([]);
   mensajeAviso = signal<string | null>(null);
+  plantillaEditando: string | null = null;
 
   // Plantilla Modal
   mostrarModalPlantillaForm = false;
-  plantillaForm = {
-    id: '',
-    codigo_plantilla: '',
-    titulo: '',
-    cuerpo_plantilla: ''
-  };
+    plantillaForm: {
+      id: string;
+      codigo_plantilla: string;
+      titulo: string;
+      cuerpo_plantilla: string;
+    } = {
+      id: '',
+      codigo_plantilla: '',
+      titulo: '',
+      cuerpo_plantilla: ''
+    };
 
   // Firma Modal
   mostrarModalFirma = false;
@@ -428,6 +450,7 @@ export class ConsentimientosHubComponent implements OnInit {
   }
 
   abrirModalPlantilla(): void {
+    this.plantillaEditando = null;
     this.plantillaForm = {
       id: '',
       codigo_plantilla: 'CI-PSIC-2026',
@@ -440,21 +463,44 @@ export class ConsentimientosHubComponent implements OnInit {
   verPlantilla(p: ConsentimientoInformado): void {
     this.plantillaForm = {
       id: p.id,
-      codigo_plantilla: p.codigo_plantilla,
-      titulo: p.titulo,
-      cuerpo_plantilla: p.cuerpo_plantilla
+      codigo_plantilla: (p.codigo_plantilla ?? p.tipo ?? '').toString(),
+      titulo: p.titulo || '',
+      cuerpo_plantilla: (p.cuerpo_plantilla ?? p.contenido_legal ?? '').toString()
     };
     this.mostrarModalPlantillaForm = true;
   }
 
+  cerrarModalPlantilla(): void {
+    this.mostrarModalPlantillaForm = false;
+    this.plantillaEditando = null;
+    this.plantillaForm = {
+      id: '',
+      codigo_plantilla: '',
+      titulo: '',
+      cuerpo_plantilla: ''
+    };
+  }
+
   guardarPlantilla(): void {
-    this.clinicaService.crearPlantillaConsentimiento(this.plantillaForm).subscribe({
-      next: () => {
-        this.mostrarModalPlantillaForm = false;
-        this.mostrarAvisoFeedback('Plantilla de consentimiento guardada');
-        this.cargarDatos();
-      }
-    });
+    if (this.plantillaEditando) {
+      this.clinicaService.actualizarPlantilla(this.plantillaEditando, this.plantillaForm).subscribe({
+        next: () => {
+          this.mostrarAvisoFeedback('Plantilla actualizada correctamente');
+          this.cerrarModalPlantilla();
+          this.cargarDatos();
+        },
+        error: (err: any) => this.mostrarAvisoFeedback('Error al actualizar: ' + (err?.error?.detail || 'Intente de nuevo'))
+      });
+    } else {
+      this.clinicaService.crearPlantillaConsentimiento(this.plantillaForm).subscribe({
+        next: () => {
+          this.mostrarAvisoFeedback('Plantilla creada exitosamente');
+          this.cerrarModalPlantilla();
+          this.cargarDatos();
+        },
+        error: (err: any) => this.mostrarAvisoFeedback('Error al guardar: ' + (err?.error?.detail || 'Revise los datos'))
+      });
+    }
   }
 
   abrirModalFirmaDigital(): void {
@@ -481,7 +527,7 @@ export class ConsentimientosHubComponent implements OnInit {
       return;
     }
 
-    let t = plant.cuerpo_plantilla;
+    let t = plant.cuerpo_plantilla ?? plant.contenido_legal ?? '';
     const nombre = pac ? `${pac.usuario?.nombre} ${pac.usuario?.apellido}` : '[NOMBRE_DEL_PACIENTE]';
     const ci = pac?.ci || '[CI_DEL_PACIENTE]';
     const hoy = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
@@ -610,5 +656,52 @@ export class ConsentimientosHubComponent implements OnInit {
   mostrarAvisoFeedback(msg: string): void {
     this.mensajeAviso.set(msg);
     setTimeout(() => this.mensajeAviso.set(null), 4000);
+  }
+
+  getTipoLegible(tipo: string | undefined | null): string {
+    if (!tipo || tipo.length === 0) return 'Sin tipo';
+    const t = tipo.toUpperCase();
+    switch (t) {
+      case 'ATENCION_GENERAL': return 'Atención Psicológica General';
+      case 'TELEPSICOLOGIA': return 'Telepsicología';
+      case 'MENORES_EDAD': return 'Autorización para Menores';
+      case 'DATOS_SENSIBLES': return 'Tratamiento de Datos Sensibles de Salud Mental';
+      default: return tipo.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+    }
+  }
+
+  editarPlantilla(p: ConsentimientoInformado): void {
+    this.plantillaEditando = p.id;
+    this.plantillaForm = {
+      id: p.id,
+      codigo_plantilla: (p.codigo_plantilla ?? p.tipo ?? '').toString(),
+      titulo: p.titulo || '',
+      cuerpo_plantilla: (p.cuerpo_plantilla ?? p.contenido_legal ?? '').toString()
+    };
+    this.mostrarModalPlantillaForm = true;
+  }
+
+  eliminarPlantilla(p: ConsentimientoInformado): void {
+    if (!confirm(`¿Eliminar la plantilla "${p.titulo}"? Esta acción no se puede deshacer.`)) {
+      return;
+    }
+    this.clinicaService.eliminarPlantilla(p.id).subscribe({
+      next: () => {
+        this.mostrarAvisoFeedback('Plantilla eliminada correctamente');
+        this.cargarDatos();
+      },
+      error: (err: any) => this.mostrarAvisoFeedback('Error al eliminar: ' + (err?.error?.detail || 'Intente de nuevo'))
+    });
+  }
+
+  toggleActiva(p: ConsentimientoInformado): void {
+    const nuevoEstado = !p.activo;
+    this.clinicaService.actualizarPlantilla(p.id, { activo: nuevoEstado }).subscribe({
+      next: () => {
+        this.mostrarAvisoFeedback(`Plantilla ${nuevoEstado ? 'activada' : 'desactivada'} correctamente`);
+        this.cargarDatos();
+      },
+      error: (err: any) => this.mostrarAvisoFeedback('Error al cambiar estado: ' + (err?.error?.detail || 'Intente de nuevo'))
+    });
   }
 }

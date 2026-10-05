@@ -619,6 +619,11 @@ class ConsentimientoInformadoViewSet(viewsets.ModelViewSet):
     serializer_class = ConsentimientoInformadoSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_serializer(self, *args, **kwargs):
+        if self.request.method in ('PATCH', 'PUT'):
+            kwargs['partial'] = True
+        return super().get_serializer(*args, **kwargs)
+
     @action(detail=True, methods=['get'], url_path='render-preview')
     def render_preview(self, request, pk=None):
         plantilla = self.get_object()
@@ -658,33 +663,106 @@ class FirmaConsentimientoViewSet(viewsets.ModelViewSet):
         user_agent = req.META.get('HTTP_USER_AGENT', '')
         serializer.save(ip_origen=ip, user_agent=user_agent)
 
-    @action(detail=True, methods=['get'], url_path='descargar-pdf')
+    @action(detail=True, methods=['get'], url_path='descargar_pdf')
     def descargar_pdf(self, request, pk=None):
+        import base64
+        from io import BytesIO
+        from reportlab.lib.pagesizes import letter
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import inch
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
+        from reportlab.lib import colors
+
         firma = self.get_object()
         buffer = BytesIO()
-
         try:
-            from reportlab.lib.pagesizes import letter
-            from reportlab.pdfgen import canvas
+            doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.8*inch, bottomMargin=0.8*inch)
+            styles = getSampleStyleSheet()
+            elementos = []
 
-            p = canvas.Canvas(buffer, pagesize=letter)
-            p.drawString(100, 750, "SIGEPSI - DOCUMENTO DE CONSENTIMIENTO INFORMADO")
-            p.drawString(100, 720, f"Título: {firma.consentimiento.titulo} (Versión: {firma.consentimiento.version})")
-            p.drawString(100, 690, f"Paciente: {firma.paciente.usuario.nombre} {firma.paciente.usuario.apellido} (CI: {firma.paciente.ci})")
-            p.drawString(100, 660, f"Firmado por: {firma.firmado_por}")
-            p.drawString(100, 630, f"Fecha de Firma: {firma.fecha_firma.strftime('%d/%m/%Y %H:%M:%S')}")
-            p.drawString(100, 600, f"Dirección IP de Registro: {firma.ip_origen}")
-            p.drawString(100, 570, f"Sello Criptográfico SHA-256: {firma.hash_sha256}")
-            p.drawString(100, 520, "El firmante declara haber leído y aceptado todas las cláusulas clínicas del centro.")
-            p.showPage()
-            p.save()
+            titulo_style = ParagraphStyle('titulo', parent=styles['Title'], fontSize=18, textColor=colors.HexColor('#1a5d3a'))
+            elementos.append(Paragraph("SIGEPSI", titulo_style))
+            elementos.append(Paragraph("Documento de Consentimiento Informado", styles['Heading2']))
+            elementos.append(Spacer(1, 12))
+
+            datos = [
+                ["Paciente:", f"{firma.paciente.usuario.nombre} {firma.paciente.usuario.apellido}"],
+                ["CI:", firma.paciente.ci],
+                ["Firmado por:", firma.firmado_por],
+                ["Fecha:", firma.fecha_firma.strftime('%d/%m/%Y %H:%M')],
+                ["IP:", firma.ip_origen],
+            ]
+            tabla = Table(datos, colWidths=[1.5*inch, 5*inch])
+            tabla.setStyle(TableStyle([
+                ('BACKGROUND', (0,0), (0,-1), colors.HexColor('#f0f0f0')),
+                ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
+                ('PADDING', (0,0), (-1,-1), 6),
+            ]))
+            elementos.append(tabla)
+            elementos.append(Spacer(1, 20))
+
+            contenido = firma.consentimiento.contenido_legal
+            contenido = contenido.replace('{PACIENTE_NOMBRE}', f"{firma.paciente.usuario.nombre} {firma.paciente.usuario.apellido}")
+            contenido = contenido.replace('{PACIENTE_CI}', firma.paciente.ci or '')
+            contenido = contenido.replace('{FECHA}', firma.fecha_firma.strftime('%d de %B de %Y'))
+            contenido = contenido.replace('{PSICOLOGO_CABECERA}', 'Equipo Psicológico SIGEPSI')
+            contenido = contenido.replace('{CENTRO_NOMBRE}', 'Centro de Atención Psicológica SIGEPSI')
+            elementos.append(Paragraph("Cuerpo del Consentimiento", styles['Heading3']))
+            elementos.append(Paragraph(contenido.replace('\n', '<br/>'), styles['BodyText']))
+            elementos.append(Spacer(1, 30))
+
+            if firma.firma_canvas_url and firma.firma_canvas_url.startswith('data:image'):
+                try:
+                    header, encoded = firma.firma_canvas_url.split(',', 1)
+                    firma_bytes = base64.b64decode(encoded)
+                    firma_io = BytesIO(firma_bytes)
+                    elementos.append(Paragraph("Firma del Paciente / Tutor:", styles['Heading3']))
+                    elementos.append(Image(firma_io, width=3*inch, height=1.2*inch))
+                except Exception:
+                    elementos.append(Paragraph("[Firma no disponible]", styles['BodyText']))
+            elementos.append(Spacer(1, 20))
+
+            sello = f"""
+            <b>Sello Criptográfico SHA-256:</b><br/>
+            <font size="8" face="Courier">{firma.hash_sha256}</font>
+            """
+            elementos.append(Paragraph(sello, styles['BodyText']))
+
+            doc.build(elementos)
             pdf_data = buffer.getvalue()
         except ImportError:
+            pdf_data = f"%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n{firma.hash_sha256}".encode('utf-8')
+        except Exception:
             pdf_data = f"%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n{firma.hash_sha256}".encode('utf-8')
 
         response = HttpResponse(pdf_data, content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="consentimiento_{firma.id}.pdf"'
         return response
+
+    @action(detail=True, methods=['post'], url_path='revocar')
+    def revocar(self, request, pk=None):
+        from django.utils import timezone
+        firma = self.get_object()
+        if firma.revocado:
+            return Response(
+                {"detail": "Esta firma ya fue revocada."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        motivo = request.data.get('motivo', '').strip()
+        if not motivo:
+            return Response(
+                {"detail": "Debe proporcionar un motivo de revocación."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        firma.revocado = True
+        firma.motivo_revocacion = motivo
+        firma.fecha_revocacion = timezone.now()
+        firma.save()
+        serializer = FirmaConsentimientoSerializer(firma)
+        return Response(
+            {"mensaje": "Firma revocada exitosamente", "firma": serializer.data},
+            status=status.HTTP_200_OK
+        )
 
 
 # ──────────────────────────────────────────────────────────────────────────────

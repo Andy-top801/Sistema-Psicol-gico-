@@ -523,6 +523,9 @@ class FirmaConsentimiento(models.Model):
     user_agent = models.TextField(blank=True, default="", verbose_name="Navegador / Dispositivo")
     firma_canvas_url = models.TextField(blank=True, default="", verbose_name="Firma Táctil (Base64 o URL)")
     fecha_firma = models.DateTimeField(auto_now_add=True, verbose_name="Marca de Tiempo de Firma")
+    revocado = models.BooleanField(default=False, verbose_name="Firma Revocada")
+    motivo_revocacion = models.TextField(blank=True, default="", verbose_name="Motivo de Revocación")
+    fecha_revocacion = models.DateTimeField(null=True, blank=True, verbose_name="Fecha de Revocación")
 
     class Meta:
         db_table = "clinica_firmaconsentimiento"
@@ -534,8 +537,26 @@ class FirmaConsentimiento(models.Model):
             models.Index(fields=['hash_sha256'], name='idx_firmaconsent_hash'),
         ]
 
+    def save(self, *args, **kwargs):
+        import hashlib
+        from django.utils import timezone
+        if not self.hash_sha256:
+            contenido = "|".join([
+                str(getattr(self, 'consentimiento_id', '') or ''),
+                str(getattr(self, 'paciente_id', '') or ''),
+                str(self.firmado_por or ''),
+                (self.firma_canvas_url or '')[:500],
+                timezone.now().isoformat(),
+            ])
+            self.hash_sha256 = hashlib.sha256(contenido.encode('utf-8')).hexdigest()
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return f"Consentimiento {self.consentimiento.tipo} - {self.firmado_por} [{self.hash_sha256[:8]}]"
+        try:
+            tipo = self.consentimiento.tipo if self.consentimiento else ''
+        except Exception:
+            tipo = ''
+        return f"Consentimiento {tipo} - {self.firmado_por} [{self.hash_sha256[:8] if self.hash_sha256 else ''}]"
 
 
 # ──────────────────────────────────────────────────────────────────────────────

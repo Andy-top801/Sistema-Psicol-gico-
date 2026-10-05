@@ -799,10 +799,51 @@ class TareaTerapeuticaSerializer(serializers.ModelSerializer):
 # CU18: Consentimiento Informado y Firma Digital Criptográfica
 # ──────────────────────────────────────────────────────────────────────────────
 class ConsentimientoInformadoSerializer(serializers.ModelSerializer):
+    codigo_plantilla = serializers.CharField(source='tipo', required=False, allow_blank=True)
+    cuerpo_plantilla = serializers.CharField(source='contenido_legal', required=False, allow_blank=True)
+    id = serializers.UUIDField(read_only=True)  # forzar read_only para que ignore el id vacío
+
     class Meta:
         model = ConsentimientoInformado
-        fields = ['id', 'titulo', 'tipo', 'contenido_legal', 'version', 'activo', 'fecha_creacion']
+        fields = [
+            'id', 'titulo', 'tipo', 'contenido_legal', 'version', 'activo',
+            'fecha_creacion', 'codigo_plantilla', 'cuerpo_plantilla'
+        ]
         read_only_fields = ['id', 'fecha_creacion']
+        extra_kwargs = {
+            'titulo': {'required': False},
+            'tipo': {'required': False, 'allow_blank': True},
+            'contenido_legal': {'required': False, 'allow_blank': True},
+            'version': {'required': False},
+            'activo': {'required': False},
+        }
+
+    def validate(self, data):
+        if getattr(self, 'partial', False):
+            return data
+
+        # Extraer desde initial_data si es necesario
+        request = self.context.get('request')
+        if request:
+            codigo_plantilla_raw = request.data.get('codigo_plantilla')
+            cuerpo_plantilla_raw = request.data.get('cuerpo_plantilla')
+            if not data.get('tipo') and codigo_plantilla_raw:
+                data['tipo'] = codigo_plantilla_raw
+            if not data.get('contenido_legal') and cuerpo_plantilla_raw:
+                data['contenido_legal'] = cuerpo_plantilla_raw
+
+        if not data.get('tipo'):
+            data['tipo'] = 'ATENCION_GENERAL'
+
+        if not data.get('contenido_legal'):
+            raise serializers.ValidationError({'contenido_legal': 'El cuerpo del consentimiento es requerido.'})
+
+        if 'version' not in data or data.get('version') is None:
+            data['version'] = '1.0'
+        if 'activo' not in data:
+            data['activo'] = True
+
+        return data
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -812,17 +853,51 @@ class ConsentimientoInformadoSerializer(serializers.ModelSerializer):
 
 
 class FirmaConsentimientoSerializer(serializers.ModelSerializer):
+    consentimiento = serializers.PrimaryKeyRelatedField(
+        queryset=ConsentimientoInformado.objects.all(),
+        required=False
+    )
     consentimiento_titulo = serializers.SerializerMethodField()
     consentimiento_tipo = serializers.SerializerMethodField()
+    firmado_por = serializers.CharField(required=False, allow_blank=True)
+    es_menor_edad = serializers.BooleanField(required=False, default=False)
+    tutor_nombre = serializers.CharField(required=False, allow_blank=True, default='')
+    tutor_ci = serializers.CharField(required=False, allow_blank=True, default='')
+    firma_canvas_url = serializers.CharField(required=False, allow_blank=True, default='')
+    hash_sha256 = serializers.CharField(required=False, allow_blank=True)
+    # Aliases del frontend
+    plantilla = serializers.PrimaryKeyRelatedField(
+        queryset=ConsentimientoInformado.objects.all(),
+        source='consentimiento',
+        required=False,
+        write_only=True
+    )
+    paciente = serializers.PrimaryKeyRelatedField(
+        queryset=Paciente.objects.all(),
+        required=False
+    )
+    paciente_id = serializers.PrimaryKeyRelatedField(
+        queryset=Paciente.objects.all(),
+        source='paciente',
+        required=False,
+        write_only=True
+    )
+    firma_imagen = serializers.CharField(
+        source='firma_canvas_url',
+        required=False,
+        allow_blank=True,
+        write_only=True
+    )
 
     class Meta:
         model = FirmaConsentimiento
         fields = [
             'id', 'consentimiento', 'consentimiento_titulo', 'consentimiento_tipo',
             'paciente', 'firmado_por', 'es_menor_edad', 'tutor_nombre', 'tutor_ci',
-            'hash_sha256', 'ip_origen', 'user_agent', 'firma_canvas_url', 'fecha_firma'
+            'hash_sha256', 'ip_origen', 'user_agent', 'firma_canvas_url', 'fecha_firma',
+            'plantilla', 'paciente_id', 'firma_imagen', 'revocado', 'motivo_revocacion', 'fecha_revocacion'
         ]
-        read_only_fields = ['id', 'fecha_firma']
+        read_only_fields = ['id', 'fecha_firma', 'hash_sha256', 'revocado', 'fecha_revocacion']
 
     def get_consentimiento_titulo(self, obj):
         return obj.consentimiento.titulo if obj.consentimiento else ""
@@ -831,9 +906,56 @@ class FirmaConsentimientoSerializer(serializers.ModelSerializer):
         return obj.consentimiento.tipo if obj.consentimiento else ""
 
     def validate_hash_sha256(self, value):
-        if not value or len(value) != 64:
+        if value and len(value) != 64:
             raise serializers.ValidationError("El hash SHA-256 debe ser una huella hexadecimal válida de 64 caracteres.")
-        return value
+        return value or ''
+
+    def validate(self, data):
+        # Mapear aliases del frontend
+        if self.initial_data:
+            if not data.get('consentimiento') and self.initial_data.get('plantilla'):
+                try:
+                    from clinica.models import ConsentimientoInformado
+                    data['consentimiento'] = ConsentimientoInformado.objects.get(id=self.initial_data.get('plantilla'))
+                except ConsentimientoInformado.DoesNotExist:
+                    raise serializers.ValidationError({'plantilla': 'Plantilla no encontrada'})
+            if not data.get('paciente'):
+                pid = self.initial_data.get('paciente') or self.initial_data.get('paciente_id')
+                if pid:
+                    try:
+                        from clinica.models import Paciente
+                        data['paciente'] = Paciente.objects.get(id=pid)
+                    except Paciente.DoesNotExist:
+                        raise serializers.ValidationError({'paciente': 'Paciente no encontrado'})
+            # Ignorar contenido_final_renderizado si viene
+
+
+        # Validar requeridos
+        if not data.get('consentimiento'):
+            raise serializers.ValidationError({'consentimiento': 'El consentimiento/plantilla es requerido.'})
+        if not data.get('paciente'):
+            raise serializers.ValidationError({'paciente': 'El paciente es requerido.'})
+
+        # Si firmado_por no viene, calcularlo desde el paciente
+        if not data.get('firmado_por'):
+            paciente = data.get('paciente')
+            if paciente and hasattr(paciente, 'usuario'):
+                u = paciente.usuario
+                data['firmado_por'] = f"{u.nombre} {u.apellido}".strip()
+            else:
+                data['firmado_por'] = 'Paciente'
+
+        # Defaults
+        if 'es_menor_edad' not in data:
+            data['es_menor_edad'] = False
+        if 'tutor_nombre' not in data:
+            data['tutor_nombre'] = ''
+        if 'tutor_ci' not in data:
+            data['tutor_ci'] = ''
+        if 'firma_canvas_url' not in data:
+            data['firma_canvas_url'] = ''
+
+        return data
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

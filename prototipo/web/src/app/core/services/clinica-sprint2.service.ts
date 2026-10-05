@@ -297,6 +297,14 @@ export class ClinicaSprint2Service {
     return this.http.post<ConsentimientoInformado>(`${this.apiUrl}/consentimientos-plantillas/`, data);
   }
 
+  actualizarPlantilla(id: string, data: Partial<ConsentimientoInformado>): Observable<ConsentimientoInformado> {
+    return this.http.patch<ConsentimientoInformado>(`${this.apiUrl}/consentimientos-plantillas/${id}/`, data);
+  }
+
+  eliminarPlantilla(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/consentimientos-plantillas/${id}/`);
+  }
+
   getFirmasConsentimiento(pacienteId?: string): Observable<FirmaConsentimiento[]> {
     let params = new HttpParams();
     if (pacienteId) params = params.set('paciente', pacienteId);
