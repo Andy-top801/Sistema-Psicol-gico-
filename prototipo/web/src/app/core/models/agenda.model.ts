@@ -18,6 +18,8 @@ export interface Cita {
   teleconsulta_id?: string;
   formulario_pendiente?: boolean;
   intake_id?: string | null;
+  nota_soap_id?: string;
+  paciente_datos?: any;
 }
 
 export interface SlotDisponible {

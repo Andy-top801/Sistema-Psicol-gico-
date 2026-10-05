@@ -140,6 +140,17 @@ class CitaViewSet(viewsets.ModelViewSet):
             "cita": CitaSerializer(cita).data
         }, status=status.HTTP_200_OK)
 
+    @action(detail=True, methods=['post'], url_path='completar')
+    def completar(self, request, pk=None):
+        """Concluye la cita marcándola como REALIZADA (Paso previo para HU-27 Nota SOAP)."""
+        cita = self.get_object()
+        cita.estado = 'REALIZADA'
+        cita.save(update_fields=['estado', 'fecha_modificacion'])
+        return Response({
+            "mensaje": "Cita concluida exitosamente como REALIZADA. Ahora puede registrar la Nota SOAP.",
+            "cita": CitaSerializer(cita).data
+        }, status=status.HTTP_200_OK)
+
     @action(detail=False, methods=['get'], url_path='slots-disponibles')
     def slots_disponibles(self, request):
         """

@@ -84,10 +84,48 @@ export class ReportService {
     columnas?: string[];
     filtros?: Record<string, any>;
     orden?: { columna: string; direccion: string };
+    formato?: string;
   }, developerKey?: string): Observable<ReporteResultado> {
     const keyOptions = developerKeyOptions(payload.fuente, developerKey);
     if (keyOptions instanceof Observable) return keyOptions;
     return this.http.post<ReporteResultado>(`${this.apiUrl}/personalizado/`, payload, keyOptions);
+  }
+
+  /**
+   * Exporta directamente el reporte personalizado a archivo Excel binario (.xlsx)
+   * formateado con OpenPyXL con membrete y estilos clínicos del centro.
+   */
+  exportarPersonalizadoExcel(payload: {
+    fuente: string;
+    columnas?: string[];
+    filtros?: Record<string, any>;
+    orden?: { columna: string; direccion: string };
+  }, developerKey?: string): Observable<Blob> {
+    const keyOptions = developerKeyOptions(payload.fuente, developerKey);
+    const extraHeaders = (typeof keyOptions === 'object' && 'headers' in keyOptions) ? (keyOptions as any).headers : {};
+    return this.http.post(`${this.apiUrl}/personalizado/`, {
+      ...payload,
+      formato: 'EXCEL'
+    }, { responseType: 'blob', headers: extraHeaders });
+  }
+
+  /**
+   * Envía el reporte personalizado a un correo destino vía servidor SMTP.
+   */
+  exportarPersonalizadoEmail(payload: {
+    fuente: string;
+    columnas?: string[];
+    filtros?: Record<string, any>;
+    orden?: { columna: string; direccion: string };
+    email: string;
+    asunto?: string;
+  }, developerKey?: string): Observable<any> {
+    const keyOptions = developerKeyOptions(payload.fuente, developerKey);
+    if (keyOptions instanceof Observable) return keyOptions;
+    return this.http.post<any>(`${this.apiUrl}/personalizado/`, {
+      ...payload,
+      formato: 'EMAIL'
+    }, keyOptions);
   }
 
   /**

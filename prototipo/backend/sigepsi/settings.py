@@ -197,7 +197,7 @@ LANGUAGE_CODE = 'es-bo'
 TIME_ZONE = 'America/La_Paz'
 USE_I18N = True
 USE_TZ = True
-AUDIT_LOG_KEY = os.environ.get('AUDIT_LOG_KEY', '')
+AUDIT_LOG_KEY = os.environ.get('AUDIT_LOG_KEY', 'sigepsi-developer-master-audit-key-2026')
 AUDIT_DEVELOPER_KEY = os.environ.get('AUDIT_DEVELOPER_KEY', '')
 
 STATIC_URL = '/static/'

@@ -102,6 +102,13 @@ export class AgendaService {
     );
   }
 
+  completarCita(citaId: string): Observable<{ mensaje: string; cita: Cita }> {
+    return this.http.post<{ mensaje: string; cita: Cita }>(
+      `${this.apiUrl}/citas/${citaId}/completar/`,
+      {}
+    );
+  }
+
   // --------------------------------------------------------------------------
   // TELECONSULTA JITSI MEET
   // --------------------------------------------------------------------------

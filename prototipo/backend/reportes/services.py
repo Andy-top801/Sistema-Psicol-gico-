@@ -38,6 +38,8 @@ FUENTES_DISPONIBLES = {
         "filtros": [
             {"key": "fecha_desde", "label": "Fecha Desde", "type": "date"},
             {"key": "fecha_hasta", "label": "Fecha Hasta", "type": "date"},
+            {"key": "mes", "label": "Mes", "type": "select",
+             "opciones": ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]},
             {"key": "estado", "label": "Estado", "type": "select",
              "opciones": ["PROGRAMADA", "CONFIRMADA", "REALIZADA", "CANCELADA", "INASISTENCIA"]},
             {"key": "modalidad", "label": "Modalidad", "type": "select",
@@ -275,14 +277,41 @@ class ReportEngine:
             qs = qs.filter(fecha__gte=filtros["fecha_desde"])
         if filtros.get("fecha_hasta"):
             qs = qs.filter(fecha__lte=filtros["fecha_hasta"])
+        if filtros.get("mes"):
+            mes_raw = str(filtros["mes"]).lower().strip()
+            meses_map = {
+                "enero": 1, "febrero": 2, "marzo": 3, "abril": 4, "mayo": 5, "junio": 6,
+                "julio": 7, "agosto": 8, "septiembre": 9, "setiembre": 9, "octubre": 10,
+                "noviembre": 11, "diciembre": 12
+            }
+            mes_num = meses_map.get(mes_raw)
+            if not mes_num and mes_raw.isdigit():
+                mes_num = int(mes_raw)
+            if mes_num:
+                qs = qs.filter(fecha__month=mes_num)
         if filtros.get("estado"):
             qs = qs.filter(estado=filtros["estado"].upper())
         if filtros.get("modalidad"):
             qs = qs.filter(modalidad=filtros["modalidad"].upper())
         if filtros.get("psicologo_id"):
             qs = qs.filter(psicologo_id=filtros["psicologo_id"])
+        if filtros.get("psicologo"):
+            psic_val = str(filtros["psicologo"]).strip()
+            qs = qs.filter(
+                Q(psicologo__usuario__nombre__icontains=psic_val) |
+                Q(psicologo__usuario__apellido__icontains=psic_val) |
+                Q(psicologo_id__icontains=psic_val)
+            )
         if filtros.get("paciente_id"):
             qs = qs.filter(paciente_id=filtros["paciente_id"])
+        if filtros.get("paciente"):
+            pac_val = str(filtros["paciente"]).strip()
+            qs = qs.filter(
+                Q(paciente__usuario__nombre__icontains=pac_val) |
+                Q(paciente__usuario__apellido__icontains=pac_val) |
+                Q(paciente__codigo_expediente__icontains=pac_val) |
+                Q(paciente_id__icontains=pac_val)
+            )
 
         qs = qs.order_by('-fecha', 'hora_inicio')
         filas = []

@@ -60,6 +60,14 @@ def write_event(event):
             log_file.write(encrypted_line + b"\n")
 
 
+def log_event(**kwargs):
+    """Alias para registrar eventos en la bitácora cifrada."""
+    try:
+        write_event(kwargs)
+    except Exception as e:
+        print(f"[AUDIT WARN] No se pudo escribir evento: {e}")
+
+
 def read_events(log_date=None):
     cipher = _cipher()
     directory = Path(settings.BASE_DIR) / "logs" / "audit"

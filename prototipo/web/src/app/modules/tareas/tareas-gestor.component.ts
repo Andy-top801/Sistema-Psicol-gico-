@@ -303,16 +303,21 @@ import { TareaTerapeutica, HistoriaClinica } from '../../core/models/clinica-spr
     .modal-backdrop-custom {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
       background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 1050;
-      display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+      display: flex; align-items: center; justify-content: center; padding: 1rem;
+      overflow-y: auto;
     }
     .modal-dialog-custom {
       width: 100%; background: #ffffff; border-radius: 16px;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      display: flex; flex-direction: column;
+      max-height: calc(100vh - 2rem);
+      margin: auto;
     }
     .modal-md { max-width: 600px; }
     .modal-lg { max-width: 800px; }
-    .modal-header-custom { padding: 1.25rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
-    .modal-footer-custom { border-top: 1px solid #e2e8f0; background: #f8fafc; display: flex; justify-content: flex-end; gap: 0.75rem; }
+    .modal-header-custom { padding: 1rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    .modal-body-custom { padding: 1.25rem 1.5rem; overflow-y: auto; flex: 1 1 auto; }
+    .modal-footer-custom { padding: 0.85rem 1.5rem; border-top: 1px solid #e2e8f0; background: #f8fafc; display: flex; justify-content: flex-end; gap: 0.75rem; flex-shrink: 0; }
   `]
 })
 export class TareasGestorComponent implements OnInit {

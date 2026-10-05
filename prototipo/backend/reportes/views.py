@@ -110,9 +110,72 @@ class ReportePersonalizadoView(ReportesPermission, APIView):
         columnas = request.data.get("columnas")
         filtros = request.data.get("filtros", {})
         orden = request.data.get("orden")
+        formato = (request.data.get("formato") or "").upper()
 
         try:
             resultado = ReportEngine.generar(fuente, columnas, filtros, orden)
+
+            # Canal Descarga Directa Excel (.xlsx con OpenPyXL)
+            if formato in ["EXCEL", "XLSX"]:
+                from .exporters import ExcelExporter
+                tenant_obj = getattr(request, 'tenant', None)
+                nombre_centro = tenant_obj.nombre if tenant_obj else "Centro Psicológico"
+                response = ExcelExporter.generar(resultado, fuente, tenant_name=nombre_centro)
+                response['Content-Disposition'] = f'attachment; filename="reporte_{fuente}.xlsx"'
+                return response
+
+            # Canal Descarga Directa CSV
+            if formato == "CSV":
+                from .exporters import CSVExporter
+                return CSVExporter.generar(resultado, fuente)
+
+            # Canal Descarga Directa HTML
+            if formato == "HTML":
+                from .exporters import HTMLExporter
+                titulo = f"Reporte de {FUENTES_DISPONIBLES[fuente]['label']}"
+                html_content = HTMLExporter.generar(resultado, titulo=titulo)
+                from django.http import HttpResponse
+                response = HttpResponse(html_content, content_type='text/html; charset=utf-8')
+                response['Content-Disposition'] = f'attachment; filename="reporte_{fuente}.html"'
+                return response
+
+            # Canal Correo Electrónico (SMTP)
+            if formato in ["EMAIL", "SMTP"] or request.data.get("email"):
+                destinatario = request.data.get("email")
+                if not destinatario:
+                    return Response(
+                        {"error": "El correo de destino es obligatorio para envío por email."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                asunto = request.data.get("asunto", f"Reporte SIGEPSI: {FUENTES_DISPONIBLES[fuente]['label']}")
+                from .exporters import HTMLExporter
+                html_content = HTMLExporter.generar(resultado, titulo=asunto)
+
+                from django.core.mail import EmailMultiAlternatives
+                from django.conf import settings
+
+                sender = getattr(settings, 'DEFAULT_FROM_EMAIL', 'notificaciones@sigepsi.com')
+                text_content = f"Adjunto se encuentra el reporte solicitado de {FUENTES_DISPONIBLES[fuente]['label']} con {resultado['total']} registros."
+                msg = EmailMultiAlternatives(asunto, text_content, sender, [destinatario])
+                msg.attach_alternative(html_content, "text/html")
+
+                try:
+                    from .exporters import ExcelExporter
+                    tenant_obj = getattr(request, 'tenant', None)
+                    nombre_centro = tenant_obj.nombre if tenant_obj else "Centro Psicológico"
+                    excel_resp = ExcelExporter.generar(resultado, fuente, tenant_name=nombre_centro)
+                    msg.attach(f"reporte_{fuente}.xlsx", excel_resp.content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                except Exception:
+                    pass
+
+                msg.send(fail_silently=False)
+                return Response({
+                    "mensaje": f"Reporte enviado exitosamente por correo a {destinatario}",
+                    "total_registros": resultado["total"],
+                    "destinatario": destinatario
+                }, status=status.HTTP_200_OK)
+
+            # Por defecto: Retorno relacional proyectado (JSON) para visor interactivo
             return Response(resultado)
         except ValueError as exc:
             return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)

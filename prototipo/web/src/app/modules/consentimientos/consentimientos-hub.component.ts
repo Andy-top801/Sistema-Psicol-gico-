@@ -144,45 +144,86 @@ import { Paciente } from '../../core/models';
       <div *ngIf="mostrarModalPlantillaForm" class="modal-backdrop-custom" (click)="mostrarModalPlantillaForm = false">
         <div class="modal-dialog-custom glass-card-modal modal-lg" (click)="$event.stopPropagation()">
           <div class="modal-header-custom">
-            <h2 class="modal-title"><i class="fa-solid fa-file-contract text-primary me-2"></i>Plantilla de Consentimiento</h2>
-            <button class="btn-close-custom" (click)="mostrarModalPlantillaForm = false"><i class="fa-solid fa-xmark"></i></button>
+            <div class="d-flex align-items-center gap-3">
+              <div class="modal-icon-badge">
+                <i class="fa-solid fa-file-contract"></i>
+              </div>
+              <div>
+                <h2 class="modal-title-clean">Plantilla de Consentimiento</h2>
+                <p class="modal-subtitle-clean">Definición de cláusulas normativas y tags legales automatizados</p>
+              </div>
+            </div>
+            <button class="btn-close-modern" (click)="mostrarModalPlantillaForm = false" title="Cerrar ventana">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
           </div>
           <div class="modal-body-custom p-4">
-            <div class="row g-3 mb-3">
-              <div class="col-md-3">
-                <label class="form-label">Código Único *</label>
-                <input type="text" class="form-control font-monospace" [(ngModel)]="plantillaForm.codigo_plantilla" placeholder="Ej. CI-ADULTOS-2026" />
+            <!-- Grid de 3 columnas para Metadatos -->
+            <div class="plantilla-meta-grid mb-3">
+              <div class="form-group-clean">
+                <label class="clean-label">Código Único <span class="req">*</span></label>
+                <input type="text" class="clean-input font-monospace" [(ngModel)]="plantillaForm.codigo_plantilla" placeholder="Ej. CI-PSIC-2026" />
               </div>
-              <div class="col-md-6">
-                <label class="form-label">Título Oficial *</label>
-                <input type="text" class="form-control" [(ngModel)]="plantillaForm.titulo" placeholder="Ej. Consentimiento Informado para Psicoterapia Individual" />
+              <div class="form-group-clean">
+                <label class="clean-label">Título Oficial <span class="req">*</span></label>
+                <input type="text" class="clean-input" [(ngModel)]="plantillaForm.titulo" placeholder="Ej. Consentimiento Informado para Tratamiento Psicoterapéutico" />
               </div>
-              <div class="col-md-3">
-                <label class="form-label">Versión Legal *</label>
-                <input type="text" class="form-control font-monospace" [(ngModel)]="plantillaForm.version" placeholder="v1.0, v1.1" />
+              <div class="form-group-clean">
+                <label class="clean-label">Versión Legal <span class="req">*</span></label>
+                <input type="text" class="clean-input font-monospace text-center" [(ngModel)]="plantillaForm.version" placeholder="v1.0" />
               </div>
             </div>
 
-            <div class="variables-hint glass-panel p-2 mb-2 small">
-              <strong class="text-primary">Variables Dinámicas Soportadas (HU-31):</strong>
-              <code class="me-2">&#123;PACIENTE_NOMBRE&#125;</code>
-              <code class="me-2">&#123;PACIENTE_CI&#125;</code>
-              <code class="me-2">&#123;FECHA&#125;</code>
-              <code class="me-2">&#123;PSICOLOGO_CABECERA&#125;</code>
-              <code class="me-2">&#123;CENTRO_NOMBRE&#125;</code>
-              <code>&#123;VERSION&#125;</code>
+            <!-- Panel de Variables Dinámicas Interactivas (HU-31) -->
+            <div class="variables-panel mb-3">
+              <div class="variables-panel-header">
+                <i class="fa-solid fa-wand-magic-sparkles text-success me-1"></i>
+                <span class="variables-panel-title">Variables Dinámicas Soportadas (Haz clic para insertar en el texto):</span>
+              </div>
+              <div class="variables-chips-row">
+                <button type="button" class="variable-chip" (click)="insertarVariable('{paciente_nombre}')" title="Insertar nombre del paciente">
+                  <code>&#123;paciente_nombre&#125;</code>
+                  <span class="chip-label">Nombre Paciente</span>
+                </button>
+                <button type="button" class="variable-chip" (click)="insertarVariable('{ci}')" title="Insertar cédula de identidad">
+                  <code>&#123;ci&#125;</code>
+                  <span class="chip-label">Cédula / DNI</span>
+                </button>
+                <button type="button" class="variable-chip" (click)="insertarVariable('{psicologo}')" title="Insertar terapeuta tratante">
+                  <code>&#123;psicologo&#125;</code>
+                  <span class="chip-label">Terapeuta</span>
+                </button>
+                <button type="button" class="variable-chip" (click)="insertarVariable('{centro}')" title="Insertar nombre de la clínica">
+                  <code>&#123;centro&#125;</code>
+                  <span class="chip-label">Clínica</span>
+                </button>
+                <button type="button" class="variable-chip" (click)="insertarVariable('{fecha}')" title="Insertar fecha de emisión">
+                  <code>&#123;fecha&#125;</code>
+                  <span class="chip-label">Fecha</span>
+                </button>
+                <button type="button" class="variable-chip" (click)="insertarVariable('{version}')" title="Insertar versión legal">
+                  <code>&#123;version&#125;</code>
+                  <span class="chip-label">Versión</span>
+                </button>
+              </div>
             </div>
 
-            <div class="mb-3">
-              <label class="form-label">Cuerpo del Consentimiento Legal *</label>
-              <textarea class="form-control font-monospace small" rows="10" [(ngModel)]="plantillaForm.cuerpo_plantilla"
-                        placeholder="Yo, {PACIENTE_NOMBRE}, con Cédula de Identidad {PACIENTE_CI}..."></textarea>
+            <!-- Cuerpo del Consentimiento -->
+            <div class="form-group-clean mb-2">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label class="clean-label mb-0">Cuerpo del Consentimiento Legal <span class="req">*</span></label>
+                <span class="small text-muted">Texto normativo estructurado con soporte de tags dinámicos</span>
+              </div>
+              <textarea class="clean-textarea font-monospace" rows="8" [(ngModel)]="plantillaForm.cuerpo_plantilla"
+                        placeholder="Por medio del presente documento, yo, {paciente_nombre}, con Cédula {ci}..."></textarea>
             </div>
           </div>
           <div class="modal-footer-custom p-3">
-            <button class="btn btn-secondary" (click)="mostrarModalPlantillaForm = false">Cerrar</button>
+            <button class="btn btn-secondary" (click)="mostrarModalPlantillaForm = false">
+              <i class="fa-solid fa-xmark me-1"></i> Cerrar
+            </button>
             <button class="btn btn-primary" [disabled]="!plantillaForm.codigo_plantilla || !plantillaForm.cuerpo_plantilla" (click)="guardarPlantilla()">
-              Guardar Plantilla
+              <i class="fa-solid fa-floppy-disk me-1"></i> Guardar Plantilla
             </button>
           </div>
         </div>
@@ -192,8 +233,18 @@ import { Paciente } from '../../core/models';
       <div *ngIf="mostrarModalFirma" class="modal-backdrop-custom" (click)="cerrarModalFirma()">
         <div class="modal-dialog-custom glass-card-modal modal-lg" (click)="$event.stopPropagation()">
           <div class="modal-header-custom">
-            <h2 class="modal-title"><i class="fa-solid fa-pen-clip text-primary me-2"></i>Captura de Firma Digital</h2>
-            <button class="btn-close-custom" (click)="cerrarModalFirma()"><i class="fa-solid fa-xmark"></i></button>
+            <div class="d-flex align-items-center gap-3">
+              <div class="modal-icon-badge">
+                <i class="fa-solid fa-pen-clip"></i>
+              </div>
+              <div>
+                <h2 class="modal-title-clean">Captura de Firma Digital</h2>
+                <p class="modal-subtitle-clean">Lienzo biométrico táctil y sellado criptográfico SHA-256</p>
+              </div>
+            </div>
+            <button class="btn-close-modern" (click)="cerrarModalFirma()" title="Cerrar ventana">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
           </div>
           <div class="modal-body-custom p-4">
 
@@ -203,10 +254,10 @@ import { Paciente } from '../../core/models';
               <span>{{ avisoMenorEdad }}</span>
             </div>
             
-            <div class="row g-3 mb-3">
-              <div class="col-md-6">
-                <label class="form-label">Seleccionar Paciente *</label>
-                <select class="form-select" [(ngModel)]="firmaForm.paciente" (ngModelChange)="onPacienteChange()">
+            <div class="firma-selects-grid mb-3">
+              <div class="form-group-clean">
+                <label class="clean-label">Seleccionar Paciente <span class="req">*</span></label>
+                <select class="clean-input clean-select" [(ngModel)]="firmaForm.paciente" (ngModelChange)="onPacienteChange()">
                   <option value="" disabled selected>-- Elija paciente --</option>
                   <option *ngFor="let pac of pacientes()" [value]="pac.id">
                     {{ pac.usuario.nombre }} {{ pac.usuario.apellido }} (CI: {{ pac.ci }})
@@ -214,9 +265,9 @@ import { Paciente } from '../../core/models';
                 </select>
               </div>
 
-              <div class="col-md-6">
-                <label class="form-label">Plantilla a Firmar *</label>
-                <select class="form-select" [(ngModel)]="firmaForm.plantilla" (ngModelChange)="actualizarVistaPreviaTexto()">
+              <div class="form-group-clean">
+                <label class="clean-label">Plantilla a Firmar <span class="req">*</span></label>
+                <select class="clean-input clean-select" [(ngModel)]="firmaForm.plantilla" (ngModelChange)="actualizarVistaPreviaTexto()">
                   <option value="" disabled selected>-- Elija plantilla --</option>
                   <option *ngFor="let pl of plantillas()" [value]="pl.id">
                     {{ pl.titulo }} ({{ pl.version || 'v1.0' }})
@@ -234,8 +285,8 @@ import { Paciente } from '../../core/models';
             <!-- Lienzo de Firma Digital (Canvas) -->
             <div class="signature-canvas-section mb-3">
               <div class="d-flex justify-content-between align-items-center mb-1">
-                <label class="form-label m-0 fw-bold">
-                  <i class="fa-solid fa-signature text-primary me-1"></i> Firma del Paciente / Tutor en Pantalla
+                <label class="clean-label m-0 fw-bold">
+                  <i class="fa-solid fa-signature text-success me-1"></i> Firma del Paciente / Tutor en Pantalla
                 </label>
                 <button class="btn btn-sm btn-outline-danger" (click)="limpiarLienzo()">
                   <i class="fa-solid fa-rotate-left me-1"></i> Limpiar Firma
@@ -246,7 +297,7 @@ import { Paciente } from '../../core/models';
                 <canvas 
                   #signatureCanvas 
                   width="700" 
-                  height="160"
+                  height="160" 
                   class="signature-canvas"
                   (mousedown)="iniciarTrazo($event)"
                   (mousemove)="dibujarTrazo($event)"
@@ -283,15 +334,25 @@ import { Paciente } from '../../core/models';
       <!-- MODAL REVOCAR -->
       <div *ngIf="firmaParaRevocar" class="modal-backdrop-custom" (click)="firmaParaRevocar = null">
         <div class="modal-dialog-custom glass-card-modal modal-md" (click)="$event.stopPropagation()">
-          <div class="modal-header-custom bg-light">
-            <h2 class="modal-title text-danger"><i class="fa-solid fa-ban me-2"></i>Revocar Consentimiento Informado</h2>
-            <button class="btn-close-custom" (click)="firmaParaRevocar = null"><i class="fa-solid fa-xmark"></i></button>
+          <div class="modal-header-custom">
+            <div class="d-flex align-items-center gap-3">
+              <div class="modal-icon-badge" style="background: #fee2e2; color: #dc2626;">
+                <i class="fa-solid fa-ban"></i>
+              </div>
+              <div>
+                <h2 class="modal-title-clean text-danger">Revocar Consentimiento Informado</h2>
+                <p class="modal-subtitle-clean">Registro formal de desistimiento o anulación legal</p>
+              </div>
+            </div>
+            <button class="btn-close-modern" (click)="firmaParaRevocar = null" title="Cerrar ventana">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
           </div>
           <div class="modal-body-custom p-4">
-            <p class="small text-muted">
+            <p class="small text-muted mb-2">
               El paciente o su tutor legal ha solicitado la rescisión del consentimiento. Indique el motivo legal del desistimiento:
             </p>
-            <textarea class="form-control" rows="3" [(ngModel)]="motivoRevocacion" placeholder="Motivo de la revocación..."></textarea>
+            <textarea class="clean-textarea" rows="3" [(ngModel)]="motivoRevocacion" placeholder="Motivo de la revocación..."></textarea>
           </div>
           <div class="modal-footer-custom p-3">
             <button class="btn btn-secondary" (click)="firmaParaRevocar = null">Cancelar</button>
@@ -359,16 +420,181 @@ import { Paciente } from '../../core/models';
     .modal-backdrop-custom {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
       background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 1050;
-      display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+      display: flex; align-items: center; justify-content: center; padding: 1rem;
+      overflow-y: auto;
     }
     .modal-dialog-custom {
       width: 100%; background: #ffffff; border-radius: 16px;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      display: flex; flex-direction: column;
+      max-height: calc(100vh - 2rem);
+      margin: auto;
     }
     .modal-md { max-width: 600px; }
     .modal-lg { max-width: 800px; }
-    .modal-header-custom { padding: 1.25rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
-    .modal-footer-custom { border-top: 1px solid #e2e8f0; background: #f8fafc; display: flex; justify-content: flex-end; gap: 0.75rem; }
+    .modal-header-custom { padding: 1rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    .modal-body-custom { padding: 1.25rem 1.5rem; overflow-y: auto; flex: 1 1 auto; }
+    .modal-footer-custom { padding: 0.85rem 1.5rem; border-top: 1px solid #e2e8f0; background: #f8fafc; display: flex; justify-content: flex-end; gap: 0.75rem; flex-shrink: 0; }
+
+    .modal-title-clean {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #0f2922;
+      margin: 0;
+      line-height: 1.2;
+    }
+    .modal-subtitle-clean {
+      font-size: 0.8rem;
+      color: #557164;
+      margin: 2px 0 0 0;
+    }
+    .modal-icon-badge {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: #e6f5ed;
+      color: #19734e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+    .btn-close-modern {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
+      color: #64748b;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+    .btn-close-modern:hover {
+      background: #fee2e2;
+      border-color: #fecaca;
+      color: #dc2626;
+    }
+    .plantilla-meta-grid {
+      display: grid;
+      grid-template-columns: 160px 1fr 110px;
+      gap: 12px;
+    }
+    @media (max-width: 680px) {
+      .plantilla-meta-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .firma-selects-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 680px) {
+      .firma-selects-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .clean-select {
+      cursor: pointer;
+    }
+    .form-group-clean {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .clean-label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #1e293b;
+      letter-spacing: 0.2px;
+      text-transform: none;
+    }
+    .clean-label .req {
+      color: #dc2626;
+      font-weight: 700;
+    }
+    .clean-input {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1.5px solid #d1ded6;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: #0f2922;
+      background: #ffffff;
+      transition: all 0.2s;
+    }
+    .clean-input:focus {
+      border-color: #19734e;
+      box-shadow: 0 0 0 3px rgba(25, 115, 78, 0.15);
+      outline: none;
+    }
+    .clean-textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid #d1ded6;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      line-height: 1.6;
+      color: #1e293b;
+      background: #ffffff;
+      resize: vertical;
+      transition: all 0.2s;
+    }
+    .clean-textarea:focus {
+      border-color: #19734e;
+      box-shadow: 0 0 0 3px rgba(25, 115, 78, 0.15);
+      outline: none;
+    }
+    .variables-panel {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 10px 14px;
+    }
+    .variables-panel-header {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #334155;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+    }
+    .variables-chips-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .variable-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 4px 10px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.15s ease;
+      color: #0f172a;
+    }
+    .variable-chip code {
+      color: #0284c7;
+      font-weight: 700;
+      font-size: 0.82rem;
+    }
+    .variable-chip .chip-label {
+      color: #64748b;
+      font-size: 0.74rem;
+    }
+    .variable-chip:hover {
+      background: #e0f2fe;
+      border-color: #38bdf8;
+      transform: translateY(-1px);
+    }
   `]
 })
 export class ConsentimientosHubComponent implements OnInit {
@@ -463,8 +689,16 @@ export class ConsentimientosHubComponent implements OnInit {
     this.mostrarModalPlantillaForm = true;
   }
 
+  insertarVariable(variable: string): void {
+    if (!this.plantillaForm.cuerpo_plantilla) {
+      this.plantillaForm.cuerpo_plantilla = variable;
+    } else {
+      this.plantillaForm.cuerpo_plantilla += ' ' + variable;
+    }
+  }
+
   guardarPlantilla(): void {
-    this.clinicaService.crearPlantillaConsentimiento(this.plantillaForm).subscribe({
+    this.clinicaService.crearPlantillaConsentimiento(this.plantillaForm as any).subscribe({
       next: () => {
         this.mostrarModalPlantillaForm = false;
         this.mostrarAvisoFeedback('Plantilla de consentimiento guardada');

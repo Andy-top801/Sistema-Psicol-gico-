@@ -25,6 +25,8 @@ import { NotaSoapEditorComponent } from './modules/notas-soap/nota-soap-editor.c
 import { TareasGestorComponent } from './modules/tareas/tareas-gestor.component';
 import { ConsentimientosHubComponent } from './modules/consentimientos/consentimientos-hub.component';
 import { DerivacionFormComponent } from './modules/derivaciones/derivacion-form.component';
+// HU-39 (CU28): Copias de seguridad automáticas y manuales con restauración en la nube
+import { BackupRestoreConsoleComponent } from './modules/backups/backup-restore-console.component';
 // Punto 7+8: Landing Page SaaS con Stripe
 import { LandingPageComponent } from './modules/landing/landing-page.component';
 import { CheckoutSuccessComponent } from './modules/landing/checkout-success.component';
@@ -44,6 +46,7 @@ export const routes: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: DashboardComponent },
       { path: 'tenants', component: TenantListComponent, canActivate: [superAdminGuard] },
+      { path: 'backups', component: BackupRestoreConsoleComponent, canActivate: [superAdminGuard] },
       { path: 'audit', component: AuditLogComponent, canActivate: [superAdminGuard] },
       { path: 'users', component: UserListComponent, canActivate: [adminCentroGuard] },
       { path: 'roles', component: RoleListComponent, canActivate: [adminCentroGuard] },

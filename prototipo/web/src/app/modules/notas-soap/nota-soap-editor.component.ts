@@ -35,9 +35,17 @@ import { NotaSesion, HistoriaClinica } from '../../core/models/clinica-sprint2.m
                 <i class="fa-solid fa-pen-ruler"></i> MODO BORRADOR
               </span>
             </div>
-            <p class="editor-subtitle">
-              Expediente: <strong>{{ historia()?.numero_historia }}</strong> · Paciente: <strong>{{ historia()?.paciente_nombre }}</strong>
-            </p>
+            <div class="editor-subtitle d-flex align-items-center gap-3 flex-wrap">
+              <span>Expediente: <strong>{{ historia()?.numero_historia || 'Buscando...' }}</strong> · Paciente: <strong>{{ historia()?.paciente_nombre || 'Buscando...' }}</strong></span>
+              <div *ngIf="listaHistorias().length > 1 && !notaSesion()?.firmado" class="d-flex align-items-center gap-1">
+                <span class="small text-muted">Cambiar paciente:</span>
+                <select class="form-select form-select-sm d-inline-block w-auto py-0 px-2" style="font-size: 0.8rem;" [(ngModel)]="historiaId" (ngModelChange)="cargarHistoria()">
+                  <option *ngFor="let h of listaHistorias()" [value]="h.id">
+                    {{ h.numero_historia }} - {{ h.paciente_nombre }}
+                  </option>
+                </select>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -422,6 +430,7 @@ export class NotaSoapEditorComponent implements OnInit, OnDestroy {
   citaId?: string;
   historia = signal<HistoriaClinica | null>(null);
   notaSesion = signal<NotaSesion | null>(null);
+  listaHistorias = signal<HistoriaClinica[]>([]);
 
   notaForm = {
     subjetivo: '',
@@ -460,8 +469,22 @@ export class NotaSoapEditorComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // Cargar catálogo de historias clínicas para fallback y selector
+    this.clinicaService.getHistoriasClinicas().subscribe({
+      next: (list) => {
+        this.listaHistorias.set(list);
+        if (!this.historiaId && list.length > 0) {
+          this.historiaId = list[0].id;
+          this.cargarHistoria();
+        }
+      },
+      error: () => {}
+    });
+
     this.route.queryParams.subscribe(q => {
-      this.historiaId = q['historia'] || '';
+      if (q['historia']) {
+        this.historiaId = q['historia'];
+      }
       this.notaId = q['id'];
       this.citaId = q['cita'];
 
@@ -506,6 +529,7 @@ export class NotaSoapEditorComponent implements OnInit, OnDestroy {
   }
 
   cargarHistoria(): void {
+    if (!this.historiaId) return;
     this.clinicaService.getHistoriaClinicaById(this.historiaId).subscribe({
       next: (hc) => this.historia.set(hc)
     });

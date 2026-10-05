@@ -567,7 +567,7 @@ import { HistoriaClinica, DiagnosticoCIE, CieItem } from '../../core/models/clin
               </label>
               <textarea 
                 class="form-control" 
-                rows="4" 
+                rows="2" 
                 [(ngModel)]="nuevoHito.justificacion" 
                 placeholder="Describa el comportamiento clínico observado, factores desencadenantes, cambios en el afecto o cogniciones..."
                 [class.is-invalid]="errorModalEvolucion && (!nuevoHito.justificacion || nuevoHito.justificacion.trim().length < 5)"
@@ -585,7 +585,7 @@ import { HistoriaClinica, DiagnosticoCIE, CieItem } from '../../core/models/clin
               </label>
               <textarea 
                 class="form-control" 
-                rows="3" 
+                rows="2" 
                 [(ngModel)]="nuevoHito.acuerdos_pactados" 
                 [placeholder]="nuevoHito.estado_avance === 'RETROCESO_CRISIS' ? 'Protocolo de seguridad, red de apoyo de emergencia, adelanto de sesión...' : 'Compromisos del paciente y terapeuta para la próxima fase...'"
                 id="input-acuerdos-evolucion"
@@ -904,7 +904,7 @@ import { HistoriaClinica, DiagnosticoCIE, CieItem } from '../../core/models/clin
     .estado-card {
       border: 2px solid #e2e8f0;
       border-radius: 10px;
-      padding: 0.75rem;
+      padding: 0.5rem 0.65rem;
       cursor: pointer;
       transition: all 0.2s ease;
       background: #ffffff;
@@ -927,10 +927,10 @@ import { HistoriaClinica, DiagnosticoCIE, CieItem } from '../../core/models/clin
     .estado-card-content {
       display: flex;
       flex-direction: column;
-      gap: 0.2rem;
+      gap: 0.15rem;
     }
     .estado-name {
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       color: #1e293b;
     }
     .crisis-warning-banner {
@@ -944,15 +944,18 @@ import { HistoriaClinica, DiagnosticoCIE, CieItem } from '../../core/models/clin
     .modal-backdrop-custom {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
       background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 1050;
-      display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+      display: flex; align-items: center; justify-content: center; padding: 1rem;
+      overflow-y: auto;
     }
     .modal-dialog-custom {
       width: 100%; max-width: 650px; background: #ffffff; border-radius: 16px;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); display: flex; flex-direction: column; overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); display: flex; flex-direction: column;
+      max-height: calc(100vh - 2rem);
+      margin: auto;
     }
-    .modal-header-custom { padding: 1.25rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
-    .modal-body-custom { padding: 1.25rem 1.5rem; }
-    .modal-footer-custom { padding: 1rem 1.5rem; border-top: 1px solid #e2e8f0; background: #f8fafc; display: flex; justify-content: flex-end; gap: 0.75rem; }
+    .modal-header-custom { padding: 1rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    .modal-body-custom { padding: 1.25rem 1.5rem; overflow-y: auto; flex: 1 1 auto; }
+    .modal-footer-custom { padding: 0.85rem 1.5rem; border-top: 1px solid #e2e8f0; background: #f8fafc; display: flex; justify-content: flex-end; gap: 0.75rem; flex-shrink: 0; }
   `]
 })
 export class HistoriaClinicaDetalleComponent implements OnInit {
@@ -1312,12 +1315,10 @@ export class HistoriaClinicaDetalleComponent implements OnInit {
 
     const payload = {
       historia_clinica: this.historiaId,
-      paciente: this.historia()?.paciente?.id,
       titulo: this.nuevaTarea.titulo.trim(),
-      descripcion: (this.nuevaTarea.instrucciones || '').trim(),
+      instrucciones: (this.nuevaTarea.instrucciones || '').trim(),
       categoria: this.nuevaTarea.categoria,
-      fecha_limite: this.nuevaTarea.fecha_limite,
-      archivo_adjunto_url: (this.nuevaTarea.archivo_adjunto_url || '').trim()
+      fecha_limite: this.nuevaTarea.fecha_limite
     };
 
     this.clinicaService.crearTarea(payload).subscribe({

@@ -39,6 +39,11 @@ db.sqlite3
 # Encrypted audit logs (never commit confidential records)
 prototipo/backend/logs/
 
+# Database backups (generated dump files)
+prototipo/backend/backups/
+*.sql.gz
+*.dump
+
 # Enterprise Architect Lock Files
 *.ldb
 

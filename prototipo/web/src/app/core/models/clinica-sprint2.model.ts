@@ -94,6 +94,7 @@ export interface NotaSesion {
   es_borrador: boolean;
   ultima_actualizacion_borrador?: string;
   duracion_minutos?: number;
+  conducta_observada?: string;
 }
 
 export interface EvolucionClinica {

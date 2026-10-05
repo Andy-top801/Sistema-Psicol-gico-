@@ -17,6 +17,7 @@ urlpatterns = [
     path('api/agenda/', include('agenda.urls')),
     path('api/', include('audit.urls')),
     path('api/reportes/', include('reportes.urls')),
+    path('api/v1/reportes/', include('reportes.urls')),
     # Endpoints de suscripciones y pagos Stripe (Punto 7+8)
     path('api/subscriptions/', include('subscriptions.urls')),
 ]

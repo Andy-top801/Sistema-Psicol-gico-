@@ -12,7 +12,9 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AgendaService } from '../../core/services/agenda.service';
 import { ClinicaService } from '../../core/services/clinica.service';
+import { ClinicaSprint2Service } from '../../core/services/clinica-sprint2.service';
 import { Cita, SlotDisponible, Psicologo, Paciente } from '../../core/models';
+import { HistoriaClinica } from '../../core/models/clinica-sprint2.model';
 
 interface DiaCalendario {
   fecha: Date;
@@ -199,6 +201,22 @@ interface DiaCalendario {
                   </button>
                   <button class="btn btn-secondary btn-sm" (click)="verDetalleCita(c)">
                     <i class="fa-solid fa-eye"></i> Detalle
+                  </button>
+                  <button 
+                    *ngIf="c.estado === 'REALIZADA'"
+                    class="btn btn-success btn-sm" 
+                    (click)="irANotaSoap(c)"
+                    title="Redactar o consultar Nota SOAP (HU-27)"
+                  >
+                    <i class="fa-solid fa-file-waveform"></i> Nota SOAP
+                  </button>
+                  <button 
+                    *ngIf="c.estado === 'PROGRAMADA' || c.estado === 'CONFIRMADA'"
+                    class="btn btn-outline-success btn-sm" 
+                    (click)="concluirSesion(c)"
+                    title="Concluir Sesión (Marcar Realizada para HU-27)"
+                  >
+                    <i class="fa-solid fa-check-double"></i> Concluir
                   </button>
                 </div>
               </td>
@@ -418,23 +436,27 @@ interface DiaCalendario {
             <div class="modal-actions-box mt-3">
               <!-- CU16 Criterio a / Paso 1: Redactar Nota SOAP al concluir la cita -->
               <div *ngIf="citaSeleccionada.nota_soap_id">
-                <a 
-                  [routerLink]="['/notas-soap/nueva']" 
-                  [queryParams]="{ id: citaSeleccionada.nota_soap_id, historia: citaSeleccionada.paciente_datos?.historia_id, cita: citaSeleccionada.id }"
-                  (click)="closeDetalleModal()"
+                <button 
+                  (click)="irANotaSoap(citaSeleccionada); closeDetalleModal()"
                   class="btn btn-outline-success w-100 mb-2">
                   <i class="fa-solid fa-file-waveform me-2"></i> Ver Nota SOAP Firmada (Inmutable)
-                </a>
+                </button>
               </div>
 
-              <div *ngIf="!citaSeleccionada.nota_soap_id && (citaSeleccionada.estado === 'REALIZADA' || citaSeleccionada.estado === 'CONFIRMADA')">
-                <a 
-                  [routerLink]="['/notas-soap/nueva']" 
-                  [queryParams]="{ historia: citaSeleccionada.paciente_datos?.historia_id, cita: citaSeleccionada.id }"
-                  (click)="closeDetalleModal()"
+              <div *ngIf="!citaSeleccionada.nota_soap_id && citaSeleccionada.estado === 'REALIZADA'">
+                <button 
+                  (click)="irANotaSoap(citaSeleccionada); closeDetalleModal()"
                   class="btn btn-success w-100 mb-2">
-                  <i class="fa-solid fa-file-waveform me-2"></i> Redactar Nota SOAP
-                </a>
+                  <i class="fa-solid fa-file-waveform me-2"></i> Redactar Nota SOAP (HU-27)
+                </button>
+              </div>
+
+              <div *ngIf="citaSeleccionada.estado === 'PROGRAMADA' || citaSeleccionada.estado === 'CONFIRMADA'">
+                <button 
+                  (click)="concluirSesion(citaSeleccionada)"
+                  class="btn btn-outline-success w-100 mb-2">
+                  <i class="fa-solid fa-check-double me-2"></i> Concluir Sesión (Marcar como Realizada)
+                </button>
               </div>
 
               <!-- Enlace a Teleconsulta Jitsi -->
@@ -824,6 +846,7 @@ export class CalendarioAgendaComponent implements OnInit {
   citasFiltradas = signal<Cita[]>([]);
   psicologos = signal<Psicologo[]>([]);
   pacientes = signal<Paciente[]>([]);
+  historiasClinicas = signal<HistoriaClinica[]>([]);
 
   // Vistas y Navegación
   vistaActual: 'mes' | 'lista' = 'mes';
@@ -874,6 +897,7 @@ export class CalendarioAgendaComponent implements OnInit {
   constructor(
     private agendaService: AgendaService,
     private clinicaService: ClinicaService,
+    private clinicaSprint2Service: ClinicaSprint2Service,
     private router: Router
   ) {}
 
@@ -895,6 +919,49 @@ export class CalendarioAgendaComponent implements OnInit {
         }
       }
     });
+
+    this.clinicaSprint2Service.getHistoriasClinicas().subscribe({
+      next: (res) => this.historiasClinicas.set(res),
+      error: () => {}
+    });
+  }
+
+  irANotaSoap(c: Cita): void {
+    const pacienteId = typeof c.paciente === 'object' ? (c.paciente as any)?.id : c.paciente;
+    const hc = this.historiasClinicas().find(h => {
+      const hPacId = typeof h.paciente === 'object' ? (h.paciente as any)?.id : h.paciente;
+      return (pacienteId && hPacId === pacienteId) || 
+             (c.paciente_nombre && h.paciente_nombre?.toLowerCase() === c.paciente_nombre?.toLowerCase()) ||
+             (c.paciente_expediente && h.numero_historia === c.paciente_expediente);
+    });
+    const historiaId = hc ? hc.id : (c.paciente_datos?.historia_id || (this.historiasClinicas()[0]?.id || ''));
+
+    if (c.nota_soap_id) {
+      this.router.navigate(['/notas-soap/nueva'], {
+        queryParams: { id: c.nota_soap_id, historia: historiaId, cita: c.id }
+      });
+    } else {
+      this.router.navigate(['/notas-soap/nueva'], {
+        queryParams: { historia: historiaId, cita: c.id }
+      });
+    }
+  }
+
+  concluirSesion(c: Cita): void {
+    if (confirm(`¿Deseas dar por concluida la sesión de ${c.paciente_nombre} y marcarla como REALIZADA? Esto habilitará el registro de la Nota SOAP estructurada.`)) {
+      this.agendaService.completarCita(c.id).subscribe({
+        next: (res) => {
+          this.mostrarToast(res.mensaje || 'Sesión concluida exitosamente como REALIZADA.', 'success');
+          this.cargarCitas();
+          if (this.showDetalleModal && this.citaSeleccionada?.id === c.id) {
+            this.citaSeleccionada.estado = 'REALIZADA';
+          }
+        },
+        error: (err) => {
+          this.mostrarToast('Error al concluir la sesión clínica.', 'error');
+        }
+      });
+    }
   }
 
   cargarCitas(): void {

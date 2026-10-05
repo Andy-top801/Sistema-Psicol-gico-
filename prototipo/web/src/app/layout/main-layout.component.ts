@@ -56,6 +56,12 @@ import { ChatbotWidgetComponent } from './chatbot-widget.component';
               <span>Centros Psicológicos</span>
             </a>
 
+            <!-- Copias de Seguridad & Restauración (SuperAdmin HU-39) -->
+            <a *ngIf="authService.isSuperAdmin()" routerLink="/backups" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
+              <i class="fa-solid fa-cloud-arrow-up nav-icon"></i>
+              <span>Copias de Seguridad (HU-39)</span>
+            </a>
+
             <a *ngIf="authService.isSuperAdmin()" routerLink="/audit" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
               <i class="fa-solid fa-clipboard-list nav-icon"></i>
               <span>Bitácora de auditoría</span>
@@ -110,6 +116,11 @@ import { ChatbotWidgetComponent } from './chatbot-widget.component';
             <a *ngIf="authService.canAccessHistoriasClinicas()" routerLink="/historias-clinicas" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
               <i class="fa-solid fa-notes-medical nav-icon"></i>
               <span>Historias Clínicas (EHR)</span>
+            </a>
+
+            <a *ngIf="authService.canAccessHistoriasClinicas()" routerLink="/notas-soap/nueva" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
+              <i class="fa-solid fa-file-waveform nav-icon"></i>
+              <span>Notas de Sesión (SOAP HU-27)</span>
             </a>
             
             <a routerLink="/intake" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">

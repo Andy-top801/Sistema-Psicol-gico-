@@ -10,7 +10,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { TenantService } from '../../core/services/tenant.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Tenant } from '../../core/models';
@@ -18,7 +18,7 @@ import { Tenant } from '../../core/models';
 @Component({
   selector: 'app-tenant-list',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   template: `
     <div class="tenants-wrapper">
       <!-- Header -->
@@ -27,9 +27,14 @@ import { Tenant } from '../../core/models';
           <h1 class="page-title">Gestión de Centros Psicológicos (Tenants)</h1>
           <p class="page-subtitle">Aprovisionamiento y administración de suscripciones multi-tenant</p>
         </div>
-        <button class="btn btn-primary" (click)="openCreateModal()">
-          <i class="fa-solid fa-plus"></i> Dar de Alta Nuevo Centro
-        </button>
+        <div class="d-flex gap-2">
+          <a routerLink="/backups" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none; padding: 10px 16px; border-radius: 8px; font-weight: 700; background: #e8f5ed; color: #19734e;">
+            <i class="fa-solid fa-cloud-arrow-up"></i> Copias de Seguridad (HU-39)
+          </a>
+          <button class="btn btn-primary" (click)="openCreateModal()">
+            <i class="fa-solid fa-plus"></i> Dar de Alta Nuevo Centro
+          </button>
+        </div>
       </div>
 
       <!-- Error Message -->
