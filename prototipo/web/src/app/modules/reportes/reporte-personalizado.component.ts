@@ -1527,6 +1527,8 @@ export class ReportePersonalizadoComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.speechParser.stopListening();
     this.subs.forEach(s => s.unsubscribe());
+    this.clearAuditState();
+    this.requests.unsubscribe();
   }
 
   private setupSpeechListeners(): void {
@@ -1789,7 +1791,6 @@ export class ReportePersonalizadoComponent implements OnInit, OnDestroy {
     this.accessError = '';
   }
   lockAudit(): void { this.clearAuditState(); }
-  ngOnDestroy(): void { this.clearAuditState(); this.requests.unsubscribe(); }
 
   /**
    * Paso 3 BDD & Step 9a/11a/12a del Diagrama de Secuencia:
