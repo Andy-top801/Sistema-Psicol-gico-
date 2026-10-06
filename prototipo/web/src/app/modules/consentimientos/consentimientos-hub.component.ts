@@ -631,11 +631,13 @@ export class ConsentimientosHubComponent implements OnInit {
     codigo_plantilla: string;
     titulo: string;
     cuerpo_plantilla: string;
+    version?: string;
   } = {
     id: '',
     codigo_plantilla: '',
     titulo: '',
-    cuerpo_plantilla: ''
+    cuerpo_plantilla: '',
+    version: 'v1.0'
   };
 
 
