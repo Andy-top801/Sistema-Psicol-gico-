@@ -21,6 +21,18 @@ import { Subscription } from 'rxjs';
       <span class="badge badge-primary"><i class="fa-solid fa-eye"></i> Solo lectura</span>
     </section>
 
+    <!-- Estado de Sesión y Rol -->
+    <div *ngIf="!authService.isAuthenticated()" class="alert-box alert-warning mb-4" role="alert">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <span>No has iniciado sesión. Para consultar la bitácora debés ingresar con la cuenta de <strong>SuperAdmin</strong>.</span>
+      <a href="/login" class="btn btn-sm btn-primary ms-3">Iniciar Sesión</a>
+    </div>
+
+    <div *ngIf="authService.isAuthenticated() && !authService.isSuperAdmin()" class="alert-box alert-warning mb-4" role="alert">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <span>Sesión activa como <strong>{{ authService.getRolNombre() }}</strong>. La bitácora requiere permisos de <strong>SuperAdmin</strong> global.</span>
+    </div>
+
     <section class="filters-bar glass-panel" aria-label="Filtros de bitácora">
       <div class="filter-field key-filter">
         <label class="form-label" for="audit-key">Clave de desarrollador</label>
@@ -132,7 +144,7 @@ export class AuditLogComponent implements OnInit, OnDestroy {
   showDeveloperKey = false;
   private request?: Subscription;
 
-  constructor(private auditService: AuditService, private authService: AuthService) {
+  constructor(private auditService: AuditService, public authService: AuthService) {
     effect(() => {
       if (!this.authService.isAuthenticated()) this.clearProtectedState();
     }, { allowSignalWrites: true });
@@ -141,6 +153,11 @@ export class AuditLogComponent implements OnInit, OnDestroy {
   ngOnInit(): void {}
 
   loadLogs(): void {
+    if (!this.authService.isAuthenticated()) {
+      this.events.set([]);
+      this.errorMessage.set('No has iniciado sesión. Por favor, iniciá sesión como SuperAdmin.');
+      return;
+    }
     if (!this.developerKey.trim()) {
       this.events.set([]);
       this.errorMessage.set('Ingresá la clave de desarrollador para consultar la bitácora.');
@@ -154,7 +171,9 @@ export class AuditLogComponent implements OnInit, OnDestroy {
       error: (error: HttpErrorResponse) => {
         this.events.set([]);
         this.loading.set(false);
-        this.errorMessage.set(error.status === 401 || error.status === 403
+        this.errorMessage.set(error.status === 401
+          ? 'Sesión expirada o no iniciada. Por favor, iniciá sesión como SuperAdmin.'
+          : error.status === 403
           ? 'Acceso denegado. Verificá la clave de desarrollador y tu sesión de SuperAdmin.'
           : error.status === 400
           ? 'Los filtros no son válidos. Verifica la fecha y vuelve a intentarlo.'

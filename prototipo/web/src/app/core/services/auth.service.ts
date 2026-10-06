@@ -1,6 +1,6 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, finalize } from 'rxjs';
 import { AuthResponse, Usuario, Tenant } from '../models';
 import { environment } from '../../../environments/environment';
 
@@ -146,8 +146,8 @@ export class AuthService {
     // IU_Navbar envía el refresh token al CTR_AuthLogout para invalidarlo
     return this.http.post(`${this.apiUrl}/auth/logout/`, { refresh }).pipe(
       // --- Paso 7: 200 OK {"mensaje": "Sesión cerrada"} ---
-      // CTR_AuthLogout confirma el cierre de sesión
-      tap(() => this.clearSession())
+      // CTR_AuthLogout confirma el cierre de sesión y limpia localmente en cualquier caso
+      finalize(() => this.clearSession())
     );
     // NOTA: Los pasos 3-6 ocurren en el backend (CTR_AuthLogout ↔ CE_TokenBlacklist):
     //   Paso 3: Validar token y autenticación de usuario

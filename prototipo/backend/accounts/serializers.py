@@ -349,17 +349,13 @@ class LoginSerializer(serializers.Serializer):
         target_tenant = None
 
         if tenant_param and str(tenant_param).strip().lower() != 'public':
-            try:
-                try:
-                    tenant_obj = Tenant.objects.get(id=tenant_param)
-                except Exception:
-                    tenant_obj = Tenant.objects.get(slug=tenant_param)
-                if not tenant_obj.activo:
-                    raise serializers.ValidationError("El centro psicológico se encuentra inactivo o suspendido.")
-                connection.set_tenant(tenant_obj)
-                target_tenant = tenant_obj
-            except Tenant.DoesNotExist:
+            tenant_obj = Tenant.obtener_por_identificador(tenant_param)
+            if not tenant_obj:
                 raise serializers.ValidationError("Centro psicológico no encontrado.")
+            if not tenant_obj.activo:
+                raise serializers.ValidationError("El centro psicológico se encuentra inactivo o suspendido.")
+            connection.set_tenant(tenant_obj)
+            target_tenant = tenant_obj
 
             user = Usuario.objects.filter(email__iexact=email).first()
             if not user:

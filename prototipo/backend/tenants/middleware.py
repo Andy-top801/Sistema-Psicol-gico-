@@ -60,25 +60,16 @@ class SigepsiTenantMiddleware(MiddlewareMixin):
                     pass
 
         if tenant_header:
-            tenant = None
-            if tenant_header.lower() == 'public':
+            if str(tenant_header).strip().lower() == 'public':
                 connection.set_schema_to_public()
                 return None
 
-            try:
-                # Intentar por UUID o por slug o schema_name
-                try:
-                    tenant = Tenant.objects.get(id=tenant_header)
-                except Exception:
-                    tenant = Tenant.objects.get(slug=tenant_header)
-            except Tenant.DoesNotExist:
-                try:
-                    tenant = Tenant.objects.get(schema_name=tenant_header)
-                except Tenant.DoesNotExist:
-                    return JsonResponse(
-                        {"error": "Centro psicológico (Tenant) no encontrado", "codigo": "TENANT_NOT_FOUND"},
-                        status=404
-                    )
+            tenant = Tenant.obtener_por_identificador(tenant_header)
+            if not tenant:
+                return JsonResponse(
+                    {"error": "Centro psicológico (Tenant) no encontrado", "codigo": "TENANT_NOT_FOUND"},
+                    status=404
+                )
 
             if not tenant.activo:
                 return JsonResponse(

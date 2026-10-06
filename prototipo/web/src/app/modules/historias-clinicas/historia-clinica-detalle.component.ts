@@ -1310,10 +1310,14 @@ export class HistoriaClinicaDetalleComponent implements OnInit {
       return;
     }
 
+    const pac = this.historia()?.paciente;
+    const pacienteId = (typeof pac === 'object' && pac !== null) ? pac.id : (typeof pac === 'string' ? pac : undefined);
+
     const payload = {
       historia_clinica: this.historiaId,
-      paciente: this.historia()?.paciente?.id,
+      paciente: pacienteId,
       titulo: this.nuevaTarea.titulo.trim(),
+      instrucciones: (this.nuevaTarea.instrucciones || '').trim(),
       descripcion: (this.nuevaTarea.instrucciones || '').trim(),
       categoria: this.nuevaTarea.categoria,
       fecha_limite: this.nuevaTarea.fecha_limite,

@@ -1126,7 +1126,9 @@ export class ReportePersonalizadoComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         if (fuenteConsultada !== this.fuenteSeleccionada || (fuenteConsultada === 'bitacora' && (keyConsultada !== this.developerKey || !this.authService.isAuthenticated()))) return;
-        if (fuenteConsultada === 'bitacora') this.accessError = err.status === 401 || err.status === 403
+        if (fuenteConsultada === 'bitacora') this.accessError = err.status === 401
+          ? 'Sesión expirada o no iniciada. Por favor, iniciá sesión como SuperAdmin.'
+          : err.status === 403
           ? 'Acceso denegado. Verificá la clave de desarrollador y tu sesión de SuperAdmin.'
           : 'No se pudo generar la bitácora. Verificá la clave e intentá nuevamente.';
         this.generando = false;
@@ -1260,7 +1262,9 @@ export class ReportePersonalizadoComponent implements OnInit, OnDestroy {
       error: (err) => {
         if (fuenteEnviada !== this.fuenteSeleccionada || (fuenteEnviada === 'bitacora' && keyEnviada !== this.developerKey)) return;
         this.enviandoEmail = false;
-        this.emailError = fuenteEnviada === 'bitacora' && (err.status === 401 || err.status === 403)
+        this.emailError = fuenteEnviada === 'bitacora' && err.status === 401
+          ? 'Sesión expirada o no iniciada. Por favor, iniciá sesión como SuperAdmin.'
+          : fuenteEnviada === 'bitacora' && err.status === 403
           ? 'Acceso denegado. Verificá la clave de desarrollador y tu sesión de SuperAdmin.'
           : err.error?.error || 'Error enviando el reporte.';
       }

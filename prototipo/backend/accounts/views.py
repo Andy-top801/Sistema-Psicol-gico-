@@ -80,7 +80,7 @@ class LogoutView(APIView):
     POST /api/auth/logout/
     Invalida el refresh token del usuario y cierra la sesión.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def post(self, request):
         # --- Paso 2: POST /api/auth/logout/ {refresh} + Bearer JWT ---
@@ -128,16 +128,11 @@ class PasswordResetRequestView(APIView):
 
         # 1. Si se envió tenant explícito
         tenant_param = request.data.get('tenant')
-        if tenant_param and tenant_param.lower() != 'public':
-            try:
-                try:
-                    target_tenant = Tenant.objects.get(id=tenant_param)
-                except Exception:
-                    target_tenant = Tenant.objects.get(slug=tenant_param)
+        if tenant_param and str(tenant_param).strip().lower() != 'public':
+            target_tenant = Tenant.obtener_por_identificador(tenant_param)
+            if target_tenant:
                 connection.set_tenant(target_tenant)
-                target_user = Usuario.objects.get(email=email, activo=True)
-            except (Tenant.DoesNotExist, Usuario.DoesNotExist):
-                target_user = None
+                target_user = Usuario.objects.filter(email=email, activo=True).first()
 
         # 2. Si no se especificó o no se halló, buscar en esquema actual
         if not target_user:
@@ -210,6 +205,7 @@ class PasswordResetRequestView(APIView):
             "mensaje": f"Se ha generado el enlace de recuperación para {email}.",
             "tenant": target_tenant.slug if target_tenant else "public",
             "token": token_obj.token,
+            "token_debug": token_obj.token,
             "reset_link": reset_link,
             "expira": token_obj.fecha_expiracion,
         }

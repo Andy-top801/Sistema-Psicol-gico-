@@ -33,6 +33,21 @@ class Tenant(TenantMixin):
         self.activo = True
         self.save()
 
+    @classmethod
+    def obtener_por_identificador(cls, identifier):
+        """Busca un tenant por UUID, slug o schema_name de manera segura."""
+        if not identifier:
+            return None
+        val = str(identifier).strip()
+        try:
+            val_uuid = uuid.UUID(val)
+            tenant = cls.objects.filter(id=val_uuid).first()
+            if tenant:
+                return tenant
+        except (ValueError, AttributeError):
+            pass
+        return cls.objects.filter(slug=val).first() or cls.objects.filter(schema_name=val).first()
+
 
 class Dominio(DomainMixin):
     id = models.AutoField(primary_key=True)

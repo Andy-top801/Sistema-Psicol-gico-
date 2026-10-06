@@ -1,5 +1,6 @@
-import { HttpInterceptorFn, HttpRequest, HttpHandlerFn } from '@angular/common/http';
+import { HttpInterceptorFn, HttpRequest, HttpHandlerFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { catchError, throwError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 
 export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, next: HttpHandlerFn) => {
@@ -9,7 +10,9 @@ export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, ne
 
   let headers = req.headers;
 
-  if (token) {
+  const isPublicAuthOrTenantList = req.url.includes('/api/tenants/public/') || req.url.includes('/api/auth/login/');
+
+  if (token && !isPublicAuthOrTenantList) {
     headers = headers.set('Authorization', `Bearer ${token}`);
   }
 
@@ -18,5 +21,12 @@ export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, ne
   }
 
   const authReq = req.clone({ headers });
-  return next(authReq);
+  return next(authReq).pipe(
+    catchError((error: HttpErrorResponse) => {
+      if (error.status === 401 && !isPublicAuthOrTenantList) {
+        authService.clearSession();
+      }
+      return throwError(() => error);
+    })
+  );
 };

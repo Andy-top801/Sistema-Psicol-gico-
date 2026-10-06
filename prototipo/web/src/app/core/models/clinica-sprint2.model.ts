@@ -87,6 +87,7 @@ export interface NotaSesion {
   analisis: string;
   plan: string;
   intervenciones_aplicadas?: string;
+  conducta_observada?: string;
   nivel_riesgo: 'BAJO' | 'MODERADO' | 'ALTO' | 'CRITICO';
   firmado: boolean;
   fecha_firma?: string;
@@ -136,7 +137,7 @@ export interface ConsentimientoInformado {
   codigo_plantilla: string;
   titulo: string;
   cuerpo_plantilla: string;
-  version: number;
+  version: number | string;
   activo: boolean;
   fecha_creacion: string;
 }

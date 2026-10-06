@@ -272,12 +272,20 @@ export class ClinicaSprint2Service {
   crearTarea(data: {
     historia_clinica: string;
     cita_origen?: string;
+    paciente?: string;
     titulo: string;
-    instrucciones: string;
+    instrucciones?: string;
+    descripcion?: string;
     categoria: string;
     fecha_limite: string;
+    archivo_adjunto_url?: string;
   }): Observable<TareaTerapeutica> {
-    return this.http.post<TareaTerapeutica>(`${this.apiUrl}/tareas/`, data);
+    const payload = {
+      ...data,
+      descripcion: data.descripcion || data.instrucciones || '',
+      instrucciones: data.instrucciones || data.descripcion || ''
+    };
+    return this.http.post<TareaTerapeutica>(`${this.apiUrl}/tareas/`, payload);
   }
 
   subirEvidenciaTarea(tareaId: string, data: {

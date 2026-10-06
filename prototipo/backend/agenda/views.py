@@ -273,7 +273,7 @@ class TeleconsultaFinishView(APIView):
     @transaction.atomic
     def post(self, request, cita_id):
         try:
-            cita = Cita.objects.select_for_update().select_related('teleconsulta', 'psicologo__usuario', 'paciente__usuario').get(id=cita_id)
+            cita = Cita.objects.select_for_update(of=('self',)).select_related('teleconsulta', 'psicologo__usuario', 'paciente__usuario').get(id=cita_id)
         except Cita.DoesNotExist:
             return Response({"error": "Cita no encontrada."}, status=status.HTTP_404_NOT_FOUND)
 
