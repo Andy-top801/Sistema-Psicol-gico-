@@ -1013,7 +1013,7 @@ class FirmaConsentimientoViewSet(viewsets.ModelViewSet):
         user_agent = req.META.get('HTTP_USER_AGENT', '')
         serializer.save(ip_origen=ip, user_agent=user_agent)
 
-    @action(detail=True, methods=['get'], url_path='descargar_pdf')
+    @action(detail=True, methods=['get'], url_path='descargar_pdf', url_name='descargar_pdf')
     def descargar_pdf(self, request, pk=None):
         import base64
         from io import BytesIO
@@ -1089,7 +1089,7 @@ class FirmaConsentimientoViewSet(viewsets.ModelViewSet):
         response['Content-Disposition'] = f'attachment; filename="consentimiento_{firma.id}.pdf"'
         return response
 
-    @action(detail=True, methods=['get'], url_path='descargar_pdf')
+    @action(detail=True, methods=['get'], url_path='descargar_pdf', url_name='descargar_pdf')
     def descargar_pdf_alias(self, request, pk=None):
         return self.descargar_pdf(request, pk)
 

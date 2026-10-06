@@ -84,4 +84,6 @@ Desktop.ini
 
 .atl/
 .codegraph/
-odd/
+odd/*.bak
+*.tmp
+*.orig

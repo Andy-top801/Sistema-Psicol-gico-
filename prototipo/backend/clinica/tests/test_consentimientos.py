@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.urls import reverse
+from rest_framework.test import APIClient
 from rest_framework import status
 from django_tenants.test.cases import TenantTestCase
 from tenants.models import Tenant
@@ -24,14 +24,15 @@ class ConsentimientosTestCase(TenantTestCase):
             email='admin@test.com', password='testpass123',
             nombre='Admin', apellido='Test', rol=self.rol, activo=True
         )
-        self.client.force_login(self.user)
+        self.client = APIClient(HTTP_HOST=self.tenant.get_primary_domain().domain)
+        self.client.force_authenticate(user=self.user)
         self.paciente = Paciente.objects.create(
             usuario=self.user, codigo_expediente='EXP-TEST-001',
             ci='12345678', fecha_nacimiento='1990-01-01', genero='M',
         )
 
     def test_crear_plantilla(self):
-        url = reverse('consentimiento-plantilla-list')
+        url = '/api/clinica/consentimientos-plantillas/'
         payload = {
             "codigo_plantilla": "CI-TEST-001",
             "cuerpo_plantilla": "Contenido del consentimiento",
@@ -44,7 +45,7 @@ class ConsentimientosTestCase(TenantTestCase):
         plantilla = ConsentimientoInformado.objects.create(
             titulo='Test', tipo='TEST', contenido_legal='Contenido', version='1.0', activo=True
         )
-        url = reverse('consentimiento-plantilla-detail', args=[plantilla.id])
+        url = f'/api/clinica/consentimientos-plantillas/{plantilla.id}/'
         response = self.client.patch(url, {'activo': False}, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -52,7 +53,7 @@ class ConsentimientosTestCase(TenantTestCase):
         plantilla = ConsentimientoInformado.objects.create(
             titulo='Test', tipo='TEST', contenido_legal='Contenido', version='1.0', activo=True
         )
-        url = reverse('consentimiento-plantilla-detail', args=[plantilla.id])
+        url = f'/api/clinica/consentimientos-plantillas/{plantilla.id}/'
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
@@ -60,7 +61,7 @@ class ConsentimientosTestCase(TenantTestCase):
         plantilla = ConsentimientoInformado.objects.create(
             titulo='Test', tipo='TEST', contenido_legal='Contenido', version='1.0', activo=True
         )
-        url = reverse('consentimiento-firma-list')
+        url = '/api/clinica/consentimientos-firmas/'
         payload = {
             "plantilla": str(plantilla.id),
             "paciente": str(self.paciente.id),
@@ -77,7 +78,7 @@ class ConsentimientosTestCase(TenantTestCase):
         firma = FirmaConsentimiento.objects.create(
             consentimiento=plantilla, paciente=self.paciente, firmado_por='Test'
         )
-        url = reverse('consentimiento-firma-revocar', args=[firma.id])
+        url = f'/api/clinica/consentimientos-firmas/{firma.id}/revocar/'
         response = self.client.post(url, {'motivo': 'Retiro'}, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -88,13 +89,13 @@ class ConsentimientosTestCase(TenantTestCase):
         firma = FirmaConsentimiento.objects.create(
             consentimiento=plantilla, paciente=self.paciente, firmado_por='Test'
         )
-        url = reverse('consentimiento-firma-descargar_pdf', args=[firma.id])
+        url = f'/api/clinica/consentimientos-firmas/{firma.id}/descargar_pdf/'
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('application/pdf', response['Content-Type'])
 
     def test_firmar_sin_plantilla_falla(self):
-        url = reverse('consentimiento-firma-list')
+        url = '/api/clinica/consentimientos-firmas/'
         payload = {"paciente": str(self.paciente.id), "contenido_final_renderizado": "test"}
         response = self.client.post(url, payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -106,6 +107,6 @@ class ConsentimientosTestCase(TenantTestCase):
         firma = FirmaConsentimiento.objects.create(
             consentimiento=plantilla, paciente=self.paciente, firmado_por='Test'
         )
-        url = reverse('consentimiento-firma-revocar', args=[firma.id])
+        url = f'/api/clinica/consentimientos-firmas/{firma.id}/revocar/'
         response = self.client.post(url, {}, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
