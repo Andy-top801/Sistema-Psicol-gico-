@@ -1,11 +1,11 @@
-// ==============================================================================
+// =
 // MÓDULO: dashboard.component.ts
 // CAPA BCE: BOUNDARY (Interfaz de Usuario) — IU_DashboardClinico, IU_AlertasClinicas
 // CASOS DE USO: CU9 (Consultar Dashboard e Indicadores), CU10 (Alertas Tempranas y Priorización)
 // DESCRIPCIÓN: Componente Angular interactivo para visualización de KPIs de gestión clínica
 //              (ausentismo, ocupación, citas por estado) y priorización de alertas de deserción.
 //              Implementa los pasos 1, 2, 7 y 8 de los Diagramas de Comunicación BCE.
-// ==============================================================================
+// =
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -1443,14 +1443,19 @@ export class DashboardComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.cargarMetricasGlobales();
-    this.cargarListaTenants();
+    if (this.authService.isAdminCentro() || this.authService.isSuperAdmin()) {
+    if (this.authService.isAdminCentro() || this.authService.isSuperAdmin()) {
+      this.cargarMetricasGlobales();
+      this.cargarListaTenants();
+    }
 
-    // Si ya estamos en el contexto de un tenant, sincronizar el slug seleccionado
     const curTenant = this.authService.currentTenant();
     if (curTenant && curTenant.slug) {
       this.selectedTenantSlug.set(curTenant.slug);
     }
+
+    this.cargarDashboardKPIs();
+  }
 
     // Cargar métricas del dashboard (Sprint 1)
     this.cargarDashboardKPIs();
