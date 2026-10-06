@@ -913,7 +913,6 @@ class FirmaConsentimientoSerializer(serializers.ModelSerializer):
 
     plantilla = serializers.PrimaryKeyRelatedField(queryset=ConsentimientoInformado.objects.all(), write_only=True, required=False)
     firma_imagen = serializers.CharField(write_only=True, required=False)
-    contenido_final_renderizado = serializers.CharField(write_only=True, required=False)
 
     firmado_por = serializers.CharField(required=False, allow_blank=True)
     es_menor_edad = serializers.BooleanField(required=False, default=False)
