@@ -244,14 +244,16 @@ import { Tenant } from '../../../core/models';
       opacity: 0.6;
     }
 
-    /* ═══════════ SPLIT CARD ═══════════ */
+    /* ═══════════ SPLIT CARD (Frosted Glass & Ambient Halo) ═══════════ */
     .login-split-card {
       width: 100%;
       max-width: 1040px;
-      background: #ffffff;
-      border: 1px solid rgba(25, 115, 78, 0.15);
+      background: rgba(255, 255, 255, 0.90);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.8);
       border-radius: 24px;
-      box-shadow: 0 20px 60px rgba(15, 41, 34, 0.08), 0 2px 10px rgba(15, 41, 34, 0.03);
+      box-shadow: 0 25px 60px -15px rgba(11, 30, 25, 0.18), 0 0 0 1px rgba(46, 196, 134, 0.15);
       display: flex;
       overflow: hidden;
       position: relative;
@@ -261,7 +263,9 @@ import { Tenant } from '../../../core/models';
     /* ═══════════ LEFT BRAND PANEL ═══════════ */
     .brand-panel {
       flex: 1.1;
-      background: linear-gradient(150deg, #0e2921 0%, #153e32 55%, #0b221b 100%);
+      background: radial-gradient(circle at 85% 15%, rgba(46, 196, 134, 0.25), transparent 60%),
+                  radial-gradient(circle at 15% 85%, rgba(14, 165, 233, 0.18), transparent 60%),
+                  #0b1e19;
       color: #ffffff;
       padding: 44px 40px;
       display: flex;
@@ -269,6 +273,7 @@ import { Tenant } from '../../../core/models';
       justify-content: space-between;
       position: relative;
       overflow: hidden;
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
     }
     .brand-panel::before {
       content: '';
@@ -519,8 +524,8 @@ import { Tenant } from '../../../core/models';
       transition: border-color 0.2s ease;
     }
     .form-select:focus {
-      border-color: #19734e;
-      box-shadow: 0 0 0 3px rgba(25, 115, 78, 0.12);
+      border-color: #2ec486;
+      box-shadow: 0 0 0 3px rgba(46, 196, 134, 0.22);
     }
     .input-icon-wrapper {
       position: relative;
@@ -547,8 +552,8 @@ import { Tenant } from '../../../core/models';
       transition: all 0.2s ease;
     }
     .form-control:focus {
-      border-color: #19734e;
-      box-shadow: 0 0 0 3px rgba(25, 115, 78, 0.12);
+      border-color: #2ec486;
+      box-shadow: 0 0 0 3px rgba(46, 196, 134, 0.22);
     }
     .btn-toggle-eye {
       position: absolute;
@@ -566,21 +571,25 @@ import { Tenant } from '../../../core/models';
       font-family: inherit;
     }
     .btn-primary {
-      background: linear-gradient(135deg, #19734e, #22a06b);
+      background: linear-gradient(135deg, #19734e 0%, #2ec486 100%);
       color: white;
       font-weight: 700;
       font-size: 0.92rem;
-      border-radius: 10px;
-      transition: all 0.25s ease;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.32);
+      transition: var(--transition-spring);
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      box-shadow: 0 4px 14px rgba(25, 115, 78, 0.25);
+      box-shadow: 0 4px 16px rgba(46, 196, 134, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35);
     }
     .btn-primary:hover:not(:disabled) {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(25, 115, 78, 0.35);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(46, 196, 134, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    }
+    .btn-primary:active:not(:disabled) {
+      transform: scale(0.97);
     }
     .btn-primary:disabled {
       opacity: 0.6;

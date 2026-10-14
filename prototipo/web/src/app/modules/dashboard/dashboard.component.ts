@@ -659,10 +659,12 @@ import { DashboardKPIs, AlertaClinica, Tenant } from '../../core/models';
       margin: 0 auto;
     }
 
-    /* Header Card */
+    /* Header Card (Frosted Glass & Aurora Accent) */
     .dash-header-card {
-      background: linear-gradient(135deg, #ffffff 0%, #f4f9f6 100%);
-      border: 1px solid #d9e7df;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.88) 0%, rgba(244, 249, 246, 0.82) 100%);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.8);
       border-radius: 20px;
       padding: 22px 28px;
       display: flex;
@@ -670,7 +672,7 @@ import { DashboardKPIs, AlertaClinica, Tenant } from '../../core/models';
       align-items: center;
       flex-wrap: wrap;
       gap: 20px;
-      box-shadow: 0 4px 16px rgba(15, 41, 34, 0.04);
+      box-shadow: 0 8px 24px -4px rgba(15, 41, 34, 0.05), 0 0 0 1px rgba(46, 196, 134, 0.12);
     }
     .header-main-info {
       display: flex;
@@ -773,17 +775,19 @@ import { DashboardKPIs, AlertaClinica, Tenant } from '../../core/models';
       transform: rotate(45deg);
     }
 
-    /* Teleconsulta Banner */
+    /* Teleconsulta Banner (Aurora Mesh & Glow) */
     .teleconsulta-banner {
-      background: linear-gradient(135deg, #0f2922 0%, #1a4337 100%);
+      background: radial-gradient(circle at 85% 15%, rgba(46, 196, 134, 0.22), transparent 50%),
+                  radial-gradient(circle at 15% 85%, rgba(14, 165, 233, 0.16), transparent 50%),
+                  #0b1e19;
       border-radius: 20px;
       padding: 22px 28px;
       color: #ffffff;
       display: flex;
       align-items: center;
       gap: 20px;
-      box-shadow: 0 8px 24px rgba(15, 41, 34, 0.15);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 12px 32px rgba(11, 30, 25, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.14);
       flex-wrap: wrap;
     }
     .tele-icon-circle {
@@ -834,41 +838,50 @@ import { DashboardKPIs, AlertaClinica, Tenant } from '../../core/models';
       flex-wrap: wrap;
     }
     .btn-emerald {
-      background: #34d399;
-      color: #064e3b;
-      font-weight: 800;
-      padding: 10px 18px;
+      background: linear-gradient(135deg, #19734e 0%, #2ec486 100%);
+      color: #ffffff;
+      font-weight: 700;
+      padding: 10px 20px;
       border-radius: 12px;
-      border: none;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 4px 16px rgba(46, 196, 134, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.3);
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 8px;
       font-size: 0.88rem;
-      transition: all 0.2s;
+      transition: var(--transition-spring);
     }
     .btn-emerald:hover {
-      background: #10b981;
-      color: #ffffff;
       transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(46, 196, 134, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    }
+    .btn-emerald:active {
+      transform: scale(0.97);
     }
     .btn-outline-white {
-      background: transparent;
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       color: #ffffff;
       font-weight: 700;
       padding: 10px 18px;
       border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.28);
       text-decoration: none;
       display: inline-flex;
       align-items: center;
       gap: 8px;
       font-size: 0.88rem;
-      transition: all 0.2s;
+      transition: var(--transition-spring);
     }
     .btn-outline-white:hover {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: #ffffff;
+      background: rgba(255, 255, 255, 0.22);
+      border-color: rgba(255, 255, 255, 0.45);
+      box-shadow: 0 4px 16px rgba(255, 255, 255, 0.1);
+    }
+    .btn-outline-white:active {
+      transform: scale(0.97);
     }
 
     /* KPI Cards Grid (5 cols) */
@@ -888,19 +901,21 @@ import { DashboardKPIs, AlertaClinica, Tenant } from '../../core/models';
     }
 
     .kpi-card {
-      background: #ffffff;
-      border: 1px solid #e3ebe6;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.75);
       border-radius: 18px;
       padding: 18px 20px;
       display: flex;
       flex-direction: column;
-      box-shadow: 0 2px 10px rgba(15, 41, 34, 0.03);
-      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+      box-shadow: 0 4px 16px rgba(15, 41, 34, 0.04), 0 0 0 1px rgba(46, 196, 134, 0.08);
+      transition: var(--transition-spring);
     }
     .kpi-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 20px rgba(15, 41, 34, 0.08);
-      border-color: #c4d7cd;
+      transform: translateY(-4px);
+      box-shadow: 0 12px 28px rgba(15, 41, 34, 0.08), 0 0 20px rgba(46, 196, 134, 0.2);
+      border-color: rgba(46, 196, 134, 0.38);
     }
     .kpi-card.border-alert {
       border: 1.5px solid #f87171;
