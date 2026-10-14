@@ -1384,9 +1384,9 @@ export class ReporteVisorComponent implements OnInit, OnDestroy {
     }
   }
 
-  columnasParaMostrar = computed(() => {
+  columnasParaMostrar(): ColumnaDef[] {
     return this.todasLasColumnas.filter(c => this.columnasVisibles.includes(c.key));
-  });
+  }
 
   // Sorting
   cambiarOrden(colKey: string): void {
@@ -1400,7 +1400,7 @@ export class ReporteVisorComponent implements OnInit, OnDestroy {
   }
 
   // Quick Search & Pagination
-  datosFiltrados = computed(() => {
+  datosFiltrados(): Record<string, any>[] {
     if (!this.resultado || !this.resultado.datos) return [];
     const q = this.busquedaRapida.toLowerCase().trim();
     if (!q) return this.resultado.datos;
@@ -1410,17 +1410,17 @@ export class ReporteVisorComponent implements OnInit, OnDestroy {
         v !== null && v !== undefined && String(v).toLowerCase().includes(q)
       );
     });
-  });
+  }
 
-  totalPaginas = computed(() => {
-    return Math.ceil(this.datosFiltrados().length / this.tamanoPagina) || 1;
-  });
+  totalPaginas(): number {
+    return Math.max(1, Math.ceil(this.datosFiltrados().length / this.tamanoPagina));
+  }
 
-  datosPaginados = computed(() => {
+  datosPaginados(): Record<string, any>[] {
     const todos = this.datosFiltrados();
     const inicio = (this.paginaActual - 1) * this.tamanoPagina;
     return todos.slice(inicio, inicio + this.tamanoPagina);
-  });
+  }
 
   // Helpers de Resumen
   getResumenEstadoEntries(): [string, any][] {

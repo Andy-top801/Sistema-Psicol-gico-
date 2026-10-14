@@ -21,7 +21,6 @@
 // 10b. CE_Usuario --> CTR_AuditLogController: 10b: datos_usuario(email, rol_tenant)
 // 11b. CTR_AuditLogController --> IU_VisorBitacoraForense: 11b: HTTP 200 OK [eventos_descifrados_auditados]
 // 12b. IU_VisorBitacoraForense --> Developer: 12b: renderizar_tabla_forense(ip, usuario, accion, hora_gmt4_bolivia)
-// ==============================================================================
 import { Component, OnInit, OnDestroy, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -84,7 +83,24 @@ import { Subscription } from 'rxjs';
       No hay eventos para los filtros seleccionados.
     </div>
 
-    <div *ngIf="!loading() && events().length > 0" class="table-container">
+    <div *ngIf="!loading() && events().length > 0" class="audit-toolbar glass-panel">
+      <div class="search-input-wrap">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input class="form-control" type="text" [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange($event)" placeholder="Filtrar por usuario, acción, IP, ruta o estado...">
+      </div>
+      <span class="audit-count">Mostrando {{ paginatedEvents().length }} de {{ filteredEvents().length }} eventos (Página {{ currentPage() }} de {{ totalPages() }})</span>
+      <div class="audit-page-buttons">
+        <button class="btn btn-secondary btn-sm" type="button" [disabled]="currentPage() <= 1" (click)="currentPage.set(currentPage() - 1)">Anterior</button>
+        <span class="page-pill">{{ currentPage() }}</span>
+        <button class="btn btn-secondary btn-sm" type="button" [disabled]="currentPage() >= totalPages()" (click)="currentPage.set(currentPage() + 1)">Siguiente</button>
+      </div>
+    </div>
+
+    <div *ngIf="!loading() && events().length > 0 && filteredEvents().length === 0" class="empty-state glass-panel">
+      No se encontraron eventos coincidentes con "{{ searchTerm }}".
+    </div>
+
+    <div *ngIf="!loading() && paginatedEvents().length > 0" class="table-container">
       <table class="custom-table">
         <thead>
           <tr>
@@ -93,7 +109,7 @@ import { Subscription } from 'rxjs';
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let event of events()">
+          <tr *ngFor="let event of paginatedEvents()">
             <td>{{ event.timestamp | date:'dd/MM/yyyy HH:mm:ss' }}</td>
             <td>{{ event.user }}<small *ngIf="event.user_id" class="user-id">{{ event.user_id }}</small></td>
             <td>{{ event.tenant || 'Global' }}</td>
@@ -113,6 +129,14 @@ import { Subscription } from 'rxjs';
     .page-header h1 { margin: 4px 0; }
     .page-header p { color: var(--text-muted); }
     .eyebrow { color: var(--primary); font-size: .75rem; font-weight: 700; letter-spacing: .08em; }
+    .audit-toolbar { padding: 12px 18px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .search-input-wrap { flex: 1 1 280px; position: relative; }
+    .search-input-wrap i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+    .search-input-wrap .form-control { padding-left: 36px; height: 36px; width: 100%; box-sizing: border-box; }
+    .audit-count { font-size: 0.85rem; color: var(--text-muted); }
+    .audit-page-buttons { display: flex; align-items: center; gap: 8px; }
+    .page-pill { font-weight: 700; min-width: 28px; text-align: center; }
+    .btn-sm { padding: 4px 10px; min-height: 32px; font-size: 0.82rem; }
     .filters-bar { padding: 12px; margin-bottom: 16px; display: grid; grid-template-columns: minmax(0, 180px) minmax(0, 1fr) auto; align-items: end; gap: 8px 12px; }
     .filter-field { min-width: 0; }
     .key-filter { grid-column: 1 / 3; }
@@ -171,6 +195,36 @@ export class AuditLogComponent implements OnInit, OnDestroy {
   tenant = '';
   developerKey = '';
   showDeveloperKey = false;
+  searchTerm = '';
+  quickSearch = signal('');
+  currentPage = signal(1);
+  pageSize = signal(50);
+
+  filteredEvents(): AuditEvent[] {
+    const all = this.events();
+    const q = this.quickSearch().toLowerCase().trim();
+    if (!q) return all;
+    return all.filter(e =>
+      (e.user && e.user.toLowerCase().includes(q)) ||
+      (e.path && e.path.toLowerCase().includes(q)) ||
+      (e.action && e.action.toLowerCase().includes(q)) ||
+      (e.ip && e.ip.toLowerCase().includes(q)) ||
+      (e.method && e.method.toLowerCase().includes(q)) ||
+      (e.tenant && e.tenant.toLowerCase().includes(q)) ||
+      (String(e.status_code).includes(q))
+    );
+  }
+
+  paginatedEvents(): AuditEvent[] {
+    const filtered = this.filteredEvents();
+    const start = (this.currentPage() - 1) * this.pageSize();
+    return filtered.slice(start, start + this.pageSize());
+  }
+
+  totalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredEvents().length / this.pageSize()));
+  }
+
   private request?: Subscription;
 
   constructor(private auditService: AuditService, private authService: AuthService) {
@@ -180,6 +234,11 @@ export class AuditLogComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {}
+
+  onSearchChange(val: string): void {
+    this.quickSearch.set(val || '');
+    this.currentPage.set(1);
+  }
 
   // CU5 Paso 1: ingresar_llave_maestra(developer_key, fecha_consulta, tenant_filtro)
   // CU5 Paso 2: GET /api/v1/audit/log/?date=... (Header: X-Developer-Key)
@@ -199,6 +258,7 @@ export class AuditLogComponent implements OnInit, OnDestroy {
         // CU5 Paso 11b: Recibir HTTP 200 OK [eventos_descifrados_auditados]
         // CU5 Paso 12b: renderizar_tabla_forense(ip, usuario, accion, hora_gmt4_bolivia)
         this.events.set(events);
+        this.currentPage.set(1);
         this.loading.set(false);
       },
       error: (error: HttpErrorResponse) => {
@@ -229,6 +289,9 @@ export class AuditLogComponent implements OnInit, OnDestroy {
       this.showDeveloperKey = false;
     }
     this.events.set([]);
+    this.searchTerm = '';
+    this.quickSearch.set('');
+    this.currentPage.set(1);
     this.loading.set(false);
   }
 

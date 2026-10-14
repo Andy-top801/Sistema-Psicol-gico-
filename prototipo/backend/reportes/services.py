@@ -3,6 +3,7 @@
 # DESCRIPCIÓN: Motor central de reportes. Construye queries dinámicas según la
 #              fuente de datos, columnas, filtros y ordenamiento seleccionados.
 # ==============================================================================
+import uuid
 from datetime import date, datetime
 from decimal import Decimal
 
@@ -293,25 +294,29 @@ class ReportEngine:
             qs = qs.filter(estado=filtros["estado"].upper())
         if filtros.get("modalidad"):
             qs = qs.filter(modalidad=filtros["modalidad"].upper())
-        if filtros.get("psicologo_id"):
-            qs = qs.filter(psicologo_id=filtros["psicologo_id"])
-        if filtros.get("psicologo"):
-            psic_val = str(filtros["psicologo"]).strip()
-            qs = qs.filter(
+        if filtros.get("psicologo_id") or filtros.get("psicologo"):
+            psic_val = str(filtros.get("psicologo_id") or filtros.get("psicologo")).strip()
+            q_psico = (
                 Q(psicologo__usuario__nombre__icontains=psic_val) |
-                Q(psicologo__usuario__apellido__icontains=psic_val) |
-                Q(psicologo_id__icontains=psic_val)
+                Q(psicologo__usuario__apellido__icontains=psic_val)
             )
-        if filtros.get("paciente_id"):
-            qs = qs.filter(paciente_id=filtros["paciente_id"])
-        if filtros.get("paciente"):
-            pac_val = str(filtros["paciente"]).strip()
-            qs = qs.filter(
+            try:
+                q_psico |= Q(psicologo_id=uuid.UUID(psic_val))
+            except (ValueError, TypeError, AttributeError):
+                pass
+            qs = qs.filter(q_psico)
+        if filtros.get("paciente_id") or filtros.get("paciente"):
+            pac_val = str(filtros.get("paciente_id") or filtros.get("paciente")).strip()
+            q_pac = (
                 Q(paciente__usuario__nombre__icontains=pac_val) |
                 Q(paciente__usuario__apellido__icontains=pac_val) |
-                Q(paciente__codigo_expediente__icontains=pac_val) |
-                Q(paciente_id__icontains=pac_val)
+                Q(paciente__codigo_expediente__icontains=pac_val)
             )
+            try:
+                q_pac |= Q(paciente_id=uuid.UUID(pac_val))
+            except (ValueError, TypeError, AttributeError):
+                pass
+            qs = qs.filter(q_pac)
 
         qs = qs.order_by('-fecha', 'hora_inicio')
         filas = []
@@ -462,8 +467,17 @@ class ReportEngine:
             qs = qs.filter(fecha__gte=filtros["fecha_desde"])
         if filtros.get("fecha_hasta"):
             qs = qs.filter(fecha__lte=filtros["fecha_hasta"])
-        if filtros.get("psicologo_id"):
-            qs = qs.filter(psicologo_id=filtros["psicologo_id"])
+        if filtros.get("psicologo_id") or filtros.get("psicologo"):
+            p_val = str(filtros.get("psicologo_id") or filtros.get("psicologo")).strip()
+            q_p = (
+                Q(psicologo__usuario__nombre__icontains=p_val) |
+                Q(psicologo__usuario__apellido__icontains=p_val)
+            )
+            try:
+                q_p |= Q(psicologo_id=uuid.UUID(p_val))
+            except (ValueError, TypeError, AttributeError):
+                pass
+            qs = qs.filter(q_p)
         if filtros.get("modalidad"):
             qs = qs.filter(modalidad=filtros["modalidad"].upper())
 
@@ -493,8 +507,17 @@ class ReportEngine:
             qs = qs.filter(cita__fecha__gte=filtros["fecha_desde"])
         if filtros.get("fecha_hasta"):
             qs = qs.filter(cita__fecha__lte=filtros["fecha_hasta"])
-        if filtros.get("psicologo_id"):
-            qs = qs.filter(cita__psicologo_id=filtros["psicologo_id"])
+        if filtros.get("psicologo_id") or filtros.get("psicologo"):
+            p_val = str(filtros.get("psicologo_id") or filtros.get("psicologo")).strip()
+            q_p = (
+                Q(cita__psicologo__usuario__nombre__icontains=p_val) |
+                Q(cita__psicologo__usuario__apellido__icontains=p_val)
+            )
+            try:
+                q_p |= Q(cita__psicologo_id=uuid.UUID(p_val))
+            except (ValueError, TypeError, AttributeError):
+                pass
+            qs = qs.filter(q_p)
 
         filas = []
         for t in qs.order_by('-cita__fecha'):

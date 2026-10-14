@@ -56,7 +56,17 @@ class AuditLogView(APIView):
 
         tenant = request.query_params.get("tenant")
         if tenant:
-            events = [event for event in events if event.get("tenant") == tenant]
+            t_clean = tenant.strip().lower()
+            events = [event for event in events if t_clean in (event.get("tenant") or "").lower()]
+
+        user_filter = request.query_params.get("user")
+        if user_filter:
+            u_clean = user_filter.strip().lower()
+            events = [event for event in events if u_clean in (event.get("user") or "").lower()]
+
+        method_filter = request.query_params.get("method")
+        if method_filter:
+            events = [event for event in events if (event.get("method") or "").upper() == method_filter.strip().upper()]
 
         # CU5 Paso 11b: HTTP 200 OK [eventos_descifrados_auditados]
         return Response(AuditEventSerializer(events, many=True).data)

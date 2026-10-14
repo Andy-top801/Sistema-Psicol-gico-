@@ -1644,7 +1644,7 @@ export class ReportePersonalizadoComponent implements OnInit, OnDestroy {
     // 3. Psicólogo
     if (params.psicologo) {
       this.filtrosValores['psicologo'] = params.psicologo;
-      this.filtrosValores['psicologo_id'] = params.psicologo;
+      delete this.filtrosValores['psicologo_id'];
     }
 
     // 4. Estado y modalidad
@@ -1898,7 +1898,7 @@ export class ReportePersonalizadoComponent implements OnInit, OnDestroy {
   }
 
   // Table filtering & pagination
-  datosFiltrados = computed(() => {
+  datosFiltrados(): Record<string, any>[] {
     if (!this.resultado || !this.resultado.datos) return [];
     const q = this.busquedaResultados.toLowerCase().trim();
     if (!q) return this.resultado.datos;
@@ -1908,17 +1908,17 @@ export class ReportePersonalizadoComponent implements OnInit, OnDestroy {
         v !== null && v !== undefined && String(v).toLowerCase().includes(q)
       );
     });
-  });
+  }
 
-  totalPaginas = computed(() => {
-    return Math.ceil(this.datosFiltrados().length / this.tamanoPagina) || 1;
-  });
+  totalPaginas(): number {
+    return Math.max(1, Math.ceil(this.datosFiltrados().length / this.tamanoPagina));
+  }
 
-  datosPaginados = computed(() => {
+  datosPaginados(): Record<string, any>[] {
     const todos = this.datosFiltrados();
     const start = (this.paginaActual - 1) * this.tamanoPagina;
     return todos.slice(start, start + this.tamanoPagina);
-  });
+  }
 
   exportarPDF(): void {
     if (!this.resultado) return;
