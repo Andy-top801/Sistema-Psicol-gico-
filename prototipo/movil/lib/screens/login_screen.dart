@@ -401,21 +401,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Tarjeta Principal del Formulario
+                    // Tarjeta Principal del Formulario (Frosted Glassmorphism)
                     Container(
                       padding: const EdgeInsets.all(22),
-                      decoration: BoxDecoration(
-                        color: AppTheme.cardBg,
-                        borderRadius: BorderRadius.circular(22),
-                        border: Border.all(color: AppTheme.borderSubtle),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.4),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
+                      decoration: AppTheme.glassDecoration(radius: 22),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -735,16 +724,17 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 12),
 
-                          // Botón de Iniciar Sesión con Gradiente
+                          // Botón de Iniciar Sesión con Gradiente Frío (Cold Button)
                           Container(
                             height: 52,
                             decoration: BoxDecoration(
-                              gradient: AppTheme.primaryGradient,
+                              gradient: AppTheme.coldGradient,
                               borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: Colors.white.withOpacity(0.35)),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppTheme.primary.withOpacity(0.4),
-                                  blurRadius: 16,
+                                  color: AppTheme.primaryLight.withOpacity(0.4),
+                                  blurRadius: 18,
                                   offset: const Offset(0, 4),
                                 ),
                               ],

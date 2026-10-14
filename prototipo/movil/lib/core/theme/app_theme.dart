@@ -2,24 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // Paleta Principal
-  static const Color primary = Color(0xFF0EA5E9);
-  static const Color primaryLight = Color(0xFF38BDF8);
-  static const Color primaryDark = Color(0xFF0284C7);
-  static const Color secondary = Color(0xFF6366F1);
-  static const Color accent = Color(0xFF8B5CF6);
+  // Paleta Principal (Forest & Mint Luxury Theme — Alineada con Web)
+  static const Color primary = Color(0xFF19734E);
+  static const Color primaryLight = Color(0xFF2EC486);
+  static const Color primaryDark = Color(0xFF135D3E);
+  static const Color secondary = Color(0xFF0F2922);
+  static const Color accent = Color(0xFF38BDF8);
 
-  // Fondos y Superficies (Dark Mode Clínico Elegante)
-  static const Color background = Color(0xFF0A0F1D);
-  static const Color cardBg = Color(0xFF141C2E);
-  static const Color cardBgElevated = Color(0xFF1B243B);
-  static const Color surface = Color(0xFF1E293B);
-  static const Color inputBg = Color(0xFF0F172A);
+  // Fondos y Superficies Cristalinas (Dark Glassmorphism)
+  static const Color background = Color(0xFF0B1E19);
+  static const Color cardBg = Color(0xFF112B23);
+  static const Color cardBgElevated = Color(0xFF16382E);
+  static const Color surface = Color(0xFF193F34);
+  static const Color inputBg = Color(0xFF0D221C);
 
   // Tipografía y Textos
   static const Color textMain = Color(0xFFF8FAFC);
-  static const Color textMuted = Color(0xFF94A3B8);
-  static const Color textSubtle = Color(0xFF64748B);
+  static const Color textMuted = Color(0xFF9CBAB0);
+  static const Color textSubtle = Color(0xFF658B7C);
 
   // Estados Semánticos
   static const Color success = Color(0xFF10B981);
@@ -27,34 +27,74 @@ class AppTheme {
   static const Color danger = Color(0xFFF43F5E);
   static const Color info = Color(0xFF38BDF8);
 
-  // Bordes
-  static const Color borderSubtle = Color(0x1FFFFFFF);
-  static const Color borderFocus = Color(0x660EA5E9);
+  // Bordes Cristalinos y Resplandores
+  static const Color borderSubtle = Color(0x2E2EC486);
+  static const Color borderFocus = Color(0x992EC486);
+  static const Color glowMint = Color(0x402EC486);
+  static const Color glowCold = Color(0x4038BDF8);
 
-  // Gradientes Reutilizables
+  // Curvas de Animación Motion.dev Spring
+  static const Curve springCurve = Curves.easeOutBack;
+  static const Curve smoothCurve = Curves.easeInOutCubic;
+
+  // Gradientes Reutilizables (Aceternity & Aurora)
   static const LinearGradient primaryGradient = LinearGradient(
-    colors: [Color(0xFF0EA5E9), Color(0xFF6366F1)],
+    colors: [Color(0xFF19734E), Color(0xFF2EC486)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient coldGradient = LinearGradient(
+    colors: [Color(0xFF2EC486), Color(0xFF38BDF8)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
   static const LinearGradient accentGradient = LinearGradient(
-    colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+    colors: [Color(0xFF2EC486), Color(0xFF0EA5E9)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
   static const LinearGradient heroGradient = LinearGradient(
-    colors: [Color(0xFF1A233A), Color(0xFF0F172A), Color(0xFF111827)],
+    colors: [Color(0xFF0B1E19), Color(0xFF14382E), Color(0xFF0F2922)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
   static const LinearGradient cardGradient = LinearGradient(
-    colors: [Color(0xFF162036), Color(0xFF0F172A)],
+    colors: [Color(0xCC112B23), Color(0xCC0D221C)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
+
+  // Helper de Decoración Glassmorphism (Efecto Cristal Esmerilado)
+  static BoxDecoration glassDecoration({
+    double radius = 18,
+    Color? borderColor,
+    Color? bgColor,
+  }) {
+    return BoxDecoration(
+      color: bgColor ?? const Color(0xCC112B23),
+      borderRadius: BorderRadius.circular(radius),
+      border: Border.all(
+        color: borderColor ?? const Color(0x332EC486),
+        width: 1.2,
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.35),
+          blurRadius: 18,
+          offset: const Offset(0, 8),
+        ),
+        BoxShadow(
+          color: const Color(0xFF2EC486).withOpacity(0.12),
+          blurRadius: 12,
+          offset: const Offset(0, 0),
+        ),
+      ],
+    );
+  }
 
   static ThemeData get darkTheme {
     final baseTextTheme = ThemeData.dark().textTheme;
