@@ -222,6 +222,8 @@ class Sprint1Verifier:
             print("\n--- Módulo 4: Motor de Citas y Concurrencia Transaccional (HU-15, HU-16) ---")
             pac_juan = Paciente.objects.get(usuario__email="juan.perez@paciente.com")
             pac_sofia = Paciente.objects.get(usuario__email="sofia.castro@paciente.com")
+            # Asegurar expediente clínico activo para pacientes de prueba
+            HistoriaClinica.objects.filter(paciente__in=[pac_juan, pac_sofia]).update(cerrada=False, fecha_cierre=None)
 
             # Próximo lunes para asegurar disponibilidad laboral activa
             hoy = date.today()

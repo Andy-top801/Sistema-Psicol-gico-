@@ -171,17 +171,17 @@ class PasswordResetRequestView(APIView):
         frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:4200').rstrip('/')
         reset_link = f"{frontend_url}/reset-password?token={token_obj.token}"
 
-        # Imprimir en consola/logs de Render para auditoría inmediata y pruebas
+        # Imprimir en consola/logs de Render para auditoria inmediata y pruebas
         print("=" * 80)
-        print(f"🔑 [RECUPERACIÓN DE CONTRASEÑA] Solicitado para: {email}")
-        print(f"👉 TOKEN: {token_obj.token}")
-        print(f"👉 ENLACE DIRECTO: {reset_link}")
+        print(f"[RECUPERACION DE CONTRASEÑA] Solicitado para: {email}")
+        print(f"-> TOKEN: {token_obj.token}")
+        print(f"-> ENLACE DIRECTO: {reset_link}")
         print("=" * 80)
 
         # --- Paso 5.1: send_mail(email, reset_link) ---
         default_sock_timeout = socket.getdefaulttimeout()
         try:
-            # Máximo 3 segundos para el intento SMTP (evita bloqueo por firewall en Render Free)
+            # Maximo 3 segundos para el intento SMTP (evita bloqueo por firewall en Render Free)
             socket.setdefaulttimeout(3)
             from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', None) or getattr(settings, 'EMAIL_HOST_USER', None)
             send_mail(
@@ -199,9 +199,9 @@ class PasswordResetRequestView(APIView):
                 recipient_list=[email],
                 fail_silently=False,
             )
-            print(f"✅ Correo enviado exitosamente a {email} vía SMTP.")
+            print(f"[OK] Correo enviado exitosamente a {email} via SMTP.")
         except Exception as smtp_err:
-            print(f"ℹ️ [AVISO] Envío SMTP omitido o bloqueado por firewall en nube ({smtp_err}). Enlace listo en respuesta y log.")
+            print(f"[AVISO] Envio SMTP omitido o bloqueado ({smtp_err}). Enlace listo en respuesta y log.")
         finally:
             socket.setdefaulttimeout(default_sock_timeout)
 
@@ -210,6 +210,7 @@ class PasswordResetRequestView(APIView):
             "mensaje": f"Se ha generado el enlace de recuperación para {email}.",
             "tenant": target_tenant.slug if target_tenant else "public",
             "token": token_obj.token,
+            "token_debug": token_obj.token,
             "reset_link": reset_link,
             "expira": token_obj.fecha_expiracion,
         }
