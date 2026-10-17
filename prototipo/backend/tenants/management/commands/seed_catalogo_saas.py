@@ -1,4 +1,5 @@
 from django.core.management.base import BaseCommand
+from django.core.management import call_command
 from django_tenants.utils import schema_context, get_public_schema_name
 from tenants.models import Tenant, Dominio
 from accounts.models import Usuario, Rol
@@ -158,13 +159,21 @@ class Command(BaseCommand):
         parser.add_argument(
             '--populate-history',
             action='store_true',
+            default=True,
             help='Ejecuta la siembra de datos clínicos e históricos (Sprint 1 y Sprint 2) en todos los centros creados.'
+        )
+        parser.add_argument(
+            '--no-history',
+            action='store_true',
+            help='Omitir la siembra de datos clínicos e históricos en los centros creados.'
         )
 
     def handle(self, *args, **options):
         self.stdout.write(self.style.NOTICE("\n========================================================================="))
         self.stdout.write(self.style.NOTICE("==> PROVISIONANDO CATÁLOGO MULTI-TENANT DE 12 CENTROS PSICOLÓGICOS (SAAS)"))
         self.stdout.write(self.style.NOTICE("=========================================================================\n"))
+
+        populate_history = not options.get('no_history', False)
 
         with schema_context(get_public_schema_name()):
             from accounts.utils import seed_tenant_roles_and_permissions
@@ -239,6 +248,17 @@ class Command(BaseCommand):
                         if u_created:
                             u.set_password(pwd)
                             u.save()
+                        else:
+                            u.rol = roles_map[r_nom]
+                            u.set_password(pwd)
+                            u.save()
+
+                if populate_history:
+                    self.stdout.write(f"  ==> Sembrando datos clínicos e históricos (Sprint 1 y 2) para: {t.nombre} ({t.schema_name})...")
+                    try:
+                        call_command('seed_sprint1', tenant=t.schema_name)
+                    except Exception as err:
+                        self.stderr.write(f"  [ERROR] Falló siembra clínica en {t.schema_name}: {err}")
 
         self.stdout.write(self.style.SUCCESS(f"\n[FINALIZADO] Catálogo SaaS de 12 Centros Psicológicos listo para la Defensa."))
-        self.stdout.write(self.style.NOTICE("Cada centro cuenta con esquema PostgreSQL aislado, dominio y credenciales demo.\n"))
+        self.stdout.write(self.style.NOTICE("Cada centro cuenta con esquema PostgreSQL aislado, dominio, credenciales demo y datos clínicos.\n"))

@@ -24,17 +24,17 @@
 
 Asegurarse de tener instalado:
 
-| Herramienta        | Versión Mínima | Verificar con            | Propósito / Notas |
-|--------------------|----------------|--------------------------|-------------------|
-| Python             | 3.10+ (3.13)   | `python --version`       | Backend Django REST y scripts |
-| PostgreSQL         | 14+ (18)       | `psql --version`         | Multi-Tenancy con esquemas independientes |
-| Node.js            | 18+ (22+)      | `node --version`         | Frontend Web Angular 17 |
-| npm                | 9+             | `npm --version`          | Gestor de paquetes de Node |
-| Angular CLI        | 17+            | `ng version`             | Framework Web SPA |
-| Flutter SDK        | 3.20+ (3.47+)  | `flutter --version`      | Aplicación Móvil multiplataforma |
-| Dart SDK           | 3.0+ (3.13+)   | `dart --version`         | Lenguaje de Flutter |
-| Java JDK / JBR     | 17+ (JDK 25)   | `java -version`          | Gradle 9.3.1 y compilación de Android (`JAVA_HOME`) |
-| Git                | 2.x            | `git --version`          | Control de versiones |
+| Herramienta    | Versión Mínima | Verificar con       | Propósito / Notas                                   |
+| -------------- | -------------- | ------------------- | --------------------------------------------------- |
+| Python         | 3.10+ (3.13)   | `python --version`  | Backend Django REST y scripts                       |
+| PostgreSQL     | 14+ (18)       | `psql --version`    | Multi-Tenancy con esquemas independientes           |
+| Node.js        | 18+ (22+)      | `node --version`    | Frontend Web Angular 17                             |
+| npm            | 9+             | `npm --version`     | Gestor de paquetes de Node                          |
+| Angular CLI    | 17+            | `ng version`        | Framework Web SPA                                   |
+| Flutter SDK    | 3.20+ (3.47+)  | `flutter --version` | Aplicación Móvil multiplataforma                    |
+| Dart SDK       | 3.0+ (3.13+)   | `dart --version`    | Lenguaje de Flutter                                 |
+| Java JDK / JBR | 17+ (JDK 25)   | `java -version`     | Gradle 9.3.1 y compilación de Android (`JAVA_HOME`) |
+| Git            | 2.x            | `git --version`     | Control de versiones                                |
 
 ---
 
@@ -89,14 +89,14 @@ En SIGEPSI, la arquitectura multi-tenant divide la responsabilidad en dos planos
 
 ### 📌 ¿Quién hace qué? Tabla Comparativa de Permisos
 
-| Rol | Nivel / Esquema | ¿Qué puede hacer? | ¿Qué NO puede hacer? |
-|---|---|---|---|
-| **SuperAdmin** | Global (`public`) | Crear/suspender centros psicológicos, configurar dominios, gestionar planes SaaS. | Ver expedientes clínicos, agendar citas o modificar datos internos de un centro. |
-| **Admin Centro** | Centro (`tenant`) | Administrador general del centro: crear/dar de baja usuarios (psicólogos, recepcionistas), asignar roles, configurar horarios y políticas del centro. | Gestionar otros centros de la plataforma o cambiar configuraciones globales SaaS. |
+| Rol                     | Nivel / Esquema   | ¿Qué puede hacer?                                                                                                                                      | ¿Qué NO puede hacer?                                                                                              |
+| ----------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| **SuperAdmin**          | Global (`public`) | Crear/suspender centros psicológicos, configurar dominios, gestionar planes SaaS.                                                                      | Ver expedientes clínicos, agendar citas o modificar datos internos de un centro.                                  |
+| **Admin Centro**        | Centro (`tenant`) | Administrador general del centro: crear/dar de baja usuarios (psicólogos, recepcionistas), asignar roles, configurar horarios y políticas del centro.  | Gestionar otros centros de la plataforma o cambiar configuraciones globales SaaS.                                 |
 | **Coordinador Clínico** | Centro (`tenant`) | Supervisión clínica, triage de pacientes entrantes, asignación de pacientes a psicólogos, revisión de historias clínicas y alertas de abandono/riesgo. | **No es el admin del sitio:** No gestiona cuentas técnicas, ni contraseñas del personal, ni políticas del centro. |
-| **Psicólogo** | Centro (`tenant`) | Atender citas, escribir notas de evolución, crear tareas terapéuticas inter-sesión, teleconsulta con sus pacientes asignados. | Ver pacientes de otros psicólogos (a menos que sea transferido) o gestionar usuarios. |
-| **Recepcionista** | Centro (`tenant`) | Registrar pacientes, agendar citas en calendario general, confirmar asistencias. | Ver notas confidenciales de sesiones psicológicas o diagnósticos reservados. |
-| **Paciente** | Centro (`tenant`) | Consultar sus próximas citas, acceder a teleconsulta, responder tareas terapéuticas. | Acceder a datos de otros pacientes o al panel administrativo. |
+| **Psicólogo**           | Centro (`tenant`) | Atender citas, escribir notas de evolución, crear tareas terapéuticas inter-sesión, teleconsulta con sus pacientes asignados.                          | Ver pacientes de otros psicólogos (a menos que sea transferido) o gestionar usuarios.                             |
+| **Recepcionista**       | Centro (`tenant`) | Registrar pacientes, agendar citas en calendario general, confirmar asistencias.                                                                       | Ver notas confidenciales de sesiones psicológicas o diagnósticos reservados.                                      |
+| **Paciente**            | Centro (`tenant`) | Consultar sus próximas citas, acceder a teleconsulta, responder tareas terapéuticas.                                                                   | Acceder a datos de otros pacientes o al panel administrativo.                                                     |
 
 ---
 
@@ -177,15 +177,15 @@ pip install -r requirements.txt
 ```
 
 **Dependencias principales:**
-| Paquete                       | Propósito                                 |
-|-------------------------------|-------------------------------------------|
-| `django>=5.0,<6.2`           | Framework web                             |
-| `djangorestframework>=3.14`   | API REST                                  |
-| `djangorestframework-simplejwt` | Autenticación JWT                       |
-| `django-tenants>=3.7`         | Multi-tenancy con esquemas PostgreSQL     |
-| `psycopg2-binary>=2.9`        | Driver PostgreSQL                         |
-| `django-cors-headers>=4.3`    | CORS para frontend                        |
-| `pyjwt`                       | Tokens JWT firmados para salas WebRTC     |
+| Paquete                         | Propósito                             |
+| ------------------------------- | ------------------------------------- |
+| `django>=5.0,<6.2`              | Framework web                         |
+| `djangorestframework>=3.14`     | API REST                              |
+| `djangorestframework-simplejwt` | Autenticación JWT                     |
+| `django-tenants>=3.7`           | Multi-tenancy con esquemas PostgreSQL |
+| `psycopg2-binary>=2.9`          | Driver PostgreSQL                     |
+| `django-cors-headers>=4.3`      | CORS para frontend                    |
+| `pyjwt`                         | Tokens JWT firmados para salas WebRTC |
 
 ### 3.4 Migraciones y Base de Datos
 
@@ -265,22 +265,22 @@ python scratch\verify_all_use_cases.py
 ```
 Ejecuta de extremo a extremo todas las Historias de Usuario (HU-01 a HU-22) y Casos de Uso del sistema:
 
-| Caso de Uso | Historia de Usuario | Descripción Funcional |
-|:---|:---|:---|
-| **CU1** | HU-03, HU-04, HU-07, HU-08 | Alta de centro, aislamiento PostgreSQL, configuración y suspensión |
-| **CU2** | HU-01, HU-02, HU-09 | Registro autónomo, login JWT auto-tenant y blacklist logout |
-| **CU27**| HU-10 | Recuperación de contraseña por token temporal criptográfico |
-| **CU3** | HU-05 | Gestión de usuarios, edición parcial sin email, toggle activo |
-| **CU4** | HU-06 | Catálogo RBAC institucional y asignación dinámica de permisos |
-| **CU6** | HU-11 | Directorio de psicólogos, aranceles, biografía y especialidades |
-| **CU8** | HU-12 | Matriz semanal de disponibilidad y rechazo de franjas invertidas |
-| **CU7** | HU-13, HU-14 | Expedientes con autogeneración de código, tutor obligatorio para menores y `/me/` |
-| **CU11**| HU-15, HU-16 | Slots libres (50 min), reserva con bloqueo pesimista y sala WebRTC automática |
-| **CU12**| HU-17 | Cancelación anticipada válida (>2h) y rechazo de cancelación tardía (<2h) |
-| **CU13**| HU-18, HU-19 | Acceso WebRTC Jitsi con roles (Moderador vs Invitado) y cierre con duración real |
-| **CU9** | HU-20 | Dashboard clínico en tiempo real con ocupación, ausentismo e ingresos |
-| **CU10**| HU-21 | Generación de alertas clínicas por inasistencias reiteradas y resolución con notas |
-| **CU14**| HU-22 | Matriz de eventos para FullCalendar con filtrado por terapeuta |
+| Caso de Uso | Historia de Usuario        | Descripción Funcional                                                              |
+| :---------- | :------------------------- | :--------------------------------------------------------------------------------- |
+| **CU1**     | HU-03, HU-04, HU-07, HU-08 | Alta de centro, aislamiento PostgreSQL, configuración y suspensión                 |
+| **CU2**     | HU-01, HU-02, HU-09        | Registro autónomo, login JWT auto-tenant y blacklist logout                        |
+| **CU27**    | HU-10                      | Recuperación de contraseña por token temporal criptográfico                        |
+| **CU3**     | HU-05                      | Gestión de usuarios, edición parcial sin email, toggle activo                      |
+| **CU4**     | HU-06                      | Catálogo RBAC institucional y asignación dinámica de permisos                      |
+| **CU6**     | HU-11                      | Directorio de psicólogos, aranceles, biografía y especialidades                    |
+| **CU8**     | HU-12                      | Matriz semanal de disponibilidad y rechazo de franjas invertidas                   |
+| **CU7**     | HU-13, HU-14               | Expedientes con autogeneración de código, tutor obligatorio para menores y `/me/`  |
+| **CU11**    | HU-15, HU-16               | Slots libres (50 min), reserva con bloqueo pesimista y sala WebRTC automática      |
+| **CU12**    | HU-17                      | Cancelación anticipada válida (>2h) y rechazo de cancelación tardía (<2h)          |
+| **CU13**    | HU-18, HU-19               | Acceso WebRTC Jitsi con roles (Moderador vs Invitado) y cierre con duración real   |
+| **CU9**     | HU-20                      | Dashboard clínico en tiempo real con ocupación, ausentismo e ingresos              |
+| **CU10**    | HU-21                      | Generación de alertas clínicas por inasistencias reiteradas y resolución con notas |
+| **CU14**    | HU-22                      | Matriz de eventos para FullCalendar con filtrado por terapeuta                     |
 
 #### D. Verificación del Sprint 2 (16 Pruebas Clínicas Avanzadas: HU-23 a HU-37)
 
@@ -391,21 +391,21 @@ npm run watch
 
 ### 4.6 Módulos y Rutas Web Disponibles
 
-| Ruta                      | Módulo                     | Funcionalidad / Descripción                      | Roles Autorizados |
-|---------------------------|----------------------------|--------------------------------------------------|-------------------|
-| `/login`                  | Autenticación              | Login con selección o detección de centro        | Público |
-| `/dashboard`              | Dashboard Clínico          | KPIs de ocupación, ausentismo y alertas activas  | Todos los autenticados |
-| `/tenants`                | Gestión de centros         | Crear, suspender y administrar centros           | SuperAdmin |
-| `/users`                  | Gestión de usuarios        | Alta, edición parcial sin email y desactivación  | Admin Centro |
-| `/roles`                  | Roles y permisos RBAC      | Configuración matricial de permisos por rol      | Admin Centro |
-| `/centro`                 | Perfil Institucional       | Configuración de datos, logo y aranceles         | Admin Centro |
-| `/pacientes`              | Pacientes y Expedientes    | Alta con código `EXP-YYYYMM-XXXX`, tutores       | Admin Centro, Recepción, Terapeuta |
-| `/psicologos`             | Directorio Profesional     | Psicólogos, especialidades y franjas horarias    | Admin Centro, Coordinador |
-| `/agenda`                 | Agenda y Calendario        | FullCalendar interactivo, slots de 50 min        | Todos |
-| `/teleconsulta/:citaId`   | Teleconsulta WebRTC        | Sala Jitsi Meet cifrada (Moderador vs Paciente)  | Psicólogo, Paciente |
-| `/mis-tareas`             | Tareas Terapéuticas        | Listado de tareas inter-sesión y registro de entregas | Paciente, Terapeuta |
-| `/consentimientos`        | Consentimiento Digital     | Firma electrónica SHA-256 de consentimientos informados | Paciente, Tutor |
-| *(Widget Global)*         | Asistente Virtual IA       | Chatbot IA Hugging Face con detección de crisis en tiempo real | Pacientes autenticados |
+| Ruta                    | Módulo                  | Funcionalidad / Descripción                                    | Roles Autorizados                  |
+| ----------------------- | ----------------------- | -------------------------------------------------------------- | ---------------------------------- |
+| `/login`                | Autenticación           | Login con selección o detección de centro                      | Público                            |
+| `/dashboard`            | Dashboard Clínico       | KPIs de ocupación, ausentismo y alertas activas                | Todos los autenticados             |
+| `/tenants`              | Gestión de centros      | Crear, suspender y administrar centros                         | SuperAdmin                         |
+| `/users`                | Gestión de usuarios     | Alta, edición parcial sin email y desactivación                | Admin Centro                       |
+| `/roles`                | Roles y permisos RBAC   | Configuración matricial de permisos por rol                    | Admin Centro                       |
+| `/centro`               | Perfil Institucional    | Configuración de datos, logo y aranceles                       | Admin Centro                       |
+| `/pacientes`            | Pacientes y Expedientes | Alta con código `EXP-YYYYMM-XXXX`, tutores                     | Admin Centro, Recepción, Terapeuta |
+| `/psicologos`           | Directorio Profesional  | Psicólogos, especialidades y franjas horarias                  | Admin Centro, Coordinador          |
+| `/agenda`               | Agenda y Calendario     | FullCalendar interactivo, slots de 50 min                      | Todos                              |
+| `/teleconsulta/:citaId` | Teleconsulta WebRTC     | Sala Jitsi Meet cifrada (Moderador vs Paciente)                | Psicólogo, Paciente                |
+| `/mis-tareas`           | Tareas Terapéuticas     | Listado de tareas inter-sesión y registro de entregas          | Paciente, Terapeuta                |
+| `/consentimientos`      | Consentimiento Digital  | Firma electrónica SHA-256 de consentimientos informados        | Paciente, Tutor                    |
+| *(Widget Global)*       | Asistente Virtual IA    | Chatbot IA Hugging Face con detección de crisis en tiempo real | Pacientes autenticados             |
 
 ---
 
@@ -476,12 +476,12 @@ flutter pub get
 ```
 
 **Dependencias principales:**
-| Paquete               | Propósito                            |
-|-----------------------|--------------------------------------|
-| `http: ^1.2.0`        | Cliente HTTP para llamadas a la API  |
-| `shared_preferences`  | Almacenamiento local (tokens JWT)    |
-| `google_fonts`         | Tipografía personalizada             |
-| `intl`                 | Internacionalización y fechas        |
+| Paquete              | Propósito                           |
+| -------------------- | ----------------------------------- |
+| `http: ^1.2.0`       | Cliente HTTP para llamadas a la API |
+| `shared_preferences` | Almacenamiento local (tokens JWT)   |
+| `google_fonts`       | Tipografía personalizada            |
+| `intl`               | Internacionalización y fechas       |
 
 ### 5.3 Configuración de Red y Conexión de Dispositivo Físico (USB)
 
@@ -634,7 +634,7 @@ cd prototipo\movil
 & "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" reverse tcp:8000 tcp:8000
 
 # Iniciar la app en tu celular:
-flutter run
+flutter run -d R5CY620NJLA
 # (O indicar tu dispositivo directamente: flutter run -d <ID_DISPOSITIVO>)
 # → Se instalará y abrirá automáticamente en tu celular
 ```
@@ -671,37 +671,249 @@ flutter run
 
 ---
 
-## 7. Credenciales de Prueba
+## 7. Credenciales de Prueba por Tenant y Rol
 
-### SuperAdmin (Esquema Public)
+> 💡 **Auto-Resolución de Tenant en el Login:**
+> En la pantalla de login (o vía API `POST /api/auth/login/`), puedes ingresar directamente el **Email** y la **Contraseña**. El backend identifica automáticamente a qué tenant pertenece el usuario y conmutará al esquema de base de datos correspondiente sin necesidad de configurar cabeceras adicionales. También puedes seleccionar o ingresar el identificador del tenant de manera explícita.
+>
+> 🔒 **Política de Contraseñas:** Cumplen con la política de seguridad institucional (mínimo 8 caracteres, al menos 1 letra mayúscula, 1 número y 1 carácter especial).
 
-| Email                                  | Contraseña   | Rol        | Ámbito |
-|----------------------------------------|-------------|------------|--------|
-| beto.caleb.delgado.rojas@gmail.com     | Admin1234*  | SuperAdmin | Plataforma Global (SaaS) |
-| admin@sigepsi.com (alias secundario)   | Admin1234*  | SuperAdmin | Plataforma Global (SaaS) |
+---
 
-### Centro Psicológico Esperanza (`centro_esperanza`)
+### 7.1 SuperAdmin (Esquema Public - Plataforma Global SaaS)
 
-| Email                                | Contraseña    | Rol                  | Ámbito / Funcionalidad |
-|--------------------------------------|--------------|----------------------|------------------------|
-| beto.caleb.delgado.rojas@gmail.com   | Admin1234*   | Admin Centro         | SuperAdmin y Administración del Centro |
-| admin@centroesperanza.com            | Admin1234*   | Admin Centro         | Gestión de Centro, Usuarios y Roles |
-| recepcion@centroesperanza.com        | Recep1234*   | Recepcionista        | Pacientes, Expedientes y Agenda |
-| carlos.mendoza@centroesperanza.com   | Psicologo123*| Psicólogo Especialista| TCC y Clínica (BOB 180.00), Citas y Teleconsulta |
-| mariana.vargas@centroesperanza.com   | Psicologo123*| Psicólogo Especialista| Familiar e Infantil (BOB 200.00), Citas y Teleconsulta |
-| juan.perez@paciente.com              | Paciente123* | Paciente Adulto      | Expediente EXP-2026-001 (CI: 8472910-LP) |
-| mateo.quispe@paciente.com            | Paciente123* | Paciente Menor       | Expediente EXP-2026-003 (Tutora: Beatriz Lima) |
+| Email                                | Contraseña   | Rol            | Ámbito / Funcionalidad                                                              |
+| ------------------------------------ | ------------ | -------------- | ----------------------------------------------------------------------------------- |
+| `beto.caleb.delgado.rojas@gmail.com` | `Admin1234*` | **SuperAdmin** | Administración global de la plataforma, creación y suspensión de centros (Tenants). |
+| `admin@sigepsi.com`                  | `Admin1234*` | **SuperAdmin** | Cuenta institucional global de respaldo.                                            |
 
-### Gabinete MenteSana (`mentesana`)
+---
 
-| Email                       | Contraseña   | Rol                  | Ámbito |
-|-----------------------------|-------------|----------------------|--------|
-| admin@mentesana.com         | Admin1234*  | Admin Centro         | Gestión Centro |
-| psicologo@mentesana.com     | Psico1234*  | Psicólogo            | Terapeuta |
-| recepcion@mentesana.com     | Recep1234*  | Recepcionista        | Recepción |
-| coordinador@mentesana.com   | Coord1234*  | Coordinador Clínico  | Supervisión |
+### 7.2 Catálogo Oficial de Centros Psicológicos (12 Tenants SaaS - Criterio 8)
 
-> **Requisitos de contraseña:** Mínimo 8 caracteres, al menos 1 mayúscula, 1 número y 1 carácter especial.
+#### 1. Centro Psicológico Esperanza (`centro_esperanza`)
+* **Ciudad:** Santa Cruz de la Sierra | **Dominio:** `esperanza.localhost` | **Plan:** Enterprise
+
+| Rol                        | Email                                                  | Contraseña      | Perfil / Alcance Funcional                                                          |
+| -------------------------- | ------------------------------------------------------ | --------------- | ----------------------------------------------------------------------------------- |
+| **Admin Centro**           | `beto.caleb.delgado.rojas@gmail.com`                   | `Admin1234*`    | SuperAdmin y Directorio Ejecutivo del Centro.                                       |
+| **Admin Centro**           | `admin@centroesperanza.com`                            | `Admin1234*`    | Gestión integral del centro, usuarios, roles y configuración.                       |
+| **Coordinador Clínico**    | `coordinador@centroesperanza.com`                      | `Coord1234*`    | Supervisión de triage, auditoría IA, reportes y reasignaciones.                     |
+| **Recepcionista**          | `recepcion@centroesperanza.com`                        | `Recep1234*`    | Admisión de pacientes, agendamiento de citas y confirmaciones.                      |
+| **Psicólogo Principal**    | `psicologo@centroesperanza.com`                        | `Psico1234*`    | Atención general y psicoterapia ambulatoria.                                        |
+| **Psicólogo Especialista** | `carlos.mendoza@centroesperanza.com`                   | `Psicologo123*` | Lic. Carlos Mendoza (TCC y Clínica, Arancel BOB 180.00, Reg: COL-PSI-4589).         |
+| **Psicólogo Especialista** | `mariana.vargas@centroesperanza.com`                   | `Psicologo123*` | Lic. Mariana Vargas (Sistémica e Infantil, Arancel BOB 200.00, Reg: COL-PSI-7821).  |
+| **Psicólogo Especialista** | `fernando.torrico@centroesperanza.com`                 | `Psicologo123*` | Lic. Fernando Torrico (Neuropsicología, Arancel BOB 220.00, Reg: COL-PSI-9340).     |
+| **Psicólogo Especialista** | `gabriel.montes@centroesperanza.com`                   | `Psicologo123*` | Lic. Gabriel Montes (ACT y Contextual, Arancel BOB 190.00, Reg: COL-SP2-9988).      |
+| **Psicólogo Especialista** | `lucia.rios@centroesperanza.com`                       | `Psicologo123*` | Lic. Lucía Ríos (Trauma y Duelo EMDR, Arancel BOB 210.00, Reg: COL-PSI-3120).       |
+| **Paciente Adulto**        | `juan.perez@paciente.com` (o `@centroesperanza.com`)   | `Paciente123*`  | Juan Pérez (CI: 8472910-LP), notas SOAP firmadas, tareas y teleconsulta.            |
+| **Paciente Adulto**        | `sofia.castro@paciente.com` (o `@centroesperanza.com`) | `Paciente123*`  | Sofía Castro (CI: 10928374-CB), activación conductual y teleconsulta.               |
+| **Paciente Menor**         | `mateo.quispe@paciente.com` (o `@centroesperanza.com`) | `Paciente123*`  | Mateo Quispe (12 años, CI: 13459872-SC, Tutora legal: Beatriz Lima Flores).         |
+| **Paciente Adulto**        | `elena.valverde@centroesperanza.com`                   | `Paciente123*`  | Elena Valverde (CI: 7382914-TJ), cita cancelada y duelo adaptativo.                 |
+| **Paciente Adulto**        | `diego.alarcon@centroesperanza.com`                    | `Paciente123*`  | Diego Alarcón (CI: 9182736-OR), caso resuelto con Acta de Alta Médica Formal.       |
+| **Paciente Adulto**        | `valentina.ramos@centroesperanza.com`                  | `Paciente123*`  | Valentina Ramos (CI: 12345678-SC), TEPT con Derivación Psiquiátrica externa.        |
+| **Paciente Adolescente**   | `rodrigo.guzman@centroesperanza.com`                   | `Paciente123*`  | Rodrigo Guzmán (CI: 6574839-BN), cita próxima con Formulario Preconsulta pendiente. |
+
+---
+
+#### 2. Gabinete Integral MenteSana (`mentesana`)
+* **Ciudad:** Cochabamba | **Dominio:** `mentesana.localhost` | **Plan:** Pro
+
+| Rol                        | Email                            | Contraseña      | Perfil / Alcance Funcional                         |
+| -------------------------- | -------------------------------- | --------------- | -------------------------------------------------- |
+| **Admin Centro**           | `admin@mentesana.com`            | `Admin1234*`    | Administración total del centro.                   |
+| **Coordinador Clínico**    | `coordinador@mentesana.com`      | `Coord1234*`    | Supervisión de equipo clínico y derivaciones.      |
+| **Recepcionista**          | `recepcion@mentesana.com`        | `Recep1234*`    | Atención presencial y calendario de citas.         |
+| **Psicólogo Principal**    | `psicologo@mentesana.com`        | `Psico1234*`    | Terapeuta general del gabinete.                    |
+| **Psicólogo Especialista** | `carlos.mendoza@mentesana.com`   | `Psicologo123*` | Terapeuta TCC, notas SOAP y evoluciones.           |
+| **Psicólogo Especialista** | `mariana.vargas@mentesana.com`   | `Psicologo123*` | Terapeuta infanto-juvenil y familiar.              |
+| **Psicólogo Especialista** | `fernando.torrico@mentesana.com` | `Psicologo123*` | Neuropsicología y rehabilitación cognitiva.        |
+| **Paciente Adulto**        | `juan.perez@mentesana.com`       | `Paciente123*`  | Paciente con expediente activo y tareas.           |
+| **Paciente Menor**         | `mateo.quispe@mentesana.com`     | `Paciente123*`  | Paciente menor de edad con consentimiento firmado. |
+
+---
+
+#### 3. Centro de Salud Emocional Equilibrio (`equilibrio_mental`)
+* **Ciudad:** La Paz | **Dominio:** `equilibrio.localhost` | **Plan:** Enterprise
+
+| Rol                        | Email                                 | Contraseña      | Perfil / Alcance Funcional                     |
+| -------------------------- | ------------------------------------- | --------------- | ---------------------------------------------- |
+| **Admin Centro**           | `admin@equilibriomental.com`          | `Admin1234*`    | Administración general de la sede La Paz.      |
+| **Coordinador Clínico**    | `coordinador@equilibriomental.com`    | `Coord1234*`    | Supervisión de triage y protocolos de crisis.  |
+| **Recepcionista**          | `recepcion@equilibriomental.com`      | `Recep1234*`    | Agenda de citas y admisión de nuevos usuarios. |
+| **Psicólogo**              | `psicologo@equilibriomental.com`      | `Psico1234*`    | Psicólogo de guardia y atención clínica.       |
+| **Psicólogo Especialista** | `carlos.mendoza@equilibriomental.com` | `Psicologo123*` | Psicoterapeuta TCC y telepsicología.           |
+| **Paciente**               | `juan.perez@equilibriomental.com`     | `Paciente123*`  | Paciente con expediente clínico completo.      |
+
+---
+
+#### 4. Clínica de Psicoterapia Renacer (`renacer_psicologia`)
+* **Ciudad:** Santa Cruz de la Sierra | **Dominio:** `renacer.localhost` | **Plan:** Pro
+
+| Rol                        | Email                                  | Contraseña      | Perfil / Alcance Funcional                         |
+| -------------------------- | -------------------------------------- | --------------- | -------------------------------------------------- |
+| **Admin Centro**           | `admin@renacerpsicologia.com`          | `Admin1234*`    | Dirección institucional de la clínica.             |
+| **Coordinador Clínico**    | `coordinador@renacerpsicologia.com`    | `Coord1234*`    | Gestión de altas terapéuticas y derivaciones.      |
+| **Recepcionista**          | `recepcion@renacerpsicologia.com`      | `Recep1234*`    | Admisión de pacientes y gestión de caja/citas.     |
+| **Psicólogo**              | `psicologo@renacerpsicologia.com`      | `Psico1234*`    | Atención clínica psicoterapéutica.                 |
+| **Psicólogo Especialista** | `carlos.mendoza@renacerpsicologia.com` | `Psicologo123*` | Psicólogo especialista colegiado.                  |
+| **Paciente**               | `juan.perez@renacerpsicologia.com`     | `Paciente123*`  | Paciente asignado con historial y consentimientos. |
+
+---
+
+#### 5. Instituto Psicológico Serenidad (`serenidad_sucre`)
+* **Ciudad:** Sucre | **Dominio:** `serenidad.localhost` | **Plan:** Basic
+
+| Rol                        | Email                               | Contraseña      | Perfil / Alcance Funcional                  |
+| -------------------------- | ----------------------------------- | --------------- | ------------------------------------------- |
+| **Admin Centro**           | `admin@serenidadsucre.com`          | `Admin1234*`    | Dirección del instituto en Sucre.           |
+| **Coordinador Clínico**    | `coordinador@serenidadsucre.com`    | `Coord1234*`    | Monitoreo clínico y auditoría de historias. |
+| **Recepcionista**          | `recepcion@serenidadsucre.com`      | `Recep1234*`    | Agendamiento y llamadas de recordatorio.    |
+| **Psicólogo**              | `psicologo@serenidadsucre.com`      | `Psico1234*`    | Terapeuta del instituto.                    |
+| **Psicólogo Especialista** | `carlos.mendoza@serenidadsucre.com` | `Psicologo123*` | Atención especializada y notas SOAP.        |
+| **Paciente**               | `juan.perez@serenidadsucre.com`     | `Paciente123*`  | Paciente registrado en el centro.           |
+
+---
+
+#### 6. Centro Terapéutico Vínculos (`vinculos_familiares`)
+* **Ciudad:** Tarija | **Dominio:** `vinculos.localhost` | **Plan:** Pro
+
+| Rol                        | Email                                   | Contraseña      | Perfil / Alcance Funcional                           |
+| -------------------------- | --------------------------------------- | --------------- | ---------------------------------------------------- |
+| **Admin Centro**           | `admin@vinculosfamiliares.com`          | `Admin1234*`    | Administración del centro de terapia vincular.       |
+| **Coordinador Clínico**    | `coordinador@vinculosfamiliares.com`    | `Coord1234*`    | Supervisión de casos familiares e infanto-juveniles. |
+| **Recepcionista**          | `recepcion@vinculosfamiliares.com`      | `Recep1234*`    | Agenda y asignación de consultorios.                 |
+| **Psicólogo**              | `psicologo@vinculosfamiliares.com`      | `Psico1234*`    | Terapeuta sistémico.                                 |
+| **Psicólogo Especialista** | `carlos.mendoza@vinculosfamiliares.com` | `Psicologo123*` | Especialista con agenda abierta y citas.             |
+| **Paciente**               | `juan.perez@vinculosfamiliares.com`     | `Paciente123*`  | Paciente con expediente activo.                      |
+
+---
+
+#### 7. Gabinete Infanto-Juvenil Crecer (`crecer_infantil`)
+* **Ciudad:** Santa Cruz de la Sierra | **Dominio:** `crecer.localhost` | **Plan:** Pro
+
+| Rol                        | Email                               | Contraseña      | Perfil / Alcance Funcional                      |
+| -------------------------- | ----------------------------------- | --------------- | ----------------------------------------------- |
+| **Admin Centro**           | `admin@crecerinfantil.com`          | `Admin1234*`    | Dirección del gabinete pediátrico y escolar.    |
+| **Coordinador Clínico**    | `coordinador@crecerinfantil.com`    | `Coord1234*`    | Triage infanto-juvenil y validación de tutores. |
+| **Recepcionista**          | `recepcion@crecerinfantil.com`      | `Recep1234*`    | Recepción de familias y citas psicopedagógicas. |
+| **Psicólogo**              | `psicologo@crecerinfantil.com`      | `Psico1234*`    | Terapeuta del neurodesarrollo.                  |
+| **Psicólogo Especialista** | `mariana.vargas@crecerinfantil.com` | `Psicologo123*` | Especialista en infancia, apego y familia.      |
+| **Paciente Menor**         | `mateo.quispe@crecerinfantil.com`   | `Paciente123*`  | Menor con consentimiento tutorizado firmado.    |
+
+---
+
+#### 8. Centro de Psicología Clínica Bienestar Pleno (`bienestar_pleno`)
+* **Ciudad:** La Paz | **Dominio:** `bienestar.localhost` | **Plan:** Enterprise
+
+| Rol                        | Email                               | Contraseña      | Perfil / Alcance Funcional                           |
+| -------------------------- | ----------------------------------- | --------------- | ---------------------------------------------------- |
+| **Admin Centro**           | `admin@bienestarpleno.com`          | `Admin1234*`    | Gestión administrativa zona sur de La Paz.           |
+| **Coordinador Clínico**    | `coordinador@bienestarpleno.com`    | `Coord1234*`    | Supervisión de protocolos de teleconsulta y calidad. |
+| **Recepcionista**          | `recepcion@bienestarpleno.com`      | `Recep1234*`    | Mesa de entrada y admisiones virtuales.              |
+| **Psicólogo**              | `psicologo@bienestarpleno.com`      | `Psico1234*`    | Psicoterapeuta del centro.                           |
+| **Psicólogo Especialista** | `carlos.mendoza@bienestarpleno.com` | `Psicologo123*` | Atención clínica y evaluación diagnóstica.           |
+| **Paciente**               | `juan.perez@bienestarpleno.com`     | `Paciente123*`  | Paciente con notas clínicas registradas.             |
+
+---
+
+#### 9. Consultorios Psicológicos Armonía (`armonia_cochabamba`)
+* **Ciudad:** Cochabamba | **Dominio:** `armonia.localhost` | **Plan:** Basic
+
+| Rol                        | Email                                  | Contraseña      | Perfil / Alcance Funcional                  |
+| -------------------------- | -------------------------------------- | --------------- | ------------------------------------------- |
+| **Admin Centro**           | `admin@armoniacochabamba.com`          | `Admin1234*`    | Dirección de consultorios en El Prado.      |
+| **Coordinador Clínico**    | `coordinador@armoniacochabamba.com`    | `Coord1234*`    | Monitoreo de adherencia y alertas clínicas. |
+| **Recepcionista**          | `recepcion@armoniacochabamba.com`      | `Recep1234*`    | Control de agenda y turnos presenciales.    |
+| **Psicólogo**              | `psicologo@armoniacochabamba.com`      | `Psico1234*`    | Terapeuta general.                          |
+| **Psicólogo Especialista** | `carlos.mendoza@armoniacochabamba.com` | `Psicologo123*` | Psicoterapia de adultos y jóvenes.          |
+| **Paciente**               | `juan.perez@armoniacochabamba.com`     | `Paciente123*`  | Paciente con tareas y seguimiento SOAP.     |
+
+---
+
+#### 10. Centro Integral de Salud Mental Resiliencia (`resiliencia_oruro`)
+* **Ciudad:** Oruro | **Dominio:** `resiliencia.localhost` | **Plan:** Basic
+
+| Rol                        | Email                                 | Contraseña      | Perfil / Alcance Funcional                  |
+| -------------------------- | ------------------------------------- | --------------- | ------------------------------------------- |
+| **Admin Centro**           | `admin@resilienciaoruro.com`          | `Admin1234*`    | Administración del centro de Oruro.         |
+| **Coordinador Clínico**    | `coordinador@resilienciaoruro.com`    | `Coord1234*`    | Supervisión y enlace interinstitucional.    |
+| **Recepcionista**          | `recepcion@resilienciaoruro.com`      | `Recep1234*`    | Atención a la comunidad y reservas.         |
+| **Psicólogo**              | `psicologo@resilienciaoruro.com`      | `Psico1234*`    | Psicólogo clínico.                          |
+| **Psicólogo Especialista** | `carlos.mendoza@resilienciaoruro.com` | `Psicologo123*` | Psicología clínica e intervenciones breves. |
+| **Paciente**               | `juan.perez@resilienciaoruro.com`     | `Paciente123*`  | Paciente activo con expediente y CIE-10.    |
+
+---
+
+#### 11. Centro Psicoterapéutico Vida & Salud (`vida_salud`)
+* **Ciudad:** Potosí | **Dominio:** `vidasalud.localhost` | **Plan:** Basic
+
+| Rol                        | Email                          | Contraseña      | Perfil / Alcance Funcional              |
+| -------------------------- | ------------------------------ | --------------- | --------------------------------------- |
+| **Admin Centro**           | `admin@vidasalud.com`          | `Admin1234*`    | Gestión general del centro en Potosí.   |
+| **Coordinador Clínico**    | `coordinador@vidasalud.com`    | `Coord1234*`    | Supervisión clínica y triage.           |
+| **Recepcionista**          | `recepcion@vidasalud.com`      | `Recep1234*`    | Gestión de pacientes y turnos.          |
+| **Psicólogo**              | `psicologo@vidasalud.com`      | `Psico1234*`    | Atención terapéutica individual.        |
+| **Psicólogo Especialista** | `carlos.mendoza@vidasalud.com` | `Psicologo123*` | Terapeuta especialista en TCC.          |
+| **Paciente**               | `juan.perez@vidasalud.com`     | `Paciente123*`  | Paciente con registro clínico e intake. |
+
+---
+
+#### 12. Consultorios Terapéuticos Oasis (`oasis_emocional`)
+* **Ciudad:** Trinidad (Beni) | **Dominio:** `oasis.localhost` | **Plan:** Basic
+
+| Rol                        | Email                               | Contraseña      | Perfil / Alcance Funcional                       |
+| -------------------------- | ----------------------------------- | --------------- | ------------------------------------------------ |
+| **Admin Centro**           | `admin@oasisemocional.com`          | `Admin1234*`    | Dirección general del consultorio en Trinidad.   |
+| **Coordinador Clínico**    | `coordinador@oasisemocional.com`    | `Coord1234*`    | Triage y seguimiento de casos prioritarios.      |
+| **Recepcionista**          | `recepcion@oasisemocional.com`      | `Recep1234*`    | Admisión y orientación al paciente.              |
+| **Psicólogo**              | `psicologo@oasisemocional.com`      | `Psico1234*`    | Atención presencial y virtual.                   |
+| **Psicólogo Especialista** | `carlos.mendoza@oasisemocional.com` | `Psicologo123*` | Psicólogo con disponibilidad semanal completa.   |
+| **Paciente**               | `juan.perez@oasisemocional.com`     | `Paciente123*`  | Paciente con historia clínica y notas de sesión. |
+
+---
+
+### 7.3 Centros Registrados Adicionales
+
+#### Centro Dr. Roberto (`dr_roberto`)
+* **Identificador:** `dr_roberto` | **Dominio:** `drroberto.com`
+
+| Rol                        | Email                              | Contraseña      | Perfil / Alcance Funcional             |
+| -------------------------- | ---------------------------------- | --------------- | -------------------------------------- |
+| **Admin Centro**           | `admin@drroberto.com`              | `Admin1234*`    | Administración del centro Dr. Roberto. |
+| **Admin Centro**           | `acdelgador126@ficct.uagrm.edu.bo` | `Admin1234*`    | Cuenta titular fundadora del centro.   |
+| **Coordinador Clínico**    | `coordinador@drroberto.com`        | `Coord1234*`    | Coordinación del centro clínico.       |
+| **Recepcionista**          | `recepcion@drroberto.com`          | `Recep1234*`    | Admisión y soporte de citas.           |
+| **Psicólogo Especialista** | `carlos.mendoza@drroberto.com`     | `Psicologo123*` | Psicólogo clínico especialista.        |
+| **Paciente**               | `juan.perez@drroberto.com`         | `Paciente123*`  | Paciente con expediente activo.        |
+
+#### Centro AlbertoKL (`albertokl`)
+* **Identificador:** `albertokl` | **Dominio:** `albertokl.com`
+
+| Rol                        | Email                              | Contraseña      | Perfil / Alcance Funcional              |
+| -------------------------- | ---------------------------------- | --------------- | --------------------------------------- |
+| **Admin Centro**           | `admin@albertokl.com`              | `Admin1234*`    | Administración institucional AlbertoKL. |
+| **Admin Centro**           | `acdelgador126@ficct.uagrm.edu.bo` | `Admin1234*`    | Cuenta titular fundadora del centro.    |
+| **Coordinador Clínico**    | `coordinador@albertokl.com`        | `Coord1234*`    | Coordinación y supervisión de casos.    |
+| **Recepcionista**          | `recepcion@albertokl.com`          | `Recep1234*`    | Recepción y gestión de expedientes.     |
+| **Psicólogo Especialista** | `carlos.mendoza@albertokl.com`     | `Psicologo123*` | Psicólogo clínico especialista.         |
+| **Paciente**               | `juan.perez@albertokl.com`         | `Paciente123*`  | Paciente con expediente activo.         |
+
+---
+
+### 7.4 Matriz Estándar de Contraseñas por Rol
+
+Para cualquier usuario demo generado por el sistema en cualquiera de los centros, las contraseñas siguen la convención unificada y probada:
+
+| Rol                           | Correo Tipo                                                | Contraseña Predeterminada |
+| ----------------------------- | ---------------------------------------------------------- | ------------------------- |
+| **SuperAdmin**                | `admin@sigepsi.com` / `beto.caleb.delgado.rojas@gmail.com` | `Admin1234*`              |
+| **Admin Centro**              | `admin@{slug}.com`                                         | `Admin1234*`              |
+| **Coordinador Clínico**       | `coordinador@{slug}.com`                                   | `Coord1234*`              |
+| **Recepcionista**             | `recepcion@{slug}.com`                                     | `Recep1234*`              |
+| **Psicólogo (Base)**          | `psicologo@{slug}.com`                                     | `Psico1234*`              |
+| **Psicólogo (Especialista)**  | `{nombre}.{apellido}@{slug}.com`                           | `Psicologo123*`           |
+| **Paciente (Adulto / Menor)** | `{nombre}.{apellido}@{slug}.com`                           | `Paciente123*`            |
 
 ---
 
@@ -709,86 +921,86 @@ flutter run
 
 ### Autenticación (Public + Tenant)
 
-| Método | Endpoint                           | Acceso     | Descripción                               |
-|--------|------------------------------------|------------|-------------------------------------------|
-| POST   | `/api/auth/register/`              | Público    | Registrar nuevo usuario                   |
-| POST   | `/api/auth/login/`                 | Público    | Login → JWT (con auto-resolución de tenant) |
-| POST   | `/api/auth/logout/`                | Auth       | Logout → blacklist refresh token          |
-| GET    | `/api/auth/me/`                    | Auth       | Perfil del usuario autenticado            |
-| POST   | `/api/auth/password-reset/`        | Público    | Solicitar token de recuperación           |
-| POST   | `/api/auth/password-reset-confirm/`| Público    | Confirmar nueva contraseña con token      |
+| Método | Endpoint                            | Acceso  | Descripción                                 |
+| ------ | ----------------------------------- | ------- | ------------------------------------------- |
+| POST   | `/api/auth/register/`               | Público | Registrar nuevo usuario                     |
+| POST   | `/api/auth/login/`                  | Público | Login → JWT (con auto-resolución de tenant) |
+| POST   | `/api/auth/logout/`                 | Auth    | Logout → blacklist refresh token            |
+| GET    | `/api/auth/me/`                     | Auth    | Perfil del usuario autenticado              |
+| POST   | `/api/auth/password-reset/`         | Público | Solicitar token de recuperación             |
+| POST   | `/api/auth/password-reset-confirm/` | Público | Confirmar nueva contraseña con token        |
 
 ### Tenants / Centros
 
-| Método | Endpoint                     | Acceso     | Descripción                               |
-|--------|------------------------------|------------|-------------------------------------------|
-| GET    | `/api/tenants/`              | Público    | Listar todos los centros                  |
-| GET    | `/api/tenants/public/`       | Público    | Listar centros activos (selector login)   |
-| POST   | `/api/tenants/`              | SuperAdmin | Crear nuevo centro + esquema PostgreSQL   |
-| PUT    | `/api/tenants/{id}/`         | SuperAdmin | Editar centro                             |
-| POST   | `/api/tenants/{id}/suspender/`| SuperAdmin| Suspender centro                          |
-| POST   | `/api/tenants/{id}/activar/` | SuperAdmin | Reactivar centro                          |
+| Método | Endpoint                       | Acceso     | Descripción                             |
+| ------ | ------------------------------ | ---------- | --------------------------------------- |
+| GET    | `/api/tenants/`                | Público    | Listar todos los centros                |
+| GET    | `/api/tenants/public/`         | Público    | Listar centros activos (selector login) |
+| POST   | `/api/tenants/`                | SuperAdmin | Crear nuevo centro + esquema PostgreSQL |
+| PUT    | `/api/tenants/{id}/`           | SuperAdmin | Editar centro                           |
+| POST   | `/api/tenants/{id}/suspender/` | SuperAdmin | Suspender centro                        |
+| POST   | `/api/tenants/{id}/activar/`   | SuperAdmin | Reactivar centro                        |
 
 ### Usuarios y Roles (dentro del Tenant)
 
 > **Header requerido:** `X-Tenant-ID: <slug_del_centro>` (o resuelto automáticamente por el JWT)
 
-| Método | Endpoint                            | Acceso       | Descripción                        |
-|--------|-------------------------------------|--------------|------------------------------------|
-| GET    | `/api/users/`                       | Admin Centro | Listar usuarios del centro         |
-| POST   | `/api/users/`                       | Admin Centro | Crear usuario en el centro         |
-| PUT/PATCH | `/api/users/{id}/`               | Admin Centro | Editar usuario (sin exigir email)  |
-| POST   | `/api/users/{id}/alternar_estado/`  | Admin Centro | Activar/desactivar usuario         |
-| GET    | `/api/roles/`                       | Admin Centro | Listar roles del sistema RBAC      |
-| POST   | `/api/roles/`                       | Admin Centro | Crear rol con permisos             |
-| GET    | `/api/permisos/`                    | Auth         | Listar permisos disponibles        |
+| Método    | Endpoint                           | Acceso       | Descripción                       |
+| --------- | ---------------------------------- | ------------ | --------------------------------- |
+| GET       | `/api/users/`                      | Admin Centro | Listar usuarios del centro        |
+| POST      | `/api/users/`                      | Admin Centro | Crear usuario en el centro        |
+| PUT/PATCH | `/api/users/{id}/`                 | Admin Centro | Editar usuario (sin exigir email) |
+| POST      | `/api/users/{id}/alternar_estado/` | Admin Centro | Activar/desactivar usuario        |
+| GET       | `/api/roles/`                      | Admin Centro | Listar roles del sistema RBAC     |
+| POST      | `/api/roles/`                      | Admin Centro | Crear rol con permisos            |
+| GET       | `/api/permisos/`                   | Auth         | Listar permisos disponibles       |
 
 ### Clínica y Directorio Profesional (Sprint 1)
 
-| Método | Endpoint                                    | Acceso       | Descripción                                         |
-|--------|---------------------------------------------|--------------|-----------------------------------------------------|
-| GET    | `/api/clinica/especialidades/`              | Auth         | Listar especialidades clínicas disponibles          |
-| GET    | `/api/clinica/psicologos/`                  | Auth         | Directorio de psicólogos con tarifas y colegiatura  |
-| POST   | `/api/clinica/psicologos/`                  | Admin Centro | Alta de psicólogo con aranceles y especialidades    |
-| PUT/PATCH | `/api/clinica/psicologos/{id}/`          | Admin Centro | Actualizar honorarios y perfil profesional          |
-| GET/POST | `/api/clinica/psicologos/{id}/disponibilidad/` | Auth/Admin| Configurar franjas horarias semanales de atención   |
-| GET    | `/api/clinica/pacientes/`                   | Clínico      | Listar pacientes y expedientes clínicos             |
-| POST   | `/api/clinica/pacientes/`                   | Clínico      | Alta de paciente (código `EXP-YYYYMM-XXXX`, tutores)|
-| PUT/PATCH | `/api/clinica/pacientes/{id}/`           | Clínico      | Editar datos del paciente y tutor                   |
-| GET    | `/api/clinica/pacientes/me/`                | Paciente     | Expediente clínico del paciente autenticado         |
+| Método    | Endpoint                                       | Acceso       | Descripción                                          |
+| --------- | ---------------------------------------------- | ------------ | ---------------------------------------------------- |
+| GET       | `/api/clinica/especialidades/`                 | Auth         | Listar especialidades clínicas disponibles           |
+| GET       | `/api/clinica/psicologos/`                     | Auth         | Directorio de psicólogos con tarifas y colegiatura   |
+| POST      | `/api/clinica/psicologos/`                     | Admin Centro | Alta de psicólogo con aranceles y especialidades     |
+| PUT/PATCH | `/api/clinica/psicologos/{id}/`                | Admin Centro | Actualizar honorarios y perfil profesional           |
+| GET/POST  | `/api/clinica/psicologos/{id}/disponibilidad/` | Auth/Admin   | Configurar franjas horarias semanales de atención    |
+| GET       | `/api/clinica/pacientes/`                      | Clínico      | Listar pacientes y expedientes clínicos              |
+| POST      | `/api/clinica/pacientes/`                      | Clínico      | Alta de paciente (código `EXP-YYYYMM-XXXX`, tutores) |
+| PUT/PATCH | `/api/clinica/pacientes/{id}/`                 | Clínico      | Editar datos del paciente y tutor                    |
+| GET       | `/api/clinica/pacientes/me/`                   | Paciente     | Expediente clínico del paciente autenticado          |
 
 ### Agenda, Citas, Teleconsulta y KPIs (Sprint 1)
 
-| Método | Endpoint                                    | Acceso       | Descripción                                         |
-|--------|---------------------------------------------|--------------|-----------------------------------------------------|
-| GET    | `/api/agenda/citas/slots-disponibles/`      | Auth         | Matriz de intervalos libres calculados (50 minutos) |
-| GET    | `/api/agenda/citas/`                        | Auth         | Listar citas con filtros (psicólogo, fecha, estado) |
-| POST   | `/api/agenda/citas/`                        | Auth         | Reserva de cita con bloqueo concurrente pesimista   |
-| POST   | `/api/agenda/citas/{id}/cancelar/`          | Auth         | Cancelar cita (valida anticipación de 2 horas)      |
-| GET    | `/api/agenda/citas/calendario/`             | Auth         | Matriz de eventos formateada para FullCalendar      |
-| GET    | `/api/agenda/teleconsulta/{cita_id}/access/`| Auth         | Sala Jitsi Meet + token JWT (Moderador / Invitado)  |
-| POST   | `/api/agenda/teleconsulta/{cita_id}/finish/`| Psicólogo    | Finalizar videollamada y registrar duración real    |
-| GET    | `/api/agenda/dashboard/kpis/`               | Coordinador  | Dashboard clínico (ocupación, ausentismo, ingresos) |
-| GET    | `/api/agenda/alertas/`                      | Clínico      | Listar alertas tempranas por inasistencia reiterada |
-| POST   | `/api/agenda/alertas/{id}/resolver/`        | Clínico      | Marcar alerta como resuelta con nota de seguimiento |
+| Método | Endpoint                                     | Acceso      | Descripción                                         |
+| ------ | -------------------------------------------- | ----------- | --------------------------------------------------- |
+| GET    | `/api/agenda/citas/slots-disponibles/`       | Auth        | Matriz de intervalos libres calculados (50 minutos) |
+| GET    | `/api/agenda/citas/`                         | Auth        | Listar citas con filtros (psicólogo, fecha, estado) |
+| POST   | `/api/agenda/citas/`                         | Auth        | Reserva de cita con bloqueo concurrente pesimista   |
+| POST   | `/api/agenda/citas/{id}/cancelar/`           | Auth        | Cancelar cita (valida anticipación de 2 horas)      |
+| GET    | `/api/agenda/citas/calendario/`              | Auth        | Matriz de eventos formateada para FullCalendar      |
+| GET    | `/api/agenda/teleconsulta/{cita_id}/access/` | Auth        | Sala Jitsi Meet + token JWT (Moderador / Invitado)  |
+| POST   | `/api/agenda/teleconsulta/{cita_id}/finish/` | Psicólogo   | Finalizar videollamada y registrar duración real    |
+| GET    | `/api/agenda/dashboard/kpis/`                | Coordinador | Dashboard clínico (ocupación, ausentismo, ingresos) |
+| GET    | `/api/agenda/alertas/`                       | Clínico     | Listar alertas tempranas por inasistencia reiterada |
+| POST   | `/api/agenda/alertas/{id}/resolver/`         | Clínico     | Marcar alerta como resuelta con nota de seguimiento |
 
 ### Expedientes Clínicos, SOAP, Tareas y Auditoría (Sprint 2)
 
-| Método | Endpoint                                    | Acceso       | Descripción                                         |
-|--------|---------------------------------------------|--------------|-----------------------------------------------------|
-| GET/POST | `/api/clinica/pre-consultas/`             | Auth/Público | Cuestionario de pre-consulta digital y triage       |
-| GET/POST | `/api/clinica/pre-consultas/auditar-ia/`    | Terapeuta    | Romero AI: sugerencias diagnósticas auditadas       |
-| GET/POST | `/api/clinica/historias-clinicas/`          | Terapeuta    | EHR: Antecedentes, comorbilidades y catálogo CIE-10 |
-| GET/POST | `/api/clinica/notas-soap/`                  | Terapeuta    | Notas SOAP inmutables asociadas a la cita           |
-| GET/POST | `/api/clinica/tareas/`                      | Terapeuta    | Asignación de tareas inter-sesión                   |
-| GET/POST | `/api/clinica/tareas/mis-tareas/`           | Paciente     | Consulta y envío de evidencias de tareas inter-sesión |
-| GET/POST | `/api/clinica/consentimientos/`             | Terapeuta    | Registro de plantilla de consentimiento informado   |
-| POST   | `/api/clinica/consentimientos/{id}/firmar/` | Paciente     | Firma digital criptográfica SHA-256 de consentimiento |
-| GET/POST | `/api/clinica/altas/`                       | Terapeuta    | Emisión de acta de alta terapéutica formal          |
-| GET/POST | `/api/clinica/derivaciones/`                | Terapeuta    | Derivación psiquiátrica formal (exportable a PDF)   |
-| GET    | `/api/clinica/derivaciones/{id}/pdf/`       | Terapeuta    | Descarga de documento PDF firmado de la derivación  |
-| POST   | `/api/clinica/chatbot/mensaje/`             | Paciente/Auth| Chatbot Asistente con IA y detección de crisis      |
-| GET    | `/api/audit/logs/`                          | Developer    | Bitácora Fernet descifrada con clave de desarrollador |
+| Método   | Endpoint                                    | Acceso        | Descripción                                           |
+| -------- | ------------------------------------------- | ------------- | ----------------------------------------------------- |
+| GET/POST | `/api/clinica/pre-consultas/`               | Auth/Público  | Cuestionario de pre-consulta digital y triage         |
+| GET/POST | `/api/clinica/pre-consultas/auditar-ia/`    | Terapeuta     | Romero AI: sugerencias diagnósticas auditadas         |
+| GET/POST | `/api/clinica/historias-clinicas/`          | Terapeuta     | EHR: Antecedentes, comorbilidades y catálogo CIE-10   |
+| GET/POST | `/api/clinica/notas-soap/`                  | Terapeuta     | Notas SOAP inmutables asociadas a la cita             |
+| GET/POST | `/api/clinica/tareas/`                      | Terapeuta     | Asignación de tareas inter-sesión                     |
+| GET/POST | `/api/clinica/tareas/mis-tareas/`           | Paciente      | Consulta y envío de evidencias de tareas inter-sesión |
+| GET/POST | `/api/clinica/consentimientos/`             | Terapeuta     | Registro de plantilla de consentimiento informado     |
+| POST     | `/api/clinica/consentimientos/{id}/firmar/` | Paciente      | Firma digital criptográfica SHA-256 de consentimiento |
+| GET/POST | `/api/clinica/altas/`                       | Terapeuta     | Emisión de acta de alta terapéutica formal            |
+| GET/POST | `/api/clinica/derivaciones/`                | Terapeuta     | Derivación psiquiátrica formal (exportable a PDF)     |
+| GET      | `/api/clinica/derivaciones/{id}/pdf/`       | Terapeuta     | Descarga de documento PDF firmado de la derivación    |
+| POST     | `/api/clinica/chatbot/mensaje/`             | Paciente/Auth | Chatbot Asistente con IA y detección de crisis        |
+| GET      | `/api/audit/logs/`                          | Developer     | Bitácora Fernet descifrada con clave de desarrollador |
 
 ---
 
@@ -796,34 +1008,34 @@ flutter run
 
 ### Backend
 
-| Problema | Causa | Solución |
-|----------|-------|----------|
-| `FATAL: database "sigepsi_db" does not exist` | No se creó la BD | Ejecutar `CREATE DATABASE sigepsi_db;` en psql |
-| `psycopg2.OperationalError: could not connect` | PostgreSQL no activo | Iniciar servicio PostgreSQL |
-| `No module named 'django'` | Entorno virtual no activo | Ejecutar `.\venv\Scripts\Activate.ps1` |
-| `relation "tenants_tenant" does not exist` | Falta migrar | Ejecutar `python manage.py migrate_schemas --shared` |
-| `TenantNotFoundError` en tests | Falta datos semilla | Ejecutar `python manage.py seed_data` y `seed_sprint1` |
-| Error en edición: `email requerido` | PUT con partial=False | Usar PATCH o vistas DRF actualizadas con `partial=True` |
+| Problema                                       | Causa                     | Solución                                                |
+| ---------------------------------------------- | ------------------------- | ------------------------------------------------------- |
+| `FATAL: database "sigepsi_db" does not exist`  | No se creó la BD          | Ejecutar `CREATE DATABASE sigepsi_db;` en psql          |
+| `psycopg2.OperationalError: could not connect` | PostgreSQL no activo      | Iniciar servicio PostgreSQL                             |
+| `No module named 'django'`                     | Entorno virtual no activo | Ejecutar `.\venv\Scripts\Activate.ps1`                  |
+| `relation "tenants_tenant" does not exist`     | Falta migrar              | Ejecutar `python manage.py migrate_schemas --shared`    |
+| `TenantNotFoundError` en tests                 | Falta datos semilla       | Ejecutar `python manage.py seed_data` y `seed_sprint1`  |
+| Error en edición: `email requerido`            | PUT con partial=False     | Usar PATCH o vistas DRF actualizadas con `partial=True` |
 
 ### Web (Angular)
 
-| Problema | Causa | Solución |
-|----------|-------|----------|
-| `npm ERR! ERESOLVE` | Conflicto de dependencias | Ejecutar `npm install --legacy-peer-deps` |
-| `ng: command not found` | Angular CLI no instalado | Ejecutar `npm install -g @angular/cli` o usar `npx ng serve` |
-| Error CORS en el navegador | Backend no corriendo | Asegurar que el backend corra en `localhost:8000` |
+| Problema                        | Causa                     | Solución                                                      |
+| ------------------------------- | ------------------------- | ------------------------------------------------------------- |
+| `npm ERR! ERESOLVE`             | Conflicto de dependencias | Ejecutar `npm install --legacy-peer-deps`                     |
+| `ng: command not found`         | Angular CLI no instalado  | Ejecutar `npm install -g @angular/cli` o usar `npx ng serve`  |
+| Error CORS en el navegador      | Backend no corriendo      | Asegurar que el backend corra en `localhost:8000`             |
 | No aparecen los slots en agenda | Formato respuesta anidado | Servicio ya actualizado para desempaquetar `{ slots: [...] }` |
 
 ### Móvil (Flutter / Android)
 
-| Problema | Causa | Solución |
-|----------|-------|----------|
-| `Gradle requires JVM 17 or later to run. Your build is currently configured to use JVM 8` | PATH de Windows tiene Java 8 antes de Android Studio JBR | Agregar `org.gradle.java.home=C:/Program Files/Android/Android Studio/jbr` en `C:\Users\User\.gradle\gradle.properties` |
+| Problema                                                                                      | Causa                                                                | Solución                                                                                                                                                                                                      |
+| --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Gradle requires JVM 17 or later to run. Your build is currently configured to use JVM 8`     | PATH de Windows tiene Java 8 antes de Android Studio JBR             | Agregar `org.gradle.java.home=C:/Program Files/Android/Android Studio/jbr` en `C:\Users\User\.gradle\gradle.properties`                                                                                       |
 | `No se pudo conectar al servidor localhost:8000` / `Connection refused` en celular físico USB | Falta redirección de puerto USB (tu PC no es el localhost del móvil) | Ejecutar en PowerShell: `& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" reverse tcp:8000 tcp:8000` (debe retornar `8000`). Luego presionar el botón **"USB (adb reverse)"** en la pantalla de Login |
-| `adb : El término 'adb' no se reconoce...` en PowerShell | ADB no está registrado en las variables de entorno PATH | Usar la ruta completa del SDK: `& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" ...` |
-| `adb.exe: failed to install ... exit code 1` al hacer `flutter run` | Pantalla del celular apagada/bloqueada o confirmación pendiente | Desbloquear la pantalla del móvil, aceptar el diálogo de confirmación emergente ("Permitir depuración / instalación por USB") y volver a lanzar |
-| `Connection refused` en emulador | URL incorrecta | Usar `10.0.2.2` en vez de `localhost` para emulador Android |
-| `Cleartext HTTP not permitted` (Android) | Seguridad Android | `android:usesCleartextTraffic="true"` ya configurado en `AndroidManifest.xml` |
+| `adb : El término 'adb' no se reconoce...` en PowerShell                                      | ADB no está registrado en las variables de entorno PATH              | Usar la ruta completa del SDK: `& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" ...`                                                                                                                 |
+| `adb.exe: failed to install ... exit code 1` al hacer `flutter run`                           | Pantalla del celular apagada/bloqueada o confirmación pendiente      | Desbloquear la pantalla del móvil, aceptar el diálogo de confirmación emergente ("Permitir depuración / instalación por USB") y volver a lanzar                                                               |
+| `Connection refused` en emulador                                                              | URL incorrecta                                                       | Usar `10.0.2.2` en vez de `localhost` para emulador Android                                                                                                                                                   |
+| `Cleartext HTTP not permitted` (Android)                                                      | Seguridad Android                                                    | `android:usesCleartextTraffic="true"` ya configurado en `AndroidManifest.xml`                                                                                                                                 |
 
 ---
 

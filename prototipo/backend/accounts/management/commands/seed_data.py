@@ -40,6 +40,15 @@ class Command(BaseCommand):
                 )
                 self.stdout.write(self.style.SUCCESS("[OK] SuperAdmin creado (beto.caleb.delgado.rojas@gmail.com)"))
 
+            if not Usuario.objects.filter(email='admin@sigepsi.com').exists():
+                superadmin_alias = Usuario.objects.create_superuser(
+                    email='admin@sigepsi.com',
+                    password='Admin1234*',
+                    nombre='Admin',
+                    apellido='SIGEPSI'
+                )
+                self.stdout.write(self.style.SUCCESS("[OK] SuperAdmin secundario creado (admin@sigepsi.com)"))
+
             # Sembrar roles y permisos en esquema public
             from accounts.utils import seed_tenant_roles_and_permissions
             seed_tenant_roles_and_permissions()
@@ -142,5 +151,10 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.SUCCESS(f"[OK] Tenant '{c2.nombre}' creado."))
 
         seed_tenant_data(c2)
+
+        # 5. Sincronizar catálogo multi-tenant de 12 Centros Psicológicos (SaaS)
+        from django.core.management import call_command
+        self.stdout.write(self.style.NOTICE("\n==> Asegurando Catálogo SaaS de 12 Centros Psicológicos..."))
+        call_command('seed_catalogo_saas')
 
         self.stdout.write(self.style.SUCCESS("\n==> ¡Siembra de datos completada exitosamente! <==\n"))

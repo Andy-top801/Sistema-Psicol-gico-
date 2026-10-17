@@ -59,6 +59,51 @@ class Command(BaseCommand):
         with schema_context(tenant.schema_name):
             atomic_tx: Any = transaction.atomic()
             with atomic_tx:
+                # 0. Roles y Permisos del Sistema en el Tenant
+                from accounts.utils import seed_tenant_roles_and_permissions
+                from core.models import Centro
+
+                roles_map = seed_tenant_roles_and_permissions()
+                rol_admin = roles_map[Rol.ADMIN_CENTRO]
+                rol_coord = roles_map[Rol.COORDINADOR]
+                rol_psico = roles_map[Rol.PSICOLOGO]
+                rol_recep = roles_map[Rol.RECEPCIONISTA]
+                rol_paciente = roles_map[Rol.PACIENTE]
+
+                # Reparar cualquier usuario previo sin rol
+                for u in Usuario.objects.filter(rol__isnull=True):
+                    email_low = u.email.lower()
+                    if 'admin' in email_low or u.is_superuser or u.is_staff:
+                        u.rol = rol_admin
+                    elif 'coord' in email_low:
+                        u.rol = rol_coord
+                    elif 'recep' in email_low:
+                        u.rol = rol_recep
+                    elif Psicologo.objects.filter(usuario=u).exists() or 'psic' in email_low or any(k in email_low for k in ['mendoza', 'vargas', 'torrico', 'montes', 'rios']):
+                        u.rol = rol_psico
+                    else:
+                        u.rol = rol_paciente
+                    u.save(update_fields=['rol'])
+
+                # Asegurar Configuración del Centro
+                Centro.objects.get_or_create(
+                    defaults={
+                        "nombre": tenant.nombre,
+                        "direccion": tenant.direccion or "Av. Las Américas #450, Santa Cruz",
+                        "telefono": tenant.telefono or "+591 3 3456789",
+                        "email": tenant.email_contacto or f"contacto@{tenant.slug}.com",
+                        "horarios_atencion": {
+                            "lunes_viernes": "08:00 - 19:00",
+                            "sabado": "08:00 - 14:00"
+                        },
+                        "configuracion": {
+                            "cancelacion_horas_anticipacion": 24,
+                            "duracion_sesion_minutos": 50,
+                            "modalidad_predeterminada": "Mixta (Presencial / Virtual)"
+                        }
+                    }
+                )
+
                 # 1. Permisos del Sprint 1
                 permisos_sprint1 = [
                     ('clinica.view_especialidad', 'Ver Especialidades', 'clinica'),
@@ -84,10 +129,42 @@ class Command(BaseCommand):
                         codigo=cod,
                         defaults={'nombre': nom, 'modulo': mod}
                     )
-                    # Asignar a Admin de Centro
-                    admin_rol = Rol.objects.filter(nombre__icontains="Admin").first()
-                    if admin_rol:
-                        RolPermiso.objects.get_or_create(rol=admin_rol, permiso=p)
+                    RolPermiso.objects.get_or_create(rol=rol_admin, permiso=p)
+                    if 'cita' in cod or 'teleconsulta' in cod or 'psicologo' in cod or 'especialidad' in cod or 'paciente' in cod or 'dashboard' in cod or 'alerta' in cod:
+                        RolPermiso.objects.get_or_create(rol=rol_psico, permiso=p)
+                    if 'cita' in cod or 'paciente' in cod or 'view' in cod:
+                        RolPermiso.objects.get_or_create(rol=rol_recep, permiso=p)
+                    if 'dashboard' in cod or 'alerta' in cod or 'cita' in cod or 'view' in cod:
+                        RolPermiso.objects.get_or_create(rol=rol_coord, permiso=p)
+
+                # Asegurar Personal Demo Institucional
+                domain_clean = tenant.slug.replace('_', '')
+                usuarios_demo = [
+                    (f"admin@{domain_clean}.com", "Admin1234*", "Admin", f"{tenant.nombre}", rol_admin, "+591 70011111"),
+                    (f"psicologo@{domain_clean}.com", "Psico1234*", "Lic. Carlos", "Mendoza", rol_psico, "+591 70022222"),
+                    (f"recepcion@{domain_clean}.com", "Recep1234*", "María", "González", rol_recep, "+591 70033333"),
+                    (f"coordinador@{domain_clean}.com", "Coord1234*", "Dr. Roberto", "Paz", rol_coord, "+591 70044444"),
+                ]
+
+                if tenant.slug == 'centro_esperanza':
+                    usuarios_demo.append(
+                        ("beto.caleb.delgado.rojas@gmail.com", "Admin1234*", "Alberto", "Delgado", rol_admin, "+591 70000000")
+                    )
+
+                for email, pwd, nom, ape, r_obj, tel in usuarios_demo:
+                    u = Usuario.objects.filter(email=email).first()
+                    if not u:
+                        Usuario.objects.create_user(
+                            email=email, password=pwd, nombre=nom, apellido=ape,
+                            telefono=tel, rol=r_obj, activo=True
+                        )
+                    else:
+                        u.nombre = nom
+                        u.apellido = ape
+                        u.rol = r_obj
+                        u.activo = True
+                        u.set_password(pwd)
+                        u.save()
 
                 # 2. Catálogo de Especialidades Clínicas (8 especialidades)
                 especialidades_data = [
@@ -106,10 +183,6 @@ class Command(BaseCommand):
                     esp, _ = Especialidad.objects.get_or_create(nombre=nom, defaults={'descripcion': desc})
                     especialidades_objs[nom] = esp
                 self.stdout.write(f"  [OK] {len(especialidades_objs)} especialidades clínicas aseguradas.")
-
-                # 3. Roles
-                rol_psico = Rol.objects.filter(nombre__icontains="Psicólogo").first() or Rol.objects.filter(nombre__icontains="Psicologo").first()
-                rol_paciente = Rol.objects.filter(nombre__icontains="Paciente").first()
 
                 # 4. Psicólogos de Prueba (5 profesionales de distintas áreas)
                 domain_clean = tenant.slug.replace('_', '')
@@ -255,6 +328,8 @@ class Command(BaseCommand):
                 pac_juan_email = "juan.perez@paciente.com" if tenant.slug == 'centro_esperanza' else f"juan.perez@{domain_clean}.com"
                 pac_sofia_email = "sofia.castro@paciente.com" if tenant.slug == 'centro_esperanza' else f"sofia.castro@{domain_clean}.com"
 
+                pac_mateo_email = "mateo.quispe@paciente.com" if tenant.slug == 'centro_esperanza' else f"mateo.quispe@{domain_clean}.com"
+
                 pacientes_seed = [
                     {
                         "email": pac_juan_email,
@@ -285,7 +360,7 @@ class Command(BaseCommand):
                         "tutor_ci": ""
                     },
                     {
-                        "email": f"mateo.quispe@{domain_clean}.com",
+                        "email": pac_mateo_email,
                         "nombre": "Mateo",
                         "apellido": "Quispe Lima",
                         "telefono": "79012345",
@@ -419,6 +494,25 @@ class Command(BaseCommand):
 
                     pacientes_creados.append(pac)
                 self.stdout.write(f"  [OK] {len(pacientes_creados)} pacientes registrados (adultos y menores con tutor legal acreditado).")
+
+                if tenant.slug == 'centro_esperanza':
+                    aliases = [
+                        ("juan.perez@centroesperanza.com", "Juan", "Pérez Morales"),
+                        ("sofia.castro@centroesperanza.com", "Sofía", "Castro Vega"),
+                        ("mateo.quispe@centroesperanza.com", "Mateo", "Quispe Lima"),
+                    ]
+                    for a_email, a_nom, a_ape in aliases:
+                        u_alias = Usuario.objects.filter(email=a_email).first()
+                        if not u_alias:
+                            Usuario.objects.create_user(
+                                email=a_email, password="Paciente123*",
+                                nombre=a_nom, apellido=a_ape,
+                                rol=rol_paciente, activo=True
+                            )
+                        else:
+                            u_alias.rol = rol_paciente
+                            u_alias.set_password("Paciente123*")
+                            u_alias.save()
 
                 # 6. Citas Operativas Distribuidas
                 hoy = date.today()

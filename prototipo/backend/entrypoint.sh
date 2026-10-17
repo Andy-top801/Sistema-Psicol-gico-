@@ -44,8 +44,8 @@ python manage.py migrate_schemas --tenant --noinput
 echo "==> Sembrando datos base (Tenant public, SuperAdmin, roles y permisos)..."
 python manage.py seed_data || echo "Nota: seed_data ya fue ejecutado previamente."
 
-echo "==> Sembrando datos clínicos Sprint 1 (Especialidades, psicólogos, pacientes)..."
-python manage.py seed_sprint1 || echo "Nota: seed_sprint1 ya fue ejecutado previamente."
+echo "==> Sembrando datos clínicos Sprint 1 (Especialidades, psicólogos, pacientes) en todos los tenants..."
+python manage.py seed_sprint1 --tenant all || echo "Nota: seed_sprint1 ya fue ejecutado previamente."
 
 echo "==> Sembrando datos clínicos Sprint 2 (CU14-CU20, HU-23 a HU-37) en todos los tenants..."
 python manage.py seed_sprint2 --tenant all || echo "Nota: seed_sprint2 ya fue ejecutado previamente."
