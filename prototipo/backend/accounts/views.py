@@ -54,6 +54,7 @@ class LoginView(APIView):
         # --- Paso 2: POST /api/auth/login/ ---
         # Se recibe la petición con credenciales (email, password, tenant)
         serializer = LoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         # Los pasos 3-8 ocurren dentro del LoginSerializer.validate():
         #   Paso 3: Validar tenant y conmutar schema
         #   Paso 4: Esquema PostgreSQL activo
@@ -61,8 +62,70 @@ class LoginView(APIView):
         #   Paso 6: Retornar usuario y hash password
         #   Paso 7: Verificar password (PBKDF2) y generar JWT
         #   Paso 8: Tokens JWT generados (con claims)
-        serializer.is_valid(raise_exception=True)
         # --- Paso 9: 200 OK (access_token, refresh_token, usuario, rol) ---
+        try:
+            from audit.services import write_event
+            ip = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', '127.0.0.1'))
+            if ip and ',' in ip:
+                ip = ip.split(',')[0].strip()
+            write_event({
+                'evento': 'LOGIN_EXITOSO',
+                'usuario': serializer.validated_data['usuario']['email'],
+                'ip': ip,
+                'detalles': 'Inicio de sesión exitoso'
+            })
+        except Exception:
+            pass
+        return Response(serializer.validated_data, status=status.HTTP_200_OK)
+
+
+class JWTCreateView(APIView):
+    """
+    ═══════════════════════════════════════════════════════════════════════════
+    CU2: Autenticación Móvil JWT (HU-40 / CU2 - Sprint 3)
+    Diagrama de Secuencia BCE – CU2: Autenticación Móvil JWT (Diagrama 306)
+    POST /api/v1/auth/jwt/create/ (email, password, subdominio)
+    Retorna: HTTP 200 OK (access_token, refresh_token) o HTTP 401 Unauthorized
+    ═══════════════════════════════════════════════════════════════════════════
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data)
+        ip = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', '127.0.0.1'))
+        if ip and ',' in ip:
+            ip = ip.split(',')[0].strip()
+
+        if not serializer.is_valid():
+            try:
+                from audit.services import write_event
+                write_event({
+                    'evento': 'LOGIN_FALLIDO',
+                    'usuario': request.data.get('email', 'desconocido'),
+                    'ip': ip,
+                    'detalles': 'Credenciales incorrectas o tenant inactivo'
+                })
+            except Exception:
+                pass
+            return Response(
+                {
+                    'error': 'Credenciales incorrectas',
+                    'detail': 'Email o contraseña inválidos o cuenta suspendida.'
+                },
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        try:
+            from audit.services import write_event
+            write_event({
+                'evento': 'LOGIN_MOVIL_EXITOSO',
+                'usuario': serializer.validated_data['usuario']['email'],
+                'ip': ip,
+                'detalles': 'Autenticación móvil JWT completada'
+            })
+        except Exception:
+            pass
+
         return Response(serializer.validated_data, status=status.HTTP_200_OK)
 
 

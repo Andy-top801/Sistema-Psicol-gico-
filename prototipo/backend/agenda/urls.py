@@ -5,7 +5,8 @@ from agenda.views import (
     TeleconsultaAccessView,
     TeleconsultaFinishView,
     DashboardKPIsView,
-    AlertaViewSet
+    AlertaViewSet,
+    FCMTokenEnrollView
 )
 
 router = DefaultRouter()
@@ -13,8 +14,11 @@ router.register(r'citas', CitaViewSet, basename='cita')
 router.register(r'alertas', AlertaViewSet, basename='alerta')
 
 urlpatterns = [
+    path('fcm-token/', FCMTokenEnrollView.as_view(), name='fcm-token-enroll'),
     path('teleconsulta/<uuid:cita_id>/access/', TeleconsultaAccessView.as_view(), name='teleconsulta-access'),
+    path('teleconsulta/<uuid:cita_id>/unirse/', TeleconsultaAccessView.as_view(), name='teleconsulta-unirse'),
     path('teleconsulta/<uuid:cita_id>/finish/', TeleconsultaFinishView.as_view(), name='teleconsulta-finish'),
+    path('teleconsulta/<uuid:cita_id>/finalizar/', TeleconsultaFinishView.as_view(), name='teleconsulta-finalizar'),
     path('dashboard/kpis/', DashboardKPIsView.as_view(), name='dashboard-kpis'),
     path('', include(router.urls)),
 ]

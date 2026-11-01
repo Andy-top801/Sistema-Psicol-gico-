@@ -9,11 +9,17 @@ urlpatterns = [
     path('api/', include('core.urls')),
     # Endpoints de centros (para selector público)
     path('api/', include('tenants.urls')),
-    # Endpoints de clínica (Sprint 1 y Sprint 2)
+    # Endpoints de clínica (Sprint 1, Sprint 2 y Sprint 3)
     path('api/clinica/', include('clinica.urls')),
+    path('api/v1/clinica/', include('clinica.urls')),
     path('api/v1/', include('clinica.urls')),
-    # Endpoints de agenda (citas, teleconsulta, dashboard, alertas) - Sprint 1
+    # Endpoints de agenda (citas, teleconsulta, dashboard, alertas, FCM)
     path('api/agenda/', include('agenda.urls')),
+    path('api/v1/agenda/', include('agenda.urls')),
+    path('api/v1/', include('agenda.urls')),
+    # Endpoints de cuentas / JWT v1
+    path('api/v1/auth/', include('accounts.urls')),
+    path('api/v1/', include('accounts.urls')),
     path('api/', include('audit.urls')),
     # Endpoints de reportes personalizables - Sprint 2
     path('api/reportes/', include('reportes.urls')),

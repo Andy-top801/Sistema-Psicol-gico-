@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from accounts.views import (
-    RegistroView, LoginView, LogoutView,
+    RegistroView, LoginView, LogoutView, JWTCreateView,
     PasswordResetRequestView, PasswordResetConfirmView,
     UsuarioViewSet, RolViewSet, PermisoListView, MeView,
     ForceChangePasswordView,
@@ -15,6 +15,9 @@ urlpatterns = [
     # Autenticación
     path('auth/register/', RegistroView.as_view(), name='auth-register'),
     path('auth/login/', LoginView.as_view(), name='auth-login'),
+    path('auth/jwt/create/', JWTCreateView.as_view(), name='auth-jwt-create'),
+    path('jwt/create/', JWTCreateView.as_view(), name='jwt-create-direct'),
+    path('v1/auth/jwt/create/', JWTCreateView.as_view(), name='v1-auth-jwt-create'),
     path('auth/logout/', LogoutView.as_view(), name='auth-logout'),
     path('auth/password-reset/', PasswordResetRequestView.as_view(), name='password-reset-request'),
     path('auth/password-reset-confirm/', PasswordResetConfirmView.as_view(), name='password-reset-confirm'),

@@ -98,6 +98,12 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
         rol_name = self.rol.nombre if self.rol else "Sin Rol"
         return f"{self.nombre} {self.apellido} <{self.email}> [{rol_name}]"
 
+    def get_full_name(self):
+        return f"{self.nombre} {self.apellido}".strip()
+
+    def get_short_name(self):
+        return self.nombre
+
     def tiene_permiso(self, codigo_permiso):
         """Verifica si el usuario tiene un permiso a través de su rol o si es superusuario."""
         if self.is_superuser:

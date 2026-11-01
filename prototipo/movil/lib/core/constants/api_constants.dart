@@ -45,4 +45,12 @@ class ApiConstants {
   static const String consentimientos = '/clinica/consentimientos/';
   static const String firmasConsentimiento = '/clinica/firmas-consentimiento/';
   static const String iaPreconsulta = '/clinica/ia/preconsulta/analizar/';
+
+  // Sprint 3 - Móvil & IA Endpoints (HU-41, HU-43, HU-46, HU-47, HU-48)
+  static const String misCitas = '/agenda/citas/mis-citas/';
+  static const String fcmToken = '/agenda/fcm-token/';
+  static const String registroAnimo = '/clinica/registro-animo/';
+  static const String clasificacionIA = '/clinica/clasificacion-ia/';
+  static const String triajeAlertas = '/clinica/triaje/alertas/';
+  static const String triajeAsignar = '/clinica/triaje/asignar/';
 }

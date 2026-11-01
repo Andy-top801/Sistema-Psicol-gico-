@@ -195,20 +195,27 @@ class CancelarCitaSerializer(serializers.Serializer):
         if cita.estado in ['CANCELADA', 'REALIZADA']:
             raise serializers.ValidationError(f"No es posible cancelar una cita con estado '{cita.estado}'.")
 
-        # HU-17: Si es el paciente quien cancela, verificar anticipación mínima de 2 horas
-        if request and request.user and hasattr(request.user, 'rol') and request.user.rol:
-            if request.user.rol.nombre == "Paciente":
-                ahora = timezone.localtime()
-                cita_dt = timezone.make_aware(
-                    datetime.combine(cita.fecha, cita.hora_inicio),
-                    timezone.get_current_timezone()
-                )
-                limite_anticipacion = ahora + timedelta(hours=2)
+        # HU-42 (Sprint 3): Si es el paciente quien cancela, verificar anticipación mínima de 24 horas
+        es_paciente = False
+        if request and request.user:
+            if hasattr(request.user, 'rol') and request.user.rol and 'paciente' in request.user.rol.nombre.lower():
+                es_paciente = True
+            elif hasattr(request.user, 'perfil_paciente'):
+                es_paciente = True
 
-                if cita_dt < limite_anticipacion:
-                    raise serializers.ValidationError({
-                        "anticipacion": "Las cancelaciones autónomas deben realizarse con al menos 2 horas de anticipación. Para cancelaciones de último momento, comuníquese con recepción."
-                    })
+        if es_paciente:
+            ahora = timezone.localtime()
+            cita_dt = timezone.make_aware(
+                datetime.combine(cita.fecha, cita.hora_inicio),
+                timezone.get_current_timezone()
+            )
+            limite_anticipacion = ahora + timedelta(hours=24)
+
+            if cita_dt < limite_anticipacion:
+                raise serializers.ValidationError({
+                    "error": "CANCELLATION_WINDOW_EXPIRED",
+                    "detail": "La política del centro exige al menos 24 horas de anticipación para cancelar o reprogramar citas desde la app móvil. Con menos tiempo, comuníquese con secretaría."
+                })
 
         return attrs
 

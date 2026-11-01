@@ -85,3 +85,42 @@ Desktop.ini
 .atl/
 .codegraph/
 .superpowers/
+
+# Temporary scripts and diagram generators
+diagramas/*.py
+diagramas/*.ps1
+diagramas/*.cs
+diagramas/EABridge.cs
+diagramas/*backup*
+diagramas/documentacion/
+build_analysis_classes_ea.py
+build_sequence_diagrams_ea.py
+rebuild_all_bce_and_sequence.py
+update_sprint3_bce.py
+check_used_images.py
+documentacion/*.py
+documentacion/*backup*.md
+
+# Unused/Test images
+documentacion/imagenes/test_*.png
+documentacion/imagenes/ea_*.png
+documentacion/imagenes/nav_diag_*.png
+documentacion/imagenes/timing_*_kroki.png
+
+# Prototipo temporary scripts and builds
+prototipo/sprint3_tester/
+prototipo/serve_all.py
+prototipo/backend/verify_sprint3.py
+prototipo/movil/android/build/
+prototipo/movil/build/
+build/
+
+# Audio notes / raw teacher feedback
+datos/CambiosProyecto1.md
+datos/CambiosProyecto2.md
+datos/Cambios_Y_Observaciones_Docente_Sprint3.md
+datos/Sprint3-01-v2.txt
+diagramas/test_*.png
+diagramas/x64/
+diagramas/x86/
+documentacion/eco 20262.docx

@@ -9,6 +9,7 @@
 #              BCE del Sprint 1.
 # ==============================================================================
 import uuid
+from datetime import datetime, date, timedelta
 from django.db import models
 from django.utils import timezone
 from clinica.models import Paciente, Psicologo
@@ -89,6 +90,28 @@ class Cita(models.Model):
 
     def __str__(self):
         return f"Cita {self.fecha} {self.hora_inicio} - Paciente: {self.paciente.usuario.nombre} / Psico: {self.psicologo.usuario.nombre} ({self.estado})"
+
+    def calcular_horas_restantes(self, ahora=None) -> float:
+        """Calcula el tiempo en horas que resta para el inicio de la cita."""
+        if not ahora:
+            ahora = timezone.localtime()
+        cita_dt = timezone.make_aware(
+            datetime.combine(self.fecha, self.hora_inicio),
+            timezone.get_current_timezone()
+        )
+        return (cita_dt - ahora).total_seconds() / 3600.0
+
+    def permite_cancelacion(self, ahora=None) -> bool:
+        """Verifica la politica de cancelacion anticipada (> 24 horas)."""
+        if self.estado in ['CANCELADA', 'REALIZADA']:
+            return False
+        return self.calcular_horas_restantes(ahora) > 24.0
+
+    def marcar_cancelada(self, motivo: str):
+        """Aplica la transicion formal de estado a CANCELADA registrando el motivo."""
+        self.estado = 'CANCELADA'
+        self.motivo_cancelacion = motivo
+        self.save(update_fields=['estado', 'motivo_cancelacion', 'fecha_modificacion'])
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -184,3 +207,46 @@ class Alerta(models.Model):
     def __str__(self):
         estado_txt = "Resuelta" if self.resuelta else "Pendiente"
         return f"[{self.severidad}] {self.tipo} - Paciente: {self.paciente.usuario.nombre} ({estado_txt})"
+
+
+# ==============================================================================
+# SPRINT 3: COLA TRANSACCIONAL DE NOTIFICACIONES Y RECORDATORIOS (CU12 / HU-43)
+# ==============================================================================
+class NotificacionCita(models.Model):
+    TIPO_EVENTO_CHOICES = [
+        ('RECORDATORIO_24H', 'Recordatorio 24 horas antes'),
+        ('RECORDATORIO_1H', 'Recordatorio 1 hora antes'),
+        ('CANCELACION', 'Aviso de Cancelación'),
+        ('REPROGRAMACION', 'Aviso de Reprogramación'),
+        ('NUEVA_TAREA', 'Aviso de Nueva Tarea Asignada'),
+    ]
+
+    CANAL_CHOICES = [
+        ('PUSH_FCM', 'Push Notification (Firebase Cloud Messaging)'),
+        ('EMAIL', 'Correo Electrónico'),
+        ('SMS', 'Mensaje SMS'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    cita = models.ForeignKey(Cita, on_delete=models.CASCADE, related_name="notificaciones", verbose_name="Cita Asociada")
+    tipo_evento = models.CharField(max_length=30, choices=TIPO_EVENTO_CHOICES, verbose_name="Tipo de Evento")
+    canal = models.CharField(max_length=20, choices=CANAL_CHOICES, default='PUSH_FCM', verbose_name="Canal de Despacho")
+    enviada = models.BooleanField(default=False, verbose_name="¿Notificación Enviada?")
+    fecha_programada = models.DateTimeField(verbose_name="Fecha Programada de Envío")
+    fecha_envio = models.DateTimeField(null=True, blank=True, verbose_name="Fecha Real de Envío")
+    error_log = models.TextField(null=True, blank=True, verbose_name="Registro de Error")
+    intentos_entrega = models.IntegerField(default=0, verbose_name="Intentos de Entrega")
+
+    class Meta:
+        db_table = "agenda_notificacioncita"
+        verbose_name = "Notificación y Recordatorio de Cita"
+        verbose_name_plural = "Notificaciones y Recordatorios de Citas"
+        ordering = ['fecha_programada']
+        indexes = [
+            models.Index(fields=['fecha_programada', 'enviada'], name='idx_notif_prog_env'),
+        ]
+
+    def __str__(self):
+        status = 'Enviada' if self.enviada else 'Pendiente'
+        return f"[{self.tipo_evento}] Cita {self.cita.id} ({status} - {self.fecha_programada})"
+

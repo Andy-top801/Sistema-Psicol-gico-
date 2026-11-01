@@ -101,8 +101,11 @@ class JitsiTokenGenerator:
 
         return {
             "sala_id": teleconsulta.sala_id,
+            "room_name": teleconsulta.sala_id,
+            "room": teleconsulta.sala_id,
             "domain": jitsi_domain,
             "jwt_token": token,
+            "sala_jwt": token,
             "es_moderador": es_moderador,
             "usuario": {
                 "id": str(usuario.id),

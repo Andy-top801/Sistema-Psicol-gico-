@@ -1157,3 +1157,68 @@ class ConversacionChatbotSerializer(serializers.ModelSerializer):
                 "es_alerta_crisis": msg.es_alerta_crisis
             }
         return None
+
+
+# ==============================================================================
+# SERIALIZADORES SPRINT 3: TOKEN FCM, ÁNIMO, CLASIFICACIÓN IA Y MATCHING
+# ==============================================================================
+from clinica.models import TokenFCM, RegistroAnimo, ClasificacionIA, SugerenciaMatching
+
+class TokenFCMSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TokenFCM
+        fields = ['id', 'paciente', 'token', 'plataforma', 'activo', 'creado_en', 'actualizado_en']
+        read_only_fields = ['id', 'creado_en', 'actualizado_en']
+
+class RegistroAnimoSerializer(serializers.ModelSerializer):
+    paciente_nombre = serializers.SerializerMethodField()
+
+    class Meta:
+        model = RegistroAnimo
+        fields = ['id', 'paciente', 'paciente_nombre', 'fecha_registro', 'estado_animo', 'escala_valor', 'factores_contexto', 'nota_reflexiva', 'creado_en']
+        read_only_fields = ['id', 'creado_en']
+
+    def get_paciente_nombre(self, obj):
+        return f'{obj.paciente.usuario.nombre} {obj.paciente.usuario.apellido}'.strip() or obj.paciente.usuario.email
+
+class ClasificacionIASerializer(serializers.ModelSerializer):
+    paciente_nombre = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ClasificacionIA
+        fields = [
+            'id', 'respuestapreconsulta', 'paciente_nombre', 'categoria_principal',
+            'confianza_score', 'nivel_severidad', 'alerta_crisis',
+            'palabras_clave_detectadas', 'explicacion_heuristica',
+            'hash_trazabilidad_sha256', 'fecha_analisis'
+        ]
+        read_only_fields = ['id', 'fecha_analisis', 'hash_trazabilidad_sha256']
+
+    def get_paciente_nombre(self, obj):
+        if obj.respuestapreconsulta and obj.respuestapreconsulta.paciente:
+            return f'{obj.respuestapreconsulta.paciente.usuario.nombre} {obj.respuestapreconsulta.paciente.usuario.apellido}'.strip() or obj.respuestapreconsulta.paciente.usuario.email
+        return "Paciente Anónimo"
+
+class SugerenciaMatchingSerializer(serializers.ModelSerializer):
+    psicologo_nombre = serializers.SerializerMethodField()
+    psicologo_colegiado = serializers.SerializerMethodField()
+    paciente_nombre = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SugerenciaMatching
+        fields = [
+            'id', 'paciente', 'paciente_nombre', 'clasificacion', 'psicologo_sugerido',
+            'psicologo_nombre', 'psicologo_colegiado', 'ranking_posicion', 'score_afinidad',
+            'factores_ponderacion', 'estado_decision', 'validado_por_coordinador',
+            'justificacion_clinica', 'fecha_generacion', 'fecha_decision'
+        ]
+        read_only_fields = ['id', 'fecha_generacion']
+
+    def get_psicologo_nombre(self, obj):
+        return f'{obj.psicologo_sugerido.usuario.nombre} {obj.psicologo_sugerido.usuario.apellido}'.strip() or obj.psicologo_sugerido.usuario.email
+
+    def get_psicologo_colegiado(self, obj):
+        return getattr(obj.psicologo_sugerido, 'numero_colegiado', '')
+
+    def get_paciente_nombre(self, obj):
+        return f'{obj.paciente.usuario.nombre} {obj.paciente.usuario.apellido}'.strip() or obj.paciente.usuario.email

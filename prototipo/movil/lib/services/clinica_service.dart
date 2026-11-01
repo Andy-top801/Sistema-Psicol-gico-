@@ -111,4 +111,56 @@ class ClinicaService {
     if (match == null) return raw;
     return '${match.group(1)!.padLeft(2, '0')}:${match.group(2)}';
   }
+
+  /// Sprint 3 - HU-46: Registrar estado de ánimo diario (Mood Tracker)
+  Future<Map<String, dynamic>> registrarEstadoAnimo({
+    required String estadoAnimo,
+    required int escalaValor,
+    required List<String> factoresContexto,
+    String notaReflexiva = '',
+    String? fechaRegistro,
+  }) async {
+    try {
+      final url = Uri.parse('${authService.baseUrl}${ApiConstants.registroAnimo}');
+      final response = await http.post(
+        url,
+        headers: authService.getHeaders(),
+        body: jsonEncode({
+          'estado_animo': estadoAnimo,
+          'escala_valor': escalaValor,
+          'factores_contexto': factoresContexto,
+          'nota_reflexiva': notaReflexiva,
+          if (fechaRegistro != null) 'fecha_registro': fechaRegistro,
+        }),
+      );
+
+      final body = jsonDecode(utf8.decode(response.bodyBytes));
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return {'success': true, 'data': body};
+      } else {
+        return {'success': false, 'error': body['error'] ?? 'Error al guardar estado de ánimo.'};
+      }
+    } catch (e) {
+      return {'success': false, 'error': 'Error de conexión: $e'};
+    }
+  }
+
+  /// Sprint 3 - HU-43: Registrar Token FCM de dispositivo móvil
+  Future<bool> registrarTokenFCM({required String token, String plataforma = 'ANDROID'}) async {
+    try {
+      final url = Uri.parse('${authService.baseUrl}${ApiConstants.fcmToken}');
+      final response = await http.post(
+        url,
+        headers: authService.getHeaders(),
+        body: jsonEncode({
+          'token': token,
+          'plataforma': plataforma,
+        }),
+      );
+      return response.statusCode == 200 || response.statusCode == 201;
+    } catch (_) {
+      return false;
+    }
+  }
+
 }

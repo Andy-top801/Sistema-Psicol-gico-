@@ -1,3 +1,4 @@
+import { ConsolaTriageComponent } from './modules/triaje/consola-triage.component';
 import { Routes } from '@angular/router';
 import { authGuard, superAdminGuard, adminCentroGuard, clinicalStaffGuard, excludeRecepcionistaGuard } from './core/guards/auth.guard';
 import { LoginComponent } from './modules/auth/login/login.component';
@@ -60,6 +61,8 @@ export const routes: Routes = [
       { path: 'reportes', component: ReportesHubComponent, canActivate: [adminCentroGuard] },
       { path: 'reportes/personalizado', component: ReportePersonalizadoComponent, canActivate: [adminCentroGuard] },
       { path: 'reportes/:fuente', component: ReporteVisorComponent, canActivate: [adminCentroGuard] },
+      // Incremento Funcional Sprint 3 (CU21, CU22 - Triaje IA & Matching HITL)
+      { path: 'triaje-ia', component: ConsolaTriageComponent, canActivate: [clinicalStaffGuard] },
       // Incremento Funcional Sprint 2 — Rutas con RBAC Clínico (HU-26)
       { path: 'intake', component: IntakeConfigComponent },  // Todos: Paciente responde, Psicólogo/Admin configura
       { path: 'historias-clinicas', component: HistoriaClinicaListComponent, canActivate: [clinicalStaffGuard] },

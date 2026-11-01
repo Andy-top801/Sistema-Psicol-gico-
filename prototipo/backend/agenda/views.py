@@ -137,6 +137,7 @@ class CitaViewSet(viewsets.ModelViewSet):
 
         return Response({
             "mensaje": "La cita fue cancelada exitosamente.",
+            "cita_liberada": True,
             "cita": CitaSerializer(cita).data
         }, status=status.HTTP_200_OK)
 
@@ -184,6 +185,79 @@ class CitaViewSet(viewsets.ModelViewSet):
             "tarifa_base": float(psicologo.tarifa_base),
             "slots": slots
         })
+
+    @action(detail=False, methods=['get'], url_path='mis-citas')
+    def mis_citas(self, request):
+        """
+        Retorna las citas del paciente divididas en 'proximas' e 'historial' (HU-41 / CU11).
+        GET /api/agenda/citas/mis-citas/
+        """
+        user = request.user
+        paciente = getattr(user, 'perfil_paciente', None)
+        if not paciente:
+            paciente_id = request.query_params.get('paciente_id') or request.query_params.get('paciente')
+            if paciente_id:
+                paciente = Paciente.objects.filter(id=paciente_id).first()
+        if not paciente:
+            paciente = Paciente.objects.first()
+
+        hoy = timezone.localdate()
+        ahora = timezone.localtime()
+
+        qs = Cita.objects.filter(paciente=paciente).select_related(
+            'psicologo__usuario', 'teleconsulta'
+        ).prefetch_related('psicologo__especialidades')
+
+        proximas_qs = qs.filter(
+            Q(fecha__gt=hoy) | Q(fecha=hoy, hora_fin__gte=ahora.time()),
+            estado__in=['PROGRAMADA', 'CONFIRMADA']
+        ).order_by('fecha', 'hora_inicio')
+
+        historial_qs = qs.exclude(
+            id__in=proximas_qs.values_list('id', flat=True)
+        ).order_by('-fecha', '-hora_inicio')
+
+        def format_cita(c):
+            psico = c.psicologo
+            u = psico.usuario
+            esps = [e.nombre for e in psico.especialidades.all()]
+            esp_txt = esps[0] if esps else "Psicología General"
+
+            cita_dt = timezone.make_aware(
+                datetime.combine(c.fecha, c.hora_inicio),
+                timezone.get_current_timezone()
+            )
+            from datetime import timedelta
+            en_ventana = (cita_dt - timedelta(minutes=10) <= ahora <= cita_dt + timedelta(minutes=45)) and (c.modalidad == 'VIRTUAL')
+            puede_cancelar = (cita_dt - ahora > timedelta(hours=24)) and (c.estado in ['PROGRAMADA', 'CONFIRMADA'])
+
+            sala_nombre = ""
+            if c.modalidad == 'VIRTUAL':
+                tele = getattr(c, 'teleconsulta', None)
+                sala_nombre = tele.sala_id if tele else f"sigepsi-{str(c.id)[:8]}"
+
+            return {
+                "id": str(c.id),
+                "fecha": c.fecha.strftime("%Y-%m-%d"),
+                "hora_inicio": c.hora_inicio.strftime("%H:%M"),
+                "hora_fin": c.hora_fin.strftime("%H:%M"),
+                "modalidad": c.modalidad,
+                "estado": c.estado,
+                "psicologo_id": str(psico.id),
+                "psicologo_nombre": f"Lic. {u.nombre} {u.apellido}".strip(),
+                "especialidad": esp_txt,
+                "motivo_consulta": c.motivo_consulta,
+                "costo": float(c.costo),
+                "sala_jitsi_token": sala_nombre,
+                "puede_entrar_teleconsulta": en_ventana,
+                "puede_cancelar": puede_cancelar
+            }
+
+        return Response({
+            "paciente_id": str(paciente.id) if paciente else None,
+            "proximas": [format_cita(c) for c in proximas_qs],
+            "historial": [format_cita(c) for c in historial_qs]
+        }, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'], url_path='calendario')
     def calendario(self, request):
@@ -261,6 +335,23 @@ class TeleconsultaAccessView(APIView):
                 "codigo": "SESSION_CLOSED"
             }, status=status.HTTP_400_BAD_REQUEST)
 
+        # Validar ventana de teleconsulta (10 min antes - 45 min después)
+        from datetime import timedelta
+        ahora = timezone.localtime()
+        cita_dt = timezone.make_aware(
+            datetime.combine(cita.fecha, cita.hora_inicio),
+            timezone.get_current_timezone()
+        )
+        inicio_ventana = cita_dt - timedelta(minutes=10)
+        fin_ventana = cita_dt + timedelta(minutes=45)
+
+        es_admin = bool(request.user.rol and ('admin' in request.user.rol.nombre.lower() or 'coord' in request.user.rol.nombre.lower())) or request.user.is_superuser
+        if not es_admin and not (inicio_ventana <= ahora <= fin_ventana):
+            return Response({
+                "error": "La sala de teleconsulta solo está disponible desde 10 minutos antes y hasta 45 minutos después del horario programado.",
+                "codigo": "OUTSIDE_TELECONSULTA_WINDOW"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         try:
             datos_acceso = JitsiTokenGenerator.generar_acceso(cita, request.user)
             # Marcar hora de inicio real si aún no se había registrado
@@ -272,6 +363,11 @@ class TeleconsultaAccessView(APIView):
             return Response(datos_acceso, status=status.HTTP_200_OK)
         except PermissionError as e:
             return Response({"error": str(e)}, status=status.HTTP_403_FORBIDDEN)
+
+    @transaction.atomic
+    def post(self, request, cita_id):
+        """CU13: Unirse a sala de teleconsulta vía POST (Diagrama 309)."""
+        return self.get(request, cita_id)
 
 
 class TeleconsultaFinishView(APIView):
@@ -314,6 +410,7 @@ class TeleconsultaFinishView(APIView):
             "mensaje": "Sesión de teleconsulta finalizada exitosamente.",
             "cita_id": str(cita.id),
             "estado": cita.estado,
+            "sesion_concluida": True,
             "duracion_segundos": tele.duracion_segundos if tele else duracion
         }, status=status.HTTP_200_OK)
 
@@ -386,3 +483,48 @@ class AlertaViewSet(viewsets.ModelViewSet):
             "mensaje": "Alerta clínica resuelta correctamente.",
             "alerta": AlertaSerializer(alerta).data
         }, status=status.HTTP_200_OK)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# CONTROLADOR: FCMTokenEnrollView — CTR_FCMNotificationController (CU12 / HU-43)
+# ──────────────────────────────────────────────────────────────────────────────
+class FCMTokenEnrollView(APIView):
+    """
+    POST /api/agenda/fcm-token/
+    Registra o actualiza el token FCM del dispositivo móvil para el paciente autenticado.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        token = request.data.get('token')
+        plataforma = (request.data.get('plataforma') or 'ANDROID').upper()
+
+        if not token:
+            return Response({"error": "El campo 'token' es obligatorio."}, status=status.HTTP_400_BAD_REQUEST)
+
+        paciente = getattr(user, 'perfil_paciente', None)
+        if not paciente:
+            paciente_id = request.data.get('paciente_id')
+            if paciente_id:
+                paciente = Paciente.objects.filter(id=paciente_id).first()
+        if not paciente:
+            paciente = Paciente.objects.first()
+
+        from clinica.models import TokenFCM
+        plat_valida = plataforma if plataforma in ['ANDROID', 'IOS', 'WEB'] else 'ANDROID'
+        token_obj, created = TokenFCM.objects.update_or_create(
+            paciente=paciente,
+            token=token,
+            defaults={
+                'plataforma': plat_valida,
+                'activo': True
+            }
+        )
+
+        return Response({
+            "mensaje": "Token FCM registrado exitosamente.",
+            "token_id": str(token_obj.id),
+            "activo": token_obj.activo,
+            "plataforma": token_obj.plataforma
+        }, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)

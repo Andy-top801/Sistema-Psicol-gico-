@@ -94,9 +94,13 @@ class AgendaService {
 
       final body = jsonDecode(utf8.decode(response.bodyBytes));
       if (response.statusCode == 200) {
-        return {'success': true, 'mensaje': body['mensaje'] ?? 'Cita cancelada con éxito.'};
+        return {'success': true, 'mensaje': body['mensaje'] ?? 'Cita cancelada con éxito.', 'cita_liberada': body['cita_liberada'] ?? true};
       } else {
-        return {'success': false, 'error': body['error'] ?? body['motivo']?[0] ?? 'No se pudo cancelar la cita.'};
+        String msg = 'No se pudo cancelar la cita.';
+        if (body is Map) {
+          msg = body['detail'] ?? body['error'] ?? (body['motivo'] is List ? body['motivo'][0] : body['motivo']) ?? msg;
+        }
+        return {'success': false, 'error': msg};
       }
     } catch (e) {
       return {'success': false, 'error': 'Error de conexión: $e'};
@@ -144,4 +148,17 @@ class AgendaService {
       return {'success': false, 'error': 'Error de conexión: $e'};
     }
   }
+
+  /// Sprint 3 - HU-41: Obtener citas del paciente divididas en 'proximas' e 'historial'
+  Future<Map<String, dynamic>> obtenerMisCitas() async {
+    try {
+      final url = Uri.parse('${authService.baseUrl}${ApiConstants.misCitas}');
+      final response = await http.get(url, headers: authService.getHeaders());
+      if (response.statusCode == 200) {
+        return jsonDecode(utf8.decode(response.bodyBytes));
+      }
+    } catch (_) {}
+    return {'proximas': [], 'historial': []};
+  }
+
 }

@@ -88,6 +88,10 @@ class Psicologo(models.Model):
     def __str__(self):
         return f"Lic. {self.usuario.nombre} {self.usuario.apellido} (Col. {self.numero_colegiado})"
 
+    def incrementar_carga(self):
+        """Metodo de dominio para actualizar estadisticas de asignacion activa."""
+        pass
+
 
 class PsicologoEspecialidad(models.Model):
     psicologo = models.ForeignKey(Psicologo, on_delete=models.CASCADE)
@@ -698,5 +702,178 @@ class MensajeChatbot(models.Model):
 
     def __str__(self):
         return f"[{self.remitente}] {self.texto[:40]}... ({self.timestamp.strftime('%H:%M')})"
+
+
+# ==============================================================================
+# SPRINT 3: DISPOSITIVOS Y TOKENS FCM PARA NOTIFICACIONES PUSH (CU12 / HU-43)
+# ==============================================================================
+class TokenFCM(models.Model):
+    PLATAFORMA_CHOICES = [
+        ('ANDROID', 'Android'),
+        ('IOS', 'iOS'),
+        ('WEB', 'Web'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE, related_name="tokens_fcm", verbose_name="Paciente Asociado")
+    token = models.TextField(verbose_name="Token de Registro FCM")
+    plataforma = models.CharField(max_length=20, choices=PLATAFORMA_CHOICES, verbose_name="Plataforma")
+    activo = models.BooleanField(default=True, verbose_name="¿Token Activo?")
+    creado_en = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Registro")
+    actualizado_en = models.DateTimeField(auto_now=True, verbose_name="Última Actualización")
+
+    class Meta:
+        db_table = "comunicacion_tokenfcm"
+        verbose_name = "Token FCM de Dispositivo Móvil"
+        verbose_name_plural = "Tokens FCM de Dispositivos Móviles"
+        unique_together = ('paciente', 'token')
+        indexes = [
+            models.Index(fields=['paciente', 'activo'], name='idx_tokenfcm_pac_act'),
+            models.Index(fields=['token'], name='idx_tokenfcm_token'),
+        ]
+
+    def __str__(self):
+        return f"[{self.plataforma}] Paciente {self.paciente.id} - {self.token[:20]}..."
+
+
+# ==============================================================================
+# SPRINT 3: REGISTRO DIARIO DE ESTADO DE ÁNIMO (MOOD TRACKER - CU17 / HU-46)
+# ==============================================================================
+class RegistroAnimo(models.Model):
+    ESTADO_CHOICES = [
+        ('MUY_BAJO', 'Muy Bajo (1/5)'),
+        ('BAJO', 'Bajo (2/5)'),
+        ('NEUTRAL', 'Neutral (3/5)'),
+        ('BUENO', 'Bueno (4/5)'),
+        ('EXCELENTE', 'Excelente (5/5)'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE, related_name="registros_animo", verbose_name="Paciente")
+    fecha_registro = models.DateField(default=timezone.now, verbose_name="Fecha de Registro")
+    estado_animo = models.CharField(max_length=30, choices=ESTADO_CHOICES, verbose_name="Estado de Ánimo")
+    escala_valor = models.IntegerField(verbose_name="Escala Numérica (1 a 5)")
+    factores_contexto = models.JSONField(default=list, blank=True, verbose_name="Factores Contextuales")
+    nota_reflexiva = models.TextField(null=True, blank=True, verbose_name="Nota Reflexiva del Paciente")
+    creado_en = models.DateTimeField(auto_now_add=True, verbose_name="Fecha y Hora de Creación")
+
+    class Meta:
+        db_table = "clinica_registroanimo"
+        verbose_name = "Registro Diario de Estado de Ánimo"
+        verbose_name_plural = "Registros Diarios de Estado de Ánimo"
+        unique_together = ('paciente', 'fecha_registro')
+        ordering = ['-fecha_registro']
+        indexes = [
+            models.Index(fields=['paciente', 'fecha_registro'], name='idx_animo_pac_fecha'),
+        ]
+
+    def __str__(self):
+        return f"[{self.fecha_registro}] {self.paciente.usuario.get_full_name() or self.paciente.usuario.email}: {self.estado_animo} ({self.escala_valor}/5)"
+
+
+# ==============================================================================
+# SPRINT 3: INFERENCIA ASISTIVA DE IA, TRIAJE Y CRISIS (CU21 / HU-47)
+# ==============================================================================
+class ClasificacionIA(models.Model):
+    CATEGORIA_CHOICES = [
+        ('ANSIEDAD_FOBIAS', 'Ansiedad y Fobias'),
+        ('DEPRESION_ANIMO', 'Depresión y Estado de Ánimo'),
+        ('PAREJA_FAMILIA', 'Pareja y Familia'),
+        ('INFANTO_JUVENIL', 'Infanto-Juvenil'),
+        ('DUELO_ADAPTACION', 'Duelo y Adaptación'),
+        ('OTRO', 'Otro Motivo Clínico'),
+    ]
+
+    SEVERIDAD_CHOICES = [
+        ('LEVE', 'Leve'),
+        ('MODERADO', 'Moderado'),
+        ('SEVERO', 'Severo'),
+        ('CRITICA', 'Crítica / Riesgo Inmediato'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    respuestapreconsulta = models.ForeignKey(RespuestaPreConsulta, on_delete=models.CASCADE, related_name="clasificaciones_ia", verbose_name="Respuesta de Preconsulta")
+    categoria_principal = models.CharField(max_length=50, choices=CATEGORIA_CHOICES, verbose_name="Área Temática")
+    confianza_score = models.DecimalField(max_digits=4, decimal_places=3, verbose_name="Score de Confianza (0 a 1)")
+    nivel_severidad = models.CharField(max_length=20, choices=SEVERIDAD_CHOICES, verbose_name="Nivel de Severidad")
+    alerta_crisis = models.BooleanField(default=False, verbose_name="¿Bandera de Crisis Vital?")
+    palabras_clave_detectadas = models.JSONField(default=list, blank=True, verbose_name="Palabras Clave Detectadas")
+    explicacion_heuristica = models.TextField(verbose_name="Explicación Heurística de Inferencia")
+    hash_trazabilidad_sha256 = models.CharField(max_length=64, verbose_name="Hash Criptográfico SHA-256")
+    fecha_analisis = models.DateTimeField(auto_now_add=True, verbose_name="Fecha y Hora del Análisis")
+
+    class Meta:
+        db_table = "clinica_clasificacionia"
+        verbose_name = "Clasificación Asistida por IA y Triaje"
+        verbose_name_plural = "Clasificaciones Asistidas por IA y Triaje"
+        ordering = ['-fecha_analisis']
+        indexes = [
+            models.Index(fields=['respuestapreconsulta'], name='idx_clasif_ia_intake'),
+            models.Index(fields=['alerta_crisis'], name='idx_clasif_ia_crisis'),
+        ]
+
+    def __str__(self):
+        crisis_tag = " [ALERTA CRISIS]" if self.alerta_crisis else ""
+        return f"[{self.categoria_principal}] {self.nivel_severidad}{crisis_tag} (Confianza: {self.confianza_score})"
+
+    def marcar_crisis_prioritaria(self):
+        """Eleva la clasificacion a severidad CRITICA y activa bandera de alerta."""
+        self.alerta_crisis = True
+        self.nivel_severidad = 'CRITICA'
+        self.save(update_fields=['alerta_crisis', 'nivel_severidad'])
+
+
+# ==============================================================================
+# SPRINT 3: SUGERENCIA DE MATCHING MULTIVARIABLE Y VALIDACIÓN HUMANA (CU22 / HU-48)
+# ==============================================================================
+class SugerenciaMatching(models.Model):
+    ESTADO_DECISION_CHOICES = [
+        ('PENDIENTE_VALIDACION', 'Pendiente de Validación por Coordinador'),
+        ('APROBADO', 'Aprobado y Asignado'),
+        ('RECHAZADO_MANUAL', 'Rechazado y Asignado Manualmente'),
+        ('DESCARTADO', 'Descartado'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE, related_name="sugerencias_matching", verbose_name="Paciente")
+    clasificacion = models.ForeignKey(ClasificacionIA, on_delete=models.CASCADE, null=True, blank=True, related_name="sugerencias", verbose_name="Clasificación IA Asociada")
+    psicologo_sugerido = models.ForeignKey(Psicologo, on_delete=models.CASCADE, related_name="sugerencias_recibidas", verbose_name="Psicólogo Sugerido")
+    ranking_posicion = models.IntegerField(verbose_name="Posición en Ranking (1 a 3)")
+    score_afinidad = models.DecimalField(max_digits=5, decimal_places=2, verbose_name="Score de Compatibilidad (0-100)")
+    factores_ponderacion = models.JSONField(verbose_name="Desglose de Factores Ponderados")
+    estado_decision = models.CharField(max_length=30, choices=ESTADO_DECISION_CHOICES, default='PENDIENTE_VALIDACION', verbose_name="Estado de Decisión")
+    validado_por_coordinador = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, blank=True, related_name="matchings_validados", verbose_name="Coordinador Clínico Validador")
+    justificacion_clinica = models.TextField(null=True, blank=True, verbose_name="Justificación Clínica")
+    fecha_generacion = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Generación")
+    fecha_decision = models.DateTimeField(null=True, blank=True, verbose_name="Fecha de Decisión")
+
+    class Meta:
+        db_table = "clinica_sugerenciamatching"
+        verbose_name = "Sugerencia de Matching de Psicólogo"
+        verbose_name_plural = "Sugerencias de Matching de Psicólogos"
+        ordering = ['ranking_posicion', '-score_afinidad']
+        indexes = [
+            models.Index(fields=['paciente', 'estado_decision'], name='idx_match_pac_dec'),
+        ]
+
+    def __str__(self):
+        return f"Top #{self.ranking_posicion}: Dr(a). {self.psicologo_sugerido.usuario.get_full_name()} -> {self.paciente.usuario.get_full_name()} ({self.score_afinidad}%)"
+
+    def marcar_aprobada(self, coordinador=None, justificacion: str = ""):
+        """Consolida la aprobacion humana HITL de la sugerencia."""
+        self.estado_decision = 'APROBADO'
+        self.validado_por_coordinador = coordinador
+        self.justificacion_clinica = justificacion or "Aprobado por Coordinador Clínico (HITL)."
+        self.fecha_decision = timezone.now()
+        self.save(update_fields=['estado_decision', 'validado_por_coordinador', 'justificacion_clinica', 'fecha_decision'])
+
+    def marcar_rechazada_manual(self, coordinador=None, justificacion: str = ""):
+        """Registra la reasignacion manual que descarta la sugerencia IA."""
+        self.estado_decision = 'RECHAZADO_MANUAL'
+        self.validado_por_coordinador = coordinador
+        self.justificacion_clinica = justificacion or "Reasignado manualmente por criterio clínico."
+        self.fecha_decision = timezone.now()
+        self.save(update_fields=['estado_decision', 'validado_por_coordinador', 'justificacion_clinica', 'fecha_decision'])
+
 
 

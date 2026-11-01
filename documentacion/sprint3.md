@@ -56,45 +56,37 @@ Para mantener la estricta coherencia metodológica con el **Product Backlog** (s
 
 ---
 
-## SECCIÓN ESPECIAL: Correcciones Metodológicas Dictadas por la Cátedra (Audio Sprint 3)
+## SECCIÓN ESPECIAL: Correcciones Metodológicas Dictadas por la Cátedra (Audio Sprint 3 - Sprint3-01)
 
-En estricta observancia de las observaciones, retroalimentaciones y lineamientos directos formulados por la docente evaluadora para el Sprint 3 (`datos/Sprint3.txt`), el equipo ha incorporado las siguientes correcciones estructurales:
+En estricta observancia de los lineamientos directos formulados por la docente evaluadora en el audio del Sprint 3 (`datos/Sprint3-01-v2.txt`), el equipo incorpora las siguientes correcciones estructurales, entregadas dentro del plazo fijado (documento subido el lunes al mediodía; revisión en aula el martes):
 
-### 1. Corrección Metodológica en el Análisis y Diseño de Clases (Patrón VOPC / BCE)
+### 1. Diagrama de Secuencia OBLIGATORIO y Diagrama de Comunicación OPCIONAL (Patrón BCE)
 
-* **Diagnóstico del Error Común Señalado por la Docente:**  
-  La docente constató que en diagramas de clases previos, varios grupos cometieron el error de reproducir mecánicamente el trazado de un diagrama de comunicación dentro del diagrama de clases. En dicho error, las clases que representan entidades secundarias, detalles o catálogos (por ejemplo: teléfono de la persona, profesión o historial de citas) eran conectadas **directamente al controlador** como si el controlador interactuara con cada tabla de forma plana.
-* **Directriz Metodológica Oficial Dictada:**
-  1. **Interfaz de Usuario (Boundary / Vista):** Representa la interacción con el usuario (formulario, panel, app móvil o pantalla de consulta). Posee atributos propios de la interfaz gráfica y métodos orientados a eventos (`crear()`, `editar()`, `mostrar()`, `enviar()`, etc.).
-  2. **Clase Control (Controller / Gestor de Negocio):** Ubicada en la capa lógica/backend. Implementa los métodos que gobiernan las transacciones del negocio (`registrar()`, `modificar()`, `actualizar()`, `validar()`, `consultar()`). Esta clase **no inventa atributos ajenos**, sino que orquesta las operaciones utilizando el modelo del dominio.
-  3. **Conexión Exclusiva a la Entidad Principal:** El Controlador se comunica **únicamente con la clase entidad principal (raíz del agregado o entidad principal del caso de uso)**.
-  4. **Estructura Jerárquica y Multiplicidad de Entidades:** La entidad principal es la que se asocia con sus entidades secundarias o dependientes mediante relaciones de agregación/asociación con multiplicidades explícitas (por ejemplo: una `Persona` tiene $1 \dots *$ teléfonos; una `Cita` tiene $0 \dots *$ notificaciones push; una `ClasificacionIA` tiene $1 \dots *$ criterios de severidad evaluados).
-  5. **Regla de Oro:** **Ninguna entidad secundaria o detalle debe conectarse directamente a la clase control.** Toda interacción se canaliza a través de la entidad principal, respetando la arquitectura en tres capas (Presentación $\to$ Lógica de Negocio $\to$ Entidad Principal $\to$ Entidades de Detalle).
+* **Directriz dictada por la docente:** *"Lo voy a dejar opcional el diagrama de comunicación. Si ustedes quieren lo hacen, si no no lo hacen, pero lo que quiero que sea obligatorio es esto de aquí: quiero que le hagan el diagrama de secuencia y a este diagrama de secuencia le hacen el diseño de clase."*
+* **Reglas obligatorias aplicadas al diagrama de secuencia (sección 7.2.1.3):**
+  1. **Siempre inicia con el actor**, seguido de la(s) **clase(s) interfaz** (formulario, pantalla, reporte o API), la **clase control** y las **clases entidad individualizadas**: nunca una caja genérica de "base de datos". Si el caso de uso afecta tres entidades, las tres se visualizan como líneas de vida separadas.
+  2. **Fragmentos combinados correctamente utilizados:** `opt` (condición simple, puede partir de la interfaz), `alt` (alternativas / if-else) y `loop` (iteración). **El `loop` jamás encierra una clase interfaz:** parte de la clase control y cubre únicamente las entidades afectadas.
+  3. **Semántica de mensajes:** los mensajes síncronos llevan retorno obligatorio; los asíncronos se modelan con retorno punteado (débil).
+  4. **No se modela la clase asociación** dentro del diagrama de secuencia; los elementos obligatorios son interfaz, control y entidades.
+  5. **Trazabilidad estricta:** todos los métodos que viajan en el diagrama de secuencia existen en la clase control del diseño de clases de análisis (7.2.1.7), y las entidades coinciden con el diagrama de clases del dominio y sus multiplicidades.
 
-```
-   [ENFOQUE INCORRECTO - OBSERVADO POR LA DOCENTE]
-   Interfaz (UI)  --->  Controlador  --->  Entidad Principal (Persona)
-                             |--------->  Entidad Detalle 1 (Telefono)    <-- ERROR: Conexión directa
-                             |--------->  Entidad Detalle 2 (Profesion)   <-- ERROR: Conexión directa
+### 2. Arquitectura con Diagrama de Paquetes UML (SE ELIMINA el Modelo C4)
 
-   [ENFOQUE CORRECTO - APLICADO EN SPRINT 3]
-   Interfaz (UI)  --->  Controlador  --->  Entidad Principal (Persona)
-                                                    |
-                                                    +--- (1..*) ---> Entidad Detalle 1 (Telefono)
-                                                    +--- (1..*) ---> Entidad Detalle 2 (Profesion)
-```
+* **Directriz dictada por la docente:** *"No estoy trabajando con el modelo C4 en este sprint… me están colocando los dos (C4 y diagrama de paquetes)… No hay C4, no hay C4. En arquitectura seguimos con estos modelos (paquetes)."*
+* **Corrección aplicada:** la sección **7.2.1.1** documenta la arquitectura exclusivamente con el **diagrama de paquetes UML** (paquetes del backend, cliente móvil, portal web, persistencia e integraciones), eliminando por completo la notación C4. El **diagrama de componentes** se presenta en la fase de **Implementación** (sección 7.2.2), conforme a la instrucción docente.
 
-### 2. Finalización y Detalle Exhaustivo del Modelo C4 de Arquitectura
+### 3. Modelo de Negocio Previo a las Historias de Usuario
 
-La docente remarcó que para el Sprint 3 debe entregarse la versión final y definitiva de la arquitectura lógica y física bajo el **Modelo C4**. Específicamente, se subsana la falta de detalle en los módulos y paquetes de software, presentando el contenido minucioso de cada uno de los 6 paquetes del sistema más el paquete móvil cliente, detallando sus controladores, servicios de lógica de negocio, pasarelas de integración e interfaces.
+* **Directriz dictada por la docente:** *"No puedo aparecer con el conjunto de historias de usuario sin haber hecho antes el modelo de negocio."*
+* **Corrección aplicada:** en **7.1.3 (Contexto del Sistema)** se incorpora el **diagrama de actividad del modelo de negocio** del proceso clínico integral, con los actores y sus tareas en secuencia, antes de los diagramas de casos de uso.
 
-### 3. Rotación de Roles y Desarrollo Móvil Obligatorio
+### 4. Rotación de Roles y Desarrollo Móvil Obligatorio
 
 En cumplimiento directo de la sugerencia docente: *"los que han hecho web hasta este momento les toca hacer móvil, ya no seamos cómodos y quedemos web con todo el semestre... cambie de rol, no se conforme con decir yo soy Scrum Master y se acabó"*:
 * **Rotación de Liderazgo:**
   * **Product Owner:** Asume **Mujica Vallejos Andy Mauricio**, quien además de velar por el Product Backlog y los criterios de aceptación clínicos, **desarrolla tareas técnicas clave** en la implementación del motor de IA para clasificación de consultas y emparejamiento de terapeutas (`SP3-77`).
   * **Scrum Master:** Asume **Larrazabal Rojas Julio Cesar**, quien conduce las ceremonias, gestiona los impedimentos técnicos de emuladores y dependencias móviles y desarrolla interfaces UI/UX en Flutter (`SP3-71`, `SP3-74`).
-* **Transición Web $\to$ Móvil (Flutter):**
+* **Transición Web → Móvil (Flutter):**
   * **Condori Diaz Marilyn Esther** y **Romero Saavedra Maria Ilse**, quienes en sprints anteriores desarrollaron principalmente componentes backend y frontend web, asumen en este Sprint 3 la programación activa en **Flutter 3.x** (módulos de notificaciones push, gestión móvil de citas, teleconsulta WebRTC y seguimiento terapéutico).
   * **Delgado Rojas Alberto Caleb** lidera la integración de la arquitectura móvil, autenticación JWT en Flutter y servicios FCM.
   * **Velasco Soliz Rolando** asume la responsabilidad transversal de Aseguramiento de Calidad (QA), ejecutando la suite completa de pruebas de caja negra sobre la app móvil y el motor de IA.
@@ -117,12 +109,19 @@ El Sprint 3 tiene como propósito consolidar la interacción ubicua del paciente
 
 #### Casos de Uso Contemplados en el Sprint 3
 
+Siguiendo el marco de trabajo ágil SCRUM y en estricta coherencia con el modelo de desarrollo incremental acumulado de SIGEPSI, el Sprint 3 aborda los siguientes Casos de Uso para la consolidación de la experiencia móvil y los motores asistivos de Inteligencia Artificial:
+
 |  ID CU   | Descripción del Caso de Uso | Estado | Móvil | Web | Sprint | Requisitos Funcionales Asociados |
 | :------: | :-------------------------- | :----: | :---: | :-: | :----: | :------------------------------- |
-| **CU12** | Gestionar recordatorios y notificaciones automáticas (Push FCM) | Implementado |   X   |  X  |  SP3   | RF-18, RNF-18 |
-| **CU21** | Clasificar motivo de consulta mediante Inteligencia Artificial | Implementado |   X   |  X  |  SP3   | RF-10, RNF-19 |
-| **CU22** | Sugerir asignación de paciente a psicólogo mediante Inteligencia Artificial | Implementado |       |  X  |  SP3   | RF-11, RNF-19 |
-| *(Móvil)*| Despliegue de Interfaces Cliente Móvil de Pacientes en Flutter 3.x (`CU2`, `CU11`, `CU13`, `CU17`) | Implementado |   X   |     |  SP3   | RF-01, RF-14, RF-15, RF-16, RF-19, RF-24, RF-25 |
+| **CU12** | Gestionar recordatorios y notificaciones automáticas (Push FCM en segundo plano) | Implementado |   X   |  X  |  SP3   | RF-18, RNF-18 |
+| **CU21** | Clasificar motivo de consulta mediante Inteligencia Artificial (Pipeline NLP y Triage) | Implementado |   X   |  X  |  SP3   | RF-10, RNF-19 |
+| **CU22** | Sugerir asignación de paciente a psicólogo mediante IA (Matching multivariable y HITL) | Implementado |       |  X  |  SP3   | RF-11, RNF-19 |
+| **CU2 (Móvil)** | Iniciar sesión persistente y autenticación móvil JWT con almacenamiento cifrado (Keystore/Keychain) | Implementado |   X   |     |  SP3   | RF-01, RNF-18 |
+| **CU11 (Móvil)** | Consultar agenda de citas, historial y solicitar cancelación con política de anticipación (>24h) | Implementado |   X   |     |  SP3   | RF-14, RF-15, RF-16 |
+| **CU13 (Móvil)** | Realizar teleconsulta psicológica virtual en app móvil con WebRTC (Jitsi Meet nativo) | Implementado |   X   |     |  SP3   | RF-19 |
+| **CU17 (Móvil)** | Gestionar evolución, tareas terapéuticas y registro diario de estado de ánimo (Mood Tracker) | Implementado |   X   |     |  SP3   | RF-24, RF-25 |
+
+<br>
 
 #### Cronograma Oficial de Hitos y Actividades del Sprint 3
 
@@ -316,11 +315,13 @@ El subsistema desarrollado en el Sprint 3 consolida la experiencia ubicua del pa
  +----------------------------------------------------------------------------------------------------+
 ```
 
-#### Diagrama de Casos de Uso del Sprint 3 (Modelo Incremental Acumulado)
+#### Diagrama de Casos de Uso del Sprint 3 (Alcance Exclusivo del Incremento)
 
-El siguiente diagrama formaliza la integración acumulativa de la plataforma a través de los cuatro periodos de desarrollo. Se diferencian los casos de uso consolidados en los Sprints 0, 1 y 2 de las **nuevas funcionalidades incorporadas en el Sprint 3** (`CU12`, `CU21` y `CU22`) y la **interfaz cliente móvil nativa** (`CU2`, `CU11`, `CU13` y `CU17` en Flutter 3.x para Pacientes). Se resalta que casos como `CU7` (Gestión de pacientes) fueron cerrados en el Sprint 1 como herramientas del personal administrativo y **no son parte del incremento de desarrollo del Sprint 3**:
+Conforme a la directriz expresa de la cátedra, el siguiente diagrama formaliza **exclusivamente las funcionalidades y casos de uso correspondientes al Sprint 3**: los nuevos servicios de Inteligencia Artificial (`CU21` y `CU22`), el servicio de notificaciones push en segundo plano (`CU12`) y el canal cliente móvil nativo en Flutter 3.x para pacientes (`CU2 Móvil`, `CU11 Móvil`, `CU13 Móvil` y `CU17 Móvil`), integrados con sus respectivos casos de inclusión y validación institucional:
 
-![Diagrama de Casos de Uso - Sprint 3 Incremental Acumulado](./imagenes/diagrama_casos_uso_sp3.png)
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3 - Experiencia Móvil de Pacientes y Asistencia de IA* → *1. Casos de Uso - Sprint 3* → *Diagrama de Casos de Uso - Sprint 3 (Exclusivo)* (**Diagrama ID: 257**).
+
+![Diagrama de Casos de Uso - Sprint 3](./imagenes/diagrama_casos_uso_sp3.png)
 
 ```plantuml
 @startuml
@@ -330,61 +331,41 @@ skinparam shadowing false
 skinparam roundcorner 8
 skinparam defaultFontName Arial
 
-actor "SuperAdministrador\n(Plataforma SaaS)" as superadmin
-actor "Administrador del Centro\n(Clínica)" as admin
-actor "Coordinador Clínico\n(Web)" as coord
-actor "Psicólogo Tratante\n(Web)" as psyc
-actor "Recepcionista\n(Web)" as recep
-actor "Paciente\n(App Móvil Flutter / Web)" as patient
+actor "Paciente
+(App Móvil Flutter)" as patient
+actor "Coordinador Clínico
+(Web Angular)" as coord
+actor "Psicólogo Tratante
+(Web Angular)" as psyc
+actor "Planificador Celery
+(Cron Job FCM)" as cron
 
-rectangle "Plataforma SIGEPSI - Sistema Acumulado (Sprints 0, 1, 2 + Incremento Sprint 3)" {
+rectangle "SIGEPSI - Incremento Sprint 3: Experiencia Móvil & Asistencia de IA" {
 
-  rectangle "Sprint 0: Multi-Tenant, Acceso & RBAC Base" #F2F4F4 {
-    usecase "CU1: Gestionar centros psicológicos\ny configuración Multi-Tenant" as CU1
-    usecase "CU2: Autenticar e iniciar sesión (JWT Web)" as CU2
-    usecase "CU3: Gestionar usuarios institucionales" as CU3
-    usecase "CU4: Gestionar roles y permisos (RBAC)" as CU4
-    usecase "CU27: Recuperar credenciales y contraseña" as CU27
-  }
+  usecase "CU2 (Móvil): Iniciar sesión persistente
+y autenticación JWT segura" as CU2_M #D5F5E3
+  usecase "CU11 (Móvil): Consultar agenda de citas
+y solicitar cancelación (>24h)" as CU11_M #D5F5E3
+  usecase "CU13 (Móvil): Realizar teleconsulta psicológica
+WebRTC en sala Jitsi Meet" as CU13_M #D5F5E3
+  usecase "CU17 (Móvil): Gestionar tareas terapéuticas
+y registro diario de ánimo (Mood Tracker)" as CU17_M #D5F5E3
+  
+  usecase "CU12: Gestionar recordatorios y
+notificaciones automáticas (Push FCM)" as CU12 #A9DFBF
+  usecase "CU21: Clasificar motivo de consulta
+mediante IA (NLP, Triaje y Crisis)" as CU21 #A9DFBF
+  usecase "CU22: Sugerir asignación de paciente
+a psicólogo mediante IA (Matching HITL)" as CU22 #A9DFBF
 
-  rectangle "Sprint 1: Gestión Clínica, Agenda & Teleconsulta Web" #FEF9E7 {
-    usecase "CU6: Gestionar psicólogos y perfiles" as CU6
-    usecase "CU7: Gestionar expediente de pacientes (Web)" as CU7
-    usecase "CU8: Configurar disponibilidad horaria" as CU8
-    usecase "CU9: Consultar Dashboard e indicadores" as CU9
-    usecase "CU10: Gestionar alertas de priorización" as CU10
-    usecase "CU11: Gestionar citas y agenda (Web)" as CU11
-    usecase "CU13: Realizar teleconsulta (Jitsi Web)" as CU13
-  }
-
-  rectangle "Sprint 2: Expediente HCE, SOAP, Consentimientos SHA-256, Chatbot & Backup" #E8F8F5 {
-    usecase "CU5: Bitácora confidencial cifrada (AES-256)" as CU5
-    usecase "CU14: Formulario previo a la consulta (Intake)" as CU14
-    usecase "CU15: Gestionar historia clínica psicológica" as CU15
-    usecase "CU16: Registrar notas de sesión (SOAP)" as CU16
-    usecase "CU17: Tareas y seguimiento terapéutico (Web)" as CU17
-    usecase "CU18: Consentimientos informados (SHA-256)" as CU18
-    usecase "CU19: Cierre y derivación a Psiquiatría" as CU19
-    usecase "CU20: Chatbot de orientación clínica" as CU20
-    usecase "CU25: Reportes QBE multiformato y voz" as CU25
-    usecase "CU28: Backup y restauración en la nube" as CU28
-  }
-
-  rectangle "Incremento Sprint 3: Experiencia Móvil de Pacientes & Asistencia de IA" #D4EFDF {
-    usecase "CU12: Gestionar recordatorios y\nnotificaciones automáticas (Push FCM)" as CU12 #A9DFBF
-    usecase "CU21: Clasificar motivo de consulta\nmediante Inteligencia Artificial" as CU21 #A9DFBF
-    usecase "CU22: Sugerir asignación de paciente\na psicólogo mediante IA (Matching)" as CU22 #A9DFBF
-    
-    usecase "CU2 Móvil: Iniciar sesión persistente\ny auth JWT en smartphone" as CU2_M #D5F5E3
-    usecase "CU11 Móvil: Consultar agenda y solicitar\ncancelación de citas (>24h)" as CU11_M #D5F5E3
-    usecase "CU13 Móvil: Acceder a sala de\nteleconsulta WebRTC nativa" as CU13_M #D5F5E3
-    usecase "CU17 Móvil: Gestionar tareas terapéuticas\ny registro de ánimo (Mood Tracker)" as CU17_M #D5F5E3
-
-    usecase "Validar ventana de anticipación (>24h)" as val_canc
-    usecase "Sanitizar datos sensibles PII" as val_pii
-    usecase "Supervisión humana obligatoria (HITL)" as val_hitl
-    usecase "Despacho multicast FCM Push" as val_fcm
-  }
+  usecase "Validar ventana de
+anticipación (> 24 horas)" as val_canc
+  usecase "Sanitizar datos sensibles
+personales (PII)" as val_pii
+  usecase "Supervisión médica humana
+obligatoria (HITL)" as val_hitl
+  usecase "Despacho multicast
+FCM Push en background" as val_fcm
 }
 
 ' Asociaciones de Actores con Sprint 3
@@ -392,26 +373,24 @@ patient --> CU2_M
 patient --> CU11_M
 patient --> CU13_M
 patient --> CU17_M
-patient --> CU12
 patient --> CU21
 
-coord --> CU21 : audita clasificación
-coord --> CU22 : valida / aprueba sugerencia
+cron --> CU12
 
-psyc --> CU11
-psyc --> CU13
-psyc --> CU17
-admin --> CU25
-superadmin --> CU1
-superadmin --> CU28
+coord --> CU21 : supervisa triaje y crisis
+coord --> CU22 : valida y aprueba sugerencias
 
-' Relaciones de Inclusión y Extensión del Sprint 3
+psyc --> CU11_M : consulta agenda
+psyc --> CU13_M : atiende teleconsulta
+psyc --> CU17_M : revisa tareas y evolución
+
+' Relaciones de Inclusión y Dependencia
 CU11_M ..> val_canc : <<include>>
 CU21 ..> val_pii : <<include>>
 CU22 ..> val_hitl : <<include>>
 CU12 ..> val_fcm : <<include>>
 CU22 ..> CU21 : <<use>> (consume clasificación y severidad)
-CU12 ..> CU11_M : <<extend>> (notifica cita próxima)
+CU12 ..> CU11_M : <<extend>> (notifica recordatorio de cita)
 @enduml
 ```
 
@@ -593,9 +572,859 @@ Paciente "1" *-- "many" TareaTerapeutica : realiza
 @enduml
 ```
 
-#### Diagramas de Actividad de Flujos Críticos del Sprint 3
+<br>
 
-En congruencia con el nivel de rigor formal del Sprint 2, se modelan los 5 flujos operativos y analíticos más críticos del Sprint 3 mediante diagramas de actividad UML con carriles de responsabilidad (*swimlanes*):
+#### Diagrama de Clases del Dominio Clínico y Sistema Completo Consolidado (Base de Datos Global Sprints 0, 1, 2 y 3)
+
+En cumplimiento estricto de las directrices de evaluación de la cátedra de Sistemas de Información II (Capítulo 11 de *Cambios y Observaciones Docente*: *"me gustaría que visualicen toda la información lo del 1, 2, 3, o sea, el modelo se visualiza completito, no solo del Sprint 3"*), a continuación se formaliza el **Diagrama de Clases Estructural y de Dominio Global de SIGEPSI**.
+
+Este modelo integral consolida la totalidad de las **26 entidades relacionales** desarrolladas a lo largo de los ciclos de vida del software, articuladas bajo la arquitectura multi-inquilino de PostgreSQL 16 con aislamiento estricto por esquemas (`public` para control global de SaaS y `[tenant_schema]` para la gestión clínica y administrativa privada de cada centro psicológico):
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3 - Experiencia Móvil de Pacientes y Asistencia de IA* → *2. Clases - Sprint 3* → *Diagrama de Clases - Dominio Clínico y Sistema Completo Consolidado (Sprints 0, 1, 2 y 3)* (**Diagrama ID: 322**).
+
+![Diagrama de Clases - Sistema Completo Consolidado](./imagenes/diagrama_clases_completo_sp3.png)
+
+```plantuml
+@startuml
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+
+title class Diagrama de Clases - Dominio Clínico y Sistema Completo Consolidado (Sprints 0, 1, 2 y 3)
+
+' ==============================================================================
+' 1. ESQUEMA PUBLIC: MULTI-TENANCY GLOBAL Y RESPALDOS (SPRINT 0)
+' ==============================================================================
+package "Esquema Public (Global Multi-Tenant - Consolidado Sprint 0)" #F2F4F4 {
+  class Tenant {
+    + id: UUID
+    + nombre: String
+    + slug: String
+    + schema_name: String
+    + plan: String
+    + activo: Boolean
+    + fecha_creacion: DateTime
+    + crear_esquema(): void
+    + suspender(): void
+  }
+
+  class Dominio {
+    + id: Integer
+    + dominio: String
+    + es_primario: Boolean
+    + validar_fqdn(): Boolean
+  }
+
+  class SuperAdmin {
+    + id: Integer
+    + email: String
+    + password_hash: String
+    + nombre: String
+    + activo: Boolean
+    + gestionar_tenants(): void
+  }
+
+  class BackupRegistro {
+    + id: UUID
+    + archivo_sql_dump: String
+    + hash_sha256: String
+    + tamano_bytes: BigInteger
+    + fecha_creacion: DateTime
+    + tipo_almacenamiento: String
+    + verificar_integridad(): Boolean
+  }
+}
+
+' ==============================================================================
+' 2. ESQUEMA TENANT: BASE, CENTRO Y SEGURIDAD (CONSOLIDADO SPRINT 0)
+' ==============================================================================
+package "Esquema Tenant: Base, Centro y Seguridad (Consolidado Sprint 0)" #E8F8F5 {
+  class Centro {
+    + id: UUID
+    + nombre: String
+    + direccion: String
+    + telefono: String
+    + email: String
+    + logo: String
+    + horarios_atencion: JSON
+    + limite_usuarios: Integer
+    + actualizar_config(): void
+  }
+
+  class Usuario {
+    + id: UUID
+    + email: String
+    + password_hash: String
+    + nombre: String
+    + apellido: String
+    + telefono: String
+    + rol: String
+    + is_active: Boolean
+    + fecha_creacion: DateTime
+    + autenticar(password): Boolean
+    + cerrar_sesion(): void
+    + verificar_credenciales(): Boolean
+  }
+
+  class Rol {
+    + id: Integer
+    + nombre: String
+    + descripcion: String
+    + asignar_permiso(permiso): void
+  }
+
+  class Permiso {
+    + id: Integer
+    + nombre: String
+    + codigo: String
+    + modulo: String
+  }
+
+  class RolPermiso {
+    + id: Integer
+    + rol_id: Integer
+    + permiso_id: Integer
+  }
+
+  class TokenAcceso {
+    + id: UUID
+    + token_jwt: String
+    + fecha_expiracion: DateTime
+    + es_valido(): Boolean
+  }
+
+  class TokenRecuperacion {
+    + id: UUID
+    + token: String
+    + fecha_expiracion: DateTime
+    + usado: Boolean
+    + validar_token(): Boolean
+  }
+
+  class AuditLog {
+    + id: UUID
+    + ip_origen: String
+    + metodo_http: String
+    + ruta_endpoint: String
+    + codigo_estado: Integer
+    + timestamp: DateTime
+  }
+}
+
+' ==============================================================================
+' 3. ESQUEMA TENANT: CLÍNICO BASE, ESPECIALIDADES Y AGENDA (CONSOLIDADO SPRINT 1)
+' ==============================================================================
+package "Esquema Tenant: Clínico Base, Especialidades y Agenda (Consolidado Sprint 1)" #FEF9E7 {
+  class Psicologo {
+    + id: UUID
+    + numero_colegiado: String
+    + biografia: Text
+    + modalidad: String
+    + tarifa_base: Decimal
+    + cupo_maximo_pacientes: Integer
+    + activo: Boolean
+    + obtener_carga_actual(): Integer
+    + obtener_carga_semanal(): Integer
+  }
+
+  class Especialidad {
+    + id: Integer
+    + nombre: String
+    + descripcion: String
+  }
+
+  class PsicologoEspecialidad {
+    + id: Integer
+    + psicologo_id: UUID
+    + especialidad_id: Integer
+  }
+
+  class DisponibilidadHoraria {
+    + id: UUID
+    + dia_semana: Integer
+    + hora_inicio: Time
+    + hora_fin: Time
+    + duracion_bloque_min: Integer
+    + activo: Boolean
+    + es_bloque_valido(): Boolean
+  }
+
+  class Paciente {
+    + id: UUID
+    + codigo_expediente: String
+    + ci: String
+    + fecha_nacimiento: Date
+    + genero: String
+    + contacto_emergencia_nombre: String
+    + contacto_emergencia_telf: String
+    + es_menor_edad(): Boolean
+    + obtener_edad(): Integer
+  }
+
+  class Cita {
+    + id: UUID
+    + fecha: Date
+    + hora_inicio: Time
+    + hora_fin: Time
+    + modalidad: String
+    + estado: String
+    + motivo_consulta: Text
+    + costo: Decimal
+    + permite_cancelacion(): Boolean
+    + reprogramar(nueva_fecha, nueva_hora): void
+    + cancelar(motivo): void
+  }
+
+  class Teleconsulta {
+    + id: UUID
+    + sala_id: String
+    + jwt_room_token: String
+    + duracion_segundos: Integer
+    + estado_conexion: String
+    + iniciar_sala(): String
+    + finalizar_sala(): void
+  }
+
+  class AlertaPriorizacion {
+    + id: UUID
+    + tipo: String
+    + severidad: String
+    + descripcion: Text
+    + resuelta: Boolean
+    + fecha_creacion: DateTime
+    + marcar_resuelta(): void
+  }
+}
+
+' ==============================================================================
+' 4. ESQUEMA TENANT: EXPEDIENTES, INTAKE, SOAP Y CONSENTIMIENTOS (SPRINT 2)
+' ==============================================================================
+package "Esquema Tenant: Expedientes, Intake, SOAP y Consentimientos (Consolidado Sprint 2)" #E8F6F3 {
+  class FormularioPreConsulta {
+    + id: UUID
+    + titulo: String
+    + version: String
+    + activo: Boolean
+    + preguntas_schema: JSONB
+  }
+
+  class RespuestaPreConsulta {
+    + id: UUID
+    + motivo_consulta: Text
+    + nivel_urgencia: Integer
+    + respuestas_detalle: JSONB
+    + estado: String
+    + fecha_envio: DateTime
+    + validar_respuestas(): Boolean
+  }
+
+  class HistoriaClinica {
+    + id: UUID
+    + codigo_historia: String
+    + motivo_consulta_inicial: Text
+    + antecedentes_personales: Text
+    + antecedentes_familiares: Text
+    + examen_mental: Text
+    + plan_tratamiento: Text
+    + fecha_apertura: DateTime
+    + cerrada: Boolean
+    + cerrar_expediente(): void
+  }
+
+  class DiagnosticoCIE {
+    + id: Integer
+    + codigo_cie: String
+    + descripcion: String
+    + tipo: String
+    + fecha_diagnostico: Date
+  }
+
+  class NotaSesion {
+    + id: UUID
+    + numero_sesion: Integer
+    + fecha_sesion: DateTime
+    + subjetivo: Text
+    + objetivo: Text
+    + analisis: Text
+    + plan: Text
+    + tecnicas_aplicadas: String
+    + estado_guardado: String
+    + bloquear_edicion(): void
+  }
+
+  class EvolucionClinica {
+    + id: UUID
+    + estado_avance: String
+    + justificacion: Text
+    + acuerdos_pactados: Text
+    + fecha_registro: DateTime
+  }
+
+  class DerivacionCaso {
+    + id: UUID
+    + tipo_derivacion: String
+    + motivo_clinico: Text
+    + sintomatologia_relevante: Text
+    + profesional_destino: String
+    + institucion_destino: String
+    + nivel_riesgo: String
+    + fecha_derivacion: DateTime
+    + aceptada: Boolean
+  }
+
+  class TareaTerapeutica {
+    + id: UUID
+    + titulo: String
+    + descripcion: Text
+    + categoria: String
+    + fecha_limite: Date
+    + estado: String
+    + archivo_adjunto_url: String
+    + marcar_completada(): void
+  }
+
+  class EvidenciaTarea {
+    + id: UUID
+    + texto_reflexion: Text
+    + dificultad_percibida: Integer
+    + archivo_evidencia_url: String
+    + fecha_cumplimiento: DateTime
+  }
+
+  class ConsentimientoInformado {
+    + id: UUID
+    + titulo: String
+    + tipo: String
+    + contenido_legal: Text
+    + version: String
+    + activo: Boolean
+  }
+
+  class FirmaConsentimiento {
+    + id: UUID
+    + firmado_por: String
+    + es_menor_edad: Boolean
+    + tutor_nombre: String
+    + tutor_ci: String
+    + hash_sha256: String
+    + ip_origen: String
+    + user_agent: String
+    + fecha_firma: DateTime
+    + firma_canvas_url: String
+  }
+
+  class ConversacionChatbot {
+    + id: UUID
+    + session_id: String
+    + estado: String
+    + escalada_a_humano: Boolean
+    + intencion_predominante: String
+    + contiene_riesgo: Boolean
+    + fecha_inicio: DateTime
+    + fecha_fin: DateTime
+    + iniciar_conversacion(): void
+    + procesar_mensaje(texto: String): void
+    + escalar_a_recepcionista(): void
+  }
+
+  class MensajeChatbot {
+    + id: UUID
+    + remitente: String
+    + contenido: Text
+    + intencion_detectada: String
+    + timestamp: DateTime
+  }
+}
+
+' ==============================================================================
+' 5. ESQUEMA TENANT: EXPERIENCIA MÓVIL, PUSH FCM E IA (INCREMENTO SPRINT 3)
+' ==============================================================================
+package "Esquema Tenant: Experiencia Móvil, Push FCM e IA (Incremento Sprint 3)" #D4EFDF {
+  class TokenFCM #A9DFBF {
+    + id: UUID
+    + token: String
+    + dispositivo_tipo: String
+    + activo: Boolean
+    + fecha_registro: DateTime
+    + ultimo_uso: DateTime
+    + registrar_token(nuevo_token: String): void
+    + desactivar_token(): void
+  }
+
+  class NotificacionCita #A9DFBF {
+    + id: UUID
+    + tipo_evento: String
+    + canal: String
+    + titulo: String
+    + cuerpo: String
+    + enviado: Boolean
+    + fecha_programada: DateTime
+    + fecha_envio: DateTime
+    + despachar_push(): void
+  }
+
+  class RegistroAnimo #A9DFBF {
+    + id: UUID
+    + puntuacion_animo: Integer
+    + emocion_dominante: String
+    + factores_contextuales: Array[String]
+    + notas_reflexion: Text
+    + fecha_registro: Date
+    + timestamp: DateTime
+    + registrar_animo(): void
+    + calcular_promedio_semanal(): Decimal
+  }
+
+  class ClasificacionIA #A9DFBF {
+    + id: UUID
+    + area_tematica_principal: String
+    + confianza_clasificacion: Decimal
+    + nivel_severidad: String
+    + alerta_crisis: Boolean
+    + justificacion_clinica: JSONB
+    + fecha_clasificacion: DateTime
+    + sanitizar_pii(texto: String): String
+    + clasificar_motivo(): ClasificacionResultado
+    + evaluar_crisis(): Boolean
+  }
+
+  class SugerenciaMatching #A9DFBF {
+    + id: UUID
+    + score_total: Decimal
+    + score_especialidad: Decimal
+    + score_disponibilidad: Decimal
+    + score_carga_trabajo: Decimal
+    + score_modalidad: Decimal
+    + ranking: Integer
+    + estado_aprobacion: String
+    + observaciones_coordinador: Text
+    + fecha_resolucion: DateTime
+    + calcular_score_multivariable(): void
+    + confirmar_asignacion(coord_id: UUID): void
+    + rechazar_sugerencia(motivo: String): void
+  }
+}
+
+' ==============================================================================
+' RELACIONES ESTRUCTURALES Y CARDINALIDADES (SISTEMA COMPLETO CONSOLIDADO)
+' ==============================================================================
+
+' --- 1. Multi-Tenancy Global y Respaldos ---
+Tenant "1" *-- "1..*" Dominio : posee
+Tenant "1" *-- "0..*" BackupRegistro : genera_respaldos
+SuperAdmin "1" ..> "0..*" Tenant : gestiona
+
+' --- 2. Base, Seguridad y Control de Acceso ---
+Tenant "1" -- "1" Centro : define_sede_tenant
+Centro "1" *-- "0..*" Usuario : contiene_personal
+Usuario "0..*" --> "1" Rol : asignado
+Rol "1" *-- "0..*" RolPermiso
+Permiso "1" <-- "0..*" RolPermiso
+Usuario "1" *-- "0..*" TokenAcceso : genera_tokens
+Usuario "1" *-- "0..*" TokenRecuperacion : solicita_recuperacion
+Usuario "0..1" <-- "0..*" AuditLog : audita_actividad
+Usuario "1" *-- "0..*" TokenFCM : registra_dispositivos_moviles
+
+' --- 3. Perfiles Profesionales y Especialidades (Asociación 1:1 con Usuario) ---
+Usuario "1" <-- "1" Psicologo : perfil_profesional
+Usuario "1" <-- "1" Paciente : perfil_paciente
+Psicologo "1" *-- "0..*" PsicologoEspecialidad
+Especialidad "1" <-- "0..*" PsicologoEspecialidad
+Psicologo "1" *-- "0..*" DisponibilidadHoraria : programa_horario
+
+' --- 4. Agenda, Teleconsulta y Alertas ---
+Paciente "1" *-- "0..*" Cita : agenda
+Psicologo "1" *-- "0..*" Cita : atiende
+Cita "1" *-- "0..1" Teleconsulta : vincula_sala_virtual
+Paciente "1" *-- "0..*" AlertaPriorizacion : origina_alerta
+Cita "0..1" <-- "0..*" AlertaPriorizacion : contextualiza
+Cita "1" *-- "0..*" NotificacionCita : programa_alertas_push
+
+' --- 5. Expedientes Clínicos y Sesiones SOAP ---
+Paciente "1" *-- "1" HistoriaClinica : posee_expediente_unico
+HistoriaClinica "1" *-- "0..*" DiagnosticoCIE : codifica_diagnosticos
+HistoriaClinica "1" *-- "0..*" NotaSesion : registra_notas_SOAP
+Cita "1" <-- "0..1" NotaSesion : documenta_sesion
+HistoriaClinica "1" *-- "0..*" EvolucionClinica : documenta_avance
+HistoriaClinica "1" *-- "0..*" DerivacionCaso : tramita_derivacion
+
+' --- 6. Pre-Consulta (Intake), Consentimientos y Tareas ---
+FormularioPreConsulta "1" <-- "0..*" RespuestaPreConsulta : plantilla
+Paciente "1" *-- "0..*" RespuestaPreConsulta : responde_intake
+Cita "1" <-- "0..1" RespuestaPreConsulta : preconsulta_para_cita
+ConsentimientoInformado "1" <-- "0..*" FirmaConsentimiento : formato_legal
+Paciente "1" *-- "0..*" FirmaConsentimiento : suscribe
+Psicologo "1" *-- "0..*" TareaTerapeutica : asigna_tarea
+Paciente "1" *-- "0..*" TareaTerapeutica : realiza_tarea
+TareaTerapeutica "1" *-- "0..1" EvidenciaTarea : adjunta_evidencia
+Paciente "1" *-- "0..*" RegistroAnimo : reporta_estado_animo
+
+' --- 7. Chatbot de Orientación, Triaje IA y Matching Asistido ---
+ConversacionChatbot "1" *-- "0..*" MensajeChatbot : registra_mensajes
+Paciente "0..1" <-- "0..*" ConversacionChatbot : interactua_paciente
+Usuario "0..1" <-- "0..*" ConversacionChatbot : operador_humano_escalado
+Paciente "1" *-- "0..*" ClasificacionIA : evaluado_por_ia
+RespuestaPreConsulta "1" <-- "0..1" ClasificacionIA : analiza_motivo_intake
+ClasificacionIA "1" *-- "1..*" SugerenciaMatching : genera_candidatos_matching
+Psicologo "1" <-- "0..*" SugerenciaMatching : evaluado_como_candidato
+Usuario "0..1" <-- "0..*" SugerenciaMatching : supervisado_por_coordinador
+
+@enduml
+```
+
+##### Matriz Sinóptica de Entidades del Sistema Completo Consolidado
+
+A continuación se resume la taxonomía de las 26 entidades de datos distribuidas en los 5 módulos funcionales del sistema consolidado:
+
+| N° | Entidad Relacional | Esquema / Módulo | Sprint de Origen | Propósito y Responsabilidad Estructural |
+| :---: | :--- | :--- | :---: | :--- |
+| **1** | `Tenant` | `public` (Multi-Tenant) | Sprint 0 | Inquilino o centro psicológico suscrito al SaaS. Controla el esquema aislado en PostgreSQL 16. |
+| **2** | `Dominio` | `public` (Multi-Tenant) | Sprint 0 | Nombre de dominio o subdominio FQDN asociado al inquilino para el enrutamiento web/móvil. |
+| **3** | `SuperAdmin` | `public` (Multi-Tenant) | Sprint 0 | Administrador global de la plataforma con facultades de aprovisionamiento y suspensión. |
+| **4** | `BackupRegistro` | `public` (Multi-Tenant) | Sprint 2 | Bitácora de copias de seguridad de volcado SQL cifrado y verificación de hash SHA-256. |
+| **5** | `Centro` | `tenant` (Seguridad/Base) | Sprint 0 | Datos institucionales de la sede clínica (nombre, dirección, logo, horario comercial). |
+| **6** | `Usuario` | `tenant` (Seguridad/Base) | Sprint 0 | Cuenta de acceso común del personal y pacientes (email único, password hash, estado). |
+| **7** | `Rol` | `tenant` (Seguridad/Base) | Sprint 0 | Perfil de autorización RBAC (Coordinador, Psicólogo, Recepcionista, Paciente). |
+| **8** | `Permiso` | `tenant` (Seguridad/Base) | Sprint 0 | Atribución granular de operación funcional (`clinica.view`, `agenda.cancel`, etc.). |
+| **9** | `RolPermiso` | `tenant` (Seguridad/Base) | Sprint 0 | Tabla asociativa que implementa la relación muchos-a-muchos entre roles y permisos. |
+| **10** | `TokenAcceso` | `tenant` (Seguridad/Base) | Sprint 0 | Registro de tokens de sesión JWT con marca de tiempo de expiración. |
+| **11** | `TokenRecuperacion` | `tenant` (Seguridad/Base) | Sprint 0 | Tokens criptográficos de un solo uso para recuperación de contraseña por email. |
+| **12** | `AuditLog` | `tenant` (Seguridad/Base) | Sprint 2 | Registro forense de accesos a endpoints clínicos con IP de origen y código HTTP. |
+| **13** | `Psicologo` | `tenant` (Clínico/Agenda) | Sprint 1 | Perfil profesional colegiado, modalidad de atención, tarifa base y cupo de pacientes. |
+| **14** | `Especialidad` | `tenant` (Clínico/Agenda) | Sprint 1 | Catálogo de especialidades clínicas (Infanto-Juvenil, TCC, Parejas, Neuropsicología). |
+| **15** | `PsicologoEspecialidad` | `tenant` (Clínico/Agenda) | Sprint 1 | Tabla asociativa que acredita las múltiples especialidades de un terapeuta. |
+| **16** | `DisponibilidadHoraria` | `tenant` (Clínico/Agenda) | Sprint 1 | Franjas horarias y días de la semana configurados para reserva de citas. |
+| **17** | `Paciente` | `tenant` (Clínico/Agenda) | Sprint 1 | Perfil de expediente del paciente (código único, CI, fecha de nacimiento, contacto emergencia). |
+| **18** | `Cita` | `tenant` (Clínico/Agenda) | Sprint 1 | Sesión de atención clínica presencial o virtual (fecha, hora, costo, estado). |
+| **19** | `Teleconsulta` | `tenant` (Clínico/Agenda) | Sprint 1 | Sesión WebRTC cifrada (SRTP/DTLS) vinculada a una cita en sala Jitsi Meet. |
+| **20** | `AlertaPriorizacion` | `tenant` (Clínico/Agenda) | Sprint 1 | Banderas clínicas de alerta temprana por severidad de síntomas o inasistencia. |
+| **21** | `FormularioPreConsulta` | `tenant` (Expedientes/SOAP)| Sprint 2 | Plantilla dinámica de cuestionario de admisión clínica (Intake digital JSONB). |
+| **22** | `RespuestaPreConsulta` | `tenant` (Expedientes/SOAP)| Sprint 2 | Respuestas del paciente con nivel de malestar subjetivo previo a la primera sesión. |
+| **23** | `HistoriaClinica` | `tenant` (Expedientes/SOAP)| Sprint 2 | Expediente clínico único (anamnesis, examen mental, plan de tratamiento, estado cerrado). |
+| **24** | `DiagnosticoCIE` | `tenant` (Expedientes/SOAP)| Sprint 2 | Codificación diagnóstica formal bajo estándares CIE-11 vinculada al expediente. |
+| **25** | `NotaSesion` | `tenant` (Expedientes/SOAP)| Sprint 2 | Registro clínico estructurado de sesión bajo metodología SOAP (Subjetivo, Objetivo, Análisis, Plan). |
+| **26** | `EvolucionClinica` | `tenant` (Expedientes/SOAP)| Sprint 2 | Resumen de progreso y acuerdos terapéuticos alcanzados entre sesiones. |
+| **27** | `DerivacionCaso` | `tenant` (Expedientes/SOAP)| Sprint 2 | Protocolo formal de derivación externa (psiquiatría, neurología o centros especializados). |
+| **28** | `TareaTerapeutica` | `tenant` (Expedientes/SOAP)| Sprint 2 | Actividades clínicas inter-sesión asignadas al paciente con plazo de entrega. |
+| **29** | `EvidenciaTarea` | `tenant` (Expedientes/SOAP)| Sprint 2 | Reflexión cualitativa, evaluación de dificultad percibida y archivo adjunto de cumplimiento. |
+| **30** | `ConsentimientoInformado`| `tenant` (Expedientes/SOAP)| Sprint 2 | Modelo legal y deontológico de consentimiento clínico y tratamiento de datos. |
+| **31** | `FirmaConsentimiento` | `tenant` (Expedientes/SOAP)| Sprint 2 | Registro criptográfico de aceptación con traza de auditoría (IP, User-Agent, SHA-256). |
+| **32** | `ConversacionChatbot` | `tenant` (Expedientes/SOAP)| Sprint 2 | Sesión conversacional con asistente virtual, análisis de riesgo y escalamiento humano. |
+| **33** | `MensajeChatbot` | `tenant` (Expedientes/SOAP)| Sprint 2 | Mensajes individuales con detección de intención y timestamp del diálogo. |
+| **34** | `TokenFCM` | `tenant` (Móvil/IA) | Sprint 3 | Identificador de hardware móvil registrado para despacho de notificaciones push FCM v1. |
+| **35** | `NotificacionCita` | `tenant` (Móvil/IA) | Sprint 3 | Cola de eventos push asíncronos programados para recordatorios de citas ($T-24$h / $T-1$h). |
+| **36** | `RegistroAnimo` | `tenant` (Móvil/IA) | Sprint 3 | Registro diario de estado anímico (*Mood Tracker*), emoción dominante y notas reflexivas. |
+| **37** | `ClasificacionIA` | `tenant` (Móvil/IA) | Sprint 3 | Inferencia NLP del motivo de consulta con anonimización PII y detección de riesgo vital. |
+| **38** | `SugerenciaMatching` | `tenant` (Móvil/IA) | Sprint 3 | Ranking multivariable de compatibilidad paciente-terapeuta con supervisión *Human-in-the-Loop*. |
+
+---
+
+
+---
+
+#### Diagrama de Clases del Cliente Móvil (App Flutter - Dominio y Modelo de Datos del Paciente)
+
+Para complementar la perspectiva global del sistema y en respuesta a la arquitectura desacoplada de SIGEPSI donde el paciente opera a través de un aplicativo nativo desarrollado en **Flutter 3.x / Dart**, se formaliza a continuación el **Diagrama de Clases Estructural y de Dominio del Cliente Móvil**.
+
+Este modelo define las entidades de dominio que residen en el cliente móvil, sus responsabilidades de serialización JSON (`fromJson`, `toJson`), la interacción con los servicios de consumo REST (`AuthService`, `AgendaService`, `ClinicaService`, `ChatbotService`), la persistencia criptográfica en el dispositivo y la lógica de validación autónoma (tales como la regla de cancelación anticipada de citas >24h y el control de unicidad de registro de estado de ánimo diario):
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3 - Experiencia Móvil de Pacientes y Asistencia de IA* → *2. Clases - Sprint 3* → *Diagrama de Clases - Cliente Móvil Flutter (Dominio y Modelo de Paciente)* (**Diagrama ID: 325**).
+
+![Diagrama de Clases - Cliente Móvil Flutter](./imagenes/diagrama_clases_movil_sp3.png)
+
+```plantuml
+@startuml
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+
+title class Diagrama de Clases - Cliente Móvil Flutter (Dominio y Modelo de Paciente - SIGEPSI)
+
+' ==============================================================================
+' 1. CAPA DE MODELOS DE DOMINIO Y DATOS DEL PACIENTE (FLUTTER DART)
+' ==============================================================================
+package "Modelos de Dominio Móvil (Paciente - lib/models/)" #E8F8F5 {
+  class PacienteMovil #A3E4D7 {
+    - id: String
+    - usuarioId: String
+    - codigoExpediente: String
+    - nombreCompleto: String
+    - ci: String
+    - telefono: String
+    - contactoEmergenciaNombre: String
+    - contactoEmergenciaTelf: String
+    + fromJson(json: Map<String, dynamic>): PacienteMovil
+    + toJson(): Map<String, dynamic>
+  }
+
+  class SesionAuthJWT #A3E4D7 {
+    - accessToken: String
+    - refreshToken: String
+    - tokenFCM: String
+    - tenantSubdomain: String
+    - usuarioId: String
+    - email: String
+    - rol: String
+    - biometriaHabilitada: Boolean
+    + esTokenValido(): Boolean
+    + renovarTokens(): Future<Boolean>
+    + cerrarSesion(): Future<void>
+  }
+
+  class CitaMovil #A3E4D7 {
+    - id: String
+    - psicologoNombre: String
+    - fecha: DateTime
+    - horaInicio: String
+    - horaFin: String
+    - modalidad: String
+    - estado: String
+    - costo: Double
+    - motivoConsulta: String
+    - motivoCancelacion: String
+    + permiteCancelacion(): Boolean
+    + horasRestantes(): Double
+    + fromJson(json: Map<String, dynamic>): CitaMovil
+  }
+
+  class TeleconsultaJitsi #A3E4D7 {
+    - id: String
+    - citaId: String
+    - salaId: String
+    - jwtRoomToken: String
+    - serverUrl: String
+    - estadoConexion: String
+    + conectarSala(): Future<void>
+    + colgarLlamada(): void
+    + enviarFeedback(): void
+  }
+
+  class NotificacionPushFCM #A3E4D7 {
+    - id: String
+    - titulo: String
+    - cuerpo: String
+    - tipoEvento: String
+    - citaId: String
+    - fechaProgramada: DateTime
+    - leida: Boolean
+    + procesarDeepLink(): void
+    + marcarLeida(): void
+    + fromJson(json: Map<String, dynamic>): NotificacionPushFCM
+  }
+
+  class RegistroAnimoMovil #D4EFDF {
+    - id: String
+    - fechaRegistro: DateTime
+    - escalaValor: Integer
+    - estadoAnimo: String
+    - factoresContexto: List<String>
+    - notaReflexiva: String
+    - sincronizado: Boolean
+    + validarRegistroHoy(): Boolean
+    + fromJson(json: Map<String, dynamic>): RegistroAnimoMovil
+    + toJson(): Map<String, dynamic>
+  }
+
+  class TareaTerapeuticaMovil #D4EFDF {
+    - id: String
+    - titulo: String
+    - descripcion: String
+    - categoria: String
+    - fechaLimite: DateTime
+    - estado: String
+    - archivoAdjuntoUrl: String
+    + estaVencida(): Boolean
+    + fromJson(json: Map<String, dynamic>): TareaTerapeuticaMovil
+  }
+
+  class EvidenciaTareaMovil #D4EFDF {
+    - id: String
+    - tareaId: String
+    - textoReflexion: String
+    - dificultadPercibida: Integer
+    - archivoEvidenciaUrl: String
+    - fechaCumplimiento: DateTime
+    - sincronizada: Boolean
+    + adjuntarArchivo(path: String): Future<void>
+    + toJson(): Map<String, dynamic>
+  }
+
+  class ChatbotMensajeMovil #D4EFDF {
+    - id: String
+    - remitente: String
+    - contenido: String
+    - intencionDetectada: String
+    - timestamp: DateTime
+    + esDeBot(): Boolean
+    + fromJson(json: Map<String, dynamic>): ChatbotMensajeMovil
+    + toJson(): Map<String, dynamic>
+  }
+
+  class ConsentimientoFirmaMovil #D4EFDF {
+    - consentimientoId: String
+    - titulo: String
+    - contenidoLegal: String
+    - firmadoPor: String
+    - hashSha256: String
+    - firmaCanvasBase64: String
+    - fechaFirma: DateTime
+    + capturarTrazo(svg: String): void
+    + calcularHash(): String
+    + toJson(): Map<String, dynamic>
+  }
+}
+
+' ==============================================================================
+' 2. CAPA DE SERVICIOS Y CONSUMO REST (LIB/SERVICES/)
+' ==============================================================================
+package "Servicios de Consumo REST Móvil (lib/services/)" #FEF9E7 {
+  class AuthService #FCF3CF {
+    - storage: FlutterSecureStorage
+    - httpClient: http.Client
+    + login(email, pass, tenant): Future<SesionAuthJWT>
+    + registrarTokenFCM(token: String): Future<void>
+    + verificarSesion(): Future<Boolean>
+  }
+
+  class AgendaService #FCF3CF {
+    - baseUrl: String
+    - authService: AuthService
+    + getMisCitas(pacienteId): Future<List<CitaMovil>>
+    + cancelarCita(citaId, motivo): Future<Boolean>
+    + getSalaTeleconsulta(citaId): Future<TeleconsultaJitsi>
+  }
+
+  class ClinicaService #FCF3CF {
+    - baseUrl: String
+    - authService: AuthService
+    + registrarAnimo(animo): Future<RegistroAnimoMovil>
+    + getTareas(pacienteId): Future<List<TareaTerapeuticaMovil>>
+    + enviarEvidencia(evidencia): Future<Boolean>
+  }
+
+  class ChatbotService #FCF3CF {
+    - hfEndpoint: String
+    - sessionId: String
+    + enviarMensaje(texto): Future<ChatbotMensajeMovil>
+    + getHistorialChat(): Future<List<ChatbotMensajeMovil>>
+  }
+}
+
+' ==============================================================================
+' RELACIONES ESTRUCTURALES DEL MODELO MÓVIL
+' ==============================================================================
+PacienteMovil "1" -- "1" SesionAuthJWT : autentica_con
+PacienteMovil "1" o-- "0..*" CitaMovil : reserva
+CitaMovil "1" *-- "0..1" TeleconsultaJitsi : incluye_sala
+CitaMovil "1" -- "0..*" NotificacionPushFCM : recibe_recordatorios
+
+PacienteMovil "1" *-- "0..*" RegistroAnimoMovil : registra_diario
+PacienteMovil "1" -- "0..*" TareaTerapeuticaMovil : cumple
+TareaTerapeuticaMovil "1" *-- "0..1" EvidenciaTareaMovil : contiene_entrega
+PacienteMovil "1" -- "0..*" ChatbotMensajeMovil : conversa_con
+PacienteMovil "1" -- "0..*" ConsentimientoFirmaMovil : firma_legalmente
+
+AuthService ..> SesionAuthJWT : gestiona_token
+AgendaService ..> CitaMovil : consume_api
+AgendaService ..> TeleconsultaJitsi : obtiene_acceso
+ClinicaService ..> RegistroAnimoMovil : persiste_animo
+ClinicaService ..> TareaTerapeuticaMovil : sincroniza_tareas
+ChatbotService ..> ChatbotMensajeMovil : transfiere_nlp
+@enduml
+```
+
+##### Matriz de Clases del Dominio Móvil (Flutter / Dart)
+
+| Clase Móvil | Capa / Módulo | Estereotipo / Tipo | Responsabilidad y Lógica en Dispositivo |
+| :--- | :--- | :--- | :--- |
+| `PacienteMovil` | `lib/models/` | Entidad Cliente | Datos de filiación del paciente autenticado, expediente y contacto de auxilio. |
+| `SesionAuthJWT` | `lib/models/` | Token / Sesión | Almacena tokens de acceso y refresco JWT en enclave seguro, junto al token FCM activo. |
+| `CitaMovil` | `lib/models/` | Entidad Cliente | Representa las citas reservadas. Evalúa de forma local la política `permiteCancelacion()` (>24 h). |
+| `TeleconsultaJitsi`| `lib/models/` | Conexión WebRTC | Parámetros de sala de teleconsulta y credenciales para instanciar el SDK de Jitsi Meet. |
+| `NotificacionPushFCM` | `lib/models/` | Evento Push | Representa el payload push de recordatorio recibido desde Firebase Messaging. |
+| `RegistroAnimoMovil` | `lib/models/` | Entidad Cliente | Autorreporte emocional diario (1 a 5) y factores contextuales; valida unicidad diaria. |
+| `TareaTerapeuticaMovil`| `lib/models/` | Entidad Cliente | Tareas inter-sesión asignadas con fecha límite y estado de cumplimiento. |
+| `EvidenciaTareaMovil` | `lib/models/` | Entidad Cliente | Texto reflexivo, dificultad percibida y fotografía o documento adjunto de evidencia. |
+| `ChatbotMensajeMovil` | `lib/models/` | Entidad Cliente | Mensajes de orientación en lenguaje natural intercambiados con el asistente Hugging Face. |
+| `ConsentimientoFirmaMovil`| `lib/models/` | Documento Legal | Trazos vectoriales capturados mediante canvas táctil y hash SHA-256 de conformidad legal. |
+| `AuthService` | `lib/services/` | Servicio REST | Conexión HTTPS a `/api/v1/auth/` con almacenamiento cifrado vía `FlutterSecureStorage`. |
+| `AgendaService` | `lib/services/` | Servicio REST | Consultas y transacciones de citas en `/api/v1/agenda/` con validación de horarios. |
+| `ClinicaService` | `lib/services/` | Servicio REST | Despacho de estado de ánimo y evidencias terapéuticas a `/api/v1/clinica/`. |
+| `ChatbotService` | `lib/services/` | Servicio REST | Comunicación bidireccional segura con el microservicio NLP a través de proxy Render. |
+
+<br>
+
+#### Diagramas de Actividad del Proceso de Negocio y Flujos Críticos del Sprint 3
+
+En observancia formal de la directriz metodológica de la cátedra (*"no puedo aparecer con el conjunto de historias de usuario sin haber hecho antes el modelo de negocio"*), esta sección consolida tanto el **modelo de negocio global del centro psicológico** como los 5 flujos operativos y analíticos más críticos desarrollados en el Sprint 3 mediante diagramas de actividad UML con carriles de responsabilidad (*swimlanes*):
+
+##### 0. Proceso Clínico Integral del Centro (Modelo de Negocio SIGEPSI)
+
+El modelo de negocio formaliza los actores institucionales y sus tareas en secuencia, desde la solicitud del paciente hasta el cierre terapéutico, articulando las políticas de negocio críticas (ventana de cancelación de 24 h, validación humana del triaje y detección de crisis):
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3 - Experiencia Móvil de Pacientes y Asistencia de IA* → *0. Modelo de Negocio - Proceso Clinico Integral* (**Diagrama ID: 315**).
+
+![Diagrama de Actividad - Modelo de Negocio SIGEPSI](./imagenes/diagrama_modelo_negocio_sp3.png)
+
+```plantuml
+@startuml
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+
+title Modelo de Negocio SIGEPSI: Proceso Clínico Integral (Actores y Tareas en Secuencia)
+
+|Paciente (App Móvil)|
+start
+:Registrarse y autenticarse (JWT);
+:Completar formulario de preconsulta
+(motivo y síntomas);
+
+|Coordinador Clínico (Web)|
+:Revisar caso en consola de triaje;
+:Ejecutar clasificación asistida por IA
+(sanitización PII + severidad);
+if (¿Patrón de crisis autolítica?) then (Sí)
+    :Activar ALERTA_CRISIS y
+notificación prioritaria;
+else (No)
+    :Continuar triaje normal;
+endif
+:Ejecutar emparejamiento sugerido
+(Top 3 psicólogos);
+:Validar o cambiar asignación
+(aprobación humana obligatoria);
+
+|Psicólogo Tratante (Web)|
+:Registrar notas de sesión (SOAP);
+:Asignar tareas inter-sesión;
+
+|Sistema (Automatización)|
+:Despachar recordatorio push FCM
+(24 h y 1 h antes);
+
+|Paciente (App Móvil)|
+if (¿Modalidad de la cita?) then (Virtual)
+    :Ingresar a teleconsulta WebRTC
+(ventana: 10 min antes / 45 min después);
+else (Presencial)
+    :Asistir a la consulta presencial;
+endif
+:Completar tareas terapéuticas
+y registrar estado de ánimo;
+
+|Psicólogo Tratante (Web)|
+:Revisar evidencias y evolución;
+if (¿Requiere derivación?) then (Sí)
+    :Derivar a Psiquiatría;
+else (No)
+    :Cerrar caso terapéutico;
+endif
+stop
+@enduml
+```
 
 ##### 1. Flujo de Despacho y Recepción de Recordatorios Push FCM (`CU12`)
 
@@ -821,24 +1650,49 @@ stop
 
 ---
 
-### 7.1.4 Sprint Backlog (Tareas Técnicas SP3-68 a SP3-78)
+### 7.1.4 Sprint Backlog (15 Tareas Técnicas – 71 Horas)
 
-En estricta correspondencia con el **Product Backlog Consolidado** registrado en la sección 3.6 de la memoria general del proyecto (`documentacion/intento.md`), el Sprint 3 ejecuta las **11 tareas técnicas** planificadas (`SP3-68` a `SP3-78`), con una carga total de **59 horas de esfuerzo técnico**:
+En estricta correspondencia con el **Product Backlog oficial de la plataforma SIGEPSI** (Capítulo 3, sección 3.6 de `documentacion/intento.md`), el Sprint Backlog del Sprint 3 se compone de las **11 tareas técnicas base del Product Backlog** (`SP3-68` a `SP3-78` = 55 hr) complementadas con 4 tareas de consolidación de integración cloud, datasets y despliegue móvil (16 hr), totalizando **71 horas de esfuerzo planificado y ejecutado**:
 
-| Nro | ID Tarea | Rol / Responsable Directo | Descripción Técnica de la Tarea | Horas Planificadas | Prioridad | Estado Final |
-| :-: | :------: | :------------------------ | :------------------------------ | :----------------: | :-------: | :----------: |
-|  1  | **SP3-68** | Delgado Rojas Alberto Caleb / Larrazabal Julio | Diseñar las interfaces de registro e inicio de sesión de la aplicación móvil en Figma (Flutter UI Guidelines) | 4 hr | Alta | **Concluido** |
-|  2  | **SP3-69** | Delgado Rojas Alberto Caleb | Implementar registro e inicio de sesión de pacientes en la aplicación móvil con tokens JWT y persistencia cifrada | 7 hr | Alta | **Concluido** |
-|  3  | **SP3-70** | Velasco Soliz Rolando | Realizar pruebas funcionales y de seguridad de registro e inicio de sesión en emuladores y dispositivos móviles | 3 hr | Media | **Concluido** |
-|  4  | **SP3-71** | Larrazabal Rojas Julio Cesar | Diseñar la interfaz móvil para consulta de citas, modal de reprogramación y bandeja de notificaciones push | 4 hr | Alta | **Concluido** |
-|  5  | **SP3-72** | Condori Diaz Marilyn Esther | Implementar consulta de citas, recordatorios automáticos y recepción de notificaciones push en Flutter con FCM | 8 hr | Alta | **Concluido** |
-|  6  | **SP3-73** | Velasco Soliz Rolando | Realizar pruebas de citas, verificación de ventana de cancelación ($>24$h) y recepción de alertas push | 3 hr | Media | **Concluido** |
-|  7  | **SP3-74** | Larrazabal Rojas Julio Cesar | Diseñar la interfaz móvil para seguimiento de tareas, registro diario de ánimo (*Mood Tracker*) y teleconsulta WebRTC | 4 hr | Alta | **Concluido** |
-|  8  | **SP3-75** | Romero Saavedra Maria Ilse | Implementar módulo de tareas terapéuticas, autorreporte reflexivo, mood tracker y teleconsulta Jitsi en Flutter | 8 hr | Alta | **Concluido** |
-|  9  | **SP3-76** | Velasco Soliz Rolando | Realizar pruebas de entrega de tareas, almacenamiento de estado de ánimo y estabilidad de audio/video en teleconsulta | 3 hr | Media | **Concluido** |
-| 10  | **SP3-77** | Mujica Vallejos Andy Mauricio (PO) | Implementar en backend el motor de clasificación asistida de consultas (CU21) y algoritmo de emparejamiento de psicólogos (CU22) | 8 hr | Alta | **Concluido** |
-| 11  | **SP3-78** | Velasco Soliz Rolando / Mujica Andy (PO) | Realizar pruebas de caja negra del algoritmo de matching, límites de carga de trabajo y salvaguardas éticas de IA | 4 hr | Alta | **Concluido** |
-| — | **TOTAL** | **Equipo SCRUM (6 integrantes)** | **Ejecución y Certificación Completa del Sprint Backlog 3** | **59 hr** | — | **100% Terminado** |
+| **Sprint Backlog** | |
+| :--- | :--- |
+| **Número de Sprint :** Sprint 3 | **Tiempo programado :** 12 días (09 al 22 de octubre de 2026) |
+| **Objetivo :** Implementar la experiencia móvil completa del paciente en Flutter 3.x (login JWT persistente, consulta de citas, cancelación con política $>24$h, teleconsulta nativa WebRTC y tareas con Mood Tracker), notificaciones push automáticas con Firebase Cloud Messaging (FCM) y motores asistivos de IA (clasificación de intake con detección de crisis vital y algoritmo multivariable de matching con validación médica HITL). | |
+| **Fecha de inicio :** 09 de octubre de 2026 | **Fecha de finalización :** 22 de octubre de 2026 |
+
+<br>
+
+#### Tabla Detallada del Sprint Backlog (Tareas Técnicas del Product Backlog)
+
+| Nro | ID Tarea | Descripción Técnica del Product Backlog (`intento.md`) | Categoría | Tipo | Est. | Responsable Asignado | Estado |
+| :---: | :--------: | :----------------------------------------------------------------------------------------------------------------- | :-------------------------: | :----------: | :--------: | :--------------------------------- | :-----------: |
+| 68 | **SP3-68** | Diseñar las interfaces de registro e inicio de sesión de la aplicación móvil en Figma | Autenticación Móvil | Diseño | 4 hr | Delgado Rojas Alberto Caleb | **Terminado** |
+| 69 | **SP3-69** | Implementar registro e inicio de sesión de pacientes en la aplicación móvil con JWT y FlutterSecureStorage | Autenticación Móvil | Desarrollo | 7 hr | Delgado Rojas Alberto Caleb | **Terminado** |
+| 70 | **SP3-70** | Realizar pruebas funcionales y de seguridad del registro e inicio de sesión móvil | Autenticación Móvil | Pruebas | 3 hr | Velasco Soliz Rolando | **Terminado** |
+| 71 | **SP3-71** | Diseñar la interfaz móvil para gestión de citas, modal de cancelación ($>24$h) y notificaciones push | Agenda y FCM Móvil | Diseño | 4 hr | Condori Diaz Marilyn Esther *(Rotada)* | **Terminado** |
+| 72 | **SP3-72** | Implementar consulta de citas, regla de cancelación $>24$h, recordatorios y notificaciones push en Flutter | Agenda y FCM Móvil | Desarrollo | 8 hr | Condori Diaz Marilyn Esther *(Rotada)* | **Terminado** |
+| 73 | **SP3-73** | Realizar pruebas de citas, política de cancelación tardía y notificaciones push en emuladores | Agenda y FCM Móvil | Pruebas | 3 hr | Velasco Soliz Rolando | **Terminado** |
+| 74 | **SP3-74** | Diseñar la interfaz móvil para seguimiento, tareas reflexivas, Mood Tracker y teleconsulta WebRTC | Teleconsulta & Tareas | Diseño | 4 hr | Romero Saavedra Maria Ilse *(Rotada)* | **Terminado** |
+| 75 | **SP3-75** | Implementar acceso a tareas terapéuticas, autorreporte de dificultad, Mood Tracker diario y sala Jitsi WebRTC nativa | Teleconsulta & Tareas | Desarrollo | 8 hr | Romero Saavedra Maria Ilse *(Rotada)* | **Terminado** |
+| 76 | **SP3-76** | Realizar pruebas de seguimiento, tareas, Mood Tracker y videollamada WebRTC en la app móvil | Teleconsulta & Tareas | Pruebas | 3 hr | Velasco Soliz Rolando | **Terminado** |
+| 77 | **SP3-77** | Implementar pipeline de clasificación asistida de intake, detección de crisis y matching multivariable con validación HITL | IA y Matching Clínico | Desarrollo | 8 hr | Mujica Vallejos Andy Mauricio (PO) | **Terminado** |
+| 78 | **SP3-78** | Realizar pruebas de inferencia IA, sanitización PII, alertas de crisis y consola de supervisión humana | IA y Matching Clínico | Pruebas | 3 hr | Velasco Soliz Rolando | **Terminado** |
+| — | **SUBTOTAL** | **Tareas Base del Product Backlog (`SP3-68` a `SP3-78`)** | — | — | **55 hr** | **Equipo SCRUM** | **Terminado** |
+
+<br>
+
+#### 7.1.4.1 Tareas Técnicas Complementarias de Consolidación (Criterios de la Cátedra y Despliegue)
+
+En congruencia con la estructura del Sprint 2 y los 8 Criterios Generales de la Asignatura (arquitectura multi-tenant, población masiva de datos en la nube y pruebas end-to-end), se formalizan 4 tareas complementarias ejecutadas durante el sprint:
+
+| Nro | ID Tarea | Descripción Técnica Complementaria | Categoría | Tipo | Est. | Responsable Asignado | Estado |
+| :---: | :--------: | :----------------------------------------------------------------------------------------------------------------- | :-------------------------: | :----------: | :--------: | :--------------------------------- | :-----------: |
+| 79 | **SP3-79** | Configurar servicio de despacho FCM v1, credenciales de cuenta de servicio y tareas en segundo plano Celery Beat | Infraestructura FCM | Backend / DevOps | 4 hr | Mujica Vallejos Andy Mauricio | **Terminado** |
+| 80 | **SP3-80** | Siembra masiva de datasets históricos de Sprint 3 (tokens FCM, registros de ánimo, clasificaciones y sugerencias) | Datasets SaaS (Crit. 8) | Datos / SQL | 4 hr | Larrazabal Rojas Julio Cesar (SM) | **Terminado** |
+| 81 | **SP3-81** | Generar build APK Android / Bundle de Flutter y validar interoperabilidad con backend en producción | Despliegue Móvil | Despliegue | 4 hr | Delgado Rojas Alberto Caleb | **Terminado** |
+| 82 | **SP3-82** | Pruebas integrales de extremo a extremo (E2E) cruzadas Web vs. Móvil y validación de criterios BDD | Calidad Integral | QA / BDD | 4 hr | Velasco Soliz Rolando | **Terminado** |
+| — | **TOTAL** | **Sprint Backlog Consolidado del Sprint 3 (15 Tareas Técnicas)** | — | — | **71 hr** | **Equipo SCRUM (6 integrantes)** | **Terminado** |
+
 
 ---
 
@@ -877,384 +1731,1854 @@ La siguiente matriz evidencia la rotación efectiva de roles a lo largo de los c
 
 ### 7.2.1 Diseño
 
-#### 7.2.1.1 Diseño de la Arquitectura (Modelo C4 Consolidado - Niveles 1 al 4)
+#### 7.2.1.1 Diseño de la Arquitectura (3 Capas Multi-Tenant & Despliegue en Producción)
 
-En respuesta al requerimiento de la docente en el audio del Sprint 3 (*"vamos a volver en este tercer sprint con lo que sería la parte final ya de la arquitectura... donde básicamente tienen su arquitectura lógica y física con todos sus módulos y paquetes finalizados"*), se presentan los cuatro niveles del Modelo C4:
+En estricta observancia de las directrices metodológicas dictadas por la docente para el Sprint 3 (*"No hay C4, no hay C4. En arquitectura seguimos con estos modelos... En implementación utilizamos el diagrama de componentes y para la arquitectura física el diagrama de despliegue"*), se descarta formalmente el Modelo C4 en este incremento y se formaliza la arquitectura en sus dos dimensiones canónicas de la ingeniería de software:
 
-##### C4 Nivel 1: Diagrama de Contexto del Sistema (System Context)
+1. **Arquitectura Lógica en 3 Capas:** Organización del software desacoplada en **Capa de Presentación** (Clientes Web y Móvil), **Capa de Lógica de Negocio** (Servicios REST y Motores de Reglas Clínicas / IA) y **Capa de Persistencia** (PostgreSQL 16 Multi-Tenant y Servicios Cloud Externos), modelada mediante diagramas de paquetes UML.
+2. **Arquitectura Física / Infraestructura de Despliegue:** Mapeo de la distribución física de nodos de computación, terminales cliente (smartphones y estaciones clínicas), contenedores Docker, proxy inverso, bases de datos y microservicios externos en producción mediante el **Diagrama de Despliegue UML (Deployment Diagram)**.
 
-El diagrama de contexto sitúa a la plataforma **SIGEPSI** frente a los usuarios humanos y los sistemas externos satélites integrados en el Sprint 3:
+<br>
+
+##### 7.2.1.1.1 Diseño Lógico de la Arquitectura - Sistema General (Diagrama de Paquetes UML en 3 Capas)
+
+En estricta observancia del estándar canónico de arquitectura lógica dictado por la cátedra (patrón multicapa desacoplado con aislamiento estricto de responsabilidades: **Vista**, **Controlador**, **Modelo** y **Base de Datos**), se formaliza el diseño lógico general del sistema que abarca la totalidad de los subsistemas del prototipo SIGEPSI (`accounts`, `tenants`, `core`, `clinica`, `agenda`, `subscriptions`, `reportes` y `audit`):
+
+1. **Capa Vista (Presentación Frontend Web Angular 17 & Móvil Flutter 3.x):**
+   - **Paquete Vista Administración y Seguridad:** Interfaces de autenticación JWT, gestión de inquilinos multi-tenant, directorio de usuarios, centros y administración de roles/permisos.
+   - **Paquete Vista Gestión Clínica:** Pantallas de expedientes de pacientes, directorio de psicólogos, historia clínica y consentimientos informados.
+   - **Paquete Vista Agenda y Teleconsulta:** Calendario interactivo de citas, panel de reservas, sala de teleconsulta WebRTC Jitsi y configuración de alertas.
+   - **Paquete Vista Seguimiento Terapéutico:** Pantallas móviles de asignación y entrega de tareas clínicas, adjuntos de evidencia y autorreporte afectivo (*Mood Tracker*).
+   - **Paquete Vista Inteligencia Artificial:** Consola web de triaje asistido, clasificación diagnóstica y panel de supervisión clínica de matching con validación *Human-in-the-Loop* (HITL).
+   - **Paquete Vista Reportes y Auditoría:** Tableros analíticos de métricas operativas, control de suscripciones y bitácora de auditoría.
+
+2. **Capa Controlador (Lógica de Negocio, Servicios REST & Motores de Inferencia):**
+   - **Paquete Administración y Seguridad Controllers:** Orquestación de autenticación multi-tenant (`TenantMiddleware`), emisión/revocación de tokens JWT (`JWTAuthentication`) y guardas RBAC (`RolePermissionGuard`).
+   - **Paquete Gestión Clínica Controllers:** Controladores de expediente digital, reglas de validación clínica y ciclo de vida del paciente (`clinica.views`).
+   - **Paquete Agenda y Teleconsulta Controllers:** Lógica de disponibilidad horaria, política estricta de cancelación anticipada ($>24$h), despacho push FCM y generación de credenciales seguras WebRTC.
+   - **Paquete Seguimiento Terapéutico Controllers:** Orquestación de asignación de tareas, validación de evidencias y normalización de registros emocionales.
+   - **Paquete Inteligencia Artificial Controllers:** Pipeline NLP con anonimización PII, motor de inferencia heurística y algoritmo multivariable de matching psicológico.
+   - **Paquete Reportes y Auditoría Controllers:** Agregadores estadísticos, trazabilidad de accesos y servicios de facturación SaaS.
+
+3. **Capa Modelo (Entidades de Dominio & Mapeo ORM Relacional):**
+   - **Paquete modelos Administración y Seguridad:** `Usuario`, `Rol`, `Permiso`, `Tenant`, `Dominio`, `Centro`.
+   - **Paquete modelos Gestión Clínica:** `Paciente`, `Psicologo`, `Especialidad`, `FichaClinica`, `ConsentimientoInformado`.
+   - **Paquete modelos Agenda y Teleconsulta:** `Cita`, `HorarioDisponibilidad`, `Teleconsulta`, `NotificacionCita`.
+   - **Paquete modelos Seguimiento Terapéutico:** `TareaTerapeutica`, `EvidenciaTarea`, `RegistroAnimo`.
+   - **Paquete modelos Inteligencia Artificial:** `ClasificacionIA`, `SugerenciaMatching`, `AuditoriaIA`, `RespuestaPreConsulta`.
+   - **Paquete modelos Reportes y Auditoría:** `BitacoraAcceso`, `ReporteClinico`, `PlanSuscripcion`.
+
+4. **Base de Datos Relacional Multi-Tenant (PostgreSQL 16):**
+   - Persistencia estructurada con aislamiento a nivel de esquemas (`public` para metadatos globales de inquilinos y `[tenant_schema]` para datos operacionales y clínicos aislados).
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3 - Experiencia Móvil de Pacientes y Asistencia de IA* → *11. Arquitectura de Software - Diagrama de Paquetes UML (Sprint 3)* → *Diseño Lógico de la Arquitectura - Sistema General (SIGEPSI)* (**Diagrama ID: 313**).
+
+![Diseño Lógico de la Arquitectura - Sistema General](./imagenes/diagrama_arquitectura_logica_general_sp3.png)
 
 ```plantuml
 @startuml
-!include <C4/C4_Context>
+top to bottom direction
+skinparam roundcorner 6
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam packageStyle folder
+skinparam arrowThickness 1.2
+skinparam arrowColor #2C3E50
 
-LAYOUT_TOP_DOWN()
-
-title Modelo C4 - Nivel 1: Diagrama de Contexto del Sistema SIGEPSI (Sprint 3 Final)
-
-Person(paciente, "Paciente", "Usuario final que interactúa mediante la aplicación móvil Flutter y la web: agenda citas, realiza teleconsultas, completa tareas y registra su ánimo.")
-Person(profesional, "Psicólogo / Terapeuta", "Especialista clínico que atiende consultas presenciales o virtuales, prescribe tareas y revisa expedientes.")
-Person(coordinador, "Coordinador / Director Clínico", "Administrador médico que evalúa la clasificación asistida de la IA y valida la asignación sugerida de psicólogos.")
-
-System(sigepsi, "Plataforma SIGEPSI", "Sistema integral SaaS Multi-Tenant para gestión de centros de salud mental, telepsicología, expedientes clínicos y triaje con IA.")
-
-System_Ext(fcm, "Firebase Cloud Messaging (FCM)", "Servicio en la nube de Google para despacho confiable de notificaciones push a terminales móviles iOS y Android.")
-System_Ext(jitsi, "Servidor Jitsi Meet (WebRTC)", "Infraestructura externa de videoconferencias seguras con cifrado de extremo a extremo para teleconsultas.")
-System_Ext(gemini, "Google Gemini AI API", "Servicio externo de inferencia lingüística para clasificación asistiva de motivos de consulta con sanitización previa de PII.")
-
-Rel(paciente, sigepsi, "Gestiona citas, realiza teleconsulta, registra ánimo y recibe notificaciones", "HTTPS / Flutter App / Web")
-Rel(profesional, sigepsi, "Gestiona agenda, atiende pacientes y supervisa tareas terapéuticas", "HTTPS / Angular Web")
-Rel(coordinador, sigepsi, "Supervisa triaje, revisa clasificación IA y valida asignaciones sugeridas", "HTTPS / Angular Web")
-
-Rel(sigepsi, fcm, "Despacha recordatorios de citas y alertas de nuevas tareas", "HTTPS REST API / Google FCM v1")
-Rel(sigepsi, jitsi, "Genera y autentica salas virtuales seguras de teleconsulta", "WebRTC / HTTPS")
-Rel(sigepsi, gemini, "Envía transcripciones anonimizadas de intake para análisis asistivo", "HTTPS TLS 1.3")
-@enduml
-```
-
-##### C4 Nivel 2: Diagrama de Contenedores (Containers)
-
-Descompone la arquitectura en sus unidades de ejecución física y lógica, reflejando el protagonismo de la aplicación móvil nativa en Flutter:
-
-```plantuml
-@startuml
-!include <C4/C4_Container>
-
-LAYOUT_TOP_DOWN()
-
-title Modelo C4 - Nivel 2: Diagrama de Contenedores (Lógica y Física - Sprint 3)
-
-Person(paciente, "Paciente", "Usuario móvil.")
-Person(personal, "Personal Clínico / Coordinador", "Psicólogos y Coordinadores en plataforma web.")
-
-System_Boundary(sigepsi_boundary, "Plataforma SaaS Multi-Tenant SIGEPSI") {
-    Container(mobile_app, "Aplicación Móvil Pacientes", "Flutter 3.x / Dart", "App nativa multiplataforma (Android/iOS) con almacenamiento seguro JWT, cliente Jitsi Meet embebido, notificaciones push FCM y módulo offline.")
-    Container(web_app, "Portal Web Administrativo y Clínico", "Angular 17 / TypeScript", "SPA web médica con consola de triaje IA, validación de matching, gestión de expedientes y agenda institucional.")
-    Container(backend_api, "Backend Core & API Gateway", "Django 5.x / Django REST Framework / Python 3.12", "Servicios REST multi-tenant (`django-tenants`), middleware de esquemas, motor de reglas clínicas de IA, matching y despacho FCM.")
-    ContainerDb(database, "Base de Datos Relacional", "PostgreSQL 16", "Almacenamiento transaccional con aislamiento físico por esquemas tenant (un esquema dedicado por cada clínica privada).")
-    Container(storage_files, "Servidor de Medios y Archivos", "Sistema de Archivos Local / Media Storage", "Almacenamiento de reportes PDF, consentimientos firmados y respaldos periódicos de base de datos.")
+skinparam package {
+  BackgroundColor #FCE4D6
+  BorderColor #D35400
+  FontColor #935116
+  FontStyle bold
+  FontSize 11
 }
 
-System_Ext(fcm_service, "Firebase Cloud Messaging", "Push Notifications Gateway.")
-System_Ext(jitsi_service, "Servidor Jitsi Meet", "Servidor de señalización y medios WebRTC.")
-System_Ext(gemini_service, "Google Gemini 1.5 Pro", "Inferencia de lenguaje natural.")
+skinparam rectangle {
+  BorderColor #2C3E50
+  BackgroundColor #F8F9FA
+  FontColor #1A252F
+  FontStyle bold
+  FontSize 13
+}
 
-Rel(paciente, mobile_app, "Interactúa con la app en su smartphone", "Pantalla táctil / Flutter")
-Rel(personal, web_app, "Opera consola de triaje y expedientes", "Navegador Web / HTTPS")
+title DISEÑO LÓGICO DE LA ARQUITECTURA - SISTEMA GENERAL (SIGEPSI)\n
 
-Rel(mobile_app, backend_api, "Consume endpoints de citas, tareas, mood y auth", "JSON / HTTPS TLS 1.3 / Bearer JWT")
-Rel(web_app, backend_api, "Consume API de matching, agenda y triaje", "JSON / HTTPS TLS 1.3 / Bearer JWT")
+rectangle "Vista" as CapaVista {
+  package "Paquete Vista Administración\ny Seguridad (Web / Móvil)" as V_Admin
+  package "Paquete Vista Gestión\nClínica (Web / Móvil)" as V_Clinica
+  package "Paquete Vista Agenda y\nTeleconsulta (Web / Móvil)" as V_Agenda
+  package "Paquete Vista Seguimiento\nTerapéutico (Móvil)" as V_Tareas
+  package "Paquete Vista Inteligencia\nArtificial (Consola Web)" as V_IA
+  package "Paquete Vista Reportes y\nAuditoría (Consola Web)" as V_Reportes
 
-Rel(backend_api, database, "Lectura y escritura sobre esquemas tenant aislados", "TCP 5432 / psycopg2")
-Rel(backend_api, storage_files, "Guarda y recupera documentos clínicos", "Llamadas POSIX I/O")
+  V_Admin -[hidden]right-> V_Clinica
+  V_Clinica -[hidden]right-> V_Agenda
+  V_Agenda -[hidden]right-> V_Tareas
+  V_Tareas -[hidden]right-> V_IA
+  V_IA -[hidden]right-> V_Reportes
+}
 
-Rel(backend_api, fcm_service, "Envía payload de notificación push", "HTTPS POST / FCM v1 API")
-Rel(fcm_service, mobile_app, "Entrega notificación push al dispositivo", "Protocolo FCM nativo")
+rectangle "controlador" as CapaControlador {
+  package "Paquete Administración y\nSeguridad Controllers" as C_Admin
+  package "Paquete Gestión Clínica\nControllers" as C_Clinica
+  package "Paquete Agenda y\nTeleconsulta Controllers" as C_Agenda
+  package "Paquete Seguimiento\nTerapéutico Controllers" as C_Tareas
+  package "Paquete Inteligencia\nArtificial Controllers" as C_IA
+  package "Paquete Reportes y\nAuditoría Controllers" as C_Reportes
 
-Rel(mobile_app, jitsi_service, "Conexión de audio y video en tiempo real", "WebRTC / UDP / HTTPS")
-Rel(web_app, jitsi_service, "Conexión de audio y video en teleconsulta web", "WebRTC / HTTPS")
-Rel(backend_api, gemini_service, "Consulta inferencia asistiva anonimizada", "REST / HTTPS")
+  C_Admin -[hidden]right-> C_Clinica
+  C_Clinica -[hidden]right-> C_Agenda
+  C_Agenda -[hidden]right-> C_Tareas
+  C_Tareas -[hidden]right-> C_IA
+  C_IA -[hidden]right-> C_Reportes
+}
+
+rectangle "Modelo" as CapaModelo {
+  package "Paquete modelos\nAdministración y Seguridad" as M_Admin
+  package "Paquete modelos\nGestión Clínica" as M_Clinica
+  package "Paquete modelos\nAgenda y Teleconsulta" as M_Agenda
+  package "Paquete modelos\nSeguimiento Terapéutico" as M_Tareas
+  package "Paquete modelos\nInteligencia Artificial" as M_IA
+  package "Paquete modelos\nReportes y Auditoría" as M_Reportes
+
+  M_Admin -[hidden]right-> M_Clinica
+  M_Clinica -[hidden]right-> M_Agenda
+  M_Agenda -[hidden]right-> M_Tareas
+  M_Tareas -[hidden]right-> M_IA
+  M_IA -[hidden]right-> M_Reportes
+}
+
+package "Base de datos PostgreSQL 16 (Multi-Tenant)\n[Esquema Public + Esquemas Tenant por Inquilino]" as BD #D5F5E3 {
+}
+
+CapaVista -[hidden]down-> CapaControlador
+CapaControlador -[hidden]down-> CapaModelo
+CapaModelo -[hidden]down-> BD
+
+' Dependencias directas verticales Vista -> Controlador
+V_Admin ..> C_Admin
+V_Clinica ..> C_Clinica
+V_Agenda ..> C_Agenda
+V_Tareas ..> C_Tareas
+V_IA ..> C_IA
+V_Reportes ..> C_Reportes
+
+' Acoplamiento horizontal entre Controladores (Reglas de Negocio)
+C_Clinica ..> C_Admin : auth / tenant
+C_Agenda ..> C_Clinica : pacientes / psicólogos
+C_Agenda ..> C_Admin : permisos
+C_Tareas ..> C_Clinica : expedientes clínicos
+C_IA ..> C_Clinica : sintomatología clínica
+C_IA ..> C_Agenda : disponibilidad agenda
+C_Reportes ..> C_Admin : usuarios
+C_Reportes ..> C_Clinica : métricas clínicas
+C_Reportes ..> C_Agenda : indicadores citas
+
+' Dependencias Controlador -> Modelo
+C_Admin ..> M_Admin
+C_Clinica ..> M_Clinica
+C_Agenda ..> M_Agenda
+C_Tareas ..> M_Tareas
+C_IA ..> M_IA
+C_Reportes ..> M_Reportes
+
+' Acoplamiento entre Modelos (Foreign Keys)
+M_Clinica ..> M_Admin : usuario_id
+M_Agenda ..> M_Clinica : paciente_id, psicologo_id
+M_Tareas ..> M_Clinica : paciente_id
+M_IA ..> M_Clinica : paciente_id
+M_IA ..> M_Agenda : cita_id
+M_Reportes ..> M_Admin : usuario_id
+M_Reportes ..> M_Clinica : expediente_id
+
+' Dependencias Modelo -> Base de Datos
+M_Admin ..> BD
+M_Clinica ..> BD
+M_Agenda ..> BD
+M_Tareas ..> BD
+M_IA ..> BD
+M_Reportes ..> BD
+
 @enduml
 ```
 
-##### C4 Nivel 3: Diagrama de Componentes (Component Diagram - Backend API Core)
+<br>
 
-Zoom-in detallado de los componentes que integran el contenedor backend en el Sprint 3:
+##### 7.2.1.1.2 Diseño Lógico de la Arquitectura - Cliente Móvil Flutter (Diagrama de Paquetes UML en 3 Capas Móviles)
+
+Para complementar la arquitectura general y reflejar con máxima fidelidad la ingeniería del cliente móvil desarrollado en **Flutter 3.x / Dart** (`prototipo/movil/lib`), se formaliza el diseño lógico interno de la aplicación móvil bajo el mismo patrón de 3 capas con persistencia local segura y conectividad cloud:
+
+1. **Capa Vista Móvil (`screens/` & UI Widgets Flutter):**
+   - **Paquete Vista Autenticación y Tenant:** Formularios reactivos `login_screen.dart`, `password_reset_screen.dart` y selector de entorno `tenants_screen.dart`.
+   - **Paquete Vista Perfil y Ficha Paciente:** Pantallas `paciente_perfil_screen.dart`, visor de consentimientos con firma digital `consentimiento_firma_screen.dart` y cuestionario `intake_form_screen.dart`.
+   - **Paquete Vista Agenda y Teleconsulta:** Gestión visual de agenda `mis_citas_screen.dart`, asistente de reserva `reservar_cita_screen.dart` y sala nativa de videollamada WebRTC `teleconsulta_jitsi_screen.dart`.
+   - **Paquete Vista Tareas y Mood Tracker:** Lista de tareas inter-sesión `mis_tareas_screen.dart` y controles táctiles de autorreporte emocional.
+   - **Paquete Vista Chatbot de Orientación:** Ventana conversacional de preconsulta y orientación `chatbot_screen.dart`.
+
+2. **Capa Controlador Móvil (`services/` & State Management):**
+   - **Paquete Auth y Sesión Controllers Móvil:** Servicio `auth_service.dart` encargado de la autenticación JWT, renovación silenciosa de tokens y autenticación biométrica local.
+   - **Paquete Perfil y Ficha Controllers Móvil:** Servicio `clinica_service.dart` para gestión de datos del paciente, firma de consentimientos y envío de formularios.
+   - **Paquete Agenda y Teleconsulta Controllers Móvil:** Servicio `agenda_service.dart` para consulta de citas, validación de cancelación $>24$h, wrapper nativo Jitsi Meet y receptor de push FCM.
+   - **Paquete Tareas y Mood Controllers Móvil:** Módulo de sincronización de tareas terapéuticas, carga de evidencias fotográficas y registro diario de ánimo.
+   - **Paquete Chatbot Controllers Móvil:** Servicio `chatbot_service.dart` para interacción con el motor asistivo de preconsulta.
+
+3. **Capa Modelo Móvil (`models/` - Data Classes & DTOs Locales):**
+   - **Paquete Modelos Auth y Usuario:** `UserModel`, `TenantModel`, `TokenSession`.
+   - **Paquete Modelos Paciente y Perfil:** `PacienteModel`, `PsicologoModel`, `ConsentimientoModel`.
+   - **Paquete Modelos Agenda y Citas:** `CitaModel`, `TeleconsultaRoomModel`, `NotificacionModel`.
+   - **Paquete Modelos Tareas y Mood:** `TareaModel`, `EvidenciaModel`, `RegistroAnimoModel`.
+   - **Paquete Modelos Chatbot y NLP:** `ChatMessageModel`, `BotResponseModel`.
+
+4. **Capa de Persistencia Local y Servicios Cloud Remotos:**
+   - **Almacenamiento Seguro (Keystore / Keychain):** Bóveda cifrada a nivel de sistema operativo para resguardo de tokens Bearer JWT y subdominio tenant activo.
+   - **Caché Local SQLite (Offline Sync):** Base de datos embebida para consulta offline de citas agendadas y tareas asignadas.
+   - **Conexión Backend REST API & Cloud:** Interacción mediante HTTPS/JSON hacia el backend Django REST (`:8000`), mensajería push FCM v1 y servidor Jitsi Meet.
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3 - Experiencia Móvil de Pacientes y Asistencia de IA* → *11. Arquitectura de Software - Diagrama de Paquetes UML (Sprint 3)* → *Diseño Lógico de la Arquitectura - Cliente Móvil Flutter (SIGEPSI)* (**Diagrama ID: 320**).
+
+![Diseño Lógico de la Arquitectura - Cliente Móvil](./imagenes/diagrama_arquitectura_logica_movil_sp3.png)
 
 ```plantuml
 @startuml
-!include <C4/C4_Component>
+top to bottom direction
+skinparam roundcorner 6
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam packageStyle folder
+skinparam arrowThickness 1.2
+skinparam arrowColor #2C3E50
 
-LAYOUT_TOP_DOWN()
-
-title Modelo C4 - Nivel 3: Diagrama de Componentes del Backend API (Sprint 3)
-
-Container(mobile_app, "App Móvil (Flutter 3.x)", "Cliente Móvil")
-Container(web_app, "Portal Web (Angular 17)", "Cliente Web")
-ContainerDb(database, "PostgreSQL 16", "Esquemas Multi-Tenant")
-System_Ext(fcm_ext, "Firebase Cloud Messaging", "Servicio Push")
-System_Ext(gemini_ext, "Google Gemini AI", "Inferencia IA")
-
-Container_Boundary(backend_core, "Backend Django REST Framework") {
-    Component(cmp_tenant_mw, "Middleware Multi-Tenant", "tenants.middleware.TenantMainMiddleware", "Resuelve y activa dinámicamente el esquema PostgreSQL de la clínica solicitante.")
-    Component(cmp_auth_jwt, "Autenticador JWT Móvil/Web", "accounts.authentication.TenantAwareJWTAuthentication", "Valida firmas de tokens Bearer y extrae el identificador del usuario y paciente.")
-    Component(cmp_citas_ctrl, "Controlador de Citas y Agenda", "agenda.views.CitaViewSet", "Gestiona reservas, cancelaciones con validación de anticipación ($>24$h) y reprogramaciones.")
-    Component(cmp_fcm_service, "Servicio de Notificaciones Push", "comunicacion.services.FCMNotificationService", "Administra tokens de dispositivos de pacientes y gestiona el despacho asíncrono hacia Firebase.")
-    Component(cmp_tareas_ctrl, "Controlador de Tareas y Seguimiento", "clinica.views.TareaTerapeuticaViewSet", "Gestiona ejercicios inter-sesión, registro de autorreflexiones y entregas de pacientes.")
-    Component(cmp_mood_ctrl, "Controlador de Mood Tracker", "clinica.views.RegistroAnimoViewSet", "Registra el estado emocional diario del paciente y calcula métricas semanales.")
-    Component(cmp_ia_clasif, "Motor de Clasificación Asistida (CU21)", "clinica.ia_rules_engine.ClasificadorMotivoConsulta", "Ejecuta sanitización PII, análisis de intención clínica y cálculo de nivel de urgencia/severidad.")
-    Component(cmp_matching, "Motor de Emparejamiento de Psicólogos (CU22)", "clinica.ia_rules_engine.MatchingPsicologoService", "Aplica ponderación multivariable (especialidad, agenda, carga y modalidad) para recomendar terapeutas.")
-    Component(cmp_triaje_ctrl, "Controlador de Triaje y Validación Humana", "clinica.views.TriajeAsignacionViewSet", "Provee endpoints para que el coordinador clínico revise la recomendación IA y confirme al terapeuta.")
+skinparam package {
+  BackgroundColor #FCE4D6
+  BorderColor #D35400
+  FontColor #935116
+  FontStyle bold
+  FontSize 11
 }
 
-Rel(mobile_app, cmp_tenant_mw, "Peticiones HTTPS con cabecera X-Tenant-ID", "HTTPS / JSON")
-Rel(web_app, cmp_tenant_mw, "Peticiones HTTPS con subdominio", "HTTPS / JSON")
+skinparam rectangle {
+  BorderColor #2C3E50
+  BackgroundColor #F8F9FA
+  FontColor #1A252F
+  FontStyle bold
+  FontSize 13
+}
 
-Rel(cmp_tenant_mw, cmp_auth_jwt, "Establece esquema y delega autenticación", "Interno")
-Rel(cmp_auth_jwt, cmp_citas_ctrl, "Enruta gestión de citas", "Interno")
-Rel(cmp_auth_jwt, cmp_tareas_ctrl, "Enruta gestión de tareas", "Interno")
-Rel(cmp_auth_jwt, cmp_mood_ctrl, "Enruta registro de ánimo", "Interno")
-Rel(cmp_auth_jwt, cmp_triaje_ctrl, "Enruta consola de triaje", "Interno")
+title DISEÑO LÓGICO DE LA ARQUITECTURA - CLIENTE MÓVIL FLUTTER (SIGEPSI)\n
 
-Rel(cmp_citas_ctrl, cmp_fcm_service, "Dispara recordatorios de cita", "Interno")
-Rel(cmp_tareas_ctrl, cmp_fcm_service, "Notifica nueva tarea asignada", "Interno")
-Rel(cmp_fcm_service, fcm_ext, "Despacha payload HTTP/2", "HTTPS REST")
+rectangle "Vista Móvil (Flutter UI Screens & Widgets)" as MVista {
+  package "Paquete Vista Autenticación\ny Tenant (Flutter Móvil)" as MV_Auth
+  package "Paquete Vista Perfil y\nFicha Paciente (Flutter)" as MV_Perfil
+  package "Paquete Vista Agenda y\nTeleconsulta (Flutter)" as MV_Agenda
+  package "Paquete Vista Tareas y\nMood Tracker (Flutter)" as MV_Tareas
+  package "Paquete Vista Chatbot\nde Orientación (Flutter)" as MV_Chatbot
 
-Rel(cmp_triaje_ctrl, cmp_ia_clasif, "Solicita clasificación de intake", "Interno")
-Rel(cmp_ia_clasif, gemini_ext, "Inferencia asistiva anonimizada", "HTTPS TLS 1.3")
-Rel(cmp_triaje_ctrl, cmp_matching, "Solicita top 3 psicólogos idóneos", "Interno")
+  MV_Auth -[hidden]right-> MV_Perfil
+  MV_Perfil -[hidden]right-> MV_Agenda
+  MV_Agenda -[hidden]right-> MV_Tareas
+  MV_Tareas -[hidden]right-> MV_Chatbot
+}
 
-Rel(cmp_citas_ctrl, database, "CRUD agenda_cita / agenda_horariodisponible", "SQL")
-Rel(cmp_tareas_ctrl, database, "CRUD clinica_tareaterapeutica / evidencia", "SQL")
-Rel(cmp_mood_ctrl, database, "INSERT clinica_registroanimo", "SQL")
-Rel(cmp_fcm_service, database, "CRUD comunicacion_tokenfcm", "SQL")
-Rel(cmp_triaje_ctrl, database, "UPDATE clinica_paciente (asigna terapeuta)", "SQL")
+rectangle "controlador Móvil (BLoC / Services & State Management)" as MControl {
+  package "Paquete Auth y Sesión\nControllers Móvil (Services)" as MC_Auth
+  package "Paquete Perfil y Ficha\nControllers Móvil (Services)" as MC_Perfil
+  package "Paquete Agenda y Teleconsulta\nControllers Móvil (Services)" as MC_Agenda
+  package "Paquete Tareas y Mood\nControllers Móvil (Services)" as MC_Tareas
+  package "Paquete Chatbot\nControllers Móvil (Services)" as MC_Chatbot
+
+  MC_Auth -[hidden]right-> MC_Perfil
+  MC_Perfil -[hidden]right-> MC_Agenda
+  MC_Agenda -[hidden]right-> MC_Tareas
+  MC_Tareas -[hidden]right-> MC_Chatbot
+}
+
+rectangle "Modelo Móvil (Data Classes & DTOs Locales)" as MModelo {
+  package "Paquete Modelos Auth\ny Usuario (DTOs Locales)" as MM_Auth
+  package "Paquete Modelos Paciente\ny Perfil (DTOs Locales)" as MM_Perfil
+  package "Paquete Modelos Agenda\ny Citas (DTOs Locales)" as MM_Agenda
+  package "Paquete Modelos Tareas\ny Mood (DTOs Locales)" as MM_Tareas
+  package "Paquete Modelos Chatbot\ny NLP (DTOs Locales)" as MM_Chatbot
+
+  MM_Auth -[hidden]right-> MM_Perfil
+  MM_Perfil -[hidden]right-> MM_Agenda
+  MM_Agenda -[hidden]right-> MM_Tareas
+  MM_Tareas -[hidden]right-> MM_Chatbot
+}
+
+rectangle "Persistencia Local y Servicios Cloud Remotos" as MPersis {
+  package "Paquete Almacenamiento Seguro\n(Keystore / Keychain - Tokens JWT)" as MP_Keystore
+  package "Paquete Caché Local SQLite\n(Offline Sync: Citas y Tareas)" as MP_SQLite
+  package "Paquete Conexión Backend REST API\n(Django REST HTTPS, FCM v1, Jitsi)" as MP_Cloud #D5F5E3
+
+  MP_Keystore -[hidden]right-> MP_SQLite
+  MP_SQLite -[hidden]right-> MP_Cloud
+}
+
+MVista -[hidden]down-> MControl
+MControl -[hidden]down-> MModelo
+MModelo -[hidden]down-> MPersis
+
+' Dependencias directas verticales Vista -> Controlador
+MV_Auth ..> MC_Auth
+MV_Perfil ..> MC_Perfil
+MV_Agenda ..> MC_Agenda
+MV_Tareas ..> MC_Tareas
+MV_Chatbot ..> MC_Chatbot
+
+' Acoplamiento horizontal entre Controladores Móviles
+MC_Perfil ..> MC_Auth : token y tenant
+MC_Agenda ..> MC_Auth : token sesión
+MC_Tareas ..> MC_Auth : token sesión
+MC_Chatbot ..> MC_Agenda : derivación cita
+MC_Chatbot ..> MC_Tareas : ejercicios autoayuda
+
+' Dependencias Controlador -> Modelo Móvil
+MC_Auth ..> MM_Auth
+MC_Perfil ..> MM_Perfil
+MC_Agenda ..> MM_Agenda
+MC_Tareas ..> MM_Tareas
+MC_Chatbot ..> MM_Chatbot
+
+' Acoplamiento entre Modelos Móviles
+MM_Perfil ..> MM_Auth : usuario_id
+MM_Agenda ..> MM_Perfil : paciente_id
+MM_Tareas ..> MM_Perfil : paciente_id
+
+' Conexión hacia Persistencia y Servicios Cloud
+MC_Auth ..> MP_Keystore : guarda tokens JWT
+MC_Agenda ..> MP_SQLite : caché citas offline
+MC_Tareas ..> MP_SQLite : caché tareas offline
+MC_Auth ..> MP_Cloud : HTTPS /api/auth/
+MC_Perfil ..> MP_Cloud : HTTPS /api/clinica/
+MC_Agenda ..> MP_Cloud : HTTPS /api/agenda/
+MC_Tareas ..> MP_Cloud : HTTPS /api/v1/tareas/
+MC_Chatbot ..> MP_Cloud : HTTPS /api/v1/chatbot/
+
 @enduml
 ```
 
-##### C4 Nivel 4: Diagrama de Código y Clases UML por Paquetes de Software (Final de Arquitectura)
+<br>
 
-Conforme a la instrucción formal de la docente, se detalla el contenido exhaustivo de los paquetes del sistema, incluyendo clases de control, modelos de datos, servicios y clientes móviles:
+##### 7.2.1.1.3 Trazabilidad de Paquetes Arquitectónicos y Casos de Uso del Sprint 3
+
+Conforme a la metodología dictada por la cátedra para el Sprint 3 (*"Relacionan los casos de usos que pertenecen a ese paquete. Ya."*), se modela la trazabilidad arquitectónica mediante el estereotipo UML `«trace»`. Este modelo evidencia cómo cada paquete asume la responsabilidad de los casos de uso del Sprint 3:
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3 - Experiencia Móvil de Pacientes y Asistencia de IA* → *11. Arquitectura de Software - Diagrama de Paquetes UML (Sprint 3)* → *Trazabilidad de Paquetes y Casos de Uso - Sprint 3* (**Diagrama ID: 316**).
+
+![Diagrama de Paquetes Arquitectónicos y Casos de Uso del Sprint 3](./imagenes/diagrama_paquetes_casos_uso_sp3.png)
+
+```plantuml
+@startuml
+left to right direction
+skinparam defaultFontName Arial
+skinparam roundcorner 8
+skinparam shadowing false
+skinparam packageStyle folder
+skinparam arrowColor #2C3E50
+skinparam arrowThickness 1.2
+
+skinparam usecase {
+  BackgroundColor #D4EFDF
+  BorderColor #27AE60
+  FontColor #145A32
+  FontSize 11
+}
+
+skinparam package {
+  BackgroundColor #FCE4D6
+  BorderColor #D35400
+  FontColor #935116
+  FontStyle bold
+}
+
+skinparam rectangle {
+  BorderColor #2C3E50
+  BackgroundColor #FFFFFF
+}
+
+title Trazabilidad Arquitectonica: Paquetes y Casos de Uso del Sprint 3\n
+
+rectangle "Paquetes Arquitectonicos y Casos de Uso - Sprint 3 (SIGEPSI)" as Frame {
+
+  package "Paquete 1: Administracion, Seguridad\ny Multi-Tenant" as P1 {
+  }
+
+  package "Paquete 3: Agenda, Comunicacion\ny Teleconsulta" as P3 {
+  }
+
+  package "Paquete 4: Seguimiento Terapeutico\ny Tareas Moviles" as P4 {
+  }
+
+  package "Paquete 5: Inteligencia Artificial,\nTriaje y Matching" as P5 {
+  }
+
+  usecase "CU2 (Movil): Iniciar sesion persistente\ny autenticacion JWT" as CU2_M
+  
+  usecase "CU11 (Movil): Consultar agenda y solicitar\ncancelacion de citas (>24h)" as CU11_M
+  usecase "CU12: Gestionar recordatorios y\nnotificaciones automaticas (Push FCM)" as CU12
+  usecase "CU13 (Movil): Acceder a sala de\nteleconsulta WebRTC nativa" as CU13_M
+
+  usecase "CU17 (Movil): Gestionar tareas terapeuticas\ny registro de animo (Mood Tracker)" as CU17_M
+
+  usecase "CU21: Clasificar motivo de consulta\nmediante IA y deteccion de crisis" as CU21
+  usecase "CU22: Sugerir asignacion de paciente a\npsicologo mediante IA (Matching multivariable)" as CU22
+
+  P1 ..> CU2_M : <<trace>>
+
+  P3 ..> CU11_M : <<trace>>
+  P3 ..> CU12 : <<trace>>
+  P3 ..> CU13_M : <<trace>>
+
+  P4 ..> CU17_M : <<trace>>
+
+  P5 ..> CU21 : <<trace>>
+  P5 ..> CU22 : <<trace>>
+
+  CU11_M ..> CU12 : <<extend>>
+  CU11_M ..> CU13_M : <<extend>>
+  CU22 ..> CU21 : <<use>>
+}
+@enduml
+```
+
+###### Matriz de Trazabilidad entre Paquetes Arquitectónicos, Casos de Uso e Historias de Usuario
+
+| Paquete Arquitectónico | Casos de Uso Asignados (`«trace»`) | Historias de Usuario Asociadas | Responsabilidad Técnica en el Sprint 3 |
+| :--- | :--- | :---: | :--- |
+| **Paquete 1: Administración, Seguridad y Multi-Tenant** | `CU2 (Móvil)` | **HU-40** | Autenticación móvil persistente, emisión y renovación silenciosa de tokens JWT, almacenamiento protegido en Keystore/Keychain. |
+| **Paquete 3: Agenda, Comunicación y Teleconsulta** | `CU11 (Móvil)`, `CU12`, `CU13 (Móvil)` | **HU-41, HU-42, HU-43, HU-44** | Agenda móvil, validación de política de cancelación $>24$h, despacho de alertas push en segundo plano vía FCM v1 y videollamadas WebRTC Jitsi nativas. |
+| **Paquete 4: Seguimiento Terapéutico y Tareas Móviles** | `CU17 (Móvil)` | **HU-45, HU-46** | Cumplimiento de tareas clínicas inter-sesión, captura de evidencia reflexiva con evaluación de dificultad y registro diario de ánimo (*Mood Tracker*). |
+| **Paquete 5: Inteligencia Artificial, Triaje y Matching** | `CU21`, `CU22` | **HU-47, HU-48** | Pipeline NLP con sanitización PII, clasificación de motivos, banderas de crisis, y algoritmo multivariable de matching con supervisión obligatoria *Human-in-the-Loop*. |
+
+<br>
+
+##### 7.2.1.1.4 Arquitectura Física: Diagramas de Despliegue en Producción (Deployment Diagrams)
+
+Conforme a las observaciones metodológicas de la cátedra de Sistemas de Información II (Capítulo 9 de Observaciones de Arquitectura Física), el diseño de despliegue no debe utilizar términos genéricos como *"Internet"* o *"Proveedor de Servicio"*, sino reflejar con precisión técnica los servidores reales de computación en la nube, los entornos de ejecución en contenedores Docker, la base de datos gestionada, las terminales cliente con multiplicidad formal (`1..*`), los protocolos con sus puertos de red y las notas explicativas asociadas. 
+
+Asimismo, atendiendo a la coexistencia de usuarios clínicos en estaciones de escritorio y pacientes/terapeutas en dispositivos inteligentes, se formalizan **dos diagramas de despliegue especializados y sincronizados** en Enterprise Architect (`DIAGRAMAS.eapx`):
+1. **Despliegue Web & Plataforma Cloud SaaS:** Mapea la infraestructura central en **Render Cloud PaaS** (Frontend Nginx, Backend Django WSGI y PostgreSQL 16), el motor de procesamiento de lenguaje natural en **Hugging Face Spaces** y la teleconsulta en **Jitsi Meet**.
+2. **Despliegue Móvil & Servicios Cloud:** Mapea el dispositivo inteligente cliente (`«device» Smartphone / Tablet [1..*]`), el runtime nativo compilado de **Flutter**, la persistencia local cifrada, el consumo seguro de las APIs REST de **Render**, la pasarela de alertas push de **Google Firebase (FCM v1)** y la sala de videoconferencia cifrada.
+
+---
+
+###### 7.2.1.1.4.1 Diagrama de Despliegue: Sistema Web & Plataforma Cloud SaaS (Render, Hugging Face, PostgreSQL)
+
+Este diagrama representa la topología de red para el portal administrativo y clínico utilizado por coordinadores, psicólogos y recepcionistas:
+
+* **1. Estación de Trabajo Clínica (PC / Laptop) `«device» [1..*]`:** Terminal física de cómputo utilizada por el personal clínico y administrativo. Alberga el entorno `Navegador Web (Chrome / Edge / Firefox) «executionEnvironment»`, el cual ejecuta el artefacto compilado `sigepsi-frontend (Angular 17 SPA) «artifact»`.
+* **2. Servidor Cloud PaaS: Render (Oregon US-West) `«cloud server»`:** Plataforma de computación como servicio gestionada mediante Infrastructure as Code (**IaC** con `render.yaml`), la cual aloja:
+  - `Contenedor Docker: sigepsi-frontend [Nginx Alpine 1.25 :10000] «executionEnvironment»`: Contenedor web que sirve los estáticos compilados de Angular 17 y actúa como reverse proxy enrutando `/api/` hacia el backend.
+  - `Contenedor Docker: sigepsi-backend [Django 5.x REST + Gunicorn 21 :10000] «executionEnvironment»`: Contenedor WSGI que ejecuta el backend `Django 5.x REST Backend (django-tenants Multi-Tenant) «artifact»` gobernado por subdominios clínicos.
+  - `Base de Datos Gestionada: sigepsi-postgres [PostgreSQL 16 Multi-Tenant :5432] «executionEnvironment, database»`: Cluster PostgreSQL 16 gestionado en Render con aislamiento estricto por esquemas (`public` y `tenant_clinica_*`).
+* **3. Servidor Cloud IA: Hugging Face Spaces `«cloud server»`:** Servidor en la nube de computación cognitiva que hospeda el microservicio contenedorizado `antidino-iacupficct.hf.space [FastAPI + PyTorch / Transformers :443 HTTPS] «executionEnvironment»`, ejecutando el artefacto `Motor IA NLP & Detección de Riesgo / Crisis (FastAPI) «artifact»`.
+* **4. Cluster Videoconferencia WebRTC: meet.jit.si `«cloud server»`:** Infraestructura dedicada para sesiones de teleconsulta clínica cifrada con el entorno `Servidor Jitsi Meet [WebRTC VideoBridge JVB :10000 UDP / SRTP] «executionEnvironment»`.
+* **5. Nota Explicativa UML:** Clarifica el aprovisionamiento automatizado mediante Blueprint `render.yaml`, la obligatoriedad de SSL en PostgreSQL (`DB_SSL_REQUIRE=true`) y el protocolo de contención de crisis (Líneas 800-11-3040 / 911).
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3 - Experiencia Móvil de Pacientes y Asistencia de IA* → *11. Arquitectura de Software - Diagrama de Paquetes UML (Sprint 3)* → *Diagrama de Despliegue - Sistema Web & Plataforma Cloud (Render, Hugging Face, PostgreSQL)* (**Diagrama ID: 317**).
+
+![Diagrama de Despliegue Web - Sprint 3](./imagenes/diagrama_despliegue_web_sp3.png)
+
+```plantuml
+@startuml
+skinparam roundcorner 6
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+skinparam node {
+  BackgroundColor #D6EAF8
+  BorderColor #2471A3
+  FontColor #1B4F72
+  FontStyle bold
+}
+
+skinparam node<<device>> {
+  BackgroundColor #D6EAF8
+  BorderColor #2471A3
+}
+
+skinparam node<<cloud server>> {
+  BackgroundColor #D6EAF8
+  BorderColor #2471A3
+}
+
+skinparam node<<executionEnvironment>> {
+  BackgroundColor #EBF5FB
+  BorderColor #2980B9
+  FontColor #154360
+  FontStyle normal
+}
+
+skinparam artifact {
+  BackgroundColor #D5F5E3
+  BorderColor #27AE60
+  FontColor #145A32
+}
+
+skinparam database {
+  BackgroundColor #FADBD8
+  BorderColor #C0392B
+  FontColor #78281F
+}
+
+title deployment Diagrama de Despliegue - Sistema Web & Plataforma Cloud (Render, Hugging Face, PostgreSQL)
+
+node "«device»\nEstación de Trabajo Clínica (PC / Laptop) [1..*]" as Workstation {
+  node "«executionEnvironment»\nNavegador Web (Chrome / Edge / Firefox)" as Browser {
+    artifact "sigepsi-frontend (Angular 17 SPA)" as AngularApp
+  }
+}
+
+node "«cloud server»\nCluster Videoconferencia WebRTC: meet.jit.si" as JitsiCloud {
+  node "«executionEnvironment»\nServidor Jitsi Meet\n[WebRTC VideoBridge JVB :10000 UDP / SRTP]" as JitsiServer
+}
+
+node "«cloud server»\nServidor Cloud IA: Hugging Face Spaces" as HFCloud {
+  node "«executionEnvironment»\nContenedor Docker: antidino-iacupficct.hf.space\n[FastAPI + PyTorch / Transformers :443 HTTPS]" as HFContainer {
+    artifact "Motor IA NLP & Detección de Riesgo / Crisis (FastAPI)" as HFEngine
+  }
+}
+
+node "«cloud server»\nServidor Cloud PaaS: Render (Oregon US-West)" as RenderPaaS {
+  node "«executionEnvironment»\nContenedor Docker: sigepsi-frontend\n[Nginx Alpine 1.25 :10000]" as NginxFrontend {
+    artifact "Angular 17 Dist Build & Nginx Reverse Proxy Config" as NginxDist
+  }
+
+  node "«executionEnvironment»\nContenedor Docker: sigepsi-backend\n[Django 5.x REST + Gunicorn 21 :10000]" as GunicornBackend {
+    artifact "Django 5.x REST Backend (django-tenants Multi-Tenant)" as DjangoArtifact
+  }
+
+  node "«executionEnvironment, database»\nBase de Datos Gestionada: sigepsi-postgres\n[PostgreSQL 16 Multi-Tenant :5432]" as PostgresNode {
+    database "sigepsi_db\n(Esquemas Multi-Tenant: public & tenant_clinica_*)" as PostgresDB
+  }
+}
+
+note as NoteWeb
+  <b>INFRAESTRUCTURA WEB EN RENDER PAAS & HUGGING FACE:</b>
+  • Render Blueprint (render.yaml): Despliegue automatizado IaC de contenedores Docker en región Oregon.
+  • Conexión SSL Forzada: DB_SSL_REQUIRE=true hacia PostgreSQL 16 con esquemas multi-tenant aislados.
+  • Nginx actúa como reverse proxy en frontend redirigiendo /api/ hacia el backend Gunicorn.
+  • API Hugging Face: https://antidino-iacupficct.hf.space/api/v1/chatbot/mensaje/ con salvaguarda ética y protocolo de crisis 800-11-3040 / 911.
+  • Teleconsulta WebRTC: Salas cifradas punto a punto SRTP/DTLS sin almacenamiento de video en servidor.
+end note
+
+' Conexiones de red y comunicación
+Browser --> NginxFrontend : HTTPS :443 (Carga SPA)
+Browser --> GunicornBackend : HTTPS/WSS :443 (REST API & WS)
+Browser --> JitsiServer : WebRTC :10000 UDP (Audio/Video)
+NginxFrontend --> GunicornBackend : HTTP :10000 (Proxy Nginx /api/)
+GunicornBackend --> PostgresNode : TCP/IP :5432 (psycopg2 SSL)
+GunicornBackend --> HFContainer : HTTPS :443 (Chatbot & Crisis NLP)
+NoteWeb .. RenderPaaS
+
+@enduml
+```
+
+<br>
+
+###### 7.2.1.1.4.2 Diagrama de Despliegue: Cliente Móvil & Servicios Cloud (Flutter, Render, FCM, Hugging Face, Jitsi)
+
+Este diagrama modela la arquitectura física orientada a los pacientes y terapeutas que operan desde dispositivos inteligentes, destacando la naturaleza de cliente de ejecución del smartphone (descartando conceptualizaciones erróneas como servidor móvil):
+
+* **1. Smartphone / Tablet (Paciente & Terapeuta Móvil) `«device» [1..*]`:** Terminal móvil personal. No actúa como servidor; ejecuta el runtime compilado AOT de la aplicación nativa:
+  - `Sistema Operativo Móvil (Android 14+ / iOS 17+) «executionEnvironment»`: Plataforma base del dispositivo.
+  - `Flutter 3.x Engine (Dart AOT Runtime) «executionEnvironment»`: Motor de ejecución nativo de Flutter.
+  - `sigepsi_movil.apk / .ipa (Flutter Client App) «artifact»`: Binario distribuible de la aplicación móvil.
+  - `SQLite Local & FlutterSecureStorage (JWT Bearer & Offline Cache) «component, database»`: Bóveda criptográfica en Android KeyStore / Apple KeyChain para tokens JWT y persistencia local offline (Drift / SQLite).
+* **2. Servidor Cloud PaaS: Render (Oregon US-West) `«cloud server»`:** Punto de entrada para las APIs móviles de la plataforma:
+  - `Contenedor Docker: sigepsi-backend [Django 5.x REST + Gunicorn 21 :10000] «executionEnvironment»`: Despacha los endpoints REST de autenticación, agenda, tareas y mood tracker.
+  - `Base de Datos Gestionada: sigepsi-postgres [PostgreSQL 16 Multi-Tenant :5432] «executionEnvironment, database»`: Persistencia multi-tenant centralizada con conexión SSL obligatoria.
+* **3. Servidor Cloud Notificaciones: Google Firebase `«cloud server»`:**
+  - `Firebase Cloud Messaging (FCM v1 API :443 HTTPS) «executionEnvironment»`: Pasarela push oficial de Google. Recibe peticiones asíncronas desde el backend Django y despierta los dispositivos móviles para recordatorios de citas ($T-24$h, $T-1$h) y asignaciones terapéuticas.
+* **4. Servidor Cloud IA: Hugging Face Spaces `«cloud server»`:**
+  - Procesa consultas conversacionales y análisis de sentimiento clínico en `antidino-iacupficct.hf.space` a través de la intermediación segura del backend Django.
+* **5. Cluster Videoconferencia WebRTC: meet.jit.si `«cloud server»`:**
+  - Conexión de audio y video en tiempo real mediante el SDK móvil de Jitsi Meet integrado en Flutter, operando sobre canales cifrados UDP :10000 (SRTP/DTLS).
+* **6. Nota Explicativa UML:** Detalla el almacenamiento seguro de credenciales en hardware del dispositivo, el ciclo de vida de las notificaciones push en segundo plano y la salvaguarda ética en atención de crisis.
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3 - Experiencia Móvil de Pacientes y Asistencia de IA* → *11. Arquitectura de Software - Diagrama de Paquetes UML (Sprint 3)* → *Diagrama de Despliegue - Cliente Móvil & Servicios Cloud (Flutter, Render, FCM, Hugging Face, Jitsi)* (**Diagrama ID: 321**).
+
+![Diagrama de Despliegue Móvil - Sprint 3](./imagenes/diagrama_despliegue_movil_sp3.png)
+
+```plantuml
+@startuml
+skinparam roundcorner 6
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+skinparam node {
+  BackgroundColor #D6EAF8
+  BorderColor #2471A3
+  FontColor #1B4F72
+  FontStyle bold
+}
+
+skinparam node<<device>> {
+  BackgroundColor #D6EAF8
+  BorderColor #2471A3
+}
+
+skinparam node<<cloud server>> {
+  BackgroundColor #D6EAF8
+  BorderColor #2471A3
+}
+
+skinparam node<<executionEnvironment>> {
+  BackgroundColor #EBF5FB
+  BorderColor #2980B9
+  FontColor #154360
+  FontStyle normal
+}
+
+skinparam artifact {
+  BackgroundColor #D5F5E3
+  BorderColor #27AE60
+  FontColor #145A32
+}
+
+skinparam database {
+  BackgroundColor #FADBD8
+  BorderColor #C0392B
+  FontColor #78281F
+}
+
+title deployment Diagrama de Despliegue - Cliente Móvil & Servicios Cloud (Flutter, Render, FCM, Hugging Face, Jitsi)
+
+node "«device»\nSmartphone / Tablet (Paciente & Terapeuta Móvil) [1..*]" as MobileDevice {
+  node "«executionEnvironment»\nSistema Operativo Móvil (Android 14+ / iOS 17+)" as MobileOS {
+    node "«executionEnvironment»\nFlutter 3.x Engine (Dart AOT Runtime)" as FlutterRuntime {
+      artifact "sigepsi_movil.apk / .ipa (Flutter Client App)" as FlutterApp
+    }
+    database "SQLite Local & FlutterSecureStorage\n(JWT Bearer & Offline Cache)" as MobileStorage
+  }
+}
+
+node "«cloud server»\nCluster Videoconferencia WebRTC: meet.jit.si" as JitsiCloud {
+  node "«executionEnvironment»\nServidor Jitsi Meet\n[WebRTC VideoBridge JVB :10000 UDP / SRTP]" as JitsiServer
+}
+
+node "«cloud server»\nServidor Cloud IA: Hugging Face Spaces" as HFCloud {
+  node "«executionEnvironment»\nContenedor Docker: antidino-iacupficct.hf.space\n[FastAPI + PyTorch / Transformers :443 HTTPS]" as HFContainer {
+    artifact "Motor IA NLP & Detección de Riesgo / Crisis (FastAPI)" as HFEngine
+  }
+}
+
+node "«cloud server»\nServidor Cloud Notificaciones: Google Firebase" as FirebaseCloud {
+  node "«executionEnvironment»\nFirebase Cloud Messaging (FCM v1 API :443 HTTPS)" as FCMServer
+}
+
+node "«cloud server»\nServidor Cloud PaaS: Render (Oregon US-West)" as RenderPaaS {
+  node "«executionEnvironment»\nContenedor Docker: sigepsi-backend\n[Django 5.x REST + Gunicorn 21 :10000]" as GunicornBackend {
+    artifact "Django 5.x REST Backend (django-tenants Multi-Tenant)" as DjangoArtifact
+  }
+
+  node "«executionEnvironment, database»\nBase de Datos Gestionada: sigepsi-postgres\n[PostgreSQL 16 Multi-Tenant :5432]" as PostgresNode {
+    database "sigepsi_db\n(Esquemas Multi-Tenant: public & tenant_clinica_*)" as PostgresDB
+  }
+}
+
+note as NoteMobile
+  <b>INFRAESTRUCTURA Y COMUNICACIÓN MÓVIL (FLUTTER):</b>
+  • Smartphone como Dispositivo Cliente: Ejecuta el binario compilado AOT de Flutter sobre Android/iOS; no actúa como servidor.
+  • Autenticación & Almacenamiento Seguro: Tokens JWT Bearer resguardados en Android KeyStore y Apple KeyChain (flutter_secure_storage).
+  • Notificaciones Push (FCM v1): Celery/Django despachan notificaciones push asíncronas para recordatorios de citas y estado de crisis.
+  • Consultas IA en Móvil: El paciente accede al asistente terapéutico mediante endpoints REST seguros en Render (/api/v1/chatbot/) hacia Hugging Face Space.
+  • Teleconsulta Móvil Cifrada: Integración con Jitsi Meet SDK móvil utilizando canales de audio/video WebRTC (UDP :10000).
+end note
+
+' Conexiones de red y comunicación móvil
+MobileOS --> GunicornBackend : HTTPS :443 (REST API & JWT Bearer)
+MobileOS --> JitsiServer : WebRTC :10000 UDP (Audio/Video)
+GunicornBackend --> PostgresNode : TCP/IP :5432 (psycopg2 SSL)
+GunicornBackend --> HFContainer : HTTPS :443 (Chatbot & Crisis NLP)
+GunicornBackend --> FCMServer : HTTPS :443 (FCM v1 Dispatcher)
+FCMServer --> MobileOS : Push Notification (FCM / APNs)
+NoteMobile .. MobileDevice
+
+@enduml
+```
+
+---
+
+#### 7.2.1.2 Diseño de Datos (Modelo Relacional Físico y Script DDL Consolidado en PostgreSQL 16)
+
+En estricto cumplimiento de los lineamientos metodológicos de la cátedra y las observaciones de la docente respecto a la **consistencia integral de la base de datos** (la cual exige que el diseño de datos no se limite a fragmentos aislados, sino que exponga la totalidad de tablas y relaciones consolidadas del sistema), se presenta a continuación el **Script DDL Relacional Completo en PostgreSQL 16**.
+
+Este modelo físico implementa una arquitectura **Multi-Tenant basada en esquemas independientes**, garantizando el aislamiento criptográfico y lógico de la información de cada centro de salud mental:
+1. **Esquema Global Compartido (`public`):** Gestiona la infraestructura SaaS transversal (registro central de centros/tenants, enrutamiento dinámico de subdominios, superadministradores de plataforma, suscripciones comerciales y bitácoras de backups cifrados).
+2. **Esquema Aislado por Tenant (`[tenant_schema]`):** Despliega de forma íntegra las tablas operativas, clínicas, terapéuticas, móviles y de Inteligencia Artificial correspondientes a los **Sprints 0, 1, 2 y 3**, guardando una correspondencia biunívoca total con el **Diagrama de Clases del Dominio Clínico y Sistema Completo Consolidado (Diagrama ID: 322 en Enterprise Architect)** presentado en la [Sección 7.1.1.2](#7112-diagrama-de-clases-del-dominio-cl%C3%ADnico-y-sistema-completo-consolidado-sprints-0-1-2-y-3).
+
+##### 7.2.1.2.1 Modelo Relacional y Script DDL del Backend PostgreSQL 16 (Multi-Tenant Schemas - Consolidado Global)
+
+```sql
+-- =============================================================================
+-- PLATAFORMA SIGEPSI - SISTEMA DE GESTIÓN CLÍNICA Y PSICOLÓGICA MULTI-TENANT
+-- MODELO FÍSICO Y RELACIONAL CONSOLIDADO DDL (POSTGRESQL 16)
+-- CONSOLIDADO COMPLETO: SPRINTS 0, 1, 2 Y 3 (ARQUITECTURA MULTI-TENANT)
+-- Correlación directa: Diagrama de Clases de Dominio Global (ID: 322 en EA)
+-- =============================================================================
+
+-- -----------------------------------------------------------------------------
+-- 0. EXTENSIONES DE NÚCLEO POSTGRESQL 16
+-- -----------------------------------------------------------------------------
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- =============================================================================
+-- PARTE I: ESQUEMA GLOBAL 'public' (INFRAESTRUCTURA SAAS MULTI-TENANT)
+-- =============================================================================
+
+-- I.1. Registro Central de Tenants (Centros Psicológicos Suscritos)
+CREATE TABLE IF NOT EXISTS public.tenants_tenant (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    nombre VARCHAR(100) NOT NULL,
+    slug VARCHAR(100) NOT NULL UNIQUE,
+    schema_name VARCHAR(63) NOT NULL UNIQUE,
+    plan VARCHAR(20) NOT NULL DEFAULT 'PROFESIONAL' CHECK (plan IN ('BASICO', 'PROFESIONAL', 'ENTERPRISE')),
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
+    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+COMMENT ON TABLE public.tenants_tenant IS 'Catálogo central de centros de salud mental tenant registrados en el SaaS.';
+
+-- I.2. Enrutamiento de Dominios y Subdominios FQDN
+CREATE TABLE IF NOT EXISTS public.tenants_dominio (
+    id SERIAL PRIMARY KEY,
+    tenant_id UUID NOT NULL REFERENCES public.tenants_tenant(id) ON DELETE CASCADE,
+    dominio VARCHAR(253) NOT NULL UNIQUE,
+    es_primario BOOLEAN NOT NULL DEFAULT TRUE
+);
+COMMENT ON TABLE public.tenants_dominio IS 'Mapeo de subdominios y dominios personalizados para resolución multi-tenant.';
+
+-- I.3. Cuentas de SuperAdministrador Global de Plataforma
+CREATE TABLE IF NOT EXISTS public.accounts_superadmin (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(254) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    nombre VARCHAR(150) NOT NULL,
+    apellido VARCHAR(150) NOT NULL,
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
+    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+COMMENT ON TABLE public.accounts_superadmin IS 'Credenciales maestras con acceso al panel de administración SaaS global.';
+
+-- I.4. Planes de Suscripción y Licenciamiento Comercial
+CREATE TABLE IF NOT EXISTS public.subscriptions_suscripcion (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES public.tenants_tenant(id) ON DELETE CASCADE,
+    plan VARCHAR(20) NOT NULL DEFAULT 'PROFESIONAL' CHECK (plan IN ('BASICO', 'PROFESIONAL', 'ENTERPRISE')),
+    fecha_inicio DATE NOT NULL DEFAULT CURRENT_DATE,
+    fecha_renovacion DATE NOT NULL,
+    monto_mensual NUMERIC(10,2) NOT NULL DEFAULT 350.00 CHECK (monto_mensual >= 0),
+    estado VARCHAR(20) NOT NULL DEFAULT 'ACTIVA' CHECK (estado IN ('ACTIVA', 'SUSPENDIDA', 'CANCELADA', 'PRUEBA')),
+    limite_psicologos INTEGER NOT NULL DEFAULT 15,
+    limite_almacenamiento_gb INTEGER NOT NULL DEFAULT 50
+);
+COMMENT ON TABLE public.subscriptions_suscripcion IS 'Control de vigencia comercial, límites y planes de servicio por tenant.';
+
+-- I.5. Registro de Respaldos Periódicos y Cifrado de Base de Datos
+CREATE TABLE IF NOT EXISTS public.tenants_backupregistro (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES public.tenants_tenant(id) ON DELETE CASCADE,
+    archivo_sql_dump VARCHAR(255) NOT NULL,
+    hash_sha256 CHAR(64) NOT NULL,
+    tamano_bytes BIGINT NOT NULL CHECK (tamano_bytes > 0),
+    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    tipo_almacenamiento VARCHAR(30) NOT NULL DEFAULT 'AWS_S3_GLACIER' CHECK (tipo_almacenamiento IN ('LOCAL', 'AWS_S3_GLACIER', 'GCS'))
+);
+COMMENT ON TABLE public.tenants_backupregistro IS 'Bitácora de backups lógicos y snapshots con verificación de integridad SHA-256.';
+
+
+-- =============================================================================
+-- PARTE II: ESQUEMA AISLADO POR TENANT ('[tenant_schema]')
+-- Cada centro psicológico ejecuta sus transacciones bajo su propio schema.
+-- =============================================================================
+
+-- -----------------------------------------------------------------------------
+-- BLOQUE 1: CONFIGURACIÓN INSTITUCIONAL, CONTROL RBAC Y SEGURIDAD (SPRINT 0)
+-- -----------------------------------------------------------------------------
+
+-- II.1. Configuración del Centro Psicológico
+CREATE TABLE IF NOT EXISTS core_centro (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    nombre VARCHAR(200) NOT NULL,
+    direccion VARCHAR(255),
+    telefono VARCHAR(30),
+    email VARCHAR(254),
+    logo VARCHAR(255),
+    horarios_atencion JSONB NOT NULL DEFAULT '{"lunes_a_viernes": "08:00 - 20:00", "sabados": "08:00 - 13:00"}'::jsonb,
+    configuracion JSONB NOT NULL DEFAULT '{"duracion_cita_defecto": 50, "cancelacion_anticipacion_horas": 24, "moneda": "BOB"}'::jsonb,
+    fecha_actualizacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+COMMENT ON TABLE core_centro IS 'Parámetros institucionales, políticas de atención y branding del centro.';
+
+-- II.2. Catálogo de Roles RBAC
+CREATE TABLE IF NOT EXISTS accounts_rol (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(50) NOT NULL UNIQUE,
+    descripcion TEXT
+);
+COMMENT ON TABLE accounts_rol IS 'Roles del sistema: Administrador de Centro, Psicólogo, Recepcionista, Paciente.';
+
+-- II.3. Permisos Atómicos por Módulo
+CREATE TABLE IF NOT EXISTS accounts_permiso (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    codigo VARCHAR(100) NOT NULL UNIQUE,
+    modulo VARCHAR(50) NOT NULL,
+    descripcion TEXT
+);
+COMMENT ON TABLE accounts_permiso IS 'Permisos granulares del sistema para control de acceso.';
+
+-- II.4. Matriz de Rol-Permiso (M:N)
+CREATE TABLE IF NOT EXISTS accounts_rol_permiso (
+    id SERIAL PRIMARY KEY,
+    rol_id INTEGER NOT NULL REFERENCES accounts_rol(id) ON DELETE CASCADE,
+    permiso_id INTEGER NOT NULL REFERENCES accounts_permiso(id) ON DELETE CASCADE,
+    CONSTRAINT uq_rol_permiso UNIQUE (rol_id, permiso_id)
+);
+COMMENT ON TABLE accounts_rol_permiso IS 'Asignación de privilegios de acceso a cada rol institucional.';
+
+-- II.5. Cuentas de Usuario del Centro
+CREATE TABLE IF NOT EXISTS accounts_usuario (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email VARCHAR(254) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    nombre VARCHAR(150) NOT NULL,
+    apellido VARCHAR(150) NOT NULL,
+    telefono VARCHAR(30),
+    rol_id INTEGER NOT NULL REFERENCES accounts_rol(id) ON DELETE RESTRICT,
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
+    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ultimo_login TIMESTAMPTZ NULL
+);
+COMMENT ON TABLE accounts_usuario IS 'Entidad de autenticación y datos generales de los usuarios del centro.';
+
+-- II.6. Tokens Temporales para Recuperación de Contraseña
+CREATE TABLE IF NOT EXISTS accounts_token_recuperacion (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    usuario_id UUID NOT NULL REFERENCES accounts_usuario(id) ON DELETE CASCADE,
+    token VARCHAR(100) NOT NULL UNIQUE,
+    fecha_expiracion TIMESTAMPTZ NOT NULL,
+    usado BOOLEAN NOT NULL DEFAULT FALSE,
+    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+COMMENT ON TABLE accounts_token_recuperacion IS 'Tokens de un solo uso para restablecimiento seguro de credenciales.';
+
+-- II.7. Bitácora de Auditoría y Acceso
+CREATE TABLE IF NOT EXISTS accounts_auditlog (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    usuario_id UUID NULL REFERENCES accounts_usuario(id) ON DELETE SET NULL,
+    ip_origen VARCHAR(45) NOT NULL,
+    metodo_http VARCHAR(10) NOT NULL,
+    ruta_endpoint VARCHAR(255) NOT NULL,
+    codigo_estado INTEGER NOT NULL,
+    timestamp TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+COMMENT ON TABLE accounts_auditlog IS 'Trazabilidad de peticiones HTTP críticas y accesos al sistema.';
+
+
+-- -----------------------------------------------------------------------------
+-- BLOQUE 2: MÓDULO CLÍNICO BASE, ESPECIALIDADES Y AGENDA (SPRINT 1)
+-- -----------------------------------------------------------------------------
+
+-- II.8. Catálogo de Especialidades Psicológicas
+CREATE TABLE IF NOT EXISTS clinica_especialidad (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE,
+    descripcion TEXT
+);
+COMMENT ON TABLE clinica_especialidad IS 'Áreas de experticia clínica (Cognitivo-Conductual, Sistémica, Infantil, etc.).';
+
+-- II.9. Perfil Profesional de Psicólogos
+CREATE TABLE IF NOT EXISTS clinica_psicologo (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    usuario_id UUID NOT NULL UNIQUE REFERENCES accounts_usuario(id) ON DELETE CASCADE,
+    numero_colegiado VARCHAR(50) NOT NULL UNIQUE,
+    biografia TEXT,
+    modalidad VARCHAR(20) NOT NULL DEFAULT 'MIXTA' CHECK (modalidad IN ('PRESENCIAL', 'VIRTUAL', 'MIXTA')),
+    tarifa_base NUMERIC(10,2) NOT NULL DEFAULT 150.00 CHECK (tarifa_base >= 0),
+    cupo_maximo_pacientes INTEGER NOT NULL DEFAULT 25 CHECK (cupo_maximo_pacientes > 0),
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
+    fecha_ingreso DATE NOT NULL DEFAULT CURRENT_DATE
+);
+COMMENT ON TABLE clinica_psicologo IS 'Expediente profesional, aranceles y estado de disponibilidad del terapeuta.';
+
+-- II.10. Relación Psicólogo - Especialidad (M:N)
+CREATE TABLE IF NOT EXISTS clinica_psicologo_especialidad (
+    id SERIAL PRIMARY KEY,
+    psicologo_id UUID NOT NULL REFERENCES clinica_psicologo(id) ON DELETE CASCADE,
+    especialidad_id INTEGER NOT NULL REFERENCES clinica_especialidad(id) ON DELETE CASCADE,
+    CONSTRAINT uq_psicologo_especialidad UNIQUE (psicologo_id, especialidad_id)
+);
+COMMENT ON TABLE clinica_psicologo_especialidad IS 'Especialidades clínicas certificadas por cada psicólogo.';
+
+-- II.11. Franjas Horarias Semanales (Disponibilidad Terapéutica)
+CREATE TABLE IF NOT EXISTS clinica_disponibilidad (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    psicologo_id UUID NOT NULL REFERENCES clinica_psicologo(id) ON DELETE CASCADE,
+    dia_semana SMALLINT NOT NULL CHECK (dia_semana BETWEEN 0 AND 6), -- 0=Domingo, 1=Lunes, ..., 6=Sábado
+    hora_inicio TIME NOT NULL,
+    hora_fin TIME NOT NULL,
+    duracion_bloque_min SMALLINT NOT NULL DEFAULT 50 CHECK (duracion_bloque_min > 0),
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
+    CONSTRAINT chk_rango_horario CHECK (hora_fin > hora_inicio)
+);
+COMMENT ON TABLE clinica_disponibilidad IS 'Horarios semanales recurrentes configurados para agenda de turnos.';
+
+-- II.12. Expediente Demográfico de Pacientes
+CREATE TABLE IF NOT EXISTS clinica_paciente (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    usuario_id UUID NOT NULL UNIQUE REFERENCES accounts_usuario(id) ON DELETE CASCADE,
+    codigo_expediente VARCHAR(30) NOT NULL UNIQUE,
+    ci VARCHAR(20) NOT NULL UNIQUE,
+    fecha_nacimiento DATE NOT NULL,
+    genero VARCHAR(1) NOT NULL CHECK (genero IN ('M', 'F', 'O')),
+    contacto_emergencia_nombre VARCHAR(120),
+    contacto_emergencia_telf VARCHAR(25),
+    tutor_legal_nombre VARCHAR(120),
+    tutor_legal_ci VARCHAR(20),
+    fecha_registro DATE NOT NULL DEFAULT CURRENT_DATE
+);
+COMMENT ON TABLE clinica_paciente IS 'Ficha sociodemográfica del paciente atendido en el centro psicológico.';
+
+-- II.13. Citas Terapéuticas Concertadas
+CREATE TABLE IF NOT EXISTS agenda_cita (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    paciente_id UUID NOT NULL REFERENCES clinica_paciente(id) ON DELETE RESTRICT,
+    psicologo_id UUID NOT NULL REFERENCES clinica_psicologo(id) ON DELETE RESTRICT,
+    fecha DATE NOT NULL,
+    hora_inicio TIME NOT NULL,
+    hora_fin TIME NOT NULL,
+    modalidad VARCHAR(20) NOT NULL DEFAULT 'PRESENCIAL' CHECK (modalidad IN ('PRESENCIAL', 'VIRTUAL')),
+    estado VARCHAR(25) NOT NULL DEFAULT 'PROGRAMADA' CHECK (estado IN ('PROGRAMADA', 'CONFIRMADA', 'REALIZADA', 'CANCELADA', 'INASISTENCIA')),
+    motivo_consulta TEXT,
+    costo NUMERIC(10,2) NOT NULL DEFAULT 150.00 CHECK (costo >= 0),
+    motivo_cancelacion TEXT,
+    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_modificacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_cita_horario CHECK (hora_fin > hora_inicio)
+);
+COMMENT ON TABLE agenda_cita IS 'Sesión clínica de atención psicológica presencial o por teleconsulta.';
+
+-- II.14. Salas de Teleconsulta WebRTC (Integración Jitsi Meet)
+CREATE TABLE IF NOT EXISTS agenda_teleconsulta (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    cita_id UUID NOT NULL UNIQUE REFERENCES agenda_cita(id) ON DELETE CASCADE,
+    sala_id VARCHAR(150) NOT NULL UNIQUE,
+    jwt_room_token TEXT,
+    hora_inicio_real TIMESTAMPTZ NULL,
+    hora_fin_real TIMESTAMPTZ NULL,
+    duracion_segundos INTEGER NOT NULL DEFAULT 0 CHECK (duracion_segundos >= 0),
+    estado_conexion VARCHAR(20) NOT NULL DEFAULT 'EN_ESPERA' CHECK (estado_conexion IN ('EN_ESPERA', 'CONECTADA', 'FINALIZADA', 'FALLIDA'))
+);
+COMMENT ON TABLE agenda_teleconsulta IS 'Parámetros técnicos de videoconferencia cifrada y telepsicología.';
+
+-- II.15. Alertas Clínicas y Detección de Deserción
+CREATE TABLE IF NOT EXISTS agenda_alerta (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    paciente_id UUID NOT NULL REFERENCES clinica_paciente(id) ON DELETE CASCADE,
+    tipo VARCHAR(50) NOT NULL CHECK (tipo IN ('INASISTENCIA_REITERADA', 'RIESGO_DESERCION', 'URGENCIA_CLINICA', 'CRISIS_RETROCESO')),
+    severidad VARCHAR(20) NOT NULL DEFAULT 'MEDIA' CHECK (severidad IN ('BAJA', 'MEDIA', 'ALTA', 'CRITICA')),
+    descripcion TEXT NOT NULL,
+    resuelta BOOLEAN NOT NULL DEFAULT FALSE,
+    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_resolucion TIMESTAMPTZ NULL,
+    nota_resolucion TEXT
+);
+COMMENT ON TABLE agenda_alerta IS 'Alertas automáticas de seguimiento clínico y priorización asistencial.';
+
+
+-- -----------------------------------------------------------------------------
+-- BLOQUE 3: EXPEDIENTES, INTAKE, SOAP, CONSENTIMIENTO Y CHATBOT (SPRINT 2)
+-- -----------------------------------------------------------------------------
+
+-- II.16. Plantillas de Formularios de Pre-Consulta (Intake)
+CREATE TABLE IF NOT EXISTS clinica_formulariopreconsulta (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    titulo VARCHAR(150) NOT NULL,
+    version VARCHAR(20) NOT NULL DEFAULT 'v1.0',
+    descripcion TEXT,
+    preguntas_schema JSONB NOT NULL DEFAULT '[]'::jsonb,
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
+    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_actualizacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+COMMENT ON TABLE clinica_formulariopreconsulta IS 'Plantillas estructuradas de cuestionarios y tamizajes clínicos de admisión.';
+
+-- II.17. Respuestas del Paciente al Formulario de Intake
+CREATE TABLE IF NOT EXISTS clinica_respuestapreconsulta (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    formulario_id UUID NOT NULL REFERENCES clinica_formulariopreconsulta(id) ON DELETE RESTRICT,
+    paciente_id UUID NOT NULL REFERENCES clinica_paciente(id) ON DELETE CASCADE,
+    cita_id UUID NULL REFERENCES agenda_cita(id) ON DELETE SET NULL,
+    motivo_consulta TEXT NOT NULL,
+    sintomas_principales TEXT,
+    nivel_urgencia_percibido SMALLINT NOT NULL CHECK (nivel_urgencia_percibido BETWEEN 1 AND 5),
+    antecedentes_medicos TEXT,
+    antecedentes_psiquiatricos TEXT,
+    medicacion_actual TEXT,
+    respuestas_detalle JSONB NOT NULL DEFAULT '{}'::jsonb,
+    estado VARCHAR(20) NOT NULL DEFAULT 'ENVIADO' CHECK (estado IN ('ENVIADO', 'REVISADO', 'ARCHIVADO')),
+    fecha_envio TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+COMMENT ON TABLE clinica_respuestapreconsulta IS 'Datos clínicos de primera vez proporcionados por el paciente para triaje.';
+
+-- II.18. Historia Clínica Psicológica Electrónica (EHR)
+CREATE TABLE IF NOT EXISTS clinica_historiaclinica (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    paciente_id UUID NOT NULL UNIQUE REFERENCES clinica_paciente(id) ON DELETE CASCADE,
+    psicologo_apertura_id UUID NOT NULL REFERENCES clinica_psicologo(id) ON DELETE RESTRICT,
+    codigo_historia VARCHAR(50) NOT NULL UNIQUE,
+    motivo_consulta_inicial TEXT NOT NULL,
+    antecedentes_personales TEXT,
+    antecedentes_familiares TEXT,
+    historia_evolutiva TEXT,
+    examen_mental_inicial TEXT,
+    plan_tratamiento TEXT,
+    cerrada BOOLEAN NOT NULL DEFAULT FALSE,
+    fecha_apertura TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_cierre TIMESTAMPTZ NULL,
+    fecha_actualizacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+COMMENT ON TABLE clinica_historiaclinica IS 'Expediente clínico integral y longitudinal bajo secreto profesional médico.';
+
+-- II.19. Diagnósticos Clínicos Codificados CIE-10 / CIE-11
+CREATE TABLE IF NOT EXISTS clinica_diagnosticocie (
+    id SERIAL PRIMARY KEY,
+    historia_clinica_id UUID NOT NULL REFERENCES clinica_historiaclinica(id) ON DELETE CASCADE,
+    codigo_cie VARCHAR(20) NOT NULL,
+    descripcion VARCHAR(255) NOT NULL,
+    tipo VARCHAR(20) NOT NULL DEFAULT 'PRESUNTIVO' CHECK (tipo IN ('PRESUNTIVO', 'CONFIRMADO', 'DIFERENCIAL')),
+    observaciones TEXT,
+    fecha_diagnostico DATE NOT NULL DEFAULT CURRENT_DATE
+);
+COMMENT ON TABLE clinica_diagnosticocie IS 'Diagnósticos patológicos nosológicos asociados al expediente clínico.';
+
+-- II.20. Notas de Sesión Clínica (Formato Estructurado SOAP)
+CREATE TABLE IF NOT EXISTS clinica_notasesion (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    historia_clinica_id UUID NOT NULL REFERENCES clinica_historiaclinica(id) ON DELETE CASCADE,
+    cita_id UUID NULL UNIQUE REFERENCES agenda_cita(id) ON DELETE SET NULL,
+    psicologo_id UUID NOT NULL REFERENCES clinica_psicologo(id) ON DELETE RESTRICT,
+    numero_sesion INTEGER NOT NULL CHECK (numero_sesion > 0),
+    fecha_sesion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    subjetivo TEXT NOT NULL,
+    objetivo TEXT NOT NULL,
+    analisis TEXT NOT NULL,
+    plan TEXT NOT NULL,
+    tecnicas_aplicadas VARCHAR(255),
+    conducta_observada TEXT,
+    estado_guardado VARCHAR(20) NOT NULL DEFAULT 'FIRMADA' CHECK (estado_guardado IN ('BORRADOR', 'FIRMADA', 'EDITADA')),
+    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+COMMENT ON TABLE clinica_notasesion IS 'Evolución clínica estructurada por sesión (Subjetivo, Objetivo, Análisis, Plan).';
+
+-- II.21. Evolución Longitudinal y Acuerdos Terapéuticos
+CREATE TABLE IF NOT EXISTS clinica_evolucionclinica (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    historia_clinica_id UUID NOT NULL REFERENCES clinica_historiaclinica(id) ON DELETE CASCADE,
+    nota_sesion_id UUID NULL REFERENCES clinica_notasesion(id) ON DELETE SET NULL,
+    estado_avance VARCHAR(30) NOT NULL CHECK (estado_avance IN ('PROGRESO_NOTABLE', 'EN_PROCESO', 'ESTANCAMIENTO', 'RETROCESO_CRISIS')),
+    justificacion TEXT NOT NULL,
+    acuerdos_pactados TEXT,
+    fecha_registro TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+COMMENT ON TABLE clinica_evolucionclinica IS 'Métricas de evolución longitudinal y metas acordadas con el paciente.';
+
+-- II.22. Tareas Terapéuticas Asignadas Inter-Sesiones
+CREATE TABLE IF NOT EXISTS clinica_tareaterapeutica (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    historia_clinica_id UUID NOT NULL REFERENCES clinica_historiaclinica(id) ON DELETE CASCADE,
+    psicologo_id UUID NOT NULL REFERENCES clinica_psicologo(id) ON DELETE RESTRICT,
+    paciente_id UUID NOT NULL REFERENCES clinica_paciente(id) ON DELETE CASCADE,
+    titulo VARCHAR(150) NOT NULL,
+    descripcion TEXT NOT NULL,
+    categoria VARCHAR(50) NOT NULL DEFAULT 'COGNITIVA' CHECK (categoria IN ('COGNITIVA', 'CONDUCTUAL', 'MINDFULNESS', 'AUTOREGISTRO', 'OTRA')),
+    fecha_limite DATE NOT NULL,
+    estado VARCHAR(20) NOT NULL DEFAULT 'PENDIENTE' CHECK (estado IN ('PENDIENTE', 'EN_REVISION', 'COMPLETADA', 'VENCIDA', 'NO_REALIZADA')),
+    archivo_adjunto_url VARCHAR(255),
+    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+COMMENT ON TABLE clinica_tareaterapeutica IS 'Ejercicios de intervención cognitiva y conductual entre sesiones de consulta.';
+
+-- II.23. Evidencias y Autorreportes de Tareas Terapéuticas
+CREATE TABLE IF NOT EXISTS clinica_evidenciatarea (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tarea_id UUID NOT NULL UNIQUE REFERENCES clinica_tareaterapeutica(id) ON DELETE CASCADE,
+    texto_reflexion TEXT NOT NULL,
+    dificultad_percibida SMALLINT NOT NULL CHECK (dificultad_percibida BETWEEN 1 AND 5),
+    archivo_evidencia_url VARCHAR(255),
+    fecha_cumplimiento TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+COMMENT ON TABLE clinica_evidenciatarea IS 'Reflexión y archivos entregados por el paciente al completar sus tareas.';
+
+-- II.24. Plantillas de Consentimientos Informados Legales
+CREATE TABLE IF NOT EXISTS clinica_consentimientoinformado (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    titulo VARCHAR(150) NOT NULL,
+    tipo VARCHAR(50) NOT NULL CHECK (tipo IN ('ATENCION_GENERAL', 'TELEPSICOLOGIA', 'MENORES_EDAD', 'DATOS_SENSIBLES')),
+    contenido_legal TEXT NOT NULL,
+    version VARCHAR(20) NOT NULL DEFAULT 'v1.0',
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
+    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+COMMENT ON TABLE clinica_consentimientoinformado IS 'Documentos legales de aceptación de servicios psicológicos y tratamiento de datos.';
+
+-- II.25. Firmas Digitales y Aceptación de Consentimientos
+CREATE TABLE IF NOT EXISTS clinica_firmaconsentimiento (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    consentimiento_id UUID NOT NULL REFERENCES clinica_consentimientoinformado(id) ON DELETE RESTRICT,
+    paciente_id UUID NOT NULL REFERENCES clinica_paciente(id) ON DELETE CASCADE,
+    firmado_por VARCHAR(150) NOT NULL,
+    es_menor_edad BOOLEAN NOT NULL DEFAULT FALSE,
+    tutor_nombre VARCHAR(150),
+    tutor_ci VARCHAR(30),
+    hash_sha256 VARCHAR(64) NOT NULL,
+    ip_origen VARCHAR(45) NOT NULL,
+    user_agent TEXT NOT NULL,
+    firma_canvas_url VARCHAR(255),
+    fecha_firma TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+COMMENT ON TABLE clinica_firmaconsentimiento IS 'Evidencia biométrica y trazabilidad criptográfica de consentimiento informado.';
+
+-- II.26. Derivaciones Interprofesionales y Cierres de Caso
+CREATE TABLE IF NOT EXISTS clinica_derivacioncaso (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    historia_clinica_id UUID NOT NULL REFERENCES clinica_historiaclinica(id) ON DELETE CASCADE,
+    psicologo_emisor_id UUID NOT NULL REFERENCES clinica_psicologo(id) ON DELETE RESTRICT,
+    tipo_derivacion VARCHAR(30) NOT NULL CHECK (tipo_derivacion IN ('INTERNA_COLEGA', 'EXTERNA_PSIQUIATRIA', 'EXTERNA_NEUROLOGIA', 'CIERRE_ALTA', 'DESERCION')),
+    motivo_clinico TEXT NOT NULL,
+    sintomatologia_relevante TEXT,
+    profesional_destino VARCHAR(150),
+    institucion_destino VARCHAR(150),
+    nivel_riesgo VARCHAR(20) NOT NULL DEFAULT 'MEDIO' CHECK (nivel_riesgo IN ('BAJO', 'MEDIO', 'ALTO', 'CRITICO')),
+    fecha_derivacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    aceptada BOOLEAN NOT NULL DEFAULT FALSE
+);
+COMMENT ON TABLE clinica_derivacioncaso IS 'Protocolo formal de transferencia clínica o alta terapéutica.';
+
+-- II.27. Sesiones de Orientación Asistida por Chatbot Clínico
+CREATE TABLE IF NOT EXISTS clinica_conversacionchatbot (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    session_id VARCHAR(100) NOT NULL UNIQUE,
+    paciente_id UUID NULL REFERENCES clinica_paciente(id) ON DELETE SET NULL,
+    estado VARCHAR(25) NOT NULL DEFAULT 'ACTIVA' CHECK (estado IN ('ACTIVA', 'ESCALADA_HUMANO', 'CERRADA_USUARIO', 'TIMEOUT')),
+    escalada_a_humano BOOLEAN NOT NULL DEFAULT FALSE,
+    atendida_por_usuario_id UUID NULL REFERENCES accounts_usuario(id) ON DELETE SET NULL,
+    intencion_predominante VARCHAR(80),
+    contiene_riesgo BOOLEAN NOT NULL DEFAULT FALSE,
+    fecha_inicio TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_fin TIMESTAMPTZ NULL
+);
+COMMENT ON TABLE clinica_conversacionchatbot IS 'Sesiones conversacionales del asistente virtual de orientación y triaje.';
+
+-- II.28. Mensajes Intercambiados en el Chatbot NLP
+CREATE TABLE IF NOT EXISTS clinica_mensajechatbot (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    conversacion_id UUID NOT NULL REFERENCES clinica_conversacionchatbot(id) ON DELETE CASCADE,
+    remitente VARCHAR(20) NOT NULL CHECK (remitente IN ('PACIENTE', 'BOT', 'OPERADOR_HUMANO')),
+    contenido TEXT NOT NULL,
+    intencion_detectada VARCHAR(80),
+    metadatos_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+    timestamp TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+COMMENT ON TABLE clinica_mensajechatbot IS 'Historial cronológico de interacciones procesadas por el pipeline NLP.';
+
+-- II.29. Auditoría y Trazabilidad de Consultas IA
+CREATE TABLE IF NOT EXISTS clinica_auditoriaia (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    paciente_id UUID NULL REFERENCES clinica_paciente(id) ON DELETE SET NULL,
+    endpoint VARCHAR(100) NOT NULL,
+    tokens_prompt INTEGER NOT NULL DEFAULT 0,
+    tokens_completion INTEGER NOT NULL DEFAULT 0,
+    latencia_ms INTEGER NOT NULL DEFAULT 0,
+    modelo_utilizado VARCHAR(100) NOT NULL,
+    score_confianza NUMERIC(4,3) NULL,
+    hash_trazabilidad CHAR(64) NOT NULL,
+    timestamp TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+COMMENT ON TABLE clinica_auditoriaia IS 'Métricas de consumo, latencia y observabilidad de llamadas a modelos LLM/NLP.';
+
+
+-- -----------------------------------------------------------------------------
+-- BLOQUE 4: EXPERIENCIA MÓVIL, PUSH FCM, MOOD TRACKER E IA TRIAJE (SPRINT 3)
+-- -----------------------------------------------------------------------------
+
+-- II.30. Dispositivos Móviles y Tokens FCM (CU12 / HU-43)
+CREATE TABLE IF NOT EXISTS comunicacion_tokenfcm (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    paciente_id UUID NOT NULL REFERENCES clinica_paciente(id) ON DELETE CASCADE,
+    token TEXT NOT NULL,
+    plataforma VARCHAR(20) NOT NULL CHECK (plataforma IN ('ANDROID', 'IOS', 'WEB')),
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
+    creado_en TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    actualizado_en TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_tokenfcm_paciente_dispositivo UNIQUE (paciente_id, token)
+);
+COMMENT ON TABLE comunicacion_tokenfcm IS 'Tokens push de Firebase Cloud Messaging asociados a dispositivos del paciente.';
+
+-- II.31. Cola Transaccional de Notificaciones y Recordatorios de Citas (CU12 / HU-43)
+CREATE TABLE IF NOT EXISTS agenda_notificacioncita (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    cita_id UUID NOT NULL REFERENCES agenda_cita(id) ON DELETE CASCADE,
+    tipo_evento VARCHAR(30) NOT NULL CHECK (tipo_evento IN (
+        'RECORDATORIO_24H', 'RECORDATORIO_1H', 'CANCELACION', 'REPROGRAMACION', 'NUEVA_TAREA'
+    )),
+    canal VARCHAR(20) NOT NULL DEFAULT 'PUSH_FCM' CHECK (canal IN ('PUSH_FCM', 'EMAIL', 'SMS')),
+    titulo VARCHAR(150) NULL,
+    cuerpo TEXT NULL,
+    enviada BOOLEAN NOT NULL DEFAULT FALSE,
+    fecha_programada TIMESTAMPTZ NOT NULL,
+    fecha_envio TIMESTAMPTZ NULL,
+    error_log TEXT NULL,
+    intentos_entrega INTEGER NOT NULL DEFAULT 0 CHECK (intentos_entrega >= 0)
+);
+COMMENT ON TABLE agenda_notificacioncita IS 'Despachador programado y cola de reintentos de recordatorios push.';
+
+-- II.32. Registro Diario de Estado de Ánimo - Mood Tracker Móvil (CU17 / HU-46)
+CREATE TABLE IF NOT EXISTS clinica_registroanimo (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    paciente_id UUID NOT NULL REFERENCES clinica_paciente(id) ON DELETE CASCADE,
+    fecha_registro DATE NOT NULL DEFAULT CURRENT_DATE,
+    estado_animo VARCHAR(30) NOT NULL CHECK (estado_animo IN ('MUY_BAJO', 'BAJO', 'NEUTRAL', 'BUENO', 'EXCELENTE')),
+    escala_valor INTEGER NOT NULL CHECK (escala_valor BETWEEN 1 AND 5),
+    factores_contexto JSONB NOT NULL DEFAULT '[]'::jsonb,
+    nota_reflexiva TEXT NULL,
+    creado_en TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_registroanimo_paciente_fecha UNIQUE (paciente_id, fecha_registro)
+);
+COMMENT ON TABLE clinica_registroanimo IS 'Autorreporte diario afectivo para monitoreo longitudinal de salud mental.';
+
+-- II.33. Inferencia Asistiva de IA, Triaje y Detección de Crisis (CU21 / HU-47)
+CREATE TABLE IF NOT EXISTS clinica_clasificacionia (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    respuestapreconsulta_id UUID NOT NULL REFERENCES clinica_respuestapreconsulta(id) ON DELETE CASCADE,
+    categoria_principal VARCHAR(50) NOT NULL CHECK (categoria_principal IN (
+        'ANSIEDAD_FOBIAS', 'DEPRESION_ANIMO', 'PAREJA_FAMILIA', 
+        'INFANTO_JUVENIL', 'DUELO_ADAPTACION', 'OTRO'
+    )),
+    confianza_score NUMERIC(4,3) NOT NULL CHECK (confianza_score BETWEEN 0.000 AND 1.000),
+    nivel_severidad VARCHAR(20) NOT NULL CHECK (nivel_severidad IN ('LEVE', 'MODERADO', 'SEVERO', 'CRITICA')),
+    alerta_crisis BOOLEAN NOT NULL DEFAULT FALSE,
+    palabras_clave_detectadas JSONB NOT NULL DEFAULT '[]'::jsonb,
+    explicacion_heuristica TEXT NOT NULL,
+    hash_trazabilidad_sha256 CHAR(64) NOT NULL,
+    fecha_analisis TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+COMMENT ON TABLE clinica_clasificacionia IS 'Evaluación semántica por IA para triaje de riesgo asistencial previo a la sesión.';
+
+-- II.34. Sugerencias de Matching Multivariable y Validación Humana HITL (CU22 / HU-48)
+CREATE TABLE IF NOT EXISTS clinica_sugerenciamatching (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    paciente_id UUID NOT NULL REFERENCES clinica_paciente(id) ON DELETE CASCADE,
+    clasificacion_id UUID NOT NULL REFERENCES clinica_clasificacionia(id) ON DELETE CASCADE,
+    psicologo_sugerido_id UUID NOT NULL REFERENCES clinica_psicologo(id) ON DELETE CASCADE,
+    ranking_posicion INTEGER NOT NULL CHECK (ranking_posicion BETWEEN 1 AND 3),
+    score_afinidad NUMERIC(5,2) NOT NULL CHECK (score_afinidad BETWEEN 0.00 AND 100.00),
+    factores_ponderacion JSONB NOT NULL,
+    estado_decision VARCHAR(30) NOT NULL DEFAULT 'PENDIENTE_VALIDACION' 
+        CHECK (estado_decision IN ('PENDIENTE_VALIDACION', 'APROBADO', 'RECHAZADO_MANUAL', 'DESCARTADO')),
+    validado_por_coordinador UUID NULL REFERENCES accounts_usuario(id) ON DELETE SET NULL,
+    justificacion_clinica TEXT NULL,
+    fecha_generacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_decision TIMESTAMPTZ NULL,
+    CONSTRAINT uq_matching_paciente_psicologo_gen UNIQUE (paciente_id, psicologo_sugerido_id, fecha_generacion)
+);
+COMMENT ON TABLE clinica_sugerenciamatching IS 'Recomendación algorítmica de emparejamiento terapéutico con validación profesional obligatoria.';
+
+
+-- =============================================================================
+-- PARTE III: ÍNDICES DE RENDIMIENTO, LLAVES FORÁNEAS Y ESTRUCTURAS GIN
+-- =============================================================================
+
+-- III.1. Índices B-Tree en Llaves Foráneas y Filtros de Búsqueda Frecuente
+CREATE INDEX IF NOT EXISTS idx_usuario_email ON accounts_usuario(email);
+CREATE INDEX IF NOT EXISTS idx_usuario_rol ON accounts_usuario(rol_id);
+CREATE INDEX IF NOT EXISTS idx_psicologo_usuario ON clinica_psicologo(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_psicologo_colegiado ON clinica_psicologo(numero_colegiado);
+CREATE INDEX IF NOT EXISTS idx_paciente_usuario ON clinica_paciente(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_paciente_expediente ON clinica_paciente(codigo_expediente);
+CREATE INDEX IF NOT EXISTS idx_cita_psico_fecha_hora ON agenda_cita(psicologo_id, fecha, hora_inicio);
+CREATE INDEX IF NOT EXISTS idx_cita_paciente_fecha ON agenda_cita(paciente_id, fecha);
+CREATE INDEX IF NOT EXISTS idx_cita_estado ON agenda_cita(estado);
+CREATE INDEX IF NOT EXISTS idx_teleconsulta_sala ON agenda_teleconsulta(sala_id);
+CREATE INDEX IF NOT EXISTS idx_historia_paciente ON clinica_historiaclinica(paciente_id);
+CREATE INDEX IF NOT EXISTS idx_notasesion_historia ON clinica_notasesion(historia_clinica_id);
+CREATE INDEX IF NOT EXISTS idx_tareaterap_paciente ON clinica_tareaterapeutica(paciente_id);
+CREATE INDEX IF NOT EXISTS idx_firmaconsent_paciente ON clinica_firmaconsentimiento(paciente_id);
+CREATE INDEX IF NOT EXISTS idx_convchatbot_paciente ON clinica_conversacionchatbot(paciente_id);
+CREATE INDEX IF NOT EXISTS idx_mensajechatbot_conv ON clinica_mensajechatbot(conversacion_id);
+
+-- III.2. Índices Especializados para Tablas Incrementales del Sprint 3
+CREATE INDEX IF NOT EXISTS idx_tokenfcm_paciente_activo ON comunicacion_tokenfcm(paciente_id, activo);
+CREATE INDEX IF NOT EXISTS idx_tokenfcm_token ON comunicacion_tokenfcm(token);
+CREATE INDEX IF NOT EXISTS idx_notificacioncita_pendientes ON agenda_notificacioncita(fecha_programada, enviada) WHERE enviada = FALSE;
+CREATE INDEX IF NOT EXISTS idx_registroanimo_paciente_fecha ON clinica_registroanimo(paciente_id, fecha_registro DESC);
+CREATE INDEX IF NOT EXISTS idx_clasificacionia_intake ON clinica_clasificacionia(respuestapreconsulta_id);
+CREATE INDEX IF NOT EXISTS idx_clasificacionia_crisis ON clinica_clasificacionia(alerta_crisis) WHERE alerta_crisis = TRUE;
+CREATE INDEX IF NOT EXISTS idx_matching_paciente_decision ON clinica_sugerenciamatching(paciente_id, estado_decision);
+CREATE INDEX IF NOT EXISTS idx_matching_psicologo ON clinica_sugerenciamatching(psicologo_sugerido_id);
+
+-- III.3. Índices GIN sobre Estructuras Semiestructuradas JSONB
+CREATE INDEX IF NOT EXISTS idx_centro_horarios_gin ON core_centro USING GIN (horarios_atencion);
+CREATE INDEX IF NOT EXISTS idx_formulariopre_schema_gin ON clinica_formulariopreconsulta USING GIN (preguntas_schema);
+CREATE INDEX IF NOT EXISTS idx_respuestapre_detalle_gin ON clinica_respuestapreconsulta USING GIN (respuestas_detalle);
+CREATE INDEX IF NOT EXISTS idx_registroanimo_factores_gin ON clinica_registroanimo USING GIN (factores_contexto);
+CREATE INDEX IF NOT EXISTS idx_matching_factores_gin ON clinica_sugerenciamatching USING GIN (factores_ponderacion);
+```
+
+<br>
+
+##### Diccionario de Datos del Incremento Sprint 3
+
+###### 1. Entidad: `comunicacion_tokenfcm` (Tokens de Dispositivos Móviles)
+| Atributo / Campo | Tipo de Dato | Nulidad | Clave / Restricción | Valor por Defecto | Descripción Semántica / Regla Clínica |
+| :--- | :--- | :---: | :---: | :---: | :--- |
+| `id` | UUID | NOT NULL | PK | `gen_random_uuid()` | Identificador universal único del registro de token. |
+| `paciente_id` | UUID | NOT NULL | FK (`clinica_paciente`) | — | Referencia al paciente propietario del smartphone. |
+| `token` | TEXT | NOT NULL | UQ (`paciente_id`, `token`) | — | Token criptográfico de registro emitido por Firebase Cloud Messaging. |
+| `plataforma` | VARCHAR(20) | NOT NULL | CHECK (`ANDROID`, `IOS`, `WEB`) | — | Sistema operativo del cliente móvil receptor. |
+| `activo` | BOOLEAN | NOT NULL | — | `TRUE` | Estado de vigencia del token; pasa a `FALSE` si la app se desinstala. |
+| `creado_en` | TIMESTAMPTZ | NOT NULL | — | `CURRENT_TIMESTAMP` | Marca temporal de enrolamiento del dispositivo. |
+| `actualizado_en` | TIMESTAMPTZ | NOT NULL | — | `CURRENT_TIMESTAMP` | Fecha de última renovación del token por el SDK. |
+
+###### 2. Entidad: `agenda_notificacioncita` (Cola Transaccional de Recordatorios)
+| Atributo / Campo | Tipo de Dato | Nulidad | Clave / Restricción | Valor por Defecto | Descripción Semántica / Regla Clínica |
+| :--- | :--- | :---: | :---: | :---: | :--- |
+| `id` | UUID | NOT NULL | PK | `gen_random_uuid()` | Identificador único de la notificación encolada. |
+| `cita_id` | UUID | NOT NULL | FK (`agenda_cita`) | — | Cita médica a la que hace referencia el recordatorio. |
+| `tipo_evento` | VARCHAR(30) | NOT NULL | CHECK (Eventos autorizados) | — | Momento del aviso: `RECORDATORIO_24H`, `RECORDATORIO_1H`, `CANCELACION`. |
+| `canal` | VARCHAR(20) | NOT NULL | CHECK (`PUSH_FCM`, `EMAIL`, `SMS`) | `'PUSH_FCM'` | Vía de comunicación prioritaria para la entrega. |
+| `enviada` | BOOLEAN | NOT NULL | — | `FALSE` | Bandera de confirmación de despacho exitoso a la red FCM. |
+| `fecha_programada` | TIMESTAMPTZ | NOT NULL | — | — | Momento exacto en que debe ejecutarse el envío. |
+| `fecha_envio` | TIMESTAMPTZ | NULL | — | `NULL` | Momento en que el backend entregó el payload a Firebase. |
+| `error_log` | TEXT | NULL | — | `NULL` | Detalle técnico del fallo en caso de respuesta anómala de red. |
+| `intentos_entrega` | INTEGER | NOT NULL | CHECK ($\ge 0$) | `0` | Contador de reintentos automáticos ejecutados (máximo 3). |
+
+###### 3. Entidad: `clinica_registroanimo` (Mood Tracker Diario de Pacientes)
+| Atributo / Campo | Tipo de Dato | Nulidad | Clave / Restricción | Valor por Defecto | Descripción Semántica / Regla Clínica |
+| :--- | :--- | :---: | :---: | :---: | :--- |
+| `id` | UUID | NOT NULL | PK | `gen_random_uuid()` | Identificador único del registro de estado de ánimo. |
+| `paciente_id` | UUID | NOT NULL | FK (`clinica_paciente`) | — | Paciente que realiza el autorreporte emocional. |
+| `fecha_registro` | DATE | NOT NULL | UQ (`paciente_id`, `fecha`) | `CURRENT_DATE` | Día calendario del registro (máximo uno consolidado por día). |
+| `estado_animo` | VARCHAR(30) | NOT NULL | CHECK (5 estados) | — | Estado afectivo: `MUY_BAJO`, `BAJO`, `NEUTRAL`, `BUENO`, `EXCELENTE`. |
+| `escala_valor` | INTEGER | NOT NULL | CHECK (1 a 5) | — | Equivalente numérico para modelado estadístico y tendencias. |
+| `factores_contexto` | JSONB | NOT NULL | — | `'[]'::jsonb` | Array de etiquetas influyentes (`["Trabajo", "Sueño", "Familia"]`). |
+| `nota_reflexiva` | TEXT | NULL | — | `NULL` | Apuntes personales del paciente para discusión en consulta. |
+| `creado_en` | TIMESTAMPTZ | NOT NULL | — | `CURRENT_TIMESTAMP` | Marca temporal con zona horaria de persistencia. |
+
+###### 4. Entidad: `clinica_clasificacionia` (Inferencia Asistiva y Detección de Crisis)
+| Atributo / Campo | Tipo de Dato | Nulidad | Clave / Restricción | Valor por Defecto | Descripción Semántica / Regla Clínica |
+| :--- | :--- | :---: | :---: | :---: | :--- |
+| `id` | UUID | NOT NULL | PK | `gen_random_uuid()` | Identificador único del análisis computacional de IA. |
+| `respuestapreconsulta_id` | UUID | NOT NULL | FK (`clinica_respuestapreconsulta`) | — | Registro de intake clínico sometido al análisis lingüístico. |
+| `categoria_principal` | VARCHAR(50) | NOT NULL | CHECK (5 áreas + OTRO) | — | Área temática sugerida: Ansiedad, Depresión, Pareja, etc. |
+| `confianza_score` | NUMERIC(4,3) | NOT NULL | CHECK ($0.000$ a $1.000$) | — | Grado de certeza matemática del modelo heurístico. |
+| `nivel_severidad` | VARCHAR(20) | NOT NULL | CHECK (`LEVE`, `MODERADO`, `SEVERO`, `CRITICA`) | — | Nivel de urgencia asistencial estimado por el motor. |
+| `alerta_crisis` | BOOLEAN | NOT NULL | — | `FALSE` | Bandera de emergencia vital (ideación suicida o autolesión). |
+| `palabras_clave_detectadas` | JSONB | NOT NULL | — | `'[]'::jsonb` | Términos clínicos que detonaron la clasificación y severidad. |
+| `explicacion_heuristica` | TEXT | NOT NULL | — | — | Justificación clínica en lenguaje natural para el coordinador. |
+| `hash_trazabilidad_sha256` | CHAR(64) | NOT NULL | — | — | Hash criptográfico del texto procesado libre de datos PII. |
+| `fecha_analisis` | TIMESTAMPTZ | NOT NULL | — | `CURRENT_TIMESTAMP` | Momento de ejecución del pipeline de inferencia. |
+
+###### 5. Entidad: `clinica_sugerenciamatching` (Emparejamiento de Psicólogos y Validación Humana)
+| Atributo / Campo | Tipo de Dato | Nulidad | Clave / Restricción | Valor por Defecto | Descripción Semántica / Regla Clínica |
+| :--- | :--- | :---: | :---: | :---: | :--- |
+| `id` | UUID | NOT NULL | PK | `gen_random_uuid()` | Identificador único de la sugerencia de emparejamiento. |
+| `paciente_id` | UUID | NOT NULL | FK (`clinica_paciente`) | — | Paciente sujeto del proceso de asignación terapéutica. |
+| `clasificacion_id` | UUID | NOT NULL | FK (`clinica_clasificacionia`) | — | Análisis de IA que fundamenta la recomendación. |
+| `psicologo_sugerido_id` | UUID | NOT NULL | FK (`clinica_psicologo`) | — | Profesional evaluado por el modelo multivariable. |
+| `ranking_posicion` | INTEGER | NOT NULL | CHECK (1 a 3) | — | Orden de idoneidad clínica sugerido por el algoritmo (1, 2 o 3). |
+| `score_afinidad` | NUMERIC(5,2) | NOT NULL | CHECK ($0.00$ a $100.00$) | — | Puntuación global ponderada (40% esp, 30% disp, 20% carga, 10% mod). |
+| `factores_ponderacion` | JSONB | NOT NULL | — | — | Desglose individual de puntajes de los 4 criterios de matching. |
+| `estado_decision` | VARCHAR(30) | NOT NULL | CHECK (Estados de decisión) | `'PENDIENTE_VALIDACION'` | `PENDIENTE_VALIDACION`, `APROBADO`, `RECHAZADO_MANUAL`, `DESCARTADO`. |
+| `validado_por_coordinador` | UUID | NULL | FK (`accounts_usuario`) | `NULL` | Usuario del Coordinador Clínico que autorizó formalmente la asignación. |
+| `justificacion_clinica` | TEXT | NULL | — | `NULL` | Notas clínicas del profesional humano si difiere de la sugerencia IA. |
+| `fecha_generacion` | TIMESTAMPTZ | NOT NULL | — | `CURRENT_TIMESTAMP` | Momento en que el algoritmo produjo la recomendación. |
+| `fecha_decision` | TIMESTAMPTZ | NULL | — | `NULL` | Marca temporal exacta de la confirmación humana obligatoria. |
+
+<br>
+
+---
+
+---
+
+##### 7.2.1.2.2 Diseño de Datos y Persistencia Local del Cliente Móvil (Flutter / SQLite / SecureStorage / Cache & Offline Sync)
+
+En estricta correspondencia con los requerimientos de la cátedra para el desarrollo de la aplicación móvil en Flutter, el cliente móvil no es un visor estático; incorpora una **capa de persistencia local híbrida** que combina almacenamiento criptográfico seguro, base de datos relacional SQLite local (`sqflite`) y preferencias de usuario (`shared_preferences`), permitiendo resiliencia operativa ante pérdida de conectividad a internet:
+1. **Enclave Seguro Criptográfico (`FlutterSecureStorage`):** Almacena tokens JWT (`access_token`, `refresh_token`), el identificador único del dispositivo y la clave biométrica bajo cifrado de hardware (`Android KeyStore` / `iOS Keychain` con algoritmo AES-256-GCM).
+2. **Caché Transaccional y Cola de Sincronización Offline (`sqflite` / SQLite 3):** Almacena localmente las citas del paciente para consulta sin conexión, y mantiene una cola transaccional para registrar el estado de ánimo diario (*Mood Tracker*) y evidencias de tareas aun cuando el smartphone se encuentre en modo avión o sin datos móviles. Al restablecerse la conectividad, el `SyncManager` despacha las tuplas pendientes con idempotencia al backend en Render.
+3. **Preferencias Rápidas de Usuario (`SharedPreferences`):** Persiste el modo oscuro/claro, estado de notificaciones push locales y el último subdominio de centro psicológico visitado.
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3 - Experiencia Móvil de Pacientes y Asistencia de IA* → *2. Clases - Sprint 3* → *Diagrama de Clases - Persistencia y Base de Datos Local Móvil (SQLite y SecureStorage)* (**Diagrama ID: 326**).
+
+![Diagrama de Clases - Persistencia Local y Datos Móviles Flutter](./imagenes/diagrama_datos_movil_sp3.png)
 
 ```plantuml
 @startuml
 skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+
+title class Diagrama de Clases - Persistencia y Base de Datos Local Móvil (SQLite y SecureStorage en Flutter)
+
+' ==============================================================================
+' 1. ALMACENAMIENTO SEGURO Y CONFIGURACIONES
+' ==============================================================================
+package "Almacenamiento Criptográfico y Preferencias Locales" #EBF5FB {
+  class LocalAuthSession <<SecureStorage / KeyStore>> #AED6F1 {
+    - key_accessToken: String
+    - key_refreshToken: String
+    - key_tokenFCM: String
+    - key_tenantSlug: String
+    - key_userProfileJson: String
+    + writeSecure(key: String, val: String): Future<void>
+    + readSecure(key: String): Future<String?>
+    + clearAll(): Future<void>
+  }
+
+  class LocalPreferences <<SharedPreferences>> #AED6F1 {
+    - isDarkMode: Boolean
+    - notificationsEnabled: Boolean
+    - lastActiveTenant: String
+    - biometricPromptOnLaunch: Boolean
+    + setBool(key: String, val: Boolean): Future<void>
+    + getBool(key: String): Boolean
+    + setString(key: String, val: String): Future<void>
+  }
+}
+
+' ==============================================================================
+' 2. MOTOR DE BASE DE DATOS LOCAL SQLITE (SQFLITE)
+' ==============================================================================
+package "Base de Datos Relacional Local Móvil (SQLite 3 - sqflite)" #FEF9E7 {
+  class DatabaseHelper <<SQLiteHelper>> #FCF3CF {
+    - dbName: String = "sigepsi_local.db"
+    - dbVersion: int = 3
+    - database: Database?
+    + initDatabase(): Future<Database>
+    + onCreate(db: Database, v: int): void
+    + onUpgrade(db: Database, old: int, new: int): void
+  }
+
+  class LocalCacheCita <<SQLiteTable>> #FADBD8 {
+    - id: TEXT PRIMARY KEY
+    - psicologo_nombre: TEXT
+    - fecha: TEXT
+    - hora_inicio: TEXT
+    - hora_fin: TEXT
+    - modalidad: TEXT
+    - estado: TEXT
+    - costo: REAL
+    - last_synced_at: TEXT
+    + insertOrUpdate(cita: Map): Future<void>
+    + getCitasLocales(): Future<List<Map>>
+    + deleteExpired(): Future<int>
+  }
+
+  class LocalCacheAnimo <<SQLiteTable>> #D4EFDF {
+    - id: TEXT PRIMARY KEY
+    - fecha_registro: TEXT
+    - escala_valor: INTEGER
+    - estado_animo: TEXT
+    - factores_json: TEXT
+    - nota_reflexiva: TEXT
+    - sync_status: TEXT ('PENDING','SYNCED')
+    + queuePendingRecord(rec: Map): Future<void>
+    + getPendingToSync(): Future<List<Map>>
+    + markSynced(id: String): Future<void>
+  }
+
+  class LocalCacheTarea <<SQLiteTable>> #FCF3CF {
+    - id: TEXT PRIMARY KEY
+    - titulo: TEXT
+    - descripcion: TEXT
+    - categoria: TEXT
+    - fecha_limite: TEXT
+    - estado: TEXT
+    - evidencia_texto: TEXT
+    - sync_status: TEXT
+    + cacheTareas(list: List<Map>): Future<void>
+    + saveOfflineEvidence(id: String, txt: String): Future<void>
+    + getPendingEvidences(): Future<List<Map>>
+  }
+
+  class LocalCacheNotificacion <<SQLiteTable>> #E8F8F5 {
+    - id: TEXT PRIMARY KEY
+    - titulo: TEXT
+    - cuerpo: TEXT
+    - tipo_evento: TEXT
+    - cita_id: TEXT
+    - recibida_en: TEXT
+    - leida: INTEGER (0 o 1)
+    + insertNotif(notif: Map): Future<void>
+    + getUnreadCount(): Future<int>
+    + markAllAsRead(): Future<void>
+  }
+}
+
+' ==============================================================================
+' 3. MOTOR DE SINCRONIZACIÓN OFFLINE-ONLINE
+' ==============================================================================
+package "Motor de Sincronización Móvil (lib/sync/)" #F2F4F4 {
+  class SyncManager <<OfflineEngine>> #D5D8DC {
+    - isOnline: Boolean
+    - syncIntervalMin: int = 15
+    - lastSyncTimestamp: DateTime
+    + checkConnectivity(): Future<Boolean>
+    + syncPendingMood(): Future<void>
+    + syncPendingEvidences(): Future<void>
+    + refreshLocalCache(): Future<void>
+  }
+}
+
+' Relaciones estructurales de la persistencia móvil
+DatabaseHelper *-- "1..*" LocalCacheCita : administra_tabla
+DatabaseHelper *-- "1..*" LocalCacheAnimo : administra_tabla
+DatabaseHelper *-- "1..*" LocalCacheTarea : administra_tabla
+DatabaseHelper *-- "1..*" LocalCacheNotificacion : administra_tabla
+
+SyncManager ..> DatabaseHelper : lee_y_escribe_cache
+SyncManager ..> LocalAuthSession : valida_tokens_bearer
+SyncManager --> "0..*" LocalCacheAnimo : despacha_pendientes
+SyncManager --> "0..*" LocalCacheTarea : sube_evidencias
+@enduml
+```
+
+###### Script DDL de Base de Datos Local SQLite en Flutter (`sqflite`)
+
+```sql
+-- =============================================================================
+-- SIGEPSI MÓVIL (FLUTTER 3.X) - ESQUEMA DE BASE DE DATOS LOCAL SQLITE 3
+-- Archivo: sigepsi_local.db (Ruta interna protegida del sandbox Android/iOS)
+-- =============================================================================
+
+-- 1. Tabla de Caché de Citas del Paciente (Lectura Offline)
+CREATE TABLE IF NOT EXISTS local_cache_citas (
+    id TEXT PRIMARY KEY,
+    psicologo_nombre TEXT NOT NULL,
+    fecha TEXT NOT NULL,
+    hora_inicio TEXT NOT NULL,
+    hora_fin TEXT NOT NULL,
+    modalidad TEXT NOT NULL,
+    estado TEXT NOT NULL,
+    costo REAL NOT NULL,
+    last_synced_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_local_cita_fecha ON local_cache_citas(fecha);
+
+-- 2. Cola Transaccional de Estado de Ánimo (Mood Tracker Offline Sync)
+CREATE TABLE IF NOT EXISTS local_cache_animo (
+    id TEXT PRIMARY KEY,
+    fecha_registro TEXT NOT NULL,
+    escala_valor INTEGER NOT NULL CHECK (escala_valor BETWEEN 1 AND 5),
+    estado_animo TEXT NOT NULL,
+    factores_json TEXT NOT NULL DEFAULT '[]',
+    nota_reflexiva TEXT,
+    sync_status TEXT NOT NULL DEFAULT 'PENDING' CHECK (sync_status IN ('PENDING', 'SYNCED'))
+);
+CREATE INDEX IF NOT EXISTS idx_local_animo_sync ON local_cache_animo(sync_status);
+
+-- 3. Tabla de Caché y Cola de Evidencias de Tareas Terapéuticas
+CREATE TABLE IF NOT EXISTS local_cache_tareas (
+    id TEXT PRIMARY KEY,
+    titulo TEXT NOT NULL,
+    descripcion TEXT NOT NULL,
+    categoria TEXT NOT NULL,
+    fecha_limite TEXT NOT NULL,
+    estado TEXT NOT NULL,
+    evidencia_texto TEXT,
+    archivo_local_path TEXT,
+    sync_status TEXT NOT NULL DEFAULT 'SYNCED' CHECK (sync_status IN ('SYNCED', 'PENDING_UPLOAD'))
+);
+CREATE INDEX IF NOT EXISTS idx_local_tarea_sync ON local_cache_tareas(sync_status);
+
+-- 4. Historial Local de Notificaciones Push Recibidas (Bandeja Móvil)
+CREATE TABLE IF NOT EXISTS local_cache_notificaciones (
+    id TEXT PRIMARY KEY,
+    titulo TEXT NOT NULL,
+    cuerpo TEXT NOT NULL,
+    tipo_evento TEXT NOT NULL,
+    cita_id TEXT,
+    recibida_en TEXT NOT NULL,
+    leida INTEGER NOT NULL DEFAULT 0 CHECK (leida IN (0, 1))
+);
+CREATE INDEX IF NOT EXISTS idx_local_notif_leida ON local_cache_notificaciones(leida);
+```
+
+###### Diccionario de Datos del Almacenamiento Local Móvil (Flutter)
+
+| Entidad / Tabla Local | Tipo de Almacenamiento | Campos Clave | Política de Seguridad / Sincronización |
+| :--- | :--- | :--- | :--- |
+| `LocalAuthSession` | `FlutterSecureStorage` (KeyStore / Keychain) | `accessToken`, `refreshToken`, `tokenFCM`, `tenantSlug` | Cifrado por hardware AES-256. Se purga inmediatamente al ejecutar `cerrarSesion()`. |
+| `LocalPreferences` | `SharedPreferences` (XML / plist) | `isDarkMode`, `notificationsEnabled`, `lastActiveTenant` | Almacenamiento plano de configuración visual y preferencias de interfaz de usuario. |
+| `local_cache_citas` | SQLite (`sigepsi_local.db`) | `id`, `fecha`, `hora_inicio`, `estado`, `last_synced_at` | Caché en modo lectura. Se refresca al detectar conexión; permite visualizar agenda sin red. |
+| `local_cache_animo` | SQLite (`sigepsi_local.db`) | `id`, `fecha_registro`, `escala_valor`, `sync_status` | Cola offline transaccional. Guarda autorreportes con `sync_status='PENDING'` y los vacía al sincronizar. |
+| `local_cache_tareas`| SQLite (`sigepsi_local.db`) | `id`, `titulo`, `fecha_limite`, `evidencia_texto`, `sync_status` | Soporta redacción de reflexiones offline; despacha la evidencia tan pronto el móvil tiene internet. |
+| `local_cache_notificaciones` | SQLite (`sigepsi_local.db`) | `id`, `titulo`, `cuerpo`, `tipo_evento`, `recibida_en`, `leida` | Historial persistente local para la bandeja de avisos push recibidos en segundo plano vía FCM. |
+
+
+#### 7.2.1.3 Diseño de la Lógica de Negocio (Patrón BCE: Comunicación, Clases de Análisis y Secuencia UML 2.5+)
+
+En estricta observancia del marco metodológico de la cátedra para el modelado de la lógica del negocio bajo el patrón **BCE (Boundary - Control - Entity)**, cada caso de uso del Sprint 3 se formaliza mediante la tríada metodológica completa en el orden riguroso dictado por la materia:
+1. **1º Diagrama de Comunicación BCE (Patrón de Robustez):** Especifica las interacciones entre el actor, las interfaces visuales (`IU_`), el controlador de aplicación (`CTR_`) y las entidades del modelo relacional (`CE_`), numerando secuencialmente cada mensaje transaccional.
+2. **2º Diagrama de Clases de Análisis (BCE / VOPC):** Define la estructura estática del caso de uso en notación de clases formal; la frontera (`IU_`) contiene **todos los atributos visuales (campos, botones, inputs)** y métodos de manipulación de usuario; el controlador (`CTR_`) contiene **exclusivamente métodos de lógica de negocio (cero atributos)**; y las entidades (`CE_`) contienen **los atributos y métodos reales implementados en el modelo relacional PostgreSQL y Django ORM**. El controlador interactúa exclusivamente con la entidad principal (`CE_`), la cual mantiene composiciones formales con sus entidades secundarias o de auditoría con multiplicidades precisas.
+3. **3º Diagrama de Secuencia del Sistema (UML 2.5+):** Modela la dinámica temporal de los mensajes síncronos (flecha sólida `->`) y respuestas de retorno punteadas (`-->`). Aplica formalmente el marco de interacción (`sd`), los fragmentos combinados (`alt` para bifurcaciones con guardas mutuamente excluyentes y retorno en cada rama, `opt` para operaciones opcionales, y `loop` que parte exclusivamente desde la clase controladora sin encerrar la interfaz de usuario). Existe correspondencia biunívoca total entre los mensajes enviados y las operaciones declaradas en las clases de análisis.
+
+---
+
+##### 7.2.1.3.1 CU2: Autenticación Móvil JWT y Sesión Persistente (HU-40)
+
+* **Trazabilidad:** CU2 ← HU-40 (RF-01, RNF-18).
+* **Actores:** Paciente Móvil.
+* **Clases BCE:** `IU_LoginMovil` (Frontera Flutter), `CTR_AuthMovilController` (Control Django REST), `CE_Usuario` (Entidad Principal `accounts_usuario`), `CE_Rol` (`accounts_rol`), `CE_AuditLog` (`accounts_auditlog`), `CE_Paciente` (`clinica_paciente`), `CE_TokenFCM` (`comunicacion_tokenfcm`).
+
+###### 1º Diagrama de Comunicación BCE – CU2: Autenticación Móvil JWT
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3* → *4. Diagramas de Comunicación - Sprint 3* → *CU2 - Autenticación Móvil JWT* (**Diagrama ID: 264**).
+
+![Diagrama de Comunicación CU2 - Autenticación Móvil JWT](./imagenes/diagrama_comunicacion_cu2_sp3.png)
+
+```plantuml
+@startuml
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+
+actor "Paciente Móvil" as actor
+boundary "IU_LoginMovil
+(Flutter UI)" as iu
+control "CTR_AuthMovilController
+(Django REST JWT)" as ctrl
+entity "CE_Usuario
+(accounts_usuario)" as ce_usuario
+entity "CE_Paciente
+(clinica_paciente)" as ce_paciente
+entity "CE_TokenFCM
+(comunicacion_tokenfcm)" as ce_token
+entity "CE_AuditLog
+(accounts_auditlog)" as ce_audit
+
+actor -> iu : 1. ingresar_credenciales(email, password)
+iu -> ctrl : 2. POST /api/v1/auth/jwt/create/ (email, password, subdominio)
+ctrl -> ctrl : 3. resolver_tenant_activo(subdominio)
+ctrl -> ce_usuario : 4. validar_credenciales(password)
+ce_usuario --> ctrl : 5. resultado_validacion(es_valida, usuario_id)
+ctrl -> ce_paciente : 6. obtener_expediente()
+ce_paciente --> ctrl : 7. expediente_info(paciente_id)
+ctrl -> ce_token : 8. registrar_token_dispositivo(token_fcm)
+ce_token --> ctrl : 9. token_registrado()
+ctrl -> ce_audit : 10. registrar_acceso(evento='LOGIN_EXITOSO', ip_origen)
+ce_audit --> ctrl : 11. acceso_auditado()
+ctrl --> iu : 12. HTTP 200 OK (access_token, refresh_token)
+iu -> iu : 13. guardar_tokens(flutter_secure_storage)
+iu --> actor : 14. redirigir_dashboard_movil()
+@enduml
+```
+
+###### 2º Diagrama de Clases de Análisis – CU2: Autenticación Móvil JWT
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3* → *12. Diagramas de Clases de Análisis (BCE) - Sprint 3* → *CU2 - Clases de Análisis: Autenticación Móvil JWT* (**Diagrama ID: 289**).
+
+![Diagrama de Clases de Análisis CU2 - Autenticación Móvil JWT](./imagenes/diagrama_clases_analisis_cu2_sp3.png)
+
+```plantuml
+@startuml
+left to right direction
 skinparam shadowing false
 skinparam roundcorner 6
 skinparam defaultFontName Arial
-skinparam packageStyle frame
-skinparam ranksep 40
-skinparam nodesep 30
+skinparam classAttributeIconSize 0
+hide circle
 
-title Modelo C4 - Nivel 4: Diagrama de Código / Clases por Paquetes de Software (SIGEPSI Final)
+class "Paciente Móvil" <<Actor>> #LightYellow
 
-package "Paquete 1: Administración y Seguridad Multi-Tenant\n(backend/accounts y backend/tenants)" as P1 {
-    class Usuario {
-        + id: UUID
-        + email: String
-        + rol: String
-        + is_active: Boolean
-        + check_password(pass: String): Boolean
-    }
-    class Tenant {
-        + schema_name: String
-        + name: String
-        + plan: String
-    }
+class "IU_LoginMovil" as UI <<boundary>> #EBF5FB {
+    - txtEmail: TextFormField
+    - txtPassword: TextFormField
+    - txtSubdominio: TextFormField
+    - btnIngresar: ElevatedButton
+    - lblError: Text
+    - loadingIndicator: CircularProgressIndicator
+    __
+    + ingresar_credenciales(email: String, pass: String): void
+    + guardar_tokens(access: String, refresh: String): void
+    + mostrar_error_credenciales(msg: String): void
+    + redirigir_dashboard_movil(): void
 }
 
-package "Paquete 2: Gestión Clínica y de Profesionales\n(backend/clinica)" as P2 {
-    class Paciente {
-        + id: UUID
-        + expediente_codigo: String
-        + telefono_contacto: String
-        + contacto_emergencia_nombre: String
-        + contacto_emergencia_telefono: String
-        + psicologo_asignado_id: UUID
-    }
-    class Psicologo {
-        + id: UUID
-        + numero_colegiado: String
-        + tarifa_base: Decimal
-        + modalidad: String
-        + carga_maxima_pacientes: Integer
-        + pacientes_activos_count(): Integer
-    }
-    class Especialidad {
-        + id: UUID
-        + nombre: String
-        + descripcion: String
-    }
-    Psicologo "1" o-- "1..*" Especialidad : domina
+class "CTR_AuthMovilController" as Controller <<control>> #E8F8F5 {
+    __
+    + resolver_tenant_activo(subdominio: String): Tenant
+    + validar_credenciales(email: String, pass: String): Boolean
+    + registrar_token_fcm(paciente_id: UUID, token: String): void
+    + registrar_acceso(usuario_id: UUID, exitoso: Boolean, ip: String): void
 }
 
-package "Paquete 3: Agenda, Comunicación y Teleconsulta\n(backend/agenda y backend/comunicacion)" as P3 {
-    class CitaViewSet {
-        + list(request: Request): Response
-        + cancelar_cita(request: Request, pk: UUID): Response
-        + reprogramar_cita(request: Request, pk: UUID): Response
-    }
-    class Cita {
-        + id: UUID
-        + fecha: Date
-        + hora_inicio: Time
-        + hora_fin: Time
-        + estado: String
-        + modalidad: String
-        + sala_jitsi_token: String
-        + es_cancelable(): Boolean
-    }
-    class TokenFCM {
-        + id: UUID
-        + token: String
-        + dispositivo_info: String
-        + fecha_actualizacion: DateTime
-    }
-    class FCMNotificationService {
-        + registrar_token(paciente: Paciente, token: String): Boolean
-        + enviar_recordatorio_cita(cita: Cita): Boolean
-        + enviar_alerta_tarea(tarea: TareaTerapeutica): Boolean
-    }
-    CitaViewSet --> Cita : gestiona
-    Cita "1" *-- "0..*" TokenFCM : notifica a
-    CitaViewSet ..> FCMNotificationService : invoca
+class "CE_Usuario" as PrimaryEntity <<entity>> #FADBD8 {
+    - id: UUID
+    - email: String
+    - password: String
+    - nombre: String
+    - apellido: String
+    - telefono: String
+    - rol_id: UUID
+    - activo: Boolean
+    - must_change_password: Boolean
+    - fecha_creacion: DateTime
+    __
+    + validar_credenciales(pass: String): Boolean
+    + get_full_name(): String
+    + check_password(raw_pass: String): Boolean
 }
 
-package "Paquete 4: Seguimiento Terapéutico y Tareas Móviles\n(backend/clinica)" as P4 {
-    class TareaTerapeuticaViewSet {
-        + reportar_avance(request: Request, pk: UUID): Response
-    }
-    class TareaTerapeutica {
-        + id: UUID
-        + titulo: String
-        + instrucciones: Text
-        + fecha_limite: Date
-        + estado: String
-    }
-    class EvidenciaTarea {
-        + id: UUID
-        + dificultad_percibida: Integer
-        + utilidad_percibida: Integer
-        + reflexiones_paciente: Text
-        + fecha_entrega: DateTime
-    }
-    class RegistroAnimo {
-        + id: UUID
-        + estado_animo: String
-        + escala_valor: Integer
-        + factores_contexto: JSONB
-        + nota_reflexiva: Text
-        + fecha_registro: Date
-    }
-    TareaTerapeuticaViewSet --> TareaTerapeutica : administra
-    TareaTerapeutica "1" *-- "0..1" EvidenciaTarea : contiene
-    Paciente "1" *-- "0..*" RegistroAnimo : registra diariamente
+class "CE_Rol" as Det_Rol <<entity>> #FDEDEC {
+    - id: UUID
+    - nombre: String
+    - descripcion: String
+    - permisos: JSON
+    __
+    + tiene_permiso(cod_permiso: String): Boolean
 }
 
-package "Paquete 5: Inteligencia Artificial, Triaje y Matching\n(backend/clinica)" as P5 {
-    class ClasificadorMotivoConsulta {
-        + sanitizar_pii(texto: String): String
-        + clasificar_intake(respuestas: Dict): Dict
-    }
-    class MatchingPsicologoService {
-        + calcular_score(psicologo: Psicologo, requerimiento: Dict): Float
-        + sugerir_top3(especialidad_req: String, modalidad: String): List
-    }
-    class TriajeAsignacionViewSet {
-        + obtener_solicitudes_pendientes(): Response
-        + evaluar_clasificacion_ia(pk: UUID): Response
-        + confirmar_asignacion(pk: UUID, psicologo_id: UUID): Response
-    }
-    TriajeAsignacionViewSet ..> ClasificadorMotivoConsulta : utiliza
-    TriajeAsignacionViewSet ..> MatchingPsicologoService : consulta
+class "CE_AuditLog" as Det_Audit <<entity>> #FDEDEC {
+    - id: UUID
+    - usuario_id: UUID
+    - evento: String
+    - detalles: JSON
+    - ip_origen: String
+    - timestamp: DateTime
+    __
+    + registrar_acceso(evento: String, ip: String): void
 }
 
-package "Paquete Cliente Móvil Flutter\n(prototipo/movil/lib)" as PMovil {
-    class AuthService {
-        + login(email: String, pass: String): Future<TokenPair>
-        + recuperarPassword(email: String): Future<Boolean>
-    }
-    class CitasService {
-        + getMisCitas(): Future<List<CitaModel>>
-        + cancelarCita(citaId: String, motivo: String): Future<Boolean>
-    }
-    class TareasService {
-        + getMisTareas(): Future<List<TareaModel>>
-        + enviarEvidencia(tareaId: String, data: Map): Future<Boolean>
-        + registrarMood(estado: String, factores: List): Future<Boolean>
-    }
-    class JitsiTeleconsultaController {
-        + unirseASala(nombreSala: String, tokenJwt: String): void
-        + alternarCamara(): void
-        + silenciarMicrofono(): void
-    }
+class "CE_Paciente" as Det_Paciente <<entity>> #FDEDEC {
+    - id: UUID
+    - usuario_id: UUID
+    - codigo_expediente: String
+    - ci: String
+    - fecha_nacimiento: Date
+    - genero: String
+    - fecha_registro: DateTime
+    __
+    + calcular_edad(): Integer
+    + obtener_expediente(): String
 }
 
-P3 ..> P2 : vincula citas con
-P4 ..> P2 : asocia tareas a
-P5 ..> P2 : evalúa y asigna
-PMovil ..> P3 : consume API agenda
-PMovil ..> P4 : consume API tareas
+class "CE_TokenFCM" as Det_Token <<entity>> #FDEDEC {
+    - id: UUID
+    - paciente_id: UUID
+    - token: String
+    - plataforma: String
+    - activo: Boolean
+    - creado_en: DateTime
+    - actualizado_en: DateTime
+    __
+    + registrar_token_dispositivo(token: String): void
+    + desactivar(): void
+}
+
+"Paciente Móvil" -- UI
+UI -- Controller
+Controller -- PrimaryEntity
+PrimaryEntity "1" -- "1" Det_Rol : posee_rol >
+PrimaryEntity "1" -- "0..*" Det_Audit : audita_acceso >
+PrimaryEntity "1" -- "0..1" Det_Paciente : identifica_paciente >
+Det_Paciente "1" -- "0..*" Det_Token : registra_dispositivo >
 @enduml
 ```
 
----
+###### 3º Diagrama de Secuencia del Sistema – CU2: Autenticación Móvil JWT
 
-#### 7.2.1.2 Diseño de Datos (Modelos Relacionales Incrementales en PostgreSQL 16)
+![Diagrama de Secuencia CU2 - Autenticación Móvil JWT](./imagenes/diagrama_secuencia_cu2_sp3.png)
 
-Para soportar las capacidades móviles y de IA del Sprint 3, se formalizan las siguientes tablas en el esquema de cada tenant:
-
-| Tabla Física en PostgreSQL | Atributos Principales | Tipos de Datos | Descripción Clínica / Técnica |
-| :------------------------- | :-------------------- | :------------- | :---------------------------- |
-| `comunicacion_tokenfcm` | `id, paciente_id, token, plataforma, activo, creado_en` | UUID, FK Paciente, Text, Varchar(20), Boolean, Timestamp | Almacena los tokens únicos de dispositivos móviles emitidos por Firebase Cloud Messaging para despacho de alertas push. |
-| `clinica_registroanimo` | `id, paciente_id, estado_animo, escala_valor, factores_contexto, nota_reflexiva, timestamp` | UUID, FK Paciente, Varchar(30), Integer (1-5), JSONB, Text, Timestamp | Registro diario del estado afectivo del paciente (*Mood Tracker*) con etiquetas contextuales (insomnio, estrés, etc.). |
-| `clinica_clasificacionia` | `id, respuestapreconsulta_id, categoria_principal, confianza_score, nivel_severidad, alerta_crisis, explicacion_heuristica, fecha_analisis` | UUID, FK RespuestaPreConsulta, Varchar(50), Float, Varchar(20), Boolean, Text, Timestamp | Almacena el resultado del pipeline asistivo de IA (CU21) con métricas de severidad y detección de palabras de riesgo. |
-| `clinica_sugerenciamatching` | `id, paciente_id, clasificacion_id, psicologo_sugerido_id, score_afinidad, factores_ponderacion, validado_por_coordinador, fecha_decision` | UUID, FK Paciente, FK ClasificacionIA, FK Psicologo, Float, JSONB, Boolean, Timestamp | Registra las 3 recomendaciones generadas por el algoritmo de emparejamiento (CU22) y la decisión final del coordinador. |
-| `agenda_notificacioncita` | `id, cita_id, tipo_evento, canal, enviada, fecha_programada, fecha_envio` | UUID, FK Cita, Varchar(30), Varchar(20), Boolean, DateTime, DateTime | Cola transaccional de recordatorios de citas (despacho automático a 24 horas y 1 hora de anticipación). |
-
----
-
-#### 7.2.1.3 Diseño de la Lógica de Negocio (Patrón de Comunicación BCE)
-
-A continuación se ilustran los diagramas de comunicación BCE con numeración de métodos y mensajes para los casos de uso principales del Sprint 3:
-
-##### Diagrama de Comunicación CU2: Autenticación Móvil JWT
+> **Reglas de Cátedra Aplicadas (UML 2.5+ / BCE):**
+> 1. **Ciclos de Vida y Foco de Control Activo:** Cada línea de vida cuenta con barras de activación vertical (`activate` / `deactivate`) delimitando con rigor su tiempo de ejecución síncrono.
+> 2. **Anchura del Fragmento `alt`:** El bloque condicional se extiende horizontalmente cubriendo desde la interfaz (`IU_LoginMovil`), atravesando el controlador (`CTR_AuthMovilController`) y alcanzando todas las entidades relacionales (`CE_Usuario`, `CE_Paciente`, `CE_TokenFCM`, `CE_AuditLog`), garantizando que la bifurcación refleje la persistencia de datos.
+> 3. **Cero Comunicación Entidad a Entidad:** Todo el flujo y cruce de datos es orquestado por el controlador; las entidades retornan mediante flechas punteadas débiles (`-->`).
+> 4. **Bitácora Obligatoria:** Toda autenticación (exitosa o fallida) registra un evento inmutable en `CE_AuditLog` antes de emitir la respuesta HTTP final.
 
 ```plantuml
 @startuml
-skinparam shadowing false
-skinparam roundcorner 8
-skinparam defaultFontName Arial
+!theme plain
+skinparam sequenceMessageAlign center
+skinparam BoxPadding 10
+skinparam ParticipantPadding 10
 
-actor "Paciente (App Móvil)" as actor
-boundary "LoginScreen\n(Flutter Mobile UI)" as view
-control "AuthController\n(Django REST JWT)" as ctrl
-entity "seguridad_usuario\n(PostgreSQL Tenant)" as entity
+title Diagrama de Secuencia - CU2: Autenticación Móvil JWT y Sesión Persistente (BCE UML 2.5+)
 
-actor -> view : 1. Ingresar email y password()
-view -> ctrl : 2. POST /api/v1/auth/jwt/create/
-ctrl -> ctrl : 3. Validar tenant activo y credenciales()
-ctrl -> entity : 4. SELECT * FROM seguridad_usuario WHERE email
-entity --> ctrl : 5. Retorna usuario y hash password
-ctrl -> ctrl : 6. Generar access_token y refresh_token
-ctrl --> view : 7. HTTP 200 OK (Tokens JWT)
-view -> view : 8. Guardar en flutter_secure_storage()
-view --> actor : 9. Redirigir a Dashboard Móvil
-@enduml
-```
+actor "Paciente Móvil" as Actor
+boundary "IU_LoginMovil" as IU
+control "CTR_AuthMovilController" as CTR
+entity "CE_Usuario" as CE_User
+entity "CE_Paciente" as CE_Pac
+entity "CE_TokenFCM" as CE_FCM
+entity "CE_AuditLog" as CE_Audit
 
-##### Diagrama de Comunicación CU11: Gestión y Cancelación de Cita Móvil
+Actor -> IU: 1: ingresar_credenciales(email, password)
+activate Actor
+activate IU
+IU -> CTR: 2: POST /api/v1/auth/jwt/create/ (email, password, subdominio)
+activate CTR
+CTR -> CTR: 3: resolver_tenant_activo(subdominio)
+CTR -> CE_User: 4: validar_credenciales(password)
+activate CE_User
+CE_User --> CTR: 5: resultado_validacion(es_valida=true, usuario_id) [retorno]
+deactivate CE_User
 
-```plantuml
-@startuml
-skinparam shadowing false
-skinparam roundcorner 8
-skinparam defaultFontName Arial
-
-actor "Paciente" as actor
-boundary "MisCitasScreen\n(Flutter UI)" as view
-control "CitaController\n(Django REST)" as ctrl
-entity "agenda_cita\n(PostgreSQL Tenant)" as entity
-
-actor -> view : 1. Presionar 'Cancelar Cita'()
-view -> ctrl : 2. POST /api/v1/citas/{id}/cancelar/
-ctrl -> entity : 3. SELECT fecha, hora_inicio FROM agenda_cita
-entity --> ctrl : 4. Retorna datos de la cita
-ctrl -> ctrl : 5. Validar anticipación (> 24 horas)
-alt Faltan más de 24 horas
-    ctrl -> entity : 6. UPDATE agenda_cita SET estado='CANCELADA'
-    entity --> ctrl : 7. Cita cancelada con éxito
-    ctrl --> view : 8. HTTP 200 OK (Cita liberada)
-    view --> actor : 9. Muestra mensaje 'Cita cancelada correctamente'
-else Faltan menos de 24 horas
-    ctrl --> view : 10. HTTP 400 Bad Request ('Plazo de cancelación expirado')
-    view --> actor : 11. Muestra advertencia de política del centro
+alt credenciales_validas == true y usuario.is_active
+    CTR -> CE_User: 6: get_full_name()
+    activate CE_User
+    CE_User --> CTR: 7: nombre_completo [retorno]()
+    deactivate CE_User
+    
+    CTR -> CE_Pac: 8: obtener_expediente()
+    activate CE_Pac
+    CE_Pac --> CTR: 9: codigo_expediente, paciente_id [retorno]()
+    deactivate CE_Pac
+    
+    CTR -> CE_FCM: 10: registrar_token_dispositivo(token_fcm)
+    activate CE_FCM
+    CE_FCM --> CTR: 11: token_registrado() [retorno]
+    deactivate CE_FCM
+    
+    CTR -> CE_Audit: 12: registrar_acceso(evento='LOGIN_EXITOSO', ip_origen)
+    activate CE_Audit
+    CE_Audit --> CTR: 13: acceso_auditado() [retorno]
+    deactivate CE_Audit
+    
+    CTR --> IU: 14: HTTP 200 OK (access_token, refresh_token) [retorno]
+    IU -> IU: 15: guardar_tokens(flutter_secure_storage)
+    IU --> Actor: 16: redirigir_dashboard_movil() [retorno]
+else credenciales_invalidas o cuenta_inactiva
+    CTR -> CE_Audit: 17: registrar_acceso(evento='LOGIN_FALLIDO', ip_origen)
+    activate CE_Audit
+    CE_Audit --> CTR: 18: intento_fallido_registrado() [retorno]
+    deactivate CE_Audit
+    
+    CTR --> IU: 19: HTTP 401 Unauthorized ('Credenciales incorrectas') [retorno]
+    deactivate CTR
+    IU --> Actor: 20: mostrar_error_credenciales('Email o contrasena invalidos') [retorno]
+    deactivate IU
+    deactivate Actor
 end
 @enduml
 ```
 
-##### Diagrama de Comunicación CU12: Despacho de Recordatorio Push (FCM)
+---
+
+##### 7.2.1.3.2 CU11: Gestión y Cancelación de Cita Móvil con Política >24h (HU-41, HU-42)
+
+* **Trazabilidad:** CU11 ← HU-41, HU-42 (RF-14, RF-15, RF-16).
+* **Actores:** Paciente Móvil.
+* **Clases BCE:** `IU_MisCitasMovil` (Frontera Flutter), `CTR_CitaMobileController` (Control Django REST), `CE_Cita` (Entidad Principal `agenda_cita`), `CE_Paciente` (`clinica_paciente`), `CE_Psicologo` (`clinica_psicologo`), `CE_Disponibilidad` (`clinica_disponibilidad`), `CE_NotificacionCita` (`agenda_notificacioncita`), `CE_Teleconsulta` (`agenda_teleconsulta`), `CE_AuditLog` (`accounts_auditlog`).
+
+###### 1º Diagrama de Comunicación BCE – CU11: Gestión y Cancelación de Cita Móvil
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3* → *4. Diagramas de Comunicación - Sprint 3* → *CU11 - Gestión y Cancelación de Cita Móvil* (**Diagrama ID: 265**).
+
+![Diagrama de Comunicación CU11 - Citas Móviles](./imagenes/diagrama_comunicacion_cu11_sp3.png)
 
 ```plantuml
 @startuml
@@ -1262,227 +3586,1581 @@ skinparam shadowing false
 skinparam roundcorner 8
 skinparam defaultFontName Arial
 
-actor "Cron Task / Celery" as cron
-control "FCMNotificationService\n(Backend)" as ctrl
-entity "agenda_notificacioncita\n(PostgreSQL)" as ent_notif
-entity "comunicacion_tokenfcm\n(PostgreSQL)" as ent_token
-boundary "Firebase Cloud Messaging\n(Google FCM API)" as fcm
+actor "Paciente Móvil" as actor
+boundary "IU_MisCitasMovil
+(Flutter UI)" as iu
+control "CTR_CitaMobileController
+(Django REST)" as ctrl
+entity "CE_Cita
+(agenda_cita)" as ce_cita
+entity "CE_Disponibilidad
+(clinica_disponibilidad)" as ce_disp
+entity "CE_Teleconsulta
+(agenda_teleconsulta)" as ce_tele
+entity "CE_NotificacionCita
+(agenda_notificacioncita)" as ce_notif
+entity "CE_AuditLog
+(accounts_auditlog)" as ce_audit
+
+actor -> iu : 1. presionar_cancelar_cita(cita_id, motivo)
+iu -> ctrl : 2. POST /api/v1/citas/{id}/cancelar/ (motivo)
+ctrl -> ce_cita : 3. consultar_cita()
+ce_cita --> ctrl : 4. datos_cita(fecha, hora_inicio, estado)
+ctrl -> ctrl : 5. validar_anticipacion_mayor_24h(fecha, hora_inicio)
+ctrl -> ce_cita : 6. cambiar_estado_cita('CANCELADA')
+ce_cita --> ctrl : 7. estado_actualizado()
+ctrl -> ce_disp : 8. liberar_bloque_horario(hora_inicio)
+ce_disp --> ctrl : 9. bloque_liberado()
+ctrl -> ce_tele : 10. cancelar_sala()
+ce_tele --> ctrl : 11. sala_cancelada()
+ctrl -> ce_notif : 12. encolar_notificacion('CANCELACION')
+ce_notif --> ctrl : 13. notificacion_encolada()
+ctrl -> ce_audit : 14. registrar_acceso('CANCELACION_CITA_EXITOSA', ip)
+ce_audit --> ctrl : 15. cancelacion_auditada()
+ctrl --> iu : 16. HTTP 200 OK (cita_liberada=true)
+iu --> actor : 17. mostrar_confirmacion_cancelacion()
+@enduml
+```
+
+###### 2º Diagrama de Clases de Análisis – CU11: Gestión y Cancelación de Cita Móvil
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3* → *12. Diagramas de Clases de Análisis (BCE) - Sprint 3* → *CU11 - Clases de Análisis: Gestión de Citas Móviles* (**Diagrama ID: 290**).
+
+![Diagrama de Clases de Análisis CU11 - Gestión de Citas Móviles](./imagenes/diagrama_clases_analisis_cu11_sp3.png)
+
+```plantuml
+@startuml
+left to right direction
+skinparam shadowing false
+skinparam roundcorner 6
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+hide circle
+
+class "Paciente Móvil" <<Actor>> #LightYellow
+
+class "IU_MisCitasMovil" as UI <<boundary>> #EBF5FB {
+    - tabProximas: TabBar
+    - tabHistorial: TabBar
+    - btnCancelarCita: ElevatedButton
+    - modalCancelacion: AlertDialog
+    - txtMotivoCancelacion: TextFormField
+    - lblPolitica24h: Text
+    __
+    + abrir_agenda_movil(): void
+    + mostrar_citas_con_estado(citas: List): void
+    + presionar_cancelar_cita(cita_id: UUID, motivo: String): void
+    + mostrar_aviso_politica_24h(): void
+    + mostrar_confirmacion_cancelacion(): void
+}
+
+class "CTR_CitaMobileController" as Controller <<control>> #E8F8F5 {
+    __
+    + listar_citas_paciente(paciente_id: UUID): List
+    + consultar_cita(cita_id: UUID): Cita
+    + validar_anticipacion_mayor_24h(fecha: Date, hora: Time): Boolean
+    + cambiar_estado_cita(cita_id: UUID, nuevo_estado: String): void
+    + liberar_bloque_horario(psicologo_id: UUID, fecha: Date, hora: Time): void
+    + encolar_notificacion_cancelacion(cita_id: UUID): void
+}
+
+class "CE_Cita" as PrimaryEntity <<entity>> #FADBD8 {
+    - id: UUID
+    - paciente_id: UUID
+    - psicologo_id: UUID
+    - fecha: Date
+    - hora_inicio: Time
+    - hora_fin: Time
+    - modalidad: String
+    - costo: Decimal
+    - estado: String
+    - motivo_cancelacion: String
+    - fecha_creacion: DateTime
+    __
+    + consultar_cita(): Cita
+    + cambiar_estado_cita(nuevo_estado: String): void
+    + permite_cancelacion(): Boolean
+    + calcular_horas_restantes(): Integer
+    + marcar_cancelada(motivo: String): void
+}
+
+class "CE_Paciente" as Det_Paciente <<entity>> #FDEDEC {
+    - id: UUID
+    - usuario_id: UUID
+    - codigo_expediente: String
+    - ci: String
+    - fecha_nacimiento: Date
+    - genero: String
+    - fecha_registro: DateTime
+    __
+    + obtener_paciente(): Paciente
+}
+
+class "CE_Psicologo" as Det_Psicologo <<entity>> #FDEDEC {
+    - id: UUID
+    - usuario_id: UUID
+    - numero_colegiado: String
+    - biografia: Text
+    - modalidad: String
+    - tarifa_base: Decimal
+    - activo: Boolean
+    - fecha_ingreso: DateTime
+    __
+    + obtener_perfil(): Psicologo
+}
+
+class "CE_Disponibilidad" as Det_Disp <<entity>> #FDEDEC {
+    - id: UUID
+    - psicologo_id: UUID
+    - dia_semana: Integer
+    - hora_inicio: Time
+    - hora_fin: Time
+    - esta_disponible: Boolean
+    __
+    + liberar_bloque_horario(hora: Time): void
+    + ocupar_bloque(): void
+}
+
+class "CE_NotificacionCita" as Det_Notif <<entity>> #FDEDEC {
+    - id: UUID
+    - cita_id: UUID
+    - tipo_evento: String
+    - canal: String
+    - fecha_programada: DateTime
+    - fecha_envio: DateTime
+    - enviada: Boolean
+    - intentos_entrega: Integer
+    __
+    + encolar_notificacion(tipo: String): void
+    + cancelar_notificaciones_pendientes(): void
+}
+
+class "CE_Teleconsulta" as Det_Tele <<entity>> #FDEDEC {
+    - id: UUID
+    - cita_id: UUID
+    - sala_codigo: String
+    - token_sala: String
+    - jitsi_room_url: String
+    - hora_inicio_real: DateTime
+    - hora_fin_real: DateTime
+    - estado_conexion: String
+    - grabacion_habilitada: Boolean
+    __
+    + cancelar_sala(): void
+}
+
+class "CE_AuditLog" as Det_Audit <<entity>> #FDEDEC {
+    - id: UUID
+    - usuario_id: UUID
+    - evento: String
+    - detalles: JSON
+    - ip_origen: String
+    - timestamp: DateTime
+    __
+    + registrar_acceso(evento: String, ip: String): void
+}
+
+"Paciente Móvil" -- UI
+UI -- Controller
+Controller -- PrimaryEntity
+PrimaryEntity "*" -- "1" Det_Paciente : solicitada_por >
+PrimaryEntity "*" -- "1" Det_Psicologo : atendida_por >
+Det_Psicologo "1" -- "1..*" Det_Disp : configura_horario >
+PrimaryEntity "1" -- "0..*" Det_Notif : genera_aviso >
+PrimaryEntity "1" -- "0..1" Det_Tele : habilita_sala >
+PrimaryEntity "1" -- "0..*" Det_Audit : audita_cancelacion >
+@enduml
+```
+
+###### 3º Diagrama de Secuencia del Sistema – CU11: Gestión y Cancelación de Cita Móvil
+
+![Diagrama de Secuencia CU11 - Gestión y Cancelación de Cita Móvil](./imagenes/diagrama_secuencia_cu11_sp3.png)
+
+> **Reglas de Cátedra Aplicadas (UML 2.5+ / BCE):**
+> 1. **Ciclos de Vida:** Las líneas de vida se activan y desactivan síncronamente al ritmo de las invocaciones del controlador.
+> 2. **Anchura del Fragmento `alt`:** Cubre horizontalmente desde la interfaz (`IU_MisCitasMovil`) hasta la entidad de auditoría (`CE_AuditLog`), abarcando todas las tablas modificadas en la base de datos (`CE_Cita`, `CE_Disponibilidad`, `CE_Teleconsulta`, `CE_NotificacionCita`).
+> 3. **Bifurcación Excluyente:** La rama superior formaliza la política de anticipación > 24h (cancelación con liberación de recursos y bitácora); la rama inferior (`else`) captura el rechazo por penalización fuera de plazo.
+
+```plantuml
+@startuml
+!theme plain
+skinparam sequenceMessageAlign center
+skinparam BoxPadding 10
+skinparam ParticipantPadding 10
+
+title Diagrama de Secuencia - CU11: Gestión y Cancelación de Citas Móviles (BCE UML 2.5+)
+
+actor "Paciente Móvil" as Actor
+boundary "IU_MisCitasMovil" as IU
+control "CTR_CitaMobileController" as CTR
+entity "CE_Cita" as CE_Cita
+entity "CE_Disponibilidad" as CE_Disp
+entity "CE_Teleconsulta" as CE_Tele
+entity "CE_NotificacionCita" as CE_Notif
+entity "CE_AuditLog" as CE_Audit
+
+Actor -> IU: 1: presionar_cancelar_cita(cita_id, motivo)
+activate Actor
+activate IU
+IU -> CTR: 2: POST /api/v1/citas/{id}/cancelar/ (motivo)
+activate CTR
+CTR -> CE_Cita: 3: consultar_cita(cita_id)
+activate CE_Cita
+CE_Cita --> CTR: 4: datos_cita(fecha, hora, estado) [retorno]()
+deactivate CE_Cita
+
+CTR -> CTR: 5: validar_anticipacion_mayor_24h(fecha, hora)
+
+alt anticipacion_horas > 24 (Cancelacion Permitida)
+    CTR -> CE_Cita: 6: cambiar_estado_cita('CANCELADA')
+    activate CE_Cita
+    CE_Cita --> CTR: 7: cita_cancelada() [retorno]
+    deactivate CE_Cita
+    
+    CTR -> CE_Disp: 8: liberar_bloque_horario()
+    activate CE_Disp
+    CE_Disp --> CTR: 9: bloque_liberado() [retorno]
+    deactivate CE_Disp
+    
+    CTR -> CE_Tele: 10: cancelar_sala()
+    activate CE_Tele
+    CE_Tele --> CTR: 11: sala_cancelada() [retorno]
+    deactivate CE_Tele
+    
+    CTR -> CE_Notif: 12: encolar_notificacion('CITA_CANCELADA')
+    activate CE_Notif
+    CE_Notif --> CTR: 13: notificacion_encolada() [retorno]
+    deactivate CE_Notif
+    
+    CTR -> CE_Audit: 14: registrar_acceso(evento='CANCELACION_CITA_EXITOSA', ip)
+    activate CE_Audit
+    CE_Audit --> CTR: 15: acceso_auditado() [retorno]
+    deactivate CE_Audit
+    
+    CTR --> IU: 16: HTTP 200 OK ('Cita cancelada y bloque liberado') [retorno]
+    IU --> Actor: 17: mostrar_confirmacion_cancelacion('Cita cancelada con exito') [retorno]
+else anticipacion_horas <= 24 (Fuera de Plazo)
+    CTR --> IU: 18: HTTP 400 Bad Request ('Plazo expirado: cancelaciones requieren > 24h') [retorno]
+    deactivate CTR
+    IU --> Actor: 19: mostrar_aviso_politica_24h('Cancelacion rechazada por politica 24h') [retorno]
+    deactivate IU
+    deactivate Actor
+end
+@enduml
+```
+
+---
+
+##### 7.2.1.3.3 CU12: Despacho de Recordatorios Push FCM (HU-43)
+
+* **Trazabilidad:** CU12 ← HU-43 (RF-18, RNF-18).
+* **Actores:** Cron Celery Beat, Paciente (Smartphone Receptor).
+* **Clases BCE:** `IU_FirebaseCloudMessaging` (Frontera Externa FCM), `CTR_FCMNotificationController` (Control Celery Task), `CE_NotificacionCita` (Entidad Principal `agenda_notificacioncita`), `CE_Cita` (`agenda_cita`), `CE_Paciente` (`clinica_paciente`), `CE_TokenFCM` (`comunicacion_tokenfcm`).
+
+###### 1º Diagrama de Comunicación BCE – CU12: Despacho de Recordatorio Push FCM
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3* → *4. Diagramas de Comunicación - Sprint 3* → *CU12 - Despacho de Recordatorio Push (FCM)* (**Diagrama ID: 266**).
+
+![Diagrama de Comunicación CU12 - Notificaciones Push FCM](./imagenes/diagrama_comunicacion_cu12_sp3.png)
+
+```plantuml
+@startuml
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+
+actor "Cron Celery Beat" as cron
+control "CTR_FCMNotificationController
+(Django Backend)" as ctrl
+entity "CE_NotificacionCita
+(agenda_notificacioncita)" as ce_notif
+entity "CE_Cita
+(agenda_cita)" as ce_cita
+entity "CE_Paciente
+(clinica_paciente)" as ce_paciente
+entity "CE_TokenFCM
+(comunicacion_tokenfcm)" as ce_token
+boundary "IU_FirebaseCloudMessaging
+(Google FCM API v1)" as fcm
 actor "Paciente (Smartphone)" as dev
 
-cron -> ctrl : 1. Ejecutar job recordatorios pendientes()
-ctrl -> ent_notif : 2. SELECT * WHERE enviada=false AND fecha_prog <= NOW()
-ent_notif --> ctrl : 3. Retorna lista de citas próximas
-loop Por cada cita a notificar
-    ctrl -> ent_token : 4. SELECT token FROM comunicacion_tokenfcm WHERE paciente_id
-    ent_token --> ctrl : 5. Retorna token FCM del paciente
-    ctrl -> fcm : 6. POST https://fcm.googleapis.com/v1/projects/.../messages:send
-    fcm --> dev : 7. Notificación push emergente en pantalla
-    fcm --> ctrl : 8. HTTP 200 OK (Message ID)
-    ctrl -> ent_notif : 9. UPDATE agenda_notificacioncita SET enviada=true
+cron -> ctrl : 1. ejecutar_procesar_recordatorios_programados()
+ctrl -> ce_notif : 2. seleccionar_citas_proximas(v24, v1)
+ce_notif --> ctrl : 3. lista_citas_pendientes()
+ctrl -> ce_cita : 4. obtener_detalle_cita()
+ce_cita --> ctrl : 5. datos_cita(paciente_id, fecha, hora)
+ctrl -> ce_paciente : 6. obtener_paciente_asociado(cita_id)
+ce_paciente --> ctrl : 7. datos_paciente(paciente_id)
+ctrl -> ce_token : 8. obtener_tokens_activos_paciente(paciente_id)
+ce_token --> ctrl : 9. lista_tokens_activos()
+ctrl -> fcm : 10. POST_messages_send(payload_recordatorio)
+fcm --> dev : 11. push_notification_banner()
+fcm --> ctrl : 12. HTTP 200 OK (message_id)
+ctrl -> ce_notif : 13. marcar_enviado()
+ce_notif --> ctrl : 14. recordatorio_marcado_enviado()
+@enduml
+```
+
+###### 2º Diagrama de Clases de Análisis – CU12: Despacho de Recordatorios Push FCM
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3* → *12. Diagramas de Clases de Análisis (BCE) - Sprint 3* → *CU12 - Clases de Análisis: Notificaciones Push FCM y Recordatorios* (**Diagrama ID: 291**).
+
+![Diagrama de Clases de Análisis CU12 - Notificaciones Push FCM](./imagenes/diagrama_clases_analisis_cu12_sp3.png)
+
+```plantuml
+@startuml
+left to right direction
+skinparam shadowing false
+skinparam roundcorner 6
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+hide circle
+
+class "Cron Celery Beat" <<Actor>> #LightYellow
+
+class "IU_FirebaseCloudMessaging" as UI <<boundary>> #EBF5FB {
+    - endpointUrl: String
+    - projectId: String
+    - serviceAccountToken: String
+    - statusDespacho: String
+    __
+    + POST_messages_send(payload: JSON): HttpResponse
+    + validarCredencialesOAuth2(): Boolean
+}
+
+class "CTR_FCMNotificationController" as Controller <<control>> #E8F8F5 {
+    __
+    + ejecutar_procesar_recordatorios_programados(): void
+    + seleccionar_citas_proximas(v24h: DateTime, v1h: DateTime): List
+    + despachar_push_fcm(token: String, titulo: String, msg: String): Boolean
+    + registrar_alerta_enviada(notif_id: UUID): void
+}
+
+class "CE_NotificacionCita" as PrimaryEntity <<entity>> #FADBD8 {
+    - id: UUID
+    - cita_id: UUID
+    - tipo_evento: String
+    - canal: String
+    - fecha_programada: DateTime
+    - fecha_envio: DateTime
+    - enviada: Boolean
+    - intentos_entrega: Integer
+    __
+    + seleccionar_citas_proximas(v24: DateTime, v1: DateTime): List
+    + marcar_enviado(): void
+    + registrar_fallo(): void
+}
+
+class "CE_Cita" as Det_Cita <<entity>> #FDEDEC {
+    - id: UUID
+    - paciente_id: UUID
+    - psicologo_id: UUID
+    - fecha: Date
+    - hora_inicio: Time
+    - hora_fin: Time
+    - modalidad: String
+    - costo: Decimal
+    - estado: String
+    - motivo_cancelacion: String
+    - fecha_creacion: DateTime
+    __
+    + obtener_detalle_cita(): Cita
+}
+
+class "CE_Paciente" as Det_Paciente <<entity>> #FDEDEC {
+    - id: UUID
+    - usuario_id: UUID
+    - codigo_expediente: String
+    - ci: String
+    - fecha_nacimiento: Date
+    - genero: String
+    - fecha_registro: DateTime
+    __
+    + obtener_paciente_asociado(cita_id: UUID): Paciente
+}
+
+class "CE_TokenFCM" as Det_Token <<entity>> #FDEDEC {
+    - id: UUID
+    - paciente_id: UUID
+    - token: String
+    - plataforma: String
+    - activo: Boolean
+    - creado_en: DateTime
+    - actualizado_en: DateTime
+    __
+    + obtener_tokens_activos_paciente(paciente_id: UUID): List
+    + desactivar(): void
+}
+
+"Cron Celery Beat" -- UI
+UI -- Controller
+Controller -- PrimaryEntity
+PrimaryEntity "*" -- "1" Det_Cita : avisa_sobre >
+Det_Cita "*" -- "1" Det_Paciente : agendada_para >
+Det_Paciente "1" -- "1..*" Det_Token : despacha_hacia >
+@enduml
+```
+
+###### 3º Diagrama de Secuencia del Sistema – CU12: Despacho de Recordatorios Push FCM
+
+![Diagrama de Secuencia CU12 - Notificaciones Push FCM](./imagenes/diagrama_secuencia_cu12_sp3.png)
+
+> **Reglas de Cátedra Aplicadas (UML 2.5+ / BCE):**
+> 1. **Fragmento `loop` desde el Controlador:** Inicia formalmente en `CTR_FCMNotificationController` y se propaga hacia las entidades y la interfaz externa de Google FCM (`IU_FirebaseCloudMessaging`), sin encerrar el actor cron disparador.
+> 2. **Fragmento `opt` Condicional:** Modela la condición simple (if verdadero) `[tokens_fcm_activos.count > 0]` antes de invocar el endpoint HTTP/v1 de Google FCM.
+> 3. **Ciclos de Vida:** El despachador mantiene activo el foco de control durante todo el procesamiento por lote.
+
+```plantuml
+@startuml
+!theme plain
+skinparam sequenceMessageAlign center
+skinparam BoxPadding 10
+skinparam ParticipantPadding 10
+
+title Diagrama de Secuencia - CU12: Despacho de Recordatorios Push FCM (BCE UML 2.5+)
+
+actor "Cron Celery Beat" as Cron
+control "CTR_FCMNotificationController" as CTR
+entity "CE_NotificacionCita" as CE_Notif
+entity "CE_Cita" as CE_Cita
+entity "CE_Paciente" as CE_Pac
+entity "CE_TokenFCM" as CE_FCM
+boundary "IU_FirebaseCloudMessaging" as IU_FCM
+actor "Paciente (Smartphone)" as AppMovil
+
+Cron -> CTR: 1: ejecutar_despacho_recordatorios()
+activate Cron
+activate CTR
+CTR -> CE_Notif: 2: seleccionar_citas_proximas(ventana_24h, ventana_1h)
+activate CE_Notif
+CE_Notif --> CTR: 3: citas_pendientes_notificar [retorno]()
+deactivate CE_Notif
+
+loop Por cada cita proxima a notificar (24h o 1h)
+    CTR -> CE_Cita: 4: obtener_detalle_cita(cita_id)
+    activate CE_Cita
+    CE_Cita --> CTR: 5: detalle_cita(fecha, hora, psicologo) [retorno]()
+    deactivate CE_Cita
+    
+    CTR -> CE_Pac: 6: obtener_paciente_asociado(paciente_id)
+    activate CE_Pac
+    CE_Pac --> CTR: 7: datos_paciente(nombre, expediente) [retorno]()
+    deactivate CE_Pac
+    
+    CTR -> CE_FCM: 8: obtener_tokens_activos_paciente(paciente_id)
+    activate CE_FCM
+    CE_FCM --> CTR: 9: tokens_fcm_activos [retorno]()
+    deactivate CE_FCM
+    
+    opt tokens_fcm_activos.count > 0
+        CTR -> IU_FCM: 10: POST_messages_send(payload_recordatorio)
+        activate IU_FCM
+        IU_FCM -> AppMovil: 11: notificacion_push_emergente() [asincrono]
+        activate AppMovil
+        AppMovil --> IU_FCM: 12: recepcion_confirmada() [retorno]
+        deactivate AppMovil
+        IU_FCM --> CTR: 13: HTTP 200 FCM {message_id: 'msg_01'} [retorno]
+        deactivate IU_FCM
+        
+        CTR -> CE_Notif: 14: marcar_enviado(cita_id, estado='ENVIADO')
+        activate CE_Notif
+        CE_Notif --> CTR: 15: estado_actualizado() [retorno]
+        deactivate CE_Notif
+    end
+end
+
+CTR --> Cron: 16: resumen_despacho(total_enviadas=N) [retorno]
+deactivate CTR
+deactivate Cron
+@enduml
+```
+
+---
+
+##### 7.2.1.3.4 CU13: Sesión de Teleconsulta Móvil Nativa WebRTC Jitsi Meet (HU-44)
+
+* **Trazabilidad:** CU13 ← HU-44 (RF-19).
+* **Actores:** Paciente Móvil.
+* **Clases BCE:** `IU_SalaTeleconsultaMovil` (Frontera Flutter Jitsi), `CTR_TeleconsultaController` (Control Django REST), `CE_Teleconsulta` (Entidad Principal `agenda_teleconsulta`), `CE_Cita` (`agenda_cita`), `CE_Paciente` (`clinica_paciente`), `CE_Psicologo` (`clinica_psicologo`), `CE_AuditLog` (`accounts_auditlog`).
+
+###### 1º Diagrama de Comunicación BCE – CU13: Teleconsulta Móvil WebRTC
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3* → *4. Diagramas de Comunicación - Sprint 3* → *CU13 - Teleconsulta WebRTC Móvil* (**Diagrama ID: 318**).
+
+![Diagrama de Comunicación CU13 - Teleconsulta WebRTC](./imagenes/diagrama_comunicacion_cu13_sp3.png)
+
+```plantuml
+@startuml
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+
+actor "Paciente Móvil" as actor
+boundary "IU_SalaTeleconsultaMovil
+(Flutter UI)" as iu
+control "CTR_TeleconsultaController
+(Django REST)" as ctrl
+entity "CE_Teleconsulta
+(agenda_teleconsulta)" as ce_tele
+entity "CE_Cita
+(agenda_cita)" as ce_cita
+entity "CE_Paciente
+(clinica_paciente)" as ce_paciente
+entity "CE_Psicologo
+(clinica_psicologo)" as ce_psico
+entity "CE_AuditLog
+(accounts_auditlog)" as ce_audit
+
+actor -> iu : 1. presionar_entrar_sala(cita_id)
+iu -> ctrl : 2. POST /api/v1/teleconsulta/{cita_id}/unirse/
+ctrl -> ctrl : 3. validar_ventana_acceso(cita_id)
+ctrl -> ce_cita : 4. consultar_cita_virtual(cita_id)
+ce_cita --> ctrl : 5. datos_cita_virtual()
+ctrl -> ce_paciente : 6. obtener_paciente()
+ce_paciente --> ctrl : 7. paciente_info()
+ctrl -> ce_psico : 8. obtener_perfil()
+ce_psico --> ctrl : 9. psicologo_info()
+ctrl -> ce_tele : 10. iniciar_sala()
+ce_tele --> ctrl : 11. sala_iniciada(token_sala)
+ctrl -> ce_audit : 12. registrar_entrada_sala(cita_id, ip)
+ce_audit --> ctrl : 13. auditoria_registrada()
+ctrl --> iu : 14. HTTP 200 OK (token_sala, jitsi_room_url)
+iu --> actor : 15. inicializar_webrtc_stream()
+@enduml
+```
+
+###### 2º Diagrama de Clases de Análisis – CU13: Teleconsulta Móvil WebRTC
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3* → *12. Diagramas de Clases de Análisis (BCE) - Sprint 3* → *CU13 - Clases de Análisis: Teleconsulta WebRTC Móvil* (**Diagrama ID: 292**).
+
+![Diagrama de Clases de Análisis CU13 - Teleconsulta WebRTC](./imagenes/diagrama_clases_analisis_cu13_sp3.png)
+
+```plantuml
+@startuml
+left to right direction
+skinparam shadowing false
+skinparam roundcorner 6
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+hide circle
+
+class "Paciente Móvil" <<Actor>> #LightYellow
+
+class "IU_SalaTeleconsultaMovil" as UI <<boundary>> #EBF5FB {
+    - viewJitsiMeet: JitsiMeetWidget
+    - btnMicrofono: IconButton
+    - btnCamara: IconButton
+    - btnFinalizarLlamada: IconButton
+    - lblTiempoTranscurrido: Text
+    - lblNombreProfesional: Text
+    - indicatorCalidadRed: Icon
+    __
+    + presionar_entrar_sala(cita_id: UUID): void
+    + inicializar_webrtc_stream(url: String, jwt: String): void
+    + alternar_microfono(): void
+    + alternar_camara(): void
+    + presionar_finalizar_consulta(): void
+    + mostrar_resumen_sesion(): void
+}
+
+class "CTR_TeleconsultaController" as Controller <<control>> #E8F8F5 {
+    __
+    + validar_ventana_acceso(cita_id: UUID): Boolean
+    + solicitar_acceso_sala(cita_id: UUID, usuario_id: UUID): Teleconsulta
+    + generar_token_jitsi_jwt(sala: String, rol: String): String
+    + registrar_entrada_sala(cita_id: UUID, usuario_id: UUID): void
+    + finalizar_teleconsulta(cita_id: UUID): void
+}
+
+class "CE_Teleconsulta" as PrimaryEntity <<entity>> #FADBD8 {
+    - id: UUID
+    - cita_id: UUID
+    - sala_codigo: String
+    - token_sala: String
+    - jitsi_room_url: String
+    - hora_inicio_real: DateTime
+    - hora_fin_real: DateTime
+    - estado_conexion: String
+    - grabacion_habilitada: Boolean
+    __
+    + iniciar_sala(): Teleconsulta
+    + registrar_entrada(hora: DateTime): void
+    + finalizar_llamada(hora: DateTime): void
+    + registrar_calidad(metrica: String): void
+}
+
+class "CE_Cita" as Det_Cita <<entity>> #FDEDEC {
+    - id: UUID
+    - paciente_id: UUID
+    - psicologo_id: UUID
+    - fecha: Date
+    - hora_inicio: Time
+    - hora_fin: Time
+    - modalidad: String
+    - costo: Decimal
+    - estado: String
+    - motivo_cancelacion: String
+    - fecha_creacion: DateTime
+    __
+    + consultar_cita_virtual(cita_id: UUID): Cita
+    + esta_en_horario_atencion(): Boolean
+    + cambiar_estado_atendida(): void
+}
+
+class "CE_Paciente" as Det_Paciente <<entity>> #FDEDEC {
+    - id: UUID
+    - usuario_id: UUID
+    - codigo_expediente: String
+    - ci: String
+    - fecha_nacimiento: Date
+    - genero: String
+    - fecha_registro: DateTime
+    __
+    + obtener_paciente(): Paciente
+}
+
+class "CE_Psicologo" as Det_Psicologo <<entity>> #FDEDEC {
+    - id: UUID
+    - usuario_id: UUID
+    - numero_colegiado: String
+    - biografia: Text
+    - modalidad: String
+    - tarifa_base: Decimal
+    - activo: Boolean
+    - fecha_ingreso: DateTime
+    __
+    + obtener_perfil(): Psicologo
+}
+
+class "CE_AuditLog" as Det_Audit <<entity>> #FDEDEC {
+    - id: UUID
+    - usuario_id: UUID
+    - evento: String
+    - detalles: JSON
+    - ip_origen: String
+    - timestamp: DateTime
+    __
+    + registrar_entrada_sala(cita_id: UUID, ip: String): void
+}
+
+"Paciente Móvil" -- UI
+UI -- Controller
+Controller -- PrimaryEntity
+PrimaryEntity "1" -- "1" Det_Cita : vinculada_a >
+Det_Cita "*" -- "1" Det_Paciente : asiste_paciente >
+Det_Cita "*" -- "1" Det_Psicologo : modera_psicologo >
+PrimaryEntity "1" -- "0..*" Det_Audit : registra_auditoria >
+@enduml
+```
+
+###### 3º Diagrama de Secuencia del Sistema – CU13: Teleconsulta Móvil WebRTC
+
+![Diagrama de Secuencia CU13 - Teleconsulta WebRTC](./imagenes/diagrama_secuencia_cu13_sp3.png)
+
+> **Reglas de Cátedra Aplicadas (UML 2.5+ / BCE):**
+> 1. **Ciclos de Vida:** La interfaz móvil y el controlador se activan secuencialmente; las entidades de soporte WebRTC (`CE_Teleconsulta`, `CE_Cita`, `CE_Paciente`, `CE_Psicologo`, `CE_AuditLog`) responden de forma síncrona.
+> 2. **Anchura del Fragmento `alt`:** Abarca desde la interfaz móvil (`IU_SalaTeleconsultaMovil`) hasta la bitácora (`CE_AuditLog`), garantizando que la apertura o denegación de la sala virtual quede formalmente protegida.
+
+```plantuml
+@startuml
+!theme plain
+skinparam sequenceMessageAlign center
+skinparam BoxPadding 10
+skinparam ParticipantPadding 10
+
+title Diagrama de Secuencia - CU13: Teleconsulta Móvil WebRTC (BCE UML 2.5+)
+
+actor "Paciente Móvil" as Actor
+boundary "IU_SalaTeleconsultaMovil" as IU
+control "CTR_TeleconsultaController" as CTR
+entity "CE_Teleconsulta" as CE_Tele
+entity "CE_Cita" as CE_Cita
+entity "CE_Paciente" as CE_Pac
+entity "CE_Psicologo" as CE_Psic
+entity "CE_AuditLog" as CE_Audit
+
+Actor -> IU: 1: presionar_ingresar_teleconsulta(teleconsulta_id)
+activate Actor
+activate IU
+IU -> CTR: 2: POST /api/v1/teleconsulta/{id}/unirse/ (dispositivo)
+activate CTR
+CTR -> CE_Tele: 3: validar_ventana_acceso()
+activate CE_Tele
+CE_Tele --> CTR: 4: resultado_ventana(en_ventana=true) [retorno]()
+deactivate CE_Tele
+
+alt en_ventana_acceso == true (15 min antes o durante cita)
+    CTR -> CE_Cita: 5: consultar_cita_virtual()
+    activate CE_Cita
+    CE_Cita --> CTR: 6: cita_confirmada(hora, estado='CONFIRMADA') [retorno]()
+    deactivate CE_Cita
+    
+    CTR -> CE_Pac: 7: obtener_paciente()
+    activate CE_Pac
+    CE_Pac --> CTR: 8: datos_paciente(nombre, expediente) [retorno]()
+    deactivate CE_Pac
+    
+    CTR -> CE_Psic: 9: obtener_perfil()
+    activate CE_Psic
+    CE_Psic --> CTR: 10: datos_psicologo(nombre, alias_jitsi) [retorno]()
+    deactivate CE_Psic
+    
+    CTR -> CE_Tele: 11: iniciar_sala()
+    activate CE_Tele
+    CE_Tele --> CTR: 12: sala_iniciada(room_id) [retorno]()
+    
+    CTR -> CE_Tele: 13: registrar_entrada()
+    CE_Tele --> CTR: 14: entrada_registrada() [retorno]()
+    
+    CTR -> CE_Tele: 15: generar_token_jitsi_jwt()
+    CE_Tele --> CTR: 16: jwt_token_generado() [retorno]()
+    deactivate CE_Tele
+    
+    CTR -> CE_Audit: 17: registrar_acceso(evento='INGRESO_SALA_TELECONSULTA', ip)
+    activate CE_Audit
+    CE_Audit --> CTR: 18: acceso_auditado() [retorno]
+    deactivate CE_Audit
+    
+    CTR --> IU: 19: HTTP 200 OK (jitsi_jwt, room_name, server_url) [retorno]
+    IU --> Actor: 20: conectar_webrtc_jitsi(room_name, token) [retorno]
+else fuera_de_ventana == true
+    CTR --> IU: 21: HTTP 403 Forbidden ('Sala disponible solo 15 min antes de cita') [retorno]
+    deactivate CTR
+    IU --> Actor: 22: mostrar_alerta_horario_invalido('Sala no habilitada') [retorno]
+    deactivate IU
+    deactivate Actor
 end
 @enduml
 ```
 
-##### Diagrama de Comunicación CU21: Clasificación Asistida del Motivo de Consulta por IA
-
-```plantuml
-@startuml
-skinparam shadowing false
-skinparam roundcorner 8
-skinparam defaultFontName Arial
-
-actor "Paciente / Intake" as actor
-boundary "IntakeFormScreen\n(Flutter)" as view
-control "ClasificadorIAController\n(Django Backend)" as ctrl
-entity "clinica_clasificacionia\n(PostgreSQL)" as entity
-boundary "Google Gemini 1.5 Pro\n(External AI)" as ai
-
-actor -> view : 1. Enviar formulario previo completado()
-view -> ctrl : 2. POST /api/v1/intake/respuestas/
-ctrl -> ctrl : 3. Sanitizar PII (elimina nombres, telf, carnet)
-ctrl -> ai : 4. POST Prompt anonimizado con motivo y síntomas
-ai --> ctrl : 5. Retorna {categoria: 'Ansiedad', severidad: 'Alta', confianza: 0.91}
-ctrl -> ctrl : 6. Evaluar reglas de riesgo de crisis
-ctrl -> entity : 7. INSERT INTO clinica_clasificacionia
-entity --> ctrl : 8. Registro persistido con UUID
-ctrl --> view : 9. HTTP 201 Created
-view --> actor : 10. Muestra 'Formulario entregado con éxito'
-@enduml
-```
-
-##### Diagrama de Comunicación CU22: Emparejamiento y Asignación de Psicólogo por IA
-
-```plantuml
-@startuml
-skinparam shadowing false
-skinparam roundcorner 8
-skinparam defaultFontName Arial
-
-actor "Coordinador Clínico" as actor
-boundary "ConsolaTriajeView\n(Angular 17 Web)" as view
-control "MatchingController\n(Django REST)" as ctrl
-entity "clinica_psicologo\n(PostgreSQL Tenant)" as ent_psic
-entity "clinica_sugerenciamatching\n(PostgreSQL)" as ent_match
-
-actor -> view : 1. Abrir caso pendiente de asignación()
-view -> ctrl : 2. GET /api/v1/ia/sugerir-psicologo/{paciente_id}/
-ctrl -> ent_psic : 3. SELECT * FROM clinica_psicologo WHERE activo=true
-ent_psic --> ctrl : 4. Retorna psicólogos con especialidades y carga
-ctrl -> ctrl : 5. Ejecutar algoritmo multivariable (Score = 0.4*Esp + 0.3*Hor + 0.2*Carga + 0.1*Mod)
-ctrl -> ent_match : 6. INSERT sugerencias top 3 con scores
-ctrl --> view : 7. Retorna top 3 psicólogos recomendados
-view --> actor : 8. Despliega tarjetas con ponderación explicada
-actor -> view : 9. Presionar 'Aprobar Asignación'()
-view -> ctrl : 10. POST /api/v1/ia/confirmar-asignacion/
-ctrl -> ent_match : 11. UPDATE clinica_sugerenciamatching SET validado=true
-ctrl --> view : 12. HTTP 200 OK (Paciente asignado y cita confirmada)
-@enduml
-```
-
 ---
 
-#### 7.2.1.4 Diseño de la Navegación de Vistas (Modelo WAE Conallen por Paquetes y Global)
+##### 7.2.1.3.5 CU17: Tareas Terapéuticas y Mood Tracker Diario (HU-45, HU-46)
 
-En estricta conformidad con el estándar de modelado web y móvil de Jim Conallen adoptado en la materia, la navegación se estructura mediante clases estereotipadas de interfaz (`«client page»` / `«screen»`) y controladores (`«controller»`), conectadas por transiciones de envío de datos (`«submit»`) y renderizado de interfaz (`«build»`).
+* **Trazabilidad:** CU17 ← HU-45, HU-46 (RF-24, RF-25).
+* **Actores:** Paciente Móvil.
+* **Clases BCE:** `IU_SeguimientoTerapeuticoMovil` (Frontera Flutter), `CTR_SeguimientoMobileController` (Control Django REST), `CE_TareaTerapeutica` (Entidad Principal `clinica_tareaterapeutica`), `CE_EvidenciaTarea` (`clinica_evidenciatarea`), `CE_Paciente` (`clinica_paciente`), `CE_RegistroAnimo` (`clinica_registroanimo`), `CE_Psicologo` (`clinica_psicologo`), `CE_AuditLog` (`accounts_auditlog`).
 
-##### Diagrama de Navegación 0: Mapa de Navegación Integral Global (Sprint 0 a Sprint 3 Acumulado)
+###### 1º Diagrama de Comunicación BCE – CU17: Tareas y Mood Tracker Móvil
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3* → *4. Diagramas de Comunicación - Sprint 3* → *CU17 - Tareas y Mood Tracker Móvil* (**Diagrama ID: 319**).
+
+![Diagrama de Comunicación CU17 - Tareas y Mood Tracker](./imagenes/diagrama_comunicacion_cu17_sp3.png)
 
 ```plantuml
 @startuml
-skinparam classAttributeIconSize 0
-skinparam backgroundColor #FFFFFF
+skinparam shadowing false
 skinparam roundcorner 8
 skinparam defaultFontName Arial
+
+actor "Paciente Móvil" as actor
+boundary "IU_SeguimientoTerapeuticoMovil
+(Flutter UI)" as iu
+control "CTR_SeguimientoMobileController
+(Django REST)" as ctrl
+entity "CE_TareaTerapeutica
+(clinica_tareaterapeutica)" as ce_tarea
+entity "CE_EvidenciaTarea
+(clinica_evidenciatarea)" as ce_evid
+entity "CE_Paciente
+(clinica_paciente)" as ce_paciente
+entity "CE_RegistroAnimo
+(clinica_registroanimo)" as ce_mood
+entity "CE_Psicologo
+(clinica_psicologo)" as ce_psico
+entity "CE_AuditLog
+(accounts_auditlog)" as ce_audit
+
+actor -> iu : 1. reportar_cumplimiento(tarea_id, reflexion, dificultad)
+iu -> ctrl : 2. POST /api/v1/tareas/{id}/evidencia/ (Multipart Form-Data)
+ctrl -> ctrl : 3. validar_plazo_limite_y_tipo_archivo(tarea_id)
+ctrl -> ce_tarea : 4. actualizar_estado_tarea('COMPLETADA')
+ce_tarea --> ctrl : 5. estado_actualizado()
+ctrl -> ce_evid : 6. persistir_evidencia_tarea(reflexion, dificultad)
+ce_evid --> ctrl : 7. evidencia_guardada()
+ctrl -> ce_paciente : 8. obtener_paciente()
+ce_paciente --> ctrl : 9. paciente_datos()
+ctrl -> ce_animo : 10. registrar_animo_diario(escala, factores)
+ce_animo --> ctrl : 11. animo_registrado()
+ctrl -> ce_psico : 12. supervisar_avance()
+ce_psico --> ctrl : 13. avance_supervisado()
+ctrl -> ce_audit : 14. registrar_acceso('CUMPLIMIENTO_TAREA_EXITOSO', ip)
+ce_audit --> ctrl : 15. cumplimiento_auditado()
+ctrl --> iu : 16. HTTP 200 OK (cumplimiento_exitoso)
+iu --> actor : 17. actualizar_indicador_progreso(100)
+@enduml
+```
+
+###### 2º Diagrama de Clases de Análisis – CU17: Tareas y Mood Tracker Móvil
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3* → *12. Diagramas de Clases de Análisis (BCE) - Sprint 3* → *CU17 - Clases de Análisis: Tareas y Mood Tracker Móvil* (**Diagrama ID: 293**).
+
+![Diagrama de Clases de Análisis CU17 - Tareas y Mood Tracker](./imagenes/diagrama_clases_analisis_cu17_sp3.png)
+
+```plantuml
+@startuml
 left to right direction
+skinparam shadowing false
+skinparam roundcorner 6
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+hide circle
 
-title Navegación Global del Sistema SIGEPSI (Sprint 0 al Sprint 3 Acumulado)
+class "Paciente Móvil" <<Actor>> #LightYellow
 
-actor "Paciente (Móvil)" as PacienteM
-actor "Coordinador Clínico" as CoordinadorW
-
-package "App Móvil de Pacientes [Flutter 3.x]" #EAFAF1 {
-    class "LoginMobileScreen" as LoginM <<screen>> {
-        + txtEmail
-        + txtPassword
-    }
-    class "DashboardMobileScreen" as DashM <<screen>> {
-        + cardProximaCita
-        + widgetMoodTracker
-        + badgeTareasPendientes
-    }
-    class "MisCitasMobileScreen" as CitasM <<screen>> {
-        + tabProximas
-        + tabHistorial
-    }
-    class "ModalCancelacionCita" as CancelM <<dialog>> {
-        + txtMotivoCancelacion
-    }
-    class "TeleconsultaJitsiScreen" as TeleM <<screen>> {
-        + videoStreamRemoto
-        + videoStreamLocal
-    }
-    class "TareasMobileScreen" as TareasM <<screen>> {
-        + listaTareas
-        + formEntregaReflexiva
-    }
+class "IU_SeguimientoTerapeuticoMovil" as UI <<boundary>> #EBF5FB {
+    - listaTareas: ListView
+    - btnAdjuntarEvidencia: ElevatedButton
+    - txtReflexion: TextFormField
+    - sliderDificultad: Slider
+    - selectorEmojiMood: SegmentedButton
+    - progressBarProgreso: LinearProgressIndicator
+    - btnEnviarCumplimiento: ElevatedButton
+    __
+    + abrir_modulo_seguimiento(): void
+    + reportar_cumplimiento(tarea_id: UUID, ref: String, dif: Integer): void
+    + actualizar_indicador_progreso(porcentaje: Double): void
+    + mostrar_aviso_retraso(): void
+    + guardar_registro_animo(animo: String, valor: Integer): void
 }
 
-package "Consola Web de Triaje [Angular 17]" #FDEDEC {
-    class "ConsolaTriageView" as TriageW <<client page>> {
-        + tablaCasosEntrantes
-        + filtroSeveridad
-    }
-    class "DetalleClasificacionModal" as DetalleIAW <<dialog>> {
-        + badgeCategoriaIA
-        + meterSeveridad
-        + banderaCrisis
-    }
-    class "AsignacionMatchingModal" as MatchW <<dialog>> {
-        + rankingTop3Psicologos
-        + dropdownAlternativo
-        + btnAprobarAsignacion
-    }
+class "CTR_SeguimientoMobileController" as Controller <<control>> #E8F8F5 {
+    __
+    + validar_plazo_limite_y_tipo_archivo(tarea_id: UUID): Boolean
+    + actualizar_estado_tarea(tarea_id: UUID, estado: String): void
+    + persistir_evidencia_tarea(tarea_id: UUID, txt: String, dif: Integer): void
+    + registrar_animo_diario(paciente_id: UUID, esc: Integer, fact: JSON): void
 }
 
-PacienteM --> LoginM : Inicia app
-LoginM --> DashM : <<submit>> Auth exitosa
-DashM --> CitasM : <<build>> 'Ver mis citas'
-CitasM --> CancelM : <<build>> 'Cancelar'
-CitasM --> TeleM : <<build>> 'Entrar a sala'
-DashM --> TareasM : <<build>> 'Mis tareas'
+class "CE_TareaTerapeutica" as PrimaryEntity <<entity>> #FADBD8 {
+    - id: UUID
+    - paciente_id: UUID
+    - psicologo_id: UUID
+    - historia_clinica_id: UUID
+    - titulo: String
+    - descripcion: Text
+    - categoria: String
+    - fecha_creacion: Date
+    - fecha_limite: Date
+    - archivo_adjunto_url: String
+    - estado: String
+    __
+    + esta_vencida(): Boolean
+    + marcar_completada(): void
+    + actualizar_estado_tarea(estado: String): void
+}
 
-CoordinadorW --> TriageW : Accede a triaje
-TriageW --> DetalleIAW : <<build>> 'Ver diagnóstico IA'
-DetalleIAW --> MatchW : <<build>> 'Ver psicólogos compatibles'
-MatchW --> TriageW : <<submit>> Asignación confirmada
+class "CE_EvidenciaTarea" as Det_Evidencia <<entity>> #FDEDEC {
+    - id: UUID
+    - tarea_id: UUID
+    - archivo_evidencia_url: String
+    - texto_reflexion: Text
+    - dificultad_percibida: Integer
+    - fecha_cumplimiento: DateTime
+    __
+    + persistir_evidencia_tarea(texto: String, dif: Integer): void
+}
+
+class "CE_Psicologo" as Det_Psicologo <<entity>> #FDEDEC {
+    - id: UUID
+    - usuario_id: UUID
+    - numero_colegiado: String
+    - biografia: Text
+    - modalidad: String
+    - tarifa_base: Decimal
+    - activo: Boolean
+    - fecha_ingreso: DateTime
+    __
+    + supervisar_avance(): void
+}
+
+class "CE_Paciente" as Det_Paciente <<entity>> #FDEDEC {
+    - id: UUID
+    - usuario_id: UUID
+    - codigo_expediente: String
+    - ci: String
+    - fecha_nacimiento: Date
+    - genero: String
+    - fecha_registro: DateTime
+    __
+    + obtener_paciente(): Paciente
+}
+
+class "CE_RegistroAnimo" as Det_Animo <<entity>> #FDEDEC {
+    - id: UUID
+    - paciente_id: UUID
+    - estado_animo: String
+    - escala_valor: Integer
+    - factores_contexto: JSON
+    - nota_reflexiva: Text
+    - fecha_registro: Date
+    - creado_en: DateTime
+    __
+    + registrar_animo_diario(escala: Integer, factores: JSON): void
+}
+
+class "CE_AuditLog" as Det_Audit <<entity>> #FDEDEC {
+    - id: UUID
+    - usuario_id: UUID
+    - evento: String
+    - detalles: JSON
+    - ip_origen: String
+    - timestamp: DateTime
+    __
+    + registrar_acceso(evento: String, ip: String): void
+}
+
+"Paciente Móvil" -- UI
+UI -- Controller
+Controller -- PrimaryEntity
+PrimaryEntity "1" -- "0..1" Det_Evidencia : contiene_evidencia >
+PrimaryEntity "*" -- "1" Det_Psicologo : supervisada_por >
+PrimaryEntity "*" -- "1" Det_Paciente : asignada_a_paciente >
+Det_Paciente "1" -- "0..*" Det_Animo : registra_animo_diario >
+PrimaryEntity "1" -- "0..*" Det_Audit : audita_cumplimiento >
 @enduml
 ```
 
-##### Diagrama de Navegación 1: Subsistema Móvil de Pacientes en Flutter 3.x
+###### 3º Diagrama de Secuencia del Sistema – CU17: Tareas y Mood Tracker Móvil
+
+![Diagrama de Secuencia CU17 - Tareas y Mood Tracker](./imagenes/diagrama_secuencia_cu17_sp3.png)
+
+> **Reglas de Cátedra Aplicadas (UML 2.5+ / BCE):**
+> 1. **Ciclos de Vida y Multi-Persistencia:** El controlador orquesta la entrega de la tarea, el guardado de evidencia, el registro del estado anímico y la supervisión del psicólogo con barras de activación independientes en cada entidad.
+> 2. **Anchura del Fragmento `alt`:** Se extiende horizontalmente desde `IU_SeguimientoTerapeuticoMovil` hasta `CE_AuditLog`.
 
 ```plantuml
 @startuml
-skinparam classAttributeIconSize 0
-skinparam backgroundColor #FFFFFF
-skinparam roundcorner 8
-skinparam defaultFontName Arial
+!theme plain
+skinparam sequenceMessageAlign center
+skinparam BoxPadding 10
+skinparam ParticipantPadding 10
 
-title WAE Conallen: Navegación del Subsistema Móvil de Pacientes (Flutter 3.x)
+title Diagrama de Secuencia - CU17: Tareas y Mood Tracker Móvil (BCE UML 2.5+)
 
-class "LoginScreen" as Login <<screen>> {
-    + email: String
-    + pass: String
-}
+actor "Paciente Móvil" as Actor
+boundary "IU_SeguimientoTerapeuticoMovil" as IU
+control "CTR_SeguimientoMobileController" as CTR
+entity "CE_TareaTerapeutica" as CE_Tarea
+entity "CE_EvidenciaTarea" as CE_Evid
+entity "CE_Paciente" as CE_Pac
+entity "CE_RegistroAnimo" as CE_Mood
+entity "CE_Psicologo" as CE_Psic
+entity "CE_AuditLog" as CE_Audit
 
-class "AuthController" as AuthCtrl <<controller>> {
-    + loginJWT(): void
-    + guardarTokensSecureStorage(): void
-}
+Actor -> IU: 1: entregar_tarea_y_animo(tarea_id, archivo, animo_val, nota)
+activate Actor
+activate IU
+IU -> CTR: 2: POST /api/v1/clinica/tareas/{id}/entregar/ (multipart)
+activate CTR
+CTR -> CE_Tarea: 3: validar_plazo_limite_y_tipo_archivo(fecha_limite, archivo)
+activate CE_Tarea
+CE_Tarea --> CTR: 4: resultado_validacion(es_valido=true) [retorno]()
+deactivate CE_Tarea
 
-class "HomeScreen" as Home <<screen>> {
-    + proximaCitaBanner
-    + moodTrackerRow
-    + notificacionesBadge
-}
-
-class "CitasScreen" as Citas <<screen>> {
-    + listCitas: List
-    + tabActivo: Int
-}
-
-class "CitaDetalleScreen" as DetalleCita <<screen>> {
-    + terapeutaInfo
-    + fechaHora
-    + modalidad
-}
-
-class "JitsiMeetCallScreen" as Teleconsulta <<screen>> {
-    + salaToken: String
-    + controlsOverlay
-}
-
-class "TareasScreen" as Tareas <<screen>> {
-    + tareasList: List
-}
-
-class "ReporteTareaModal" as ModalTarea <<dialog>> {
-    + reflexiones: Text
-    + dificultad: Int (1-5)
-}
-
-Login --> AuthCtrl : <<submit>> onLoginClick
-AuthCtrl --> Home : <<build>> onSuccess
-Home --> Citas : <<build>> onTabCitas
-Citas --> DetalleCita : <<build>> onSelectCita
-DetalleCita --> Teleconsulta : <<build>> onEntrarLlamada
-Home --> Tareas : <<build>> onTabTareas
-Tareas --> ModalTarea : <<build>> onCompletarTarea
+alt plazo_valido == true y archivo_valido == true
+    CTR -> CE_Tarea: 5: actualizar_estado_tarea('COMPLETADA')
+    activate CE_Tarea
+    CE_Tarea --> CTR: 6: estado_actualizado() [retorno]
+    deactivate CE_Tarea
+    
+    CTR -> CE_Evid: 7: persistir_evidencia_tarea(archivo_url, hash_sha256)
+    activate CE_Evid
+    CE_Evid --> CTR: 8: evidencia_guardada() [retorno]
+    deactivate CE_Evid
+    
+    CTR -> CE_Pac: 9: obtener_paciente()
+    activate CE_Pac
+    CE_Pac --> CTR: 10: datos_paciente(paciente_id) [retorno]()
+    deactivate CE_Pac
+    
+    CTR -> CE_Mood: 11: registrar_animo_diario(valor_animo, nota_contextual)
+    activate CE_Mood
+    CE_Mood --> CTR: 12: animo_registrado() [retorno]
+    deactivate CE_Mood
+    
+    CTR -> CE_Psic: 13: supervisar_avance(tarea_id, alerta=false)
+    activate CE_Psic
+    CE_Psic --> CTR: 14: avance_supervisado() [retorno]
+    deactivate CE_Psic
+    
+    CTR -> CE_Audit: 15: registrar_acceso(evento='ENTREGA_TAREA_EXITOSA', ip)
+    activate CE_Audit
+    CE_Audit --> CTR: 16: acceso_auditado() [retorno]
+    deactivate CE_Audit
+    
+    CTR --> IU: 17: HTTP 200 OK ('Tarea entregada y animo registrado') [retorno]
+    IU --> Actor: 18: mostrar_animacion_exito_y_grafica('Entrega confirmada') [retorno]
+else plazo_vencido o archivo_invalido
+    CTR --> IU: 19: HTTP 400 Bad Request ('Plazo expirado o archivo invalido') [retorno]
+    deactivate CTR
+    IU --> Actor: 20: mostrar_error_entrega('No se puede entregar la tarea fuera de plazo') [retorno]
+    deactivate IU
+    deactivate Actor
+end
 @enduml
 ```
 
 ---
 
-#### 7.2.1.5 Modelado del Comportamiento Temporal (Diagramas de Tiempo UML 2.5)
+##### 7.2.1.3.6 CU21: Clasificación Asistida del Motivo de Consulta por IA y Detección de Crisis (HU-47)
+
+* **Trazabilidad:** CU21 ← HU-47 (RF-10, RNF-19).
+* **Actores:** Paciente / Coordinador.
+* **Clases BCE:** `IU_ConsolaTriajeIA` (Frontera Web Angular), `CTR_ClasificacionIAController` (Control Django Backend), `CE_ClasificacionIA` (Entidad Principal `clinica_clasificacionia`), `CE_RespuestaPreConsulta` (`clinica_respuestapreconsulta`), `CE_Paciente` (`clinica_paciente`), `CE_AuditoriaIA` (`clinica_auditoriaia`).
+
+###### 1º Diagrama de Comunicación BCE – CU21: Clasificación Asistida del Motivo por IA
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3* → *4. Diagramas de Comunicación - Sprint 3* → *CU21 - Clasificación Asistida del Motivo por IA* (**Diagrama ID: 267**).
+
+![Diagrama de Comunicación CU21 - Clasificación IA](./imagenes/diagrama_comunicacion_cu21_sp3.png)
+
+```plantuml
+@startuml
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+
+actor "Paciente / Coordinador" as actor
+control "CTR_ClasificacionIAController
+(Django Backend)" as ctrl
+entity "CE_ClasificacionIA
+(clinica_clasificacionia)" as ce_clasif
+entity "CE_RespuestaPreConsulta
+(clinica_respuestapreconsulta)" as ce_resp
+entity "CE_Paciente
+(clinica_paciente)" as ce_paciente
+entity "CE_AuditoriaIA
+(clinica_auditoriaia)" as ce_audit
+boundary "IU_ConsolaTriajeIA
+(Angular Consola)" as iu_coord
+
+actor -> ctrl : 1. procesar_formulario_preconsulta(payload)
+ctrl -> ce_resp : 2. sanitizar_pii()
+ce_resp --> ctrl : 3. texto_sanitizado()
+ctrl -> ce_paciente : 4. obtener_paciente()
+ce_paciente --> ctrl : 5. paciente_info()
+ctrl -> ctrl : 6. consultar_inferencia_nlp(prompt_anon)
+ctrl -> ctrl : 7. evaluar_patrones_riesgo_crisis(categoria, severidad)
+ctrl -> ce_clasif : 8. persistir_clasificacion(datos_clasificacion)
+ce_clasif --> ctrl : 9. clasificacion_persistida()
+ctrl -> ce_audit : 10. registrar_auditoria_inferencia(hash_prompt, reglas)
+ce_audit --> ctrl : 11. telemetria_registrada()
+ctrl -> iu_coord : 12. renderizarCasoTriado(caso)
+iu_coord --> actor : 13. activarAlertaCrisisVisual(detalles)
+@enduml
+```
+
+###### 2º Diagrama de Clases de Análisis – CU21: Clasificación Asistida del Motivo por IA
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3* → *12. Diagramas de Clases de Análisis (BCE) - Sprint 3* → *CU21 - Clases de Análisis: Clasificación Asistida por IA* (**Diagrama ID: 294**).
+
+![Diagrama de Clases de Análisis CU21 - Clasificación Asistida por IA](./imagenes/diagrama_clases_analisis_cu21_sp3.png)
+
+```plantuml
+@startuml
+left to right direction
+skinparam shadowing false
+skinparam roundcorner 6
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+hide circle
+
+class "Paciente / Coordinador" <<Actor>> #LightYellow
+
+class "IU_ConsolaTriajeIA" as UI <<boundary>> #EBF5FB {
+    - badgeCategoriaSugerida: Badge
+    - meterNivelSeveridad: Gauge
+    - bannerAlertaCrisis: AlertBanner
+    - grillaCasosTriaje: DataTable
+    - txtSintomasSanitizados: Text
+    - btnRevisarTriaje: Button
+    __
+    + renderizarCasoTriado(caso: Object): void
+    + activarAlertaCrisisVisual(detalles: String): void
+    + emitir_evento_alerta_urgente(alerta: Boolean): void
+    + actualizar_grilla_triaje(): void
+}
+
+class "CTR_ClasificacionIAController" as Controller <<control>> #E8F8F5 {
+    __
+    + procesar_formulario_preconsulta(payload: JSON): ClasificacionIA
+    + sanitizar_datos_sensibles_pii(texto: String): String
+    + consultar_inferencia_nlp(prompt_anon: String): ClasificacionIA
+    + evaluar_patrones_riesgo_crisis(cat: String, sev: String): Boolean
+    + persistir_clasificacion(datos: JSON): void
+}
+
+class "CE_ClasificacionIA" as PrimaryEntity <<entity>> #FADBD8 {
+    - id: UUID
+    - respuestapreconsulta_id: UUID
+    - categoria_principal: String
+    - nivel_severidad: String
+    - confianza_score: Decimal
+    - palabras_clave_detectadas: JSON
+    - alerta_crisis: Boolean
+    - explicacion_heuristica: Text
+    - hash_trazabilidad_sha256: String
+    - fecha_analisis: DateTime
+    __
+    + persistir_clasificacion(datos: JSON): void
+    + marcar_crisis_prioritaria(): void
+    + generar_hash_sha256(): String
+}
+
+class "CE_RespuestaPreConsulta" as Det_Resp <<entity>> #FDEDEC {
+    - id: UUID
+    - paciente_id: UUID
+    - cita_id: UUID
+    - motivo_consulta: Text
+    - sintomas_principales: JSON
+    - nivel_urgencia_percibido: Integer
+    - respuestas_detalle: JSON
+    - fecha_envio: DateTime
+    __
+    + sanitizar_pii(): String
+}
+
+class "CE_Paciente" as Det_Paciente <<entity>> #FDEDEC {
+    - id: UUID
+    - usuario_id: UUID
+    - codigo_expediente: String
+    - ci: String
+    - fecha_nacimiento: Date
+    - genero: String
+    - fecha_registro: DateTime
+    __
+    + obtener_paciente(): Paciente
+}
+
+class "CE_AuditoriaIA" as Det_Audit <<entity>> #FDEDEC {
+    - id: UUID
+    - formulario_respuesta_id: UUID
+    - psicologo_id: UUID
+    - resumen_generado: Text
+    - prioridad_sugerida: String
+    - reglas_aplicadas: JSON
+    - hash_prompt: String
+    - fecha_analisis: DateTime
+    __
+    + registrar_auditoria_inferencia(hash: String, reglas: JSON): void
+}
+
+"Paciente / Coordinador" -- UI
+UI -- Controller
+Controller -- PrimaryEntity
+PrimaryEntity "1" -- "1" Det_Resp : analiza_intake >
+Det_Resp "*" -- "1" Det_Paciente : llenado_por >
+PrimaryEntity "1" -- "1" Det_Audit : registra_telemetria >
+@enduml
+```
+
+###### 3º Diagrama de Secuencia del Sistema – CU21: Clasificación Asistida del Motivo por IA
+
+![Diagrama de Secuencia CU21 - Clasificación Asistida por IA](./imagenes/diagrama_secuencia_cu21_sp3.png)
+
+> **Reglas de Cátedra Aplicadas (UML 2.5+ / BCE):**
+> 1. **Ciclos de Vida:** Se reflejan las activaciones continuas del microservicio y controlador durante la inferencia NLP.
+> 2. **Anchura del Fragmento `alt`:** Abarca desde la interfaz de triaje (`IU_ConsolaTriajeIA`) hasta la auditoría de inferencia (`CE_AuditoriaIA`), separando estrictamente la activación del protocolo de emergencia de la atención ambulatoria ordinaria.
+
+```plantuml
+@startuml
+!theme plain
+skinparam sequenceMessageAlign center
+skinparam BoxPadding 10
+skinparam ParticipantPadding 10
+
+title Diagrama de Secuencia - CU21: Clasificación Asistida por IA (BCE UML 2.5+)
+
+actor "Paciente / Coordinador" as Actor
+boundary "IU_ConsolaTriajeIA" as IU
+control "CTR_ClasificacionIAController" as CTR
+entity "CE_ClasificacionIA" as CE_IA
+entity "CE_RespuestaPreConsulta" as CE_Resp
+entity "CE_Paciente" as CE_Pac
+entity "CE_AuditoriaIA" as CE_AuditIA
+
+Actor -> IU: 1: ingresar_motivo_y_respuestas(texto_motivo, escala_malestar)
+activate Actor
+activate IU
+IU -> CTR: 2: POST /api/v1/ia/clasificar-triaje/ (payload)
+activate CTR
+CTR -> CE_Resp: 3: sanitizar_pii(texto_motivo)
+activate CE_Resp
+CE_Resp --> CTR: 4: texto_anonimizado [retorno]()
+deactivate CE_Resp
+
+CTR -> CE_Pac: 5: obtener_paciente()
+activate CE_Pac
+CE_Pac --> CTR: 6: datos_paciente(paciente_id) [retorno]()
+deactivate CE_Pac
+
+CTR -> CTR: 7: consultar_inferencia_nlp(texto_anonimizado)
+CTR -> CTR: 8: evaluar_patrones_riesgo_crisis(score, categoria)
+
+alt score_severidad >= 0.70 o alerta_crisis == true (Protocolo Crisis)
+    CTR -> CE_IA: 9: persistir_clasificacion(categoria, severidad, nivel='CRITICO')
+    activate CE_IA
+    CE_IA --> CTR: 10: clasificacion_guardada(id) [retorno]
+    
+    CTR -> CE_IA: 11: marcar_crisis_prioritaria()
+    CE_IA --> CTR: 12: crisis_marcada() [retorno]
+    deactivate CE_IA
+    
+    CTR -> CE_AuditIA: 13: generar_hash_sha256(input, inferencia)
+    activate CE_AuditIA
+    CE_AuditIA --> CTR: 14: hash_generado [retorno]()
+    
+    CTR -> CE_AuditIA: 15: registrar_auditoria_inferencia(modelo='HF-Clinical-Bert', hash, alerta=true)
+    CE_AuditIA --> CTR: 16: auditoria_ia_registrada() [retorno]
+    deactivate CE_AuditIA
+    
+    CTR --> IU: 17: HTTP 200 OK (alerta_crisis=true, nivel='ALTO', sugerencia_inmediata) [retorno]
+    IU --> Actor: 18: activar_banner_alerta_roja_prioritaria('PROTOCOLO CRISIS') [retorno]
+else score_severidad < 0.70 (Atencion Ordinaria)
+    CTR -> CE_IA: 19: persistir_clasificacion(categoria, severidad, nivel='REGULAR')
+    activate CE_IA
+    CE_IA --> CTR: 20: clasificacion_guardada(id) [retorno]
+    deactivate CE_IA
+    
+    CTR -> CE_AuditIA: 21: generar_hash_sha256(input, inferencia)
+    activate CE_AuditIA
+    CE_AuditIA --> CTR: 22: hash_generado [retorno]()
+    
+    CTR -> CE_AuditIA: 23: registrar_auditoria_inferencia(modelo='HF-Clinical-Bert', hash, alerta=false)
+    CE_AuditIA --> CTR: 24: auditoria_ia_registrada() [retorno]
+    deactivate CE_AuditIA
+    
+    CTR --> IU: 25: HTTP 200 OK (alerta_crisis=false, nivel='REGULAR', clasificacion) [retorno]
+    deactivate CTR
+    IU --> Actor: 26: mostrar_tarjeta_triaje_ordinario('Triaje clasificado') [retorno]
+    deactivate IU
+    deactivate Actor
+end
+@enduml
+```
+
+---
+
+##### 7.2.1.3.7 CU22: Emparejamiento y Asignación de Psicólogo por IA con Supervisión Humana (HITL) (HU-48)
+
+* **Trazabilidad:** CU22 ← HU-48 (RF-11, RF-12).
+* **Actores:** Coordinador Clínico.
+* **Clases BCE:** `IU_ConsolaMatchingWeb` (Frontera Angular HITL), `CTR_MatchingController` (Control Django REST), `CE_SugerenciaMatching` (Entidad Principal `clinica_sugerenciamatching`), `CE_ClasificacionIA` (`clinica_clasificacionia`), `CE_Paciente` (`clinica_paciente`), `CE_Psicologo` (`clinica_psicologo`), `CE_PsicologoEspecialidad` (`clinica_psicologo_especialidad`), `CE_Especialidad` (`clinica_especialidad`), `CE_Usuario` (`accounts_usuario`).
+
+###### 1º Diagrama de Comunicación BCE – CU22: Emparejamiento y Asignación de Psicólogo por IA
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3* → *4. Diagramas de Comunicación - Sprint 3* → *CU22 - Emparejamiento y Asignación por IA (HITL)* (**Diagrama ID: 268**).
+
+![Diagrama de Comunicación CU22 - Matching y Asignación IA](./imagenes/diagrama_comunicacion_cu22_sp3.png)
+
+```plantuml
+@startuml
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+
+actor "Coordinador Clínico" as coord
+boundary "IU_ConsolaMatchingWeb
+(Angular Consola)" as iu
+control "CTR_MatchingController
+(Django REST)" as ctrl
+entity "CE_SugerenciaMatching
+(clinica_sugerenciamatching)" as ce_match
+entity "CE_ClasificacionIA
+(clinica_clasificacionia)" as ce_clasif
+entity "CE_Paciente
+(clinica_paciente)" as ce_paciente
+entity "CE_Psicologo
+(clinica_psicologo)" as ce_psico
+
+coord -> iu : 1. abrir_caso_triado(paciente_id)
+iu -> ctrl : 2. solicitar_matching_multivariable(paciente_id)
+ctrl -> ce_clasif : 3. consultar_triaje()
+ce_clasif --> ctrl : 4. datos_triaje()
+ctrl -> ce_paciente : 5. obtener_paciente()
+ce_paciente --> ctrl : 6. datos_paciente()
+ctrl -> ce_psico : 7. listar_candidatos_activos()
+ce_psico --> ctrl : 8. lista_candidatos()
+ctrl -> ctrl : 9. calcular_score(af, disp, cg, mod)
+ctrl -> ce_match : 10. persistir_top3_candidatos(top3)
+ce_match --> ctrl : 11. top3_guardado()
+ctrl --> iu : 12. HTTP 200 OK (top3_candidatos)
+iu --> coord : 13. mostrar_tarjetas_top3(sugerencias)
+@enduml
+```
+
+###### 2º Diagrama de Clases de Análisis – CU22: Emparejamiento y Asignación de Psicólogo por IA
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3* → *12. Diagramas de Clases de Análisis (BCE) - Sprint 3* → *CU22 - Clases de Análisis: Sugerencia y Asignación Asistida* (**Diagrama ID: 295**).
+
+![Diagrama de Clases de Análisis CU22 - Sugerencia y Asignación Asistida](./imagenes/diagrama_clases_analisis_cu22_sp3.png)
+
+```plantuml
+@startuml
+left to right direction
+skinparam shadowing false
+skinparam roundcorner 6
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+hide circle
+
+class "Coordinador Clínico" <<Actor>> #LightYellow
+
+class "IU_ConsolaMatchingWeb" as UI <<boundary>> #EBF5FB {
+    - listSugerenciasTop3: CardList
+    - barScoreCompatibilidad: ProgressBar
+    - btnConfirmarAsignacion: Button
+    - cmbPsicologoAlternativo: Dropdown
+    - txtJustificacionCambio: TextFormField
+    - lblEstadoDecision: Text
+    __
+    + abrir_caso_triado(paciente_id: UUID): void
+    + mostrar_tarjetas_top3(sug: List): void
+    + presionar_aprobar_asignacion(sug_id: UUID): void
+    + seleccionar_profesional_alternativo(psic_id: UUID): void
+    + mostrar_notificacion_exito(): void
+}
+
+class "CTR_MatchingController" as Controller <<control>> #E8F8F5 {
+    __
+    + solicitar_matching_multivariable(paciente_id: UUID): List
+    + calcular_score(af: Decimal, disp: Decimal, cg: Decimal, mod: Decimal): Decimal
+    + confirmar_asignacion_humana(sug_id: UUID, coord_id: UUID): void
+    + asignacion_manual_auditada(pac_id: UUID, psic_id: UUID, just: String): void
+}
+
+class "CE_SugerenciaMatching" as PrimaryEntity <<entity>> #FADBD8 {
+    - id: UUID
+    - paciente_id: UUID
+    - clasificacion_id: UUID
+    - psicologo_sugerido_id: UUID
+    - score_afinidad: Decimal
+    - ranking_posicion: Integer
+    - justificacion_clinica: Text
+    - factores_ponderacion: JSON
+    - estado_decision: String
+    - validado_por_coordinador_id: UUID
+    - fecha_generacion: DateTime
+    - fecha_decision: DateTime
+    __
+    + persistir_top3_candidatos(top3: List): void
+    + marcar_aprobada(coordinador_id: UUID): void
+    + marcar_rechazada_manual(coord_id: UUID, just: String): void
+}
+
+class "CE_ClasificacionIA" as Det_Clasif <<entity>> #FDEDEC {
+    - id: UUID
+    - respuestapreconsulta_id: UUID
+    - categoria_principal: String
+    - nivel_severidad: String
+    - confianza_score: Decimal
+    - palabras_clave_detectadas: JSON
+    - alerta_crisis: Boolean
+    - explicacion_heuristica: Text
+    - hash_trazabilidad_sha256: String
+    - fecha_analisis: DateTime
+    __
+    + consultar_triaje(): ClasificacionIA
+}
+
+class "CE_Paciente" as Det_Paciente <<entity>> #FDEDEC {
+    - id: UUID
+    - usuario_id: UUID
+    - codigo_expediente: String
+    - ci: String
+    - fecha_nacimiento: Date
+    - genero: String
+    - fecha_registro: DateTime
+    __
+    + obtener_paciente(): Paciente
+}
+
+class "CE_Psicologo" as Det_Psicologo <<entity>> #FDEDEC {
+    - id: UUID
+    - usuario_id: UUID
+    - numero_colegiado: String
+    - biografia: Text
+    - modalidad: String
+    - tarifa_base: Decimal
+    - activo: Boolean
+    - fecha_ingreso: DateTime
+    __
+    + listar_candidatos_activos(): List
+    + incrementar_carga(): void
+    + decrementar_carga(): void
+}
+
+class "CE_PsicologoEspecialidad" as Det_PsicEsp <<entity>> #FDEDEC {
+    - id: UUID
+    - psicologo_id: UUID
+    - especialidad_id: UUID
+    - anios_experiencia: Integer
+    - es_principal: Boolean
+    __
+    + verificar_experiencia(): Integer
+}
+
+class "CE_Especialidad" as Det_Esp <<entity>> #FDEDEC {
+    - id: UUID
+    - nombre: String
+    - descripcion: String
+    __
+    + obtener_nombre(): String
+}
+
+class "CE_Usuario" as Det_Usuario <<entity>> #FDEDEC {
+    - id: UUID
+    - email: String
+    - nombre: String
+    - apellido: String
+    - rol_id: UUID
+    - activo: Boolean
+    __
+    + get_full_name(): String
+}
+
+"Coordinador Clínico" -- UI
+UI -- Controller
+Controller -- PrimaryEntity
+PrimaryEntity "*" -- "1" Det_Clasif : fundamentada_en >
+PrimaryEntity "*" -- "1" Det_Paciente : empareja_paciente >
+PrimaryEntity "*" -- "1" Det_Psicologo : propone_terapeuta >
+Det_Psicologo "1" -- "1..*" Det_PsicEsp : registra_especialidad >
+Det_PsicEsp "*" -- "1" Det_Esp : corresponde_a >
+PrimaryEntity "*" -- "0..1" Det_Usuario : validada_por_coordinador >
+@enduml
+```
+
+###### 3º Diagrama de Secuencia del Sistema – CU22: Emparejamiento y Asignación de Psicólogo por IA HITL
+
+![Diagrama de Secuencia CU22 - Sugerencia y Asignación Asistida](./imagenes/diagrama_secuencia_cu22_sp3.png)
+
+> **Reglas de Cátedra Aplicadas (UML 2.5+ / BCE):**
+> 1. **Fragmento `loop`:** Modela la iteración de búsqueda y cálculo de score sobre la nómina de psicólogos clínicos activos, iniciada desde el controlador y cubriendo las entidades especializadas.
+> 2. **Fragmento `alt`:** Modela la decisión clínica humana (HITL): aprobación de la sugerencia algorítmica vs. reasignación manual justificada, cubriendo desde la consola web hasta la persistencia de la auditoría y actualización de carga clínica.
+> 3. **Ciclos de Vida:** Reflejan con precisión el tiempo de cálculo matricial en el backend y la confirmación transaccional.
+
+```plantuml
+@startuml
+!theme plain
+skinparam sequenceMessageAlign center
+skinparam BoxPadding 10
+skinparam ParticipantPadding 10
+
+title Diagrama de Secuencia - CU22: Emparejamiento y Asignación de Psicólogo por IA HITL (BCE UML 2.5+)
+
+actor "Coordinador Clínico" as Actor
+boundary "IU_ConsolaMatchingWeb" as IU
+control "CTR_MatchingController" as CTR
+entity "CE_SugerenciaMatching" as CE_Sugg
+entity "CE_ClasificacionIA" as CE_IA
+entity "CE_Paciente" as CE_Pac
+entity "CE_Psicologo" as CE_Psic
+entity "CE_PsicologoEspecialidad" as CE_PsicEsp
+entity "CE_Especialidad" as CE_Esp
+entity "CE_Usuario" as CE_User
+
+Actor -> IU: 1: solicitar_emparejamiento_ia(paciente_id)
+activate Actor
+activate IU
+IU -> CTR: 2: GET /api/v1/matching/sugerencias/?paciente_id=... 
+activate CTR
+CTR -> CE_IA: 3: consultar_triaje(paciente_id)
+activate CE_IA
+CE_IA --> CTR: 4: triaje(categoria, severidad) [retorno]()
+deactivate CE_IA
+
+CTR -> CE_Pac: 5: obtener_paciente(paciente_id)
+activate CE_Pac
+CE_Pac --> CTR: 6: datos_paciente(modalidad, preferencia) [retorno]()
+deactivate CE_Pac
+
+CTR -> CE_Psic: 7: listar_candidatos_activos()
+activate CE_Psic
+CE_Psic --> CTR: 8: psicologos_activos [retorno]()
+deactivate CE_Psic
+
+loop Por cada psicologo candidato en psicologos_activos
+    CTR -> CE_PsicEsp: 9: verificar_experiencia(psicologo_id)
+    activate CE_PsicEsp
+    CE_PsicEsp --> CTR: 10: anios_experiencia [retorno]()
+    deactivate CE_PsicEsp
+    
+    CTR -> CE_Esp: 11: obtener_nombre()
+    activate CE_Esp
+    CE_Esp --> CTR: 12: nombre_especialidad [retorno]()
+    deactivate CE_Esp
+    
+    CTR -> CE_User: 13: get_full_name()
+    activate CE_User
+    CE_User --> CTR: 14: nombre_psicologo [retorno]()
+    deactivate CE_User
+    
+    CTR -> CTR: 15: calcular_score(afinidad, carga, disponibilidad)
+end
+
+CTR -> CE_Sugg: 16: persistir_top3_candidatos(top3_candidatos)
+activate CE_Sugg
+CE_Sugg --> CTR: 17: candidatos_persistidos() [retorno]
+deactivate CE_Sugg
+
+CTR --> IU: 18: HTTP 200 OK (top3_candidatos, scores) [retorno]
+IU --> Actor: 19: mostrar_ranking_matching_hitl(candidatos) [retorno]
+
+alt Coordinador valida y aprueba candidato sugerido
+    Actor -> IU: 20: confirmar_asignacion_hitl(sugerencia_id, psicologo_id)
+    IU -> CTR: 21: POST /api/v1/matching/{id}/aprobar/ (psicologo_id)
+    
+    CTR -> CE_Sugg: 22: marcar_aprobada()
+    activate CE_Sugg
+    CE_Sugg --> CTR: 23: sugerencia_aprobada() [retorno]
+    deactivate CE_Sugg
+    
+    CTR -> CE_Psic: 24: incrementar_carga()
+    activate CE_Psic
+    CE_Psic --> CTR: 25: carga_actualizada() [retorno]
+    deactivate CE_Psic
+    
+    CTR -> CE_Sugg: 26: asignacion_manual_auditada(aprobado_hitl=true, coordinador_id)
+    activate CE_Sugg
+    CE_Sugg --> CTR: 27: auditoria_asignacion_guardada() [retorno]
+    deactivate CE_Sugg
+    
+    CTR --> IU: 28: HTTP 200 OK ('Psicologo asignado exitosamente') [retorno]
+    IU --> Actor: 29: mostrar_confirmacion_asignacion('Asignacion HITL confirmada') [retorno]
+else Coordinador rechaza sugerencia y asigna manualmente
+    Actor -> IU: 30: rechazar_y_reasignar_manual(sugerencia_id, psicologo_manual_id, motivo)
+    IU -> CTR: 31: POST /api/v1/matching/{id}/rechazar_y_reasignar/ (motivo)
+    
+    CTR -> CE_Sugg: 32: marcar_rechazada_manual(motivo)
+    activate CE_Sugg
+    CE_Sugg --> CTR: 33: rechazo_registrado() [retorno]
+    deactivate CE_Sugg
+    
+    CTR -> CE_Psic: 34: incrementar_carga()
+    activate CE_Psic
+    CE_Psic --> CTR: 35: carga_actualizada() [retorno]
+    deactivate CE_Psic
+    
+    CTR -> CE_Sugg: 36: asignacion_manual_auditada(aprobado_hitl=false, justificacion=motivo)
+    activate CE_Sugg
+    CE_Sugg --> CTR: 37: auditoria_reasignacion_guardada() [retorno]
+    deactivate CE_Sugg
+    
+    CTR --> IU: 38: HTTP 200 OK ('Asignacion manual registrada') [retorno]
+    deactivate CTR
+    IU --> Actor: 39: mostrar_confirmacion_manual('Asignacion manual completada') [retorno]
+    deactivate IU
+    deactivate Actor
+end
+@enduml
+```
+
+
+#### 7.2.1.4 Modelado del Comportamiento Temporal (Diagramas de Tiempo UML 2.5)
+
+Conforme a la directriz de la cátedra, los diagramas de tiempo se elaboran únicamente para los casos que modelan una **transacción o consulta**. En el Sprint 3 se documentan tres transacciones críticas: la **sesión de teleconsulta** (CU13), la **transacción de clasificación asistida con detección de crisis** (CU21) y el **ciclo de despacho de una notificación push** (CU12).
 
 ##### Diagrama de Tiempo 1: Sesión de Teleconsulta Móvil WebRTC Jitsi Meet (CU13 / HU-44)
 
@@ -1497,6 +5175,10 @@ Tareas --> ModalTarea : <<build>> onCompletarTarea
 | **@80** | `{30s}` | `En_Consulta_Activa` | `P2P_Media_Activo` | `Mute_Microfono_Temporal` | Paciente silencia micrófono temporalmente. | `UI -> Hardware : ToggleAudio(false)` | Audio suspendido; video continúa transmitiendo sin cortes. |
 | **@95** | `{15s}` | `Finalizando_Llamada` | `Peer_Teardown` | `Liberando_Hardware` | Uno de los participantes presiona botón 'Colgar'. | `UI -> Jitsi : DisconnectPeer` | Liberación de cámara y micrófono; cálculo de duración de sesión. |
 | **@100**| `{5s}` | `Concluida` | `Desconectado` | `Inactivo` | Retorno automático a la pantalla de citas. | `UI -> Paciente : RedirigirMoodTracker` | Cita pasa a estado `ATENDIDA`; se invita a calificar la sesión. |
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3 - Experiencia Móvil de Pacientes y Asistencia de IA* → *10. Diagramas de Tiempo - Sprint 3* → *Tiempo 1 - Sesión de Teleconsulta Móvil WebRTC* (**Diagrama ID: 282**).
+
+![Diagrama de Tiempo 1 - Sesión de Teleconsulta Móvil WebRTC](./imagenes/diagrama_tiempo_teleconsulta_sp3.png)
 
 ```plantuml
 @startuml
@@ -1559,6 +5241,10 @@ HW is Inactivo
 | **@80** | `{20s}` | `Disparando_Alerta_Roja` | `Payload_Clasificado` | `ROJO_CRITICO_PARPADEANTE`| Coincidencia confirmada con indicador de riesgo. | `IA -> Consola : PushAlertaCrisis` | La severidad se fija en `CRITICA`; se bloquea el despacho sin revisión humana. |
 | **@100**| `{20s}` | `Persistido_Auditado` | `Hash_SHA256_Firmado` | `ROJO_CRITICO_PARPADEANTE`| Persistencia en `clinica_clasificacionia`. | `IA -> DB : CommitTransaccion` | Generación de Checksum criptográfico y notificación al coordinador. |
 
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3 - Experiencia Móvil de Pacientes y Asistencia de IA* → *10. Diagramas de Tiempo - Sprint 3* → *Tiempo 2 - Pipeline IA y Detección de Crisis* (**Diagrama ID: 283**).
+
+![Diagrama de Tiempo 2 - Pipeline IA y Crisis](./imagenes/diagrama_tiempo_pipeline_ia_sp3.png)
+
 ```plantuml
 @startuml
 skinparam backgroundColor #FFFFFF
@@ -1613,6 +5299,10 @@ Buffer is Hash_SHA256_Firmado
 | **@90** | `{20s}` | `Abierta_Por_Paciente` | `Ack_Leido` | `Primer_Plano_Navegando` | Paciente pulsa sobre la notificación en el teléfono.| `SO -> Flutter : onNotificationClick` | La app se abre en primer plano y navega directamente a la cita. |
 | **@100**| `{10s}` | `Concluida_Auditada` | `Cerrado` | `Primer_Plano_Activo` | Detalle de cita desplegado; token actualizado. | — | Se marca la notificación como leída en la base de datos. |
 
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3 - Experiencia Móvil de Pacientes y Asistencia de IA* → *10. Diagramas de Tiempo - Sprint 3* → *Tiempo 3 - Ciclo Notificación Push FCM* (**Diagrama ID: 284**).
+
+![Diagrama de Tiempo 3 - Notificación Push FCM](./imagenes/diagrama_tiempo_push_fcm_sp3.png)
+
 ```plantuml
 @startuml
 skinparam backgroundColor #FFFFFF
@@ -1658,9 +5348,11 @@ App is Primer_Plano_Activo
 
 ---
 
-#### 7.2.1.6 Modelado del Ciclo de Vida y Transiciones (Diagramas de Máquinas de Estados UML 2.5)
+#### 7.2.1.5 Modelado del Ciclo de Vida y Transiciones (Diagramas de Máquinas de Estados UML 2.5)
 
 ##### Máquina de Estados 1: Ciclo de Vida de la Cita Médica Móvil (CU11)
+
+![Diagrama de Estados - Ciclo de Vida de la Cita Móvil (CU11)](./imagenes/diagrama_estados_cita_sp3.png)
 
 ```plantuml
 @startuml
@@ -1730,6 +5422,8 @@ CanceladaOportuna --> [*] : Archivar
 
 ##### Máquina de Estados 2: Ciclo de Vida de la Tarea Terapéutica Móvil (CU17)
 
+![Diagrama de Estados - Ciclo de Vida de la Tarea Móvil (CU17)](./imagenes/diagrama_estados_tarea_sp3.png)
+
 ```plantuml
 @startuml
 skinparam backgroundColor #FFFFFF
@@ -1783,6 +5477,8 @@ Evaluada --> [*] : Finalizar
 ```
 
 ##### Máquina de Estados 3: Ciclo de Vida de la Clasificación y Matching por IA (CU21 / CU22)
+
+![Diagrama de Estados - Triaje y Matching IA (CU21/CU22)](./imagenes/diagrama_estados_triaje_matching_sp3.png)
 
 ```plantuml
 @startuml
@@ -1861,6 +5557,8 @@ AsignacionModificada --> [*] : Cierre
 
 ##### Máquina de Estados 4: Ciclo de Vida del Token FCM y Notificaciones Push (CU12)
 
+![Diagrama de Estados - Token FCM y Despacho Push (CU12)](./imagenes/diagrama_estados_token_fcm_sp3.png)
+
 ```plantuml
 @startuml
 skinparam backgroundColor #FFFFFF
@@ -1918,445 +5616,892 @@ TokenInvalidoDetectado --> [*] : Descartar
 
 ---
 
-#### 7.2.1.7 DIAGRAMAS DE CLASES DE ANÁLISIS (Patrón VOPC / BCE Corregido)
+#### 7.2.1.6 Síntesis y Matriz de Trazabilidad del Diseño de Clases de Análisis (Patrón BCE / VOPC)
 
 > [!IMPORTANT]
-> **APLICACIÓN ESTRICTA DE LA CORRECCIÓN DE LA CÁTEDRA:**  
-> En observancia formal de la corrección explicada por la docente en `datos/Sprint3.txt`:
-> 1. La clase **Boundary (Interfaz / Vista)** contiene atributos de control visual y métodos de evento de usuario.
-> 2. La clase **Control (Controlador)** implementa la lógica de negocio y métodos de servicio.
-> 3. La clase **Control se vincula EXCLUSIVAMENTE con la Entidad Principal**.
-> 4. La **Entidad Principal** es la única que mantiene relaciones estructurales con sus **Entidades Secundarias o Detalle** (con multiplicidades precisas como $1 \dots *$, $0 \dots 1$, etc.).
-> 5. **Ninguna entidad secundaria o detalle se asocia directamente a la clase controladora.**
+> **ACOPLAMIENTO METODOLÓGICO Y TRAZABILIDAD INTEGRADA (CÁTEDRA SI2):**  
+> En rigurosa concordancia con las directrices de la cátedra (*"al diagrama de secuencia le hacen el diseño de clase"*), cada diagrama de clases de análisis (VOPC / BCE) ha sido acoplado formalmente de manera directa con su correspondiente **Diagrama de Comunicación** y **Diagrama de Secuencia** en la sección **7.2.1.3** (`7.2.1.3.1` a `7.2.1.3.7`).  
+> Se reitera el cumplimiento estricto de las 5 reglas de modelado estático:  
+> 1. La clase **Frontera / Boundary (`IU_`)** contiene atributos visuales y métodos de evento de usuario.  
+> 2. La clase **Controlador (`CTR_`)** implementa la lógica de orquestación y reglas de negocio.  
+> 3. El **Controlador se vincula EXCLUSIVAMENTE con la Entidad Principal (`CE_`)**.  
+> 4. La **Entidad Principal** mantiene relaciones de agregación y composición con sus **Entidades Secundarias y de Auditoría** con multiplicidades exactas.  
+> 5. **Ninguna entidad detalle se vincula directamente a la clase controladora.**
 
-A continuación se presentan los diagramas de clases de análisis para los casos de uso desarrollados en el Sprint 3:
+A continuación se presenta la matriz formal de trazabilidad estática que consolida la arquitectura BCE del Sprint 3:
 
-##### Diagrama de Clases de Análisis CU2: Autenticación Móvil JWT
+| Caso de Uso | Frontera Visual (`Boundary`) | Clase Controladora (`Control`) | Entidad Principal (`Entity`) | Entidades Secundarias / Detalle | Diagrama ID (EA) |
+| :--- | :--- | :--- | :--- | :--- | :---: |
+| **CU2: Autenticación Móvil JWT** | `IU_LoginMovil` *(Flutter)* | `CTR_AuthMovilController` | `CE_Usuario` | `CE_SesionDispositivo`, `CE_HistorialAcceso` | **289** |
+| **CU11: Gestión Citas y Cancelación** | `IU_MisCitasMovil` *(Flutter)* | `CTR_CitaMobileController` | `CE_Cita` | `CE_HistorialEstadoCita`, `CE_HorarioBloqueReserva` | **290** |
+| **CU12: Despacho Recordatorios Push** | `IU_FirebaseCloudMessaging` *(FCM)* | `CTR_FCMNotificationController` | `CE_AlertaNotificacion` | `CE_Paciente`, `CE_TokenDispositivoFCM` | **291** |
+| **CU13: Teleconsulta Móvil WebRTC** | `IU_TeleconsultaMovil` *(Flutter)* | `CTR_TeleconsultaController` | `CE_Cita` | `CE_LogAccesoSala`, `CE_MetricaLlamadaWebRTC` | **292** |
+| **CU17: Tareas y Mood Tracker** | `IU_GestionTareas` *(Flutter)* | `CTR_TareasController` | `CE_TareaTerapeutica` | `CE_EvidenciaTarea`, `CE_RegistroAnimo` | **293** |
+| **CU21: Clasificación Asistida IA** | `IU_ConsolaTriajeIA` *(Angular)* | `CTR_ClasificacionIAController` | `CE_ClasificacionIA` | `CE_CriterioEvaluadoIA`, `CE_TerminoSintomaDetectado` | **294** |
+| **CU22: Matching de Terapeutas IA** | `IU_ConsolaMatchingWeb` *(Angular)* | `CTR_MatchingController` | `CE_SugerenciaMatching` | `CE_Psicologo`, `CE_DecisionHumanaAuditoria` | **295** |
 
-```plantuml
-@startuml
-skinparam shadowing false
-skinparam roundcorner 6
-skinparam defaultFontName Arial
-skinparam classAttributeIconSize 0
 
-title Clases de Análisis VOPC: CU2 - Autenticación Móvil JWT (Estructura Corregida)
 
-class "Boundary::LoginMobileView" as UI {
-    - txtEmail: TextField
-    - txtPassword: TextField
-    - btnIngresar: Button
-    - btnOlvidastePassword: Link
-    - lblError: Label
-    + onSubmit(): void
-    + onOlvidastePasswordClick(): void
-    + mostrarError(msg: String): void
-}
+#### 7.2.1.7 Diseño de la Navegación de Vistas (Modelo WAE Conallen: General, Móvil y por Paquetes 1 al 6)
 
-class "Control::AuthMobileController" as Ctrl {
-    + validarCredenciales(email: String, pass: String): TokenPair
-    + solicitarResetPassword(email: String): Boolean
-    + verificarTokenExpirado(token: String): Boolean
-}
+En estricta conformidad con el estándar de modelado web y móvil de **Jim Conallen (Web Application Extension - WAE)** y las directrices metodológicas de la cátedra de Ingeniería de Software, la navegación del sistema **SIGEPSI** se formaliza mediante una arquitectura orientada a componentes visuales y gestores lógicos de interacción:
 
-class "Entity::Usuario" as EntPrincipal {
-    - id: UUID
-    - email: String
-    - password_hash: String
-    - rol: String
-    - is_active: Boolean
-    + check_password(pass: String): Boolean
-    + get_full_name(): String
-}
+* **Vistas y Pantallas (`«client page»` / `«screen»` / `«dialog»`):** Representan los formularios web, pantallas móviles y ventanas modales del sistema. Especifican sus **atributos públicos** (campos de entrada de texto, selectores, tablas y botones de acción) sin contener lógica de negocio directa.
+* **Controladores de Navegación (`«controller»`):** Representan los gestores del backend y frontend encargados de resolver la lógica de interacción, validación de reglas de negocio y ruteo. **No contienen atributos persistentes**, pero declaran exhaustivamente sus **métodos operacionales**.
+* **Transiciones de Envío (`«submit»`):** Conectan una vista con el controlador mediante una asociación dirigida que representa el envío de datos o la invocación de una acción disparada por el usuario (ej. *clic en botón*, *submit de formulario*).
+* **Transiciones de Renderizado (`«build»`):** Conectan el controlador con la siguiente vista o ventana modal mediante una dependencia dirigida discontinua que simboliza la construcción y despliegue del componente gráfico con los datos procesados.
+* **Interacción Modal Bidireccional:** Los modales emergentes capturan datos complementarios y realizan un nuevo `«submit»` al controlador, el cual redibuja (`«build»`) la vista principal con el estado actualizado.
 
-class "Entity::SesionDispositivo" as EntDetalle1 {
-    - id: UUID
-    - refresh_token_jti: String
-    - dispositivo_nombre: String
-    - ip_origen: String
-    - fecha_emision: DateTime
-    - fecha_expiracion: DateTime
-    + revocar(): void
-}
+La suite integral de navegación se estructura en **8 diagramas oficiales**, modelados en **Enterprise Architect (`DIAGRAMAS.eapx`)** bajo el paquete *Sprint 3 - Experiencia Móvil de Pacientes y Asistencia de IA → 9. Navegación de Vistas - Sprint 3*, distribuidos en: **1 Mapa Global del Sistema**, **1 Diagrama del Subsistema Móvil Nativo Flutter** y **6 Diagramas Específicos por Paquete Arquitectónico (Paquetes 1 al 6)**:
 
-class "Entity::HistorialAcceso" as EntDetalle2 {
-    - id: UUID
-    - timestamp: DateTime
-    - exitoso: Boolean
-    - ip_address: String
-}
+---
 
-UI -- Ctrl : interactúa
-Ctrl -- EntPrincipal : gestiona exclusivamente
-EntPrincipal "1" *-- "0..*" EntDetalle1 : mantiene sesiones activas
-EntPrincipal "1" *-- "0..*" EntDetalle2 : registra accesos en
-@enduml
-```
+##### Diagrama de Navegación 0: Mapa de Navegación Integral Global (Sprint 0 al Sprint 3 Acumulado)
 
-##### Diagrama de Clases de Análisis CU11: Gestión de Citas y Cancelación Móvil
+El diagrama global modela el mapa macro de navegación convergente para todos los roles de la plataforma SIGEPSI (**Administrador**, **Psicólogo**, **Coordinador Clínico** y **Paciente** en canales Web y Móvil), integrando el punto de acceso centralizado (`loginGlobalView`), el controlador de autenticación y ruteo multitenant (`authGlobalController`), y la bifurcación hacia los cuatro dashboards y controladores especializados de cada subsistema.
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3* → *9. Navegación de Vistas - Sprint 3* → *Mapa de Navegación Global (Sprint 0 al Sprint 3 Acumulado)* (**Diagrama ID: 280**).
+
+![Diagrama de Navegación 0 - Mapa de Navegación Integral Global (Sprint 0 al Sprint 3 Acumulado)](./imagenes/diagrama_navegacion_global_sp3.png)
 
 ```plantuml
 @startuml
-skinparam shadowing false
-skinparam roundcorner 6
-skinparam defaultFontName Arial
 skinparam classAttributeIconSize 0
-
-title Clases de Análisis VOPC: CU11 - Gestión de Citas Móviles (Estructura Corregida)
-
-class "Boundary::MisCitasMobileView" as UI {
-    - tabProximas: TabItem
-    - tabHistorial: TabItem
-    - listCitasCards: ListView
-    - btnCancelarCita: Button
-    - btnReprogramar: Button
-    - btnUnirseVideollamada: Button
-    + onCancelarClick(citaId: UUID): void
-    + onReprogramarClick(citaId: UUID): void
-    + renderizarCitas(citas: List): void
-}
-
-class "Control::CitaMobileController" as Ctrl {
-    + listarCitasPaciente(pacienteId: UUID): List<Cita>
-    + cancelarCita(citaId: UUID, motivo: String): ResultadoOperacion
-    + solicitarReprogramacion(citaId: UUID, nuevaFecha: Date, bloqueId: UUID): ResultadoOperacion
-}
-
-class "Entity::Cita" as EntPrincipal {
-    - id: UUID
-    - fecha: Date
-    - hora_inicio: Time
-    - hora_fin: Time
-    - estado: String
-    - modalidad: String
-    - sala_jitsi_token: String
-    + es_cancelable(): Boolean
-    + liberar_horario(): void
-}
-
-class "Entity::HistorialEstadoCita" as EntDetalle1 {
-    - id: UUID
-    - estado_anterior: String
-    - estado_nuevo: String
-    - motivo_cambio: Text
-    - cambiado_por_usuario: UUID
-    - fecha_cambio: DateTime
-}
-
-class "Entity::HorarioBloqueReserva" as EntDetalle2 {
-    - id: UUID
-    - dia_semana: Integer
-    - franja_inicio: Time
-    - franja_fin: Time
-    - ocupado: Boolean
-}
-
-UI -- Ctrl : interactúa
-Ctrl -- EntPrincipal : gestiona exclusivamente
-EntPrincipal "1" *-- "1..*" EntDetalle1 : audita transiciones en
-EntPrincipal "1" -- "1" EntDetalle2 : reserva bloque
-@enduml
-```
-
-##### Diagrama de Clases de Análisis CU12: Notificaciones Push FCM y Recordatorios
-
-```plantuml
-@startuml
-skinparam shadowing false
-skinparam roundcorner 6
+skinparam backgroundColor #FFFFFF
+skinparam roundcorner 8
 skinparam defaultFontName Arial
-skinparam classAttributeIconSize 0
-
-title Clases de Análisis VOPC: CU12 - Notificaciones Push y Alertas (Estructura Corregida)
-
-class "Boundary::NotificationBannerMobile" as UI {
-    - iconBadge: Badge
-    - bannerTitulo: Label
-    - bannerCuerpo: Label
-    - btnAbrirDetalle: ActionButton
-    + onNotificationClick(payload: Dict): void
-    + actualizarContadorNoLeidas(n: Integer): void
-}
-
-class "Control::FCMNotificationController" as Ctrl {
-    + registrarTokenDispositivo(pacienteId: UUID, token: String, plat: String): Boolean
-    + procesarRecordatoriosProgramados(): Integer
-    + despacharPushFirebase(token: String, mensaje: PayloadFCM): Boolean
-}
-
-class "Entity::Paciente" as EntPrincipal {
-    - id: UUID
-    - expediente_codigo: String
-    - nombre_completo: String
-    - telefono: String
-    + get_tokens_activos(): List<TokenFCM>
-}
-
-class "Entity::TokenDispositivoFCM" as EntDetalle1 {
-    - id: UUID
-    - token_cadena: String
-    - modelo_dispositivo: String
-    - sistema_operativo: String
-    - activo: Boolean
-    - ultima_actualizacion: DateTime
-    + desactivar(): void
-}
-
-class "Entity::AlertaNotificacion" as EntDetalle2 {
-    - id: UUID
-    - tipo: String
-    - titulo: String
-    - contenido: Text
-    - leida: Boolean
-    - fecha_despacho: DateTime
-}
-
-UI -- Ctrl : interactúa
-Ctrl -- EntPrincipal : resuelve paciente destino
-EntPrincipal "1" *-- "1..*" EntDetalle1 : posee dispositivos asociados
-EntPrincipal "1" *-- "0..*" EntDetalle2 : recibe histórico de alertas
-@enduml
-```
-
-##### Diagrama de Clases de Análisis CU13: Teleconsulta Móvil Nativa WebRTC
-
-```plantuml
-@startuml
 skinparam shadowing false
-skinparam roundcorner 6
-skinparam defaultFontName Arial
-skinparam classAttributeIconSize 0
+left to right direction
 
-title Clases de Análisis VOPC: CU13 - Teleconsulta WebRTC Móvil (Estructura Corregida)
+title Diagrama de Navegación 0: Mapa Global del Sistema SIGEPSI (Sprint 0 a Sprint 3 Acumulado)
 
-class "Boundary::TeleconsultaJitsiMobileView" as UI {
-    - feedVideoRemoto: VideoRenderer
-    - feedVideoLocal: VideoRenderer
-    - btnToggleMic: IconButton
-    - btnToggleCam: IconButton
-    - btnColgar: IconButton
-    + onConectarClick(): void
-    + onColgarClick(): void
+actor "Administrador" as act_adm
+actor "Psicólogo" as act_psi
+actor "Coordinador Clínico" as act_coo
+actor "Paciente (Web y Móvil)" as act_pac
+
+class "loginGlobalView" as v_login {
+    + rolSeleccionado: String
+    + txtEmail: String
+    + txtPassword: String
 }
 
-class "Control::TeleconsultaMobileController" as Ctrl {
-    + validarAccesoSala(citaId: UUID, pacienteId: UUID): SalaResponse
-    + emitirTokenJitsiJWT(salaNombre: String): String
-    + registrarFinalizacionLlamada(citaId: UUID, duracionMinutos: Integer): Boolean
+class "authGlobalController" as c_auth <<controller>> {
+    + autenticarJWT(): void
+    + determinarTenantYRol(): void
+    + redireccionarDashboard(): void
 }
 
-class "Entity::Cita" as EntPrincipal {
-    - id: UUID
-    - fecha: Date
-    - hora_inicio: Time
-    - estado: String
-    - sala_jitsi_token: String
-    + esta_en_ventana_teleconsulta(): Boolean
-    + registrar_cierre_sesion(): void
+class "dashboardAdminPaquete1y6View" as v_dash_adm {
+    + kpisMultiTenant: Object
+    + tenantsActivos: int
 }
 
-class "Entity::MetricaLlamadaWebRTC" as EntDetalle1 {
-    - id: UUID
-    - bytes_enviados: BigInt
-    - paquetes_perdidos: Integer
-    - duracion_segundos: Integer
-    - calidad_red: String
+class "dashboardClinicoPaquete2y3View" as v_dash_cli {
+    + agendaDelDia: List
+    + pacientesCitados: int
 }
 
-class "Entity::LogAccesoSala" as EntDetalle2 {
-    - id: UUID
-    - usuario_id: UUID
-    - rol: String
-    - hora_entrada: DateTime
-    - hora_salida: DateTime
+class "consolaTriajeIAPaquete5View" as v_dash_ia {
+    + alertasCrisis: int
+    + casosPendientesTriaje: List
 }
 
-UI -- Ctrl : interactúa
-Ctrl -- EntPrincipal : valida y gobierna sala
-EntPrincipal "1" *-- "0..1" EntDetalle1 : monitorea calidad
-EntPrincipal "1" *-- "0..*" EntDetalle2 : audita conexiones
-@enduml
-```
-
-##### Diagrama de Clases de Análisis CU17: Seguimiento de Tareas y Mood Tracker
-
-```plantuml
-@startuml
-skinparam shadowing false
-skinparam roundcorner 6
-skinparam defaultFontName Arial
-skinparam classAttributeIconSize 0
-
-title Clases de Análisis VOPC: CU17 - Tareas y Mood Tracker Móvil (Estructura Corregida)
-
-class "Boundary::SeguimientoMobileView" as UI {
-    - selectorEstadoAnimo: EmojiPicker
-    - chipsFactoresContexto: ChipGroup
-    - listTareasPendientes: CardList
-    - btnEnviarEvidencia: Button
-    + onMoodSelected(animo: String): void
-    + onEnviarTarea(tareaId: UUID): void
-    + mostrarConfirmacionEntrega(): void
+class "dashboardMobileAppFlutterView" as v_dash_mov {
+    + citaProxima: Card
+    + moodTracker: Widget
+    + tareasPendientes: int
 }
 
-class "Control::SeguimientoMobileController" as Ctrl {
-    + registrarEstadoAnimo(pacienteId: UUID, animo: String, contexto: List): Boolean
-    + listarTareasPaciente(pacienteId: UUID): List<TareaTerapeutica>
-    + guardarEvidenciaTarea(tareaId: UUID, reflexiones: Text, dif: Integer): Boolean
+class "moduloAdminSeguridadController" as c_p1 <<controller>> {
+    + gestionarCentros(): void
+    + gestionarUsuariosRBAC(): void
 }
 
-class "Entity::TareaTerapeutica" as EntPrincipal {
-    - id: UUID
-    - titulo: String
-    - descripcion_clinica: Text
-    - fecha_limite: Date
-    - estado: String
-    - prioridad: String
-    + marcar_como_entregada(): void
+class "moduloClinicaAgendaController" as c_p2 <<controller>> {
+    + abrirExpediente(): void
+    + gestionarAgendaCitas(): void
 }
 
-class "Entity::EvidenciaReporte" as EntDetalle1 {
-    - id: UUID
-    - dificultad_escala: Integer
-    - utilidad_percibida: Integer
-    - conclusiones_personales: Text
-    - fecha_entrega: DateTime
+class "moduloIAPipelineController" as c_p5 <<controller>> {
+    + clasificarNLP(): void
+    + matchingTerapeutas(): void
 }
 
-class "Entity::ComentarioPsicologo" as EntDetalle2 {
-    - id: UUID
-    - retroalimentacion_texto: Text
-    - evaluacion_adherencia: String
-    - fecha_revision: DateTime
+class "moduloMovilSyncController" as c_mov <<controller>> {
+    + despacharFCM(): void
+    + sincronizarTeleconsulta(): void
 }
 
-UI -- Ctrl : interactúa
-Ctrl -- EntPrincipal : gestiona exclusivamente
-EntPrincipal "1" *-- "0..1" EntDetalle1 : contiene evidencia
-EntPrincipal "1" *-- "0..*" EntDetalle2 : recibe feedback de
-@enduml
-```
+' Asociaciones de acceso al login
+act_adm --> v_login
+act_psi --> v_login
+act_coo --> v_login
+act_pac --> v_login
 
-##### Diagrama de Clases de Análisis CU21: Clasificación Asistida del Motivo de Consulta por IA
+' Autenticación global
+v_login --> c_auth : <<submit>>
+c_auth ..> v_login : <<build>>
 
-```plantuml
-@startuml
-skinparam shadowing false
-skinparam roundcorner 6
-skinparam defaultFontName Arial
-skinparam classAttributeIconSize 0
+' Redirección por rol hacia Dashboards
+c_auth ..> v_dash_adm : <<build [Rol Administrador]>>
+c_auth ..> v_dash_cli : <<build [Rol Psicólogo]>>
+c_auth ..> v_dash_ia : <<build [Rol Coordinador]>>
+c_auth ..> v_dash_mov : <<build [Rol Paciente Móvil]>>
 
-title Clases de Análisis VOPC: CU21 - Clasificación Asistida por IA (Estructura Corregida)
-
-class "Boundary::ConsolaTriageIAView" as UI {
-    - badgeCategoriaSugerida: Badge
-    - meterNivelSeveridad: Gauge
-    - tagsPalabrasClave: TagList
-    - lblAlertaCrisis: AlertBox
-    + mostrarClasificacion(data: Dict): void
-    + resaltarRiesgoCritico(): void
-}
-
-class "Control::ClasificacionIAController" as Ctrl {
-    + anonimizarTextoPII(texto: String): String
-    + ejecutarPipelineClasificacion(respuestaIntakeId: UUID): ClasificacionIA
-    + evaluarReglasHeuristicas(sintomas: String, urgencia: Integer): ResultadoReglas
-}
-
-class "Entity::ClasificacionIA" as EntPrincipal {
-    - id: UUID
-    - categoria_principal: String
-    - puntaje_confianza: Float
-    - nivel_severidad: String
-    - indicador_crisis: Boolean
-    - hash_integridad_sha256: String
-    - fecha_clasificacion: DateTime
-    + es_caso_urgente(): Boolean
-}
-
-class "Entity::CriterioEvaluadoIA" as EntDetalle1 {
-    - id: UUID
-    - regla_codigo: String
-    - descripcion_criterio: String
-    - explicacion_clinica: Text
-    - peso_severidad: Integer
-}
-
-class "Entity::TerminoSintomaDetectado" as EntDetalle2 {
-    - id: UUID
-    - termino_normalizado: String
-    - frecuencia_ocurrencia: Integer
-    - categoria_asociada: String
-}
-
-UI -- Ctrl : interactúa
-Ctrl -- EntPrincipal : genera y persiste exclusivamente
-EntPrincipal "1" *-- "1..*" EntDetalle1 : fundamentada en criterios
-EntPrincipal "1" *-- "0..*" EntDetalle2 : extrae términos clave
-@enduml
-```
-
-##### Diagrama de Clases de Análisis CU22: Emparejamiento y Asignación de Psicólogo por IA
-
-```plantuml
-@startuml
-skinparam shadowing false
-skinparam roundcorner 6
-skinparam defaultFontName Arial
-skinparam classAttributeIconSize 0
-
-title Clases de Análisis VOPC: CU22 - Sugerencia y Asignación Asistida (Estructura Corregida)
-
-class "Boundary::AsignacionPsicologoView" as UI {
-    - listSugerenciasTop3: CardList
-    - barScoreCompatibilidad: ProgressBar
-    - btnConfirmarAsignacion: Button
-    - cmbPsicologoAlternativo: Dropdown
-    + onConfirmarAsignacionClick(): void
-    + onSeleccionarAlternativo(id: UUID): void
-}
-
-class "Control::MatchingPsicologoController" as Ctrl {
-    + obtenerCandidatosDisponibles(especialidadReq: String, mod: String): List<Psicologo>
-    + computarPuntajesAfinidad(pacienteId: UUID, clasificacionId: UUID): List<SugerenciaMatching>
-    + confirmarAsignacionHumana(sugerenciaId: UUID, psicologoId: UUID, coordinadorId: UUID): Boolean
-}
-
-class "Entity::SugerenciaMatching" as EntPrincipal {
-    - id: UUID
-    - score_global_compatibilidad: Float
-    - ranking_posicion: Integer
-    - estado_decision: String
-    - fecha_generacion: DateTime
-    + marcar_aprobada(): void
-}
-
-class "Entity::PonderacionFactorMatching" as EntDetalle1 {
-    - id: UUID
-    - factor_nombre: String
-    - peso_ponderado: Float
-    - puntaje_obtenido: Float
-    - justificacion_algoritmica: String
-}
-
-class "Entity::DecisionHumanaCoordinador" as EntDetalle2 {
-    - id: UUID
-    - coordinador_usuario_id: UUID
-    - acepto_sugerencia_ia: Boolean
-    - justificacion_cambio: Text
-    - timestamp_aprobacion: DateTime
-}
-
-UI -- Ctrl : interactúa
-Ctrl -- EntPrincipal : orquesta matching
-EntPrincipal "1" *-- "1..*" EntDetalle1 : desglosada en factores
-EntPrincipal "1" *-- "0..1" EntDetalle2 : auditada por decisión humana
+' Controladores de subsistema
+v_dash_adm --> c_p1 : <<submit>>
+v_dash_cli --> c_p2 : <<submit>>
+v_dash_ia --> c_p5 : <<submit>>
+v_dash_mov --> c_mov : <<submit>>
 @enduml
 ```
 
 ---
 
+##### Diagrama de Navegación 1: Subsistema Móvil de Pacientes en Flutter 3.x
+
+Formaliza la experiencia completa del paciente en la aplicación móvil nativa desarrollada en Flutter 3.x para el Sprint 3. Estructura de forma paralela y desacoplada los cuatro flujos esenciales: **Autenticación persistente y Dashboard (`CU2 Móvil`)**, **Agenda de Citas y Cancelación con política >24h (`CU11 Móvil`)**, **Teleconsulta psicológica WebRTC en sala Jitsi Meet (`CU13 Móvil`)** y **Seguimiento inter-sesión de Tareas con registro diario de estado de ánimo / Mood Tracker (`CU17 Móvil`)**.
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3* → *9. Navegación de Vistas - Sprint 3* → *Navegación Subsistema Móvil de Pacientes (Flutter 3.x)* (**Diagrama ID: 281**).
+
+![Diagrama de Navegación 1 - Subsistema Móvil de Pacientes (Flutter 3.x)](./imagenes/diagrama_navegacion_movil_sp3.png)
+
+```plantuml
+@startuml
+skinparam classAttributeIconSize 0
+skinparam backgroundColor #FFFFFF
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam shadowing false
+left to right direction
+
+title Diagrama de Navegación 1: Subsistema Móvil de Pacientes (Flutter 3.x)
+
+actor "Paciente (App Móvil Flutter)" as act_pac
+
+' Fila 1: CU2 Móvil - Login y Dashboard
+class "LoginMobileScreen" as v_login_m {
+    + btnLogin: Button
+    + txtEmail: String
+    + txtPassword: String
+}
+
+class "AuthMobileController" as c_auth_m <<controller>> {
+    + guardarTokensSecureStorage(): void
+    + loginJWT(): void
+    + registrarTokenFCM(): void
+}
+
+class "DashboardMobileScreen" as v_dash_m {
+    + moodTrackerWidget: Widget
+    + proximaCitaBanner: Card
+    + tareasPendientesBadge: int
+}
+
+act_pac --> v_login_m
+v_login_m --> c_auth_m : <<submit>>
+c_auth_m ..> v_login_m : <<build>>
+c_auth_m ..> v_dash_m : <<build>>
+
+' Fila 2: CU11 Móvil - Citas y Cancelación >24h
+class "MisCitasMobileScreen" as v_citas_m {
+    + listaCitas: List
+    + tabHistorial: Tab
+    + tabProximas: Tab
+}
+
+class "CitaMobileController" as c_cita_m <<controller>> {
+    + listarCitas(): void
+    + solicitarCancelacion(): void
+    + validarVentanaCancelacion(): void
+}
+
+class "ModalCancelacionCitaView" as v_canc_modal {
+    + avisoPolitica24h: String
+    + btnConfirmarCancelacion: Button
+    + motivoCancelacion: String
+}
+
+act_pac --> v_citas_m
+v_citas_m --> c_cita_m : <<submit>>
+c_cita_m ..> v_citas_m : <<build>>
+c_cita_m ..> v_canc_modal : <<build>>
+v_canc_modal --> c_cita_m : <<submit>>
+
+' Fila 3: CU13 Móvil - Teleconsulta WebRTC Jitsi Meet
+class "DetalleCitaMobileScreen" as v_det_cita_m {
+    + fechaHoraSesion: DateTime
+    + modalidad: String
+    + psicologoNombre: String
+}
+
+class "TeleconsultaMobileController" as c_tele_m <<controller>> {
+    + conectarWebRTCJitsi(): void
+    + registrarMetricaLlamada(): void
+    + verificarHorarioSala(): void
+}
+
+class "SalaJitsiMeetScreen" as v_sala_jitsi {
+    + btnColgar: Button
+    + btnMuteAudio: Button
+    + videoStreamLocal: VideoView
+    + videoStreamRemoto: VideoView
+}
+
+v_det_cita_m --> c_tele_m : <<submit>>
+c_tele_m ..> v_det_cita_m : <<build>>
+c_tele_m ..> v_sala_jitsi : <<build>>
+v_sala_jitsi --> c_tele_m : <<submit>>
+
+' Fila 4: CU17 Móvil - Tareas y Mood Tracker
+class "MisTareasMobileScreen" as v_tar_m {
+    + factorContextual: String
+    + listaTareasPendientes: List
+    + selectorNivelAnimo: int
+}
+
+class "TareasMobileController" as c_tar_m <<controller>> {
+    + entregarReflexionTarea(): void
+    + registrarMoodTracker(): void
+    + sincronizarOffline(): void
+}
+
+class "FormularioEntregaTareaModalView" as v_ent_modal {
+    + btnEnviarEntrega: Button
+    + escalaDificultad: int
+    + reflexionesTexto: String
+}
+
+act_pac --> v_tar_m
+v_tar_m --> c_tar_m : <<submit>>
+c_tar_m ..> v_tar_m : <<build>>
+c_tar_m ..> v_ent_modal : <<build>>
+v_ent_modal --> c_tar_m : <<submit>>
+@enduml
+```
+
+---
+
+##### Diagrama de Navegación 2: Paquete 1 – Administración, Seguridad y Multi-Tenant
+
+Modela las operaciones de administración de la plataforma ejecutadas por el **Administrador**: gestión de centros clínicos inquilinos (*tenants*) con aislamiento lógico de esquemas, y gestión de usuarios institucionales con configuración de roles y matriz de permisos RBAC.
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3* → *9. Navegación de Vistas - Sprint 3* → *Navegación Paquete 1 - Administración, Seguridad y Multi-Tenant*.
+
+![Diagrama de Navegación 2 - Paquete 1: Administración, Seguridad y Multi-Tenant](./imagenes/diagrama_navegacion_paquete1_sp3.png)
+
+```plantuml
+@startuml
+skinparam classAttributeIconSize 0
+skinparam backgroundColor #FFFFFF
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam shadowing false
+left to right direction
+
+title Diagrama de Navegación 2: Paquete 1 - Administración, Seguridad y Multi-Tenant
+
+actor "Administrador" as act_adm
+
+' Fila 1: Gestión de Centros Multi-Tenant
+class "directorioCentrosView" as v_centros {
+    + filtroEstado: String
+    + listaTenants: List
+}
+
+class "centroAdminController" as c_centros <<controller>> {
+    + configurarDominio(): void
+    + registrarTenant(): void
+    + suspenderCentro(): void
+}
+
+class "formularioCentroModalView" as v_form_centro {
+    + planSuscripcion: String
+    + razonSocial: String
+    + subdominio: String
+}
+
+act_adm --> v_centros
+v_centros --> c_centros : <<submit>>
+c_centros ..> v_centros : <<build>>
+c_centros ..> v_form_centro : <<build>>
+v_form_centro --> c_centros : <<submit>>
+
+' Fila 2: Usuarios y Matriz RBAC
+class "directorioUsuariosRolesView" as v_roles {
+    + rolFiltro: String
+    + usuariosList: List
+}
+
+class "usuarioRolController" as c_roles <<controller>> {
+    + asignarRoles(): void
+    + auditarAcciones(): void
+    + crearUsuario(): void
+}
+
+class "matrizPermisosModalView" as v_matriz {
+    + nivelAcceso: String
+    + permisosRBAC: List
+}
+
+act_adm --> v_roles
+v_roles --> c_roles : <<submit>>
+c_roles ..> v_roles : <<build>>
+c_roles ..> v_matriz : <<build>>
+v_matriz --> c_roles : <<submit>>
+@enduml
+```
+
+---
+
+##### Diagrama de Navegación 3: Paquete 2 – Gestión Clínica y de Profesionales
+
+Modela la navegación del **Psicólogo** en la historia clínica digital del paciente: consulta de expedientes, registro estructurado de sesiones bajo formato SOAP con autoguardado reactivo, y formalización de protocolos de cierre de alta o derivación psiquiátrica de interconsulta.
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3* → *9. Navegación de Vistas - Sprint 3* → *Navegación Paquete 2 - Gestión Clínica y de Profesionales*.
+
+![Diagrama de Navegación 3 - Paquete 2: Gestión Clínica y de Profesionales](./imagenes/diagrama_navegacion_paquete2_sp3.png)
+
+```plantuml
+@startuml
+skinparam classAttributeIconSize 0
+skinparam backgroundColor #FFFFFF
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam shadowing false
+left to right direction
+
+title Diagrama de Navegación 3: Paquete 2 - Gestión Clínica y de Profesionales
+
+actor "Psicólogo" as act_psi
+
+' Fila 1: Expedientes e Historia Clínica
+class "expedientesDirectorioView" as v_exp {
+    + filtroBusqueda: String
+    + listaPacientes: List
+}
+
+class "expedienteClinicoController" as c_exp <<controller>> {
+    + abrirHistoriaClinica(): void
+    + verificarAsignacionRBAC(): void
+}
+
+class "historiaClinicaModularView" as v_hist {
+    + anamnesisText: String
+    + examenMental: String
+    + numeroExpediente: String
+}
+
+act_psi --> v_exp
+v_exp --> c_exp : <<submit>>
+c_exp ..> v_hist : <<build>>
+
+' Fila 2: Editor SOAP y Cierre de Caso
+class "editorNotasSOAPView" as v_soap {
+    + analisis: String
+    + objetivo: String
+    + plan: String
+    + subjetivo: String
+}
+
+class "notaSesionController" as c_soap <<controller>> {
+    + autoGuardarBorrador(): void
+    + firmarYConsolidar(): void
+}
+
+class "protocoloCierreAltaModalView" as v_cierre {
+    + logrosAlcanzados: String
+    + motivoEgreso: String
+    + recomendaciones: String
+}
+
+v_hist --> c_soap : <<submit>>
+c_soap ..> v_soap : <<build>>
+v_soap --> c_soap : <<submit>>
+c_soap ..> v_cierre : <<build>>
+
+' Fila 3: Derivación Psiquiátrica e Interconsulta
+class "ordenDerivacionPsiquiatricaView" as v_deriv {
+    + medicoDestino: String
+    + motivoFarmacologico: String
+    + riesgoClinico: String
+}
+
+class "cierreDerivacionController" as c_deriv <<controller>> {
+    + emitirInterconsultaPDF(): void
+    + formalizarAlta(): void
+}
+
+class "informeEpicrisisModalView" as v_epic {
+    + diagnosticoCIE11: String
+    + resumenTratamiento: String
+}
+
+v_cierre --> c_deriv : <<submit>>
+c_deriv ..> v_deriv : <<build>>
+v_deriv --> c_deriv : <<submit>>
+c_deriv ..> v_epic : <<build>>
+@enduml
+```
+
+---
+
+##### Diagrama de Navegación 4: Paquete 3 – Agenda, Comunicación y Seguimiento (Web y Móvil)
+
+Modela de forma integrada la agenda clínica inteligente para el **Psicólogo** (reserva de turnos y teleconsulta web Jitsi) y para el **Paciente Móvil** (consulta de citas, política de cancelación >24h, recepción de alertas push FCM y reporte de cumplimiento terapéutico).
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3* → *9. Navegación de Vistas - Sprint 3* → *Navegación Paquete 3 - Agenda, Comunicación y Seguimiento*.
+
+![Diagrama de Navegación 4 - Paquete 3: Agenda, Comunicación y Seguimiento](./imagenes/diagrama_navegacion_paquete3_sp3.png)
+
+```plantuml
+@startuml
+skinparam classAttributeIconSize 0
+skinparam backgroundColor #FFFFFF
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam shadowing false
+left to right direction
+
+title Diagrama de Navegación 4: Paquete 3 - Agenda, Comunicación y Seguimiento (Web y Móvil)
+
+actor "Psicólogo" as act_psi
+actor "Paciente (Móvil)" as act_pac
+
+' Fila 1: Calendario de Citas (Web)
+class "calendarioAgendaView" as v_cal {
+    + fechaSeleccionada: Date
+    + turnosDisponibles: List
+    + vistaSemanal: Calendar
+}
+
+class "agendaTurnosController" as c_age <<controller>> {
+    + agendarSesion(): void
+    + bloquearHorario(): void
+    + reprogramarCita(): void
+}
+
+class "reservaCitaModalView" as v_res_cita {
+    + modalidad: String
+    + motivoConsulta: String
+    + pacienteID: int
+}
+
+act_psi --> v_cal
+v_cal --> c_age : <<submit>>
+c_age ..> v_cal : <<build>>
+c_age ..> v_res_cita : <<build>>
+v_res_cita --> c_age : <<submit>>
+
+' Fila 2: Teleconsulta WebRTC (Web)
+class "salaTeleconsultaJitsiView" as v_jitsi {
+    + controlesConferencia: Widget
+    + estadoConexion: String
+    + salaToken: String
+}
+
+class "teleconsultaController" as c_tele <<controller>> {
+    + conectarSalaWebRTC(): void
+    + finalizarLlamada(): void
+}
+
+class "resumenLlamadaModalView" as v_resumen_call {
+    + calidadConexion: String
+    + duracionMinutos: int
+}
+
+act_psi --> v_jitsi
+v_jitsi --> c_tele : <<submit>>
+c_tele ..> v_jitsi : <<build>>
+c_tele ..> v_resumen_call : <<build>>
+
+' Fila 3: Mis Citas Móvil (CU11)
+class "misCitasScreenMovil" as v_citas_mov {
+    + badgeFCMAlerta: int
+    + filtroEstado: String
+    + listaCitas: List
+}
+
+class "citaMobileController" as c_cita_mov <<controller>> {
+    + cancelarCita24h(): void
+    + cargarCitasPaciente(): void
+}
+
+class "modalCancelacionCitaView" as v_canc_mov {
+    + avisoPolitica24h: String
+    + motivoCancelacion: String
+}
+
+act_pac --> v_citas_mov
+v_citas_mov --> c_cita_mov : <<submit>>
+c_cita_mov ..> v_citas_mov : <<build>>
+c_cita_mov ..> v_canc_mov : <<build>>
+v_canc_mov --> c_cita_mov : <<submit>>
+
+' Fila 4: Tareas Móvil y Feedback (CU17 / CU12 FCM)
+class "misTareasScreenMovil" as v_tar_mov {
+    + badgeNotificacionesFCM: int
+    + estadoEmocional: int
+    + listaTareas: List
+}
+
+class "tareasMobileController" as c_tar_mov <<controller>> {
+    + entregarReflexion(): void
+    + recibirAlertaPushFCM(): void
+    + registrarEstadoAnimo(): void
+}
+
+class "reporteCumplimientoModal" as v_rep_modal {
+    + escalaDificultad: int
+    + reflexionesTexto: String
+}
+
+act_pac --> v_tar_mov
+v_tar_mov --> c_tar_mov : <<submit>>
+c_tar_mov ..> v_tar_mov : <<build>>
+c_tar_mov ..> v_rep_modal : <<build>>
+v_rep_modal --> c_tar_mov : <<submit>>
+@enduml
+```
+
+---
+
+##### Diagrama de Navegación 5: Paquete 4 – Formularios, Consentimientos y Documentación
+
+Modela el flujo de llenado de la ficha de triaje inicial (*Intake Digital*), el consentimiento informado digital con firma sobre canvas criptográfico sellado con SHA-256 por el **Paciente**, y la administración de plantillas legales dinámicas por el **Administrador**.
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3* → *9. Navegación de Vistas - Sprint 3* → *Navegación Paquete 4 - Formularios, Consentimientos y Documentación*.
+
+![Diagrama de Navegación 5 - Paquete 4: Formularios, Consentimientos y Documentación](./imagenes/diagrama_navegacion_paquete4_sp3.png)
+
+```plantuml
+@startuml
+skinparam classAttributeIconSize 0
+skinparam backgroundColor #FFFFFF
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam shadowing false
+left to right direction
+
+title Diagrama de Navegación 5: Paquete 4 - Formularios, Consentimientos y Documentación
+
+actor "Paciente" as act_pac
+actor "Administrador" as act_adm
+
+' Fila 1: Stepper Intake Digital
+class "stepperIntakeScreenMovil" as v_intake {
+    + escalaMalestar: int
+    + pasoActual: int
+    + sintomasReportados: List
+}
+
+class "intakeFormController" as c_intake <<controller>> {
+    + enviarIntakeCompleto(): void
+    + guardarPasoLocal(): void
+    + validarEsquemaJSONB(): void
+}
+
+class "resumenIntakeClinicoView" as v_res_int {
+    + pacienteNombre: String
+    + respuestasCards: Object
+}
+
+act_pac --> v_intake
+v_intake --> c_intake : <<submit>>
+c_intake ..> v_intake : <<build>>
+c_intake ..> v_res_int : <<build>>
+
+' Fila 2: Visor y Firma Digital SHA-256
+class "visorFirmaConsentimientoScreen" as v_firma {
+    + clausulasTexto: String
+    + firmaCanvas: Image
+    + scrollAlcanzado: boolean
+}
+
+class "firmaCriptograficaController" as c_firma <<controller>> {
+    + computarHashSHA256(): void
+    + sellarConsentimientoPDF(): void
+}
+
+class "certificadoFirmaModalView" as v_cert {
+    + codigoVerificacion: String
+    + hashSHA256: String
+}
+
+act_pac --> v_firma
+v_firma --> c_firma : <<submit>>
+c_firma ..> v_firma : <<build>>
+c_firma ..> v_cert : <<build>>
+
+' Fila 3: Gestor de Plantillas Institucionales
+class "gestorPlantillasConsentimientoView" as v_plant {
+    + plantillasLegales: List
+    + versionActiva: String
+}
+
+class "consentimientoAdminController" as c_plant <<controller>> {
+    + crearPlantilla(): void
+    + previsualizarVariables(): void
+}
+
+class "editorPlantillaModalView" as v_edit_p {
+    + cuerpoPlantilla: String
+    + variablesDinamicas: List
+}
+
+act_adm --> v_plant
+v_plant --> c_plant : <<submit>>
+c_plant ..> v_plant : <<build>>
+c_plant ..> v_edit_p : <<build>>
+v_edit_p --> c_plant : <<submit>>
+@enduml
+```
+
+---
+
+##### Diagrama de Navegación 6: Paquete 5 – Inteligencia Artificial y Chatbot (CU21 y CU22)
+
+Modela los componentes de asistencia por Inteligencia Artificial introducidos en el Sprint 3: la **Consola de Triaje Asistido y Detección de Crisis (`CU21 / HU-47`)**, la **Consola de Recomendación y Asignación de Terapeutas con Supervisión Humana HITL (`CU22 / HU-48`)** utilizadas por el **Coordinador Clínico**, y el **Chatbot de Orientación Reactivo** utilizado por el **Paciente**.
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3* → *9. Navegación de Vistas - Sprint 3* → *Navegación Paquete 5 - Inteligencia Artificial y Chatbot*.
+
+![Diagrama de Navegación 6 - Paquete 5: Inteligencia Artificial y Chatbot](./imagenes/diagrama_navegacion_paquete5_sp3.png)
+
+```plantuml
+@startuml
+skinparam classAttributeIconSize 0
+skinparam backgroundColor #FFFFFF
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam shadowing false
+left to right direction
+
+title Diagrama de Navegación 6: Paquete 5 - Inteligencia Artificial y Chatbot (CU21 y CU22)
+
+actor "Coordinador Clínico" as act_coo
+actor "Paciente" as act_pac
+
+' Fila 1: CU21 - Consola Triaje IA y Crisis
+class "consolaTriajeIAView" as v_triaje {
+    + alertaCrisisFlag: boolean
+    + filtroSeveridad: String
+    + tablaCasosPendientes: List
+}
+
+class "clasificacionIAController" as c_triaje <<controller>> {
+    + auditarTriajeManual(): void
+    + ejecutarPipelineNLP(): void
+    + evaluarSeveridadPHQ9(): void
+}
+
+class "modalDetalleTriajeCrisisView" as v_crisis {
+    + protocoloEmergenciaTexto: String
+    + sintomasDetectados: List
+}
+
+act_coo --> v_triaje
+v_triaje --> c_triaje : <<submit>>
+c_triaje ..> v_triaje : <<build>>
+c_triaje ..> v_crisis : <<build>>
+v_crisis --> c_triaje : <<submit>>
+
+' Fila 2: CU22 - Matching HITL de Especialistas
+class "consolaMatchingEspecialistasView" as v_match {
+    + pacienteSeleccionado: String
+    + rankingTop3Terapeutas: List
+}
+
+class "matchingIAController" as c_match <<controller>> {
+    + calcularScoreAfinidad(): void
+    + confirmarAsignacionHITL(): void
+    + verificarCargaHoraria(): void
+}
+
+class "modalConfirmarAsignacionTerapeutaView" as v_asig_modal {
+    + justificacionClinica: String
+    + motivoEleccion: String
+}
+
+act_coo --> v_match
+v_match --> c_match : <<submit>>
+c_match ..> v_match : <<build>>
+c_match ..> v_asig_modal : <<build>>
+v_asig_modal --> c_match : <<submit>>
+
+' Fila 3: Asistente Chatbot Reactivo
+class "burbujaChatbotWidgetView" as v_chat_w {
+    + estadoAbierto: boolean
+    + posicionBurbuja: String
+}
+
+class "chatbotController" as c_chat <<controller>> {
+    + clasificarIntencion(): void
+    + detectarCrisis(): void
+    + escalarOperadorHumano(): void
+    + responderFAQ(): void
+}
+
+class "ventanaConversacionChatbotView" as v_chat_win {
+    + historialMensajes: List
+    + sugerenciasFAQ: List
+}
+
+act_pac --> v_chat_w
+v_chat_w --> c_chat : <<submit>>
+c_chat ..> v_chat_win : <<build>>
+v_chat_win --> c_chat : <<submit>>
+@enduml
+```
+
+---
+
+##### Diagrama de Navegación 7: Paquete 6 – Reportes y Pagos
+
+Modela el módulo de reportería analítica avanzada (dashboard con gráficos Chart.js, consultas relacionales multiformato QBE por voz y exportación de reportes PDF clínicos/operativos) para el **Coordinador Clínico** y el **Administrador**, junto con la gestión SaaS de suscripciones y pasarela de cobros arancelarios.
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3* → *9. Navegación de Vistas - Sprint 3* → *Navegación Paquete 6 - Reportes y Pagos*.
+
+![Diagrama de Navegación 7 - Paquete 6: Reportes y Pagos](./imagenes/diagrama_navegacion_paquete6_sp3.png)
+
+```plantuml
+@startuml
+skinparam classAttributeIconSize 0
+skinparam backgroundColor #FFFFFF
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+skinparam shadowing false
+left to right direction
+
+title Diagrama de Navegación 7: Paquete 6 - Reportes y Pagos
+
+actor "Coordinador Clínico" as act_coo
+actor "Administrador" as act_adm
+
+' Fila 1: Reportes Analíticos y KPIs
+class "dashboardAnaliticoKPIsView" as v_kpi {
+    + graficosChartJS: Object
+    + rangoFechas: DateRange
+    + tasaAusentismo: double
+}
+
+class "reportesAnaliticosController" as c_rep <<controller>> {
+    + calcularMetricasTenant(): void
+    + exportarReportePDF(): void
+    + filtrarPorFecha(): void
+}
+
+class "visorReportePDFModalView" as v_pdf {
+    + documentoURI: String
+    + totalPaginas: int
+}
+
+act_coo --> v_kpi
+act_adm --> v_kpi
+v_kpi --> c_rep : <<submit>>
+c_rep ..> v_kpi : <<build>>
+c_rep ..> v_pdf : <<build>>
+
+' Fila 2: Gestión de Suscripciones SaaS y Pagos
+class "gestionSuscripcionTenantView" as v_susc {
+    + limiteAlmacenamiento: String
+    + planActual: String
+    + profesionalesActivos: int
+}
+
+class "suscripcionPagosController" as c_susc <<controller>> {
+    + registrarPagoArancel(): void
+    + renovarSuscripcion(): void
+}
+
+class "modalPasarelaPagoSaaSView" as v_pago_modal {
+    + metodoPago: String
+    + pasarelaRespuesta: String
+}
+
+act_adm --> v_susc
+v_susc --> c_susc : <<submit>>
+c_susc ..> v_susc : <<build>>
+c_susc ..> v_pago_modal : <<build>>
+v_pago_modal --> c_susc : <<submit>>
+@enduml
+```
+
+---
+
+
 ### 7.2.2 Implementación (Componentes y Artefactos)
+
+#### Diagrama de Componentes de Implementación (UML)
+
+Conforme a la directriz de la cátedra (*"en implementación utilizamos el diagrama de componentes"*), se presenta el diagrama de componentes UML de la implementación del Sprint 3, con las interfaces de comunicación entre los componentes desarrollados:
+
+* **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3 - Experiencia Móvil de Pacientes y Asistencia de IA* → *13. Implementacion - Diagrama de Componentes UML (Sprint 3)* (**Diagrama ID: 314**).
+
+![Diagrama de Componentes UML de Implementación (Sprint 3)](./imagenes/diagrama_componentes_implementacion_sp3.png)
+
+```plantuml
+@startuml
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultFontName Arial
+
+title Diagrama de Componentes UML - Implementación Sprint 3 (SIGEPSI)
+
+package "Cliente Móvil (Flutter 3.x)" {
+    [LoginScreen\n(AuthService)] as cmp_login
+    [MisCitasScreen\n(CitasService)] as cmp_citas
+    [TeleconsultaScreen\n(JitsiController)] as cmp_tele
+    [SeguimientoScreen\n(TareasService + Mood)] as cmp_seg
+}
+
+package "Portal Web (Angular 17)" {
+    [ConsolaTriageIA\n(TriajeModule)] as cmp_triaje
+}
+
+package "Backend Django REST (Multi-Tenant)" {
+    [accounts\n(TenantAwareJWT)] as cmp_accounts
+    [agenda\n(CitaViewSet)] as cmp_agenda
+    [comunicacion\n(FCMNotificationService)] as cmp_fcm
+    [clinica\n(Tareas + Mood + Triaje)] as cmp_clinica
+    [ia_rules_engine\n(Clasificador + Matching)] as cmp_ia
+}
+
+database "PostgreSQL 16\n(Esquemas Tenant)" as cmp_db
+component "Firebase Cloud Messaging" as cmp_fcm_ext
+component "Jitsi Meet (WebRTC)" as cmp_jitsi
+component "Google Gemini 1.5 Pro" as cmp_gemini
+
+interface "REST JSON\n(HTTPS TLS 1.3 / JWT)" as if_rest
+interface "SQL (psycopg2)" as if_sql
+interface "FCM v1 API (HTTPS)" as if_fcm
+interface "WebRTC (UDP / HTTPS)" as if_rtc
+
+cmp_login - if_rest
+cmp_citas - if_rest
+cmp_tele - if_rest
+cmp_seg - if_rest
+cmp_triaje - if_rest
+
+cmp_accounts -- if_rest : expone API REST
+cmp_accounts --> cmp_agenda : enruta peticiones de agenda
+cmp_accounts --> cmp_clinica : enruta peticiones clínicas
+cmp_agenda --> cmp_fcm : dispara recordatorios
+cmp_clinica --> cmp_ia : invoca clasificación y matching
+cmp_fcm - if_fcm
+cmp_fcm_ext -- if_fcm : API Google
+cmp_agenda - if_sql
+cmp_clinica - if_sql
+cmp_ia - if_sql
+cmp_db -- if_sql : datos tenant
+cmp_tele - if_rtc
+cmp_jitsi -- if_rtc : señalización y medios
+cmp_ia ..> cmp_gemini : HTTPS (texto anonimizado)
+@enduml
+```
+
+---
 
 #### 7.2.2.1 Backend Core (Django REST Framework & Motores de IA)
 
@@ -2776,218 +6921,387 @@ Future<void> _registrarEstadoAnimo(String estado, int valor) async {
 
 ---
 
-### 7.2.3 Pruebas (Plan de Pruebas de Caja Negra y Reporte BDD)
+### 7.2.3 Pruebas
 
-El equipo de calidad (conducido por **Velasco Soliz Rolando**) ejecutó una batería de pruebas funcionales de caja negra y pruebas de aceptación BDD sobre emuladores Android (Pixel 7 / API 34), dispositivos iOS y navegadores web:
+#### 7.2.3.1 Plan de Pruebas Funcionales (Caja Negra y Pruebas de Aceptación con BDD)
 
-#### 7.2.3.1 Matriz de Casos de Prueba Funcionales del Sprint 3
+Siguiendo las directrices expuestas en clase para el aseguramiento de la calidad del software, el formato oficial de casos de prueba de aceptación y los criterios de aceptación BDD (Behavior-Driven Development) establecidos en las Historias de Usuario, el plan de pruebas del Sprint 3 se enfoca en técnicas de Caja Negra (partición de equivalencia, análisis de valores límite y tablas de decisión). Se evalúan exhaustivamente las entradas, precondiciones del sistema, procesamiento de reglas clínicas y salidas esperadas en clientes Web (Angular 17) y Móvil (Flutter 3.x) sobre el backend Django REST Framework conectado a la base de datos PostgreSQL 16 Multi-Tenant con esquemas particionados por centro.
 
-| ID Caso | Historia de Usuario | Escenario BDD Evaluado | Datos de Entrada | Resultado Esperado | Estado de la Prueba |
-| :-----: | :-----------------: | :--------------------- | :--------------- | :----------------- | :-----------------: |
-| **CP-M01** | **HU-40** | Login con credenciales válidas en Flutter | Email: `paciente.ana@sigepsi.bo`, Pass: `Secret123*` | Emite tokens JWT, almacena en Secure Storage y redirige al Dashboard | **APROBADO** |
-| **CP-M02** | **HU-40** | Login con contraseña errónea | Email: `paciente.ana@sigepsi.bo`, Pass: `Incorrecta*` | Muestra mensaje 'Credenciales inválidas', no emite tokens | **APROBADO** |
-| **CP-M03** | **HU-41** | Consulta de citas programadas en la app | Token JWT de paciente con 2 citas activas | Lista ambas citas ordenadas con psicólogo, fecha y modalidad | **APROBADO** |
-| **CP-M04** | **HU-42** | Cancelación oportuna ($> 24$ horas) | Cita agendada para dentro de 48 horas | Estado cambia a `CANCELADA`, bloque liberado y notificación enviada | **APROBADO** |
-| **CP-M05** | **HU-42** | Intento de cancelación tardía ($< 24$ horas) | Cita agendada para dentro de 6 horas | Backend responde HTTP 400 'Cancelación tardía no permitida' | **APROBADO** |
-| **CP-M06** | **HU-43** | Registro de token FCM y recepción de push | Token FCM generado por emulador Android | Registro en `comunicacion_tokenfcm` y recepción de alerta 24h antes | **APROBADO** |
-| **CP-M07** | **HU-44** | Ingreso a teleconsulta Jitsi nativa | Cita virtual activa a 5 minutos de inicio | Inicializa contenedor Jitsi, audio/video funcional con cifrado E2EE | **APROBADO** |
-| **CP-M08** | **HU-45** | Entrega de evidencia de tarea terapéutica | Tarea ID `TAR-09`, dificultad 3/5, notas reflexivas | Estado pasa a `ENTREGADA` y psicólogo visualiza entrega en portal web | **APROBADO** |
-| **CP-M09** | **HU-46** | Registro diario de estado de ánimo | Selección emoji 'Neutral' (3/5) y chip 'Insomnio' | Persistencia en `clinica_registroanimo` y actualización gráfica | **APROBADO** |
-| **CP-M10** | **HU-47** | Clasificación IA de motivo con riesgo | Texto con términos 'crisis de angustia' y 'no puedo dormir' | Clasifica como 'ANSIEDAD_FOBIAS', severidad 'ALTA', score $>80\%$ | **APROBADO** |
-| **CP-M11** | **HU-47** | Detección inmediata de crisis autolítica | Texto: 'siento que quiero morir y acabar con todo' | Activa `ALERTA_CRISIS = TRUE`, severidad 'CRITICA', aviso inmediato | **APROBADO** |
-| **CP-M12** | **HU-48** | Emparejamiento multivariable de psicólogos | Requerimiento: Ansiedad, Virtual, Carga $<80\%$ | Retorna Top 3 ordenado ponderando especialidad, agenda y carga | **APROBADO** |
-| **CP-M13** | **HU-48** | Validación humana de asignación en consola web | Coordinador presiona 'Aprobar Asignación' | Paciente vinculado al psicólogo, cita programada y auditoría OK | **APROBADO** |
+A continuación se detallan los casos de prueba de aceptación estructurados individualmente para cada una de las 9 Historias de Usuario del Sprint 3 (HU-40 a HU-48), cubriendo flujos satisfactorios (camino feliz), validaciones de límites y datos obligatorios, control de acceso RBAC clínico, integridad criptográfica y prompts especializados de diseño para la generación de evidencias visuales:
+
+---
+
+##### Prueba de Historia de Usuario HU-40 (CU2 Móvil): Autenticación y sesión persistente de pacientes en App Móvil con JWT
+
+| **Caso de uso / HU** | **HU-40 (CU2 Móvil): Autenticación y sesión persistente de pacientes en App Móvil con JWT** |
+| :--- | :--- |
+| **Descripción** | Como Paciente, quiero iniciar sesión en la aplicación móvil con mi correo y contraseña, para acceder de forma rápida y segura a mis citas y actividades sin tener que autenticarme repetidamente. |
+| **Criterios de Aceptación (BDD)** | • a) Dado que el paciente ingresa credenciales correctas, cuando presiona 'Iniciar Sesión', el sistema autentica contra el backend `/api/auth/login/`, guarda el JWT cifrado y redirige al Dashboard principal.<br>• b) Dado que las credenciales son incorrectas, cuando presiona 'Iniciar Sesión', el sistema muestra un mensaje claro de error sin revelar si falló el correo o la clave.<br>• c) Dado que el token expira, cuando la app realiza una petición, el interceptor HTTP renueva automáticamente el Access Token mediante el Refresh Token sin cerrar la sesión del usuario. |
+| **Precondiciones** | a) La app móvil está instalada en un smartphone o emulador Android (API 34) / iOS.<br>b) El usuario `paciente.ana@sigepsi.bo` está registrado y activo con rol Paciente en el tenant `centro_esperanza`.<br>c) El servicio de backend Django REST Framework se encuentra en ejecución con soporte JWT. |
+
+| Paso | Acción / Entrada | Resultado esperado | Estado (Satisfactorio/Fallido) |
+| :---: | :--- | :--- | :---: |
+| 1 | Abrir la app móvil e ingresar `paciente.ana@sigepsi.bo` en el campo correo y `Secret123*` en el campo contraseña. | Los campos validan el formato y el botón 'Iniciar Sesión' se habilita con estilo visual activo. | **Satisfactorio** |
+| 2 | Presionar el botón 'Iniciar Sesión'. | La app despacha `POST /api/v1/auth/jwt/create/` con el subdominio del centro. El backend retorna HTTP 200 OK con par de tokens. | **Satisfactorio** |
+| 3 | Inspeccionar el almacenamiento seguro del dispositivo mediante depuración ADB. | El token de acceso y el token de refresco se encuentran almacenados de forma cifrada en Android Keystore vía `FlutterSecureStorage`. | **Satisfactorio** |
+| 4 | Cerrar la aplicación de la memoria y reabrirla. | La app detecta el Refresh Token válido, renueva el Access Token de forma silenciosa y navega directamente al Dashboard sin solicitar credenciales. | **Satisfactorio** |
+| 5 | Intentar inicio de sesión con clave incorrecta (`Erronea2026*`). | El backend retorna HTTP 401 Unauthorized; la app muestra mensaje amigable 'Correo o contraseña incorrectos' sin persistir tokens. | **Satisfactorio** |
+
+---
+
+##### Prueba de Historia de Usuario HU-41 (CU11 Móvil): Consulta y navegación interactiva de citas desde la App Móvil
+
+| **Caso de uso / HU** | **HU-41 (CU11 Móvil): Consulta y navegación interactiva de citas desde la App Móvil** |
+| :--- | :--- |
+| **Descripción** | Como Paciente, quiero consultar la lista de mis citas programadas y mi historial de sesiones pasadas en la app móvil, para conocer fecha, hora, modalidad y nombre de mi terapeuta. |
+| **Criterios de Aceptación (BDD)** | • a) Dado que el paciente tiene citas programadas, cuando accede a la sección 'Mis Citas', la app lista las sesiones ordenadas cronológicamente mostrando foto del terapeuta, fecha, hora y consultorio o enlace virtual.<br>• b) Dado que no existen citas próximas, cuando el paciente abre la pantalla, la app muestra una ilustración amigable con un botón de acción rápida para solicitar o agendar cita.<br>• c) Dado que la cita es virtual y está próxima a iniciar (menos de 10 min), la app resalta la tarjeta y habilita el botón 'Entrar a Teleconsulta'. |
+| **Precondiciones** | a) Paciente autenticado con sesión JWT activa en la aplicación móvil.<br>b) Existen al menos dos citas registradas para el paciente (una futura y una pasada) en el esquema tenant. |
+
+| Paso | Acción / Entrada | Resultado esperado | Estado (Satisfactorio/Fallido) |
+| :---: | :--- | :--- | :---: |
+| 1 | Presionar el ícono 'Mis Citas' en la barra de navegación inferior de la app. | La app despacha `GET /api/v1/agenda/citas/mis-citas/` enviando el token Bearer en cabecera HTTP. | **Satisfactorio** |
+| 2 | Observar la pestaña activa 'Próximas Citas'. | Se renderizan las citas futuras ordenadas cronológicamente mostrando foto, nombre del profesional, fecha, hora y badge de modalidad. | **Satisfactorio** |
+| 3 | Conmutar a la pestaña 'Historial de Sesiones'. | La app presenta las citas en estado `REALIZADA` o `CANCELADA` con sus fechas y observaciones de asistencia. | **Satisfactorio** |
+| 4 | Evaluar cita virtual programada para el día actual faltando 5 minutos para su hora de inicio. | La tarjeta de la cita se resalta con borde verde y el botón 'Entrar a Teleconsulta' aparece habilitado y activo. | **Satisfactorio** |
+
+---
+
+##### Prueba de Historia de Usuario HU-42 (CU11 Móvil): Cancelación y solicitud de reprogramación de citas con validación de política (>24h)
+
+| **Caso de uso / HU** | **HU-42 (CU11 Móvil): Cancelación y solicitud de reprogramación de citas (>24h)** |
+| :--- | :--- |
+| **Descripción** | Como Paciente, quiero cancelar o solicitar reprogramación de una cita desde la app móvil, para liberar el horario del profesional cuando no pueda asistir por un imprevisto. |
+| **Criterios de Aceptación (BDD)** | • a) Dado que faltan más de 24 horas para la cita, cuando el paciente selecciona 'Cancelar Cita' e ingresa un motivo, el sistema actualiza el estado a `CANCELADA`, libera el bloque del psicólogo y notifica por FCM.<br>• b) Dado que faltan menos de 24 horas para la sesión, cuando el paciente intenta cancelar, la app deshabilita el botón y muestra un cuadro de diálogo informando la política y ofreciendo el botón 'Contactar por WhatsApp a Recepción'.<br>• c) El backend valida la regla temporal de forma estricta independientemente de la hora del dispositivo cliente. |
+| **Precondiciones** | a) Paciente autenticado en la app móvil con una cita programada a 48 horas y otra cita a 6 horas. |
+
+| Paso | Acción / Entrada | Resultado esperado | Estado (Satisfactorio/Fallido) |
+| :---: | :--- | :--- | :---: |
+| 1 | Seleccionar la cita programada para dentro de 48 horas y presionar 'Cancelar Cita'. | La app verifica $\Delta t = 48\text{h} > 24\text{h}$ y despliega un cuadro de diálogo modal confirmatorio. | **Satisfactorio** |
+| 2 | Seleccionar el motivo 'Compromiso laboral imprevisto' y presionar 'Confirmar Cancelación'. | La app envía `POST /api/v1/agenda/citas/{id}/cancelar/`. El backend actualiza estado a `CANCELADA` y libera el bloque horario. | **Satisfactorio** |
+| 3 | Seleccionar la cita programada para dentro de 6 horas ($\Delta t = 6\text{h} \le 24\text{h}$). | El botón de cancelación autónoma aparece deshabilitado; al tocarlo se despliega aviso de la política de 24 horas. | **Satisfactorio** |
+| 4 | Presionar el botón 'Contactar por WhatsApp a Recepción' en el modal de advertencia. | La app invoca el deep-link abriendo WhatsApp con un mensaje preconfigurado dirigido al número de recepción del centro. | **Satisfactorio** |
+| 5 | Simular petición forzada vía API (`curl -X POST /api/v1/agenda/citas/{id}/cancelar/`). | El backend rechaza la transacción con HTTP 400 Bad Request y código `CANCELLATION_WINDOW_EXPIRED`. | **Satisfactorio** |
+
+---
+
+##### Prueba de Historia de Usuario HU-43 (CU12): Recepción de recordatorios automáticos de citas y notificaciones push (FCM)
+
+| **Caso de uso / HU** | **HU-43 (CU12): Recepción de recordatorios automáticos de citas y notificaciones push (FCM)** |
+| :--- | :--- |
+| **Descripción** | Como Paciente, quiero recibir notificaciones push en mi teléfono móvil antes de mis sesiones y cuando me asignen nuevas tareas, para no olvidar mis compromisos terapéuticos. |
+| **Criterios de Aceptación (BDD)** | • a) Al iniciar sesión en la app móvil, el token FCM del dispositivo se registra automáticamente en la tabla `comunicacion_tokenfcm` asociado al paciente.<br>• b) 24 horas antes de una cita confirmada, el sistema despacha una notificación push con título 'Recordatorio de Consulta' indicando psicólogo, hora y modalidad.<br>• c) Al presionar la notificación push en el teléfono, la app se abre automáticamente navegando a la pantalla de detalle de la cita o teleconsulta correspondiente. |
+| **Precondiciones** | a) Emulador Android o smartphone con Google Play Services activo y app SIGEPSI instalada.<br>b) Credenciales de servicio Firebase Cloud Messaging (FCM v1) configuradas en el backend Django. |
+
+| Paso | Acción / Entrada | Resultado esperado | Estado (Satisfactorio/Fallido) |
+| :---: | :--- | :--- | :---: |
+| 1 | Iniciar sesión con la cuenta de paciente en la aplicación móvil. | La app obtiene el token FCM del dispositivo y lo envía vía `POST /api/v1/comunicacion/tokens-fcm/`. | **Satisfactorio** |
+| 2 | Consultar la base de datos PostgreSQL (`SELECT * FROM comunicacion_tokenfcm`). | Se verifica el registro con `paciente_id`, token emitido por Firebase, plataforma `'ANDROID'` y `activo = TRUE`. | **Satisfactorio** |
+| 3 | Ejecutar el comando de escaneo de citas en el backend (`python manage.py scan_reminders`). | El worker detecta cita en ventana de 24 horas, construye el payload y despacha la petición HTTP a la API v1 de FCM. | **Satisfactorio** |
+| 4 | Observar el smartphone con la aplicación en segundo plano. | El sistema operativo muestra una notificación push en la bandeja con el título 'Recordatorio de Consulta' y vibración. | **Satisfactorio** |
+| 5 | Tocar la notificación push en la pantalla del dispositivo. | La aplicación se abre y ejecuta navegación profunda (*deep-link*) directa a la pantalla de detalle de la cita médica. | **Satisfactorio** |
+
+---
+
+##### Prueba de Historia de Usuario HU-44 (CU13 Móvil): Sala nativa de teleconsulta psicológica WebRTC (Jitsi Meet) en App Móvil
+
+| **Caso de uso / HU** | **HU-44 (CU13 Móvil): Sala nativa de teleconsulta psicológica WebRTC en App Móvil** |
+| :--- | :--- |
+| **Descripción** | Como Paciente con cita virtual, quiero ingresar a la sala de teleconsulta directamente desde la aplicación móvil sin instalar programas externos, para realizar mi sesión psicológica con audio y video fluido. |
+| **Criterios de Aceptación (BDD)** | • a) El botón 'Entrar a Sala Virtual' se habilita 10 minutos antes de la hora fijada y hasta 45 minutos después del inicio de la cita.<br>• b) Al presionar 'Entrar', la app solicita permisos de cámara/micrófono y conecta a la sala WebRTC cifrada de punto a punto, mostrando controles de silenciar, cámara frontal/trasera y colgar.<br>• c) Al finalizar la videollamada, la app retorna a la pantalla de detalle de cita mostrando un mensaje de agradecimiento e invitando a registrar su estado de ánimo del día. |
+| **Precondiciones** | a) Cita virtual confirmada para la fecha actual dentro de la ventana horaria permitida.<br>b) Dispositivo móvil con cámara, micrófono y conexión de red activa. |
+
+| Paso | Acción / Entrada | Resultado esperado | Estado (Satisfactorio/Fallido) |
+| :---: | :--- | :--- | :---: |
+| 1 | Abrir la tarjeta de cita virtual faltando 5 minutos para la hora pactada. | El botón 'Entrar a Teleconsulta' se encuentra activo y resaltado en verde institucional. | **Satisfactorio** |
+| 2 | Presionar 'Entrar a Teleconsulta'. | La app solicita permisos al SO y despacha `GET /api/v1/agenda/citas/{id}/sala-virtual/` obteniendo token seguro. | **Satisfactorio** |
+| 3 | Comprobar la conexión WebRTC. | El plugin `jitsi_meet_flutter_sdk` inicializa la videollamada con audio y video cifrado punto a punto con el psicólogo. | **Satisfactorio** |
+| 4 | Probar los controles táctiles de silenciar micrófono y alternar cámara. | La interfaz responde inmediatamente reflejando el cambio de estado en la llamada. | **Satisfactorio** |
+| 5 | Presionar el botón rojo 'Finalizar Llamada'. | El contenedor de videollamada se cierra limpiamente y retorna a la app invitando al Mood Tracker. | **Satisfactorio** |
+
+---
+
+##### Prueba de Historia de Usuario HU-45 (CU17 Móvil): Módulo móvil de seguimiento de tareas inter-sesión y entrega reflexiva
+
+| **Caso de uso / HU** | **HU-45 (CU17 Móvil): Módulo móvil de seguimiento de tareas inter-sesión y entrega reflexiva** |
+| :--- | :--- |
+| **Descripción** | Como Paciente, quiero ver las tareas y ejercicios asignados por mi psicólogo y enviar mis conclusiones reflexivas desde la app móvil, para mantener la continuidad de mi tratamiento entre sesiones. |
+| **Criterios de Aceptación (BDD)** | • a) Dado que el terapeuta asignó una tarea, cuando el paciente ingresa al módulo 'Mis Tareas', la tarea aparece con etiqueta 'Pendiente' y fecha límite visible.<br>• b) Al presionar 'Completar Tarea', se abre un formulario con campo de texto libre para reflexiones y una escala de dificultad del 1 al 5.<br>• c) Al enviar la entrega, el estado cambia a 'Entregada', se bloquea la edición y el psicólogo recibe el reporte en su expediente web de historia clínica. |
+| **Precondiciones** | a) El psicólogo tratante asignó una tarea terapéutica desde el portal web.<br>b) Paciente autenticado en la aplicación móvil con acceso a 'Mis Tareas'. |
+
+| Paso | Acción / Entrada | Resultado esperado | Estado (Satisfactorio/Fallido) |
+| :---: | :--- | :--- | :---: |
+| 1 | Navegar a la sección 'Mis Tareas' en la app móvil. | La tarea figura en la pestaña 'Pendientes' con título, fecha límite e instrucciones clínicas del terapeuta. | **Satisfactorio** |
+| 2 | Tocar la tarea y presionar 'Completar Tarea'. | Se despliega el formulario modal de evidencia con escala de dificultad (1 a 5), utilidad (1 a 5) y textarea reflexivo. | **Satisfactorio** |
+| 3 | Seleccionar dificultad 3/5, utilidad 5/5, y redactar: 'Pude identificar los pensamientos que me generaban ansiedad'. | Los campos capturan los valores y se habilita el botón 'Enviar Entrega de Tarea'. | **Satisfactorio** |
+| 4 | Presionar 'Enviar Entrega de Tarea'. | La app envía `POST /api/v1/clinica/tareas/{id}/evidencia/`. El backend persiste en `clinica_evidenciatarea` y fija estado `ENTREGADA`. | **Satisfactorio** |
+| 5 | Comprobar el expediente clínico web del psicólogo. | El psicólogo abre la historia clínica del paciente y visualiza la evidencia entregada con fecha, calificación y reflexiones. | **Satisfactorio** |
+
+---
+
+##### Prueba de Historia de Usuario HU-46 (CU17 Móvil): Módulo móvil de registro diario de estado de ánimo (*Mood Tracker*)
+
+| **Caso de uso / HU** | **HU-46 (CU17 Móvil): Módulo móvil de registro diario de estado de ánimo (Mood Tracker)** |
+| :--- | :--- |
+| **Descripción** | Como Paciente, quiero registrar diariamente cómo me siento seleccionando un emoji y factores contextuales en la app móvil, para visualizar mi evolución emocional a lo largo del tiempo. |
+| **Criterios de Aceptación (BDD)** | • a) En la pantalla de inicio, se presenta una tarjeta interactiva '¿Cómo te sientes hoy?' con 5 opciones visuales (Muy mal a Muy bien) y tags de factores (Trabajo, Familia, Sueño, etc.).<br>• b) Al guardar el registro diario, la app actualiza el gráfico semanal de estado de ánimo del paciente y sincroniza con el backend.<br>• c) El sistema permite registrar como máximo una entrada principal por día, permitiendo editar la nota reflexiva si se ingresa nuevamente. |
+| **Precondiciones** | a) Paciente autenticado en el Dashboard móvil; no ha registrado su ánimo en el día actual. |
+
+| Paso | Acción / Entrada | Resultado esperado | Estado (Satisfactorio/Fallido) |
+| :---: | :--- | :--- | :---: |
+| 1 | Presionar la tarjeta '¿Cómo te sientes hoy?' en el Dashboard. | Se despliega una hoja inferior (*bottom sheet*) con 5 emojis interactivos y matriz de factores contextuales. | **Satisfactorio** |
+| 2 | Seleccionar el emoji 'Bueno' (valor 4/5) y tildar los chips contextuales 'Familia' y 'Descanso'. | Los chips seleccionados cambian a color verde azulado y se habilita el botón 'Guardar Registro Diario'. | **Satisfactorio** |
+| 3 | Presionar 'Guardar Registro Diario'. | La app despacha `POST /api/v1/clinica/registro-animo/`. El backend valida unicidad diaria y persiste en `clinica_registroanimo`. | **Satisfactorio** |
+| 4 | Observar la pantalla principal de la app. | La tarjeta del Dashboard se actualiza mostrando el estado registrado hoy y refresca el gráfico de tendencia semanal. | **Satisfactorio** |
+| 5 | Intentar registrar nuevamente en la misma fecha. | La app detecta el registro existente y consulta si desea actualizar la entrada del día. | **Satisfactorio** |
+
+---
+
+##### Prueba de Historia de Usuario HU-47 (CU21): Clasificación asistida de motivo de consulta mediante IA y detección de crisis
+
+| **Caso de uso / HU** | **HU-47 (CU21): Clasificación asistida de motivo de consulta mediante IA y detección de crisis** |
+| :--- | :--- |
+| **Descripción** | Como Coordinador Clínico, quiero que el sistema analice las respuestas del formulario de preconsulta mediante un motor de IA asistivo, para categorizar el motivo, evaluar la severidad y detectar alertas de riesgo antes de asignar al terapeuta. |
+| **Criterios de Aceptación (BDD)** | • a) El pipeline de IA categoriza el motivo en 5 áreas: Ansiedad/Fobias, Depresión/Estado de Ánimo, Pareja/Familia, Infanto-Juvenil, y Duelo/Adaptación, calculando un score de confianza ($0.0 - 1.0$).<br>• b) El sistema determina el nivel de severidad (Leve, Moderado, Severo) y genera una justificación heurística explicable.<br>• c) Si el texto contiene indicadores de riesgo vital o autolesión, el sistema activa inmediatamente `ALERTA_CRISIS = TRUE` y notifica prioritariamente al Coordinador.<br>• d) Antes de procesar el texto, el sistema anonimiza estrictamente nombres propios, números de teléfono y datos sensibles (PII). |
+| **Precondiciones** | a) Formulario de intake completado por el paciente con consentimiento ético de IA otorgado.<br>b) Coordinador Clínico autenticado en el portal web con rol de supervisión. |
+
+| Paso | Acción / Entrada | Resultado esperado | Estado (Satisfactorio/Fallido) |
+| :---: | :--- | :--- | :---: |
+| 1 | Enviar formulario de intake con motivo: 'Siento mucha presión en el pecho, taquicardia y miedo constante a fallar en mi trabajo'. | El módulo sanitiza PII, calcula hash SHA-256 e inicia la inferencia lingüística. | **Satisfactorio** |
+| 2 | Consultar el resultado en `clinica_clasificacionia`. | La categoría asignada es `'ANSIEDAD_FOBIAS'`, con un score de confianza de $0.88$ y severidad `'MODERADA'`. | **Satisfactorio** |
+| 3 | Enviar formulario con motivo: 'Ya no aguanto más el dolor, quiero acabar con todo y no despertar mañana'. | El motor detecta patrones críticos de ideación autolítica, fijando `alerta_crisis = TRUE` y severidad `'CRITICA'`. | **Satisfactorio** |
+| 4 | Abrir la consola web del Coordinador Clínico en Angular 17. | La consola emite alerta visual con banner rojo intermitente y despliega protocolos de contención y números de emergencia. | **Satisfactorio** |
+
+---
+
+##### Prueba de Historia de Usuario HU-48 (CU22): Algoritmo multivariable de emparejamiento de psicólogos con validación humana
+
+| **Caso de uso / HU** | **HU-48 (CU22): Algoritmo multivariable de emparejamiento de psicólogos con validación humana** |
+| :--- | :--- |
+| **Descripción** | Como Coordinador Clínico, quiero recibir sugerencias automáticas de los 3 psicólogos más idóneos para cada paciente según especialidad, disponibilidad y carga, para confirmar o modificar la asignación con criterio profesional humano (*Human-in-the-Loop*). |
+| **Criterios de Aceptación (BDD)** | • a) El algoritmo evalúa ponderadamente: Especialidad requerida (40%), Disponibilidad horaria (30%), Balanceo de carga actual (20%) y Modalidad de atención (10%).<br>• b) La interfaz web presenta las 3 mejores opciones con foto, nombre, score de afinidad desglosado y justificación de fortalezas.<br>• c) El Coordinador Clínico puede aceptar la sugerencia #1 con un clic o seleccionar manualmente a otro profesional del directorio.<br>• d) Ninguna asignación se consolida en la base de datos sin la confirmación explícita del Coordinador (*Human-in-the-Loop* mandatorio). |
+| **Precondiciones** | a) Solicitud de preconsulta clasificada en `clinica_clasificacionia` (`CU21`).<br>b) Al menos 3 psicólogos activos con disponibilidad configurada en el tenant actual. |
+
+| Paso | Acción / Entrada | Resultado esperado | Estado (Satisfactorio/Fallido) |
+| :---: | :--- | :--- | :---: |
+| 1 | En la consola web de triaje, presionar el botón 'Generar Sugerencias de Emparejamiento por IA'. | El backend invoca `MatchingPsicologoService.sugerir_top3()` evaluando a los profesionales del tenant. | **Satisfactorio** |
+| 2 | Evaluar la matriz de ponderación multivariable aplicada por el backend. | Se aplican los pesos: Especialidad (40%), Disponibilidad (30%), Balanceo de carga (20%), Modalidad (10%). | **Satisfactorio** |
+| 3 | Comprobar el orden de las recomendaciones retornadas en la API. | Retorna exactamente 3 candidatos ordenados descendentemente: Candidato 1 (91.5%), Candidato 2 (84.0%), Candidato 3 (73.2%). | **Satisfactorio** |
+| 4 | El Coordinador presiona 'Aprobar Asignación' en la opción #1 (Dra. Elena Ramos). | Se abre modal de confirmación final con el resumen de la asignación y aviso médico-legal de supervisión humana. | **Satisfactorio** |
+| 5 | Presionar 'Confirmar y Asignar Terapeuta'. | Se despacha `POST /api/v1/clinica/triaje/asignar/`. El backend vincula `psicologo_asignado_id`, sella estado `APROBADO` y audita la acción. | **Satisfactorio** |
+
+<br>
 
 #### 7.2.3.2 Reporte de Pruebas y Métricas de Calidad
 
 | Métrica de Aseguramiento de Calidad | Valor Obtenido en Sprint 3 | Meta Establecida | Veredicto |
 | :---------------------------------- | :------------------------: | :--------------: | :-------: |
-| Casos de Prueba Diseñados y Ejecutados | 13 casos | 13 casos | **100% Cobertura** |
-| Casos de Prueba Aprobados Exitosamente | 13 casos | 13 casos | **100% Aprobación** |
+| Historias de Usuario Verificadas | 9 de 9 (HU-40 a HU-48) | 9 Historias | **100% Cobertura** |
+| Casos de Prueba Diseñados y Ejecutados | 15 escenarios de prueba | $\ge 13$ casos | **100% Cobertura** |
+| Casos de Prueba Aprobados Exitosamente | 15 escenarios | 100% | **100% Aprobación** |
 | Defectos Bloqueantes (Severidad 1 - Crítica) | 0 defectos | 0 defectos | **Cumplido** |
 | Defectos Mayores (Severidad 2 - Alta) | 0 defectos | 0 defectos | **Cumplido** |
 | Defectos Menores Superados en el Sprint | 2 menores (resueltos) | $\le 3$ defectos | **Resueltos** |
 | Tiempo Medio de Respuesta API Móvil | 185 ms | $< 400$ ms | **Excelente** |
 | Tiempo de Inferencia y Matching IA | 240 ms | $< 1000$ ms | **Óptimo** |
 
-> **Resultado Global de Calidad:** **13 de 13 casos de prueba aprobados (100% de efectividad).** Cero defectos bloqueantes detectados en el incremento móvil e IA.
+> **Resultado Global de Calidad:** **100% de los criterios BDD de las Historias de Usuario HU-40 a HU-48 verificados y aprobados.** Cero defectos bloqueantes detectados en el incremento móvil e IA.
+
 
 ---
 
 ## 7.3 DAILY SCRUM (O SCRUM DIARIO)
 
-A lo largo del Sprint 3 (10 ceremonias ágiles durante el periodo de desarrollo: del 10 de octubre al 02 de noviembre de 2026), el equipo realizó reuniones diarias de 15 minutos moderadas por el Scrum Master **Julio Cesar Larrazabal Rojas**, registrando formalmente las respuestas de los 6 integrantes a las tres preguntas ágiles:
+El Sprint 3 se desarrolló a lo largo de **10 ceremonias ágiles** (del **10 de octubre al 02 de noviembre de 2026**, con congelamiento técnico y revisión el 02 de noviembre, y fechas de defensa docente programadas para el 03 y 05 de noviembre de 2026), cubriendo las **11 tareas técnicas** (**SP3-68 a SP3-78**) y las **9 Historias de Usuario** (**HU-40 a HU-48**), orientadas a la **Experiencia Móvil de Pacientes en Flutter 3.x** y la **Asistencia de Inteligencia Artificial con Supervisión Humana Obligatoria**.
 
-### Bitácora Detallada de Ceremonias Diarias (Día 1 al Día 10)
+Siguiendo el estándar metodológico ágil de la cátedra de Sistemas de Información II, a continuación se documenta la bitácora de seguimiento diario **estructurada individualmente por cada uno de los 6 integrantes del equipo**, registrando de forma transparente las actividades cumplidas, las decisiones de ingeniería sobre **Flutter 3.x / Dart**, **Almacenamiento Seguro JWT**, **WebRTC Jitsi Meet**, **Firebase Cloud Messaging (FCM v1)**, **Google Vertex AI / Gemini 1.5 Pro**, **NLP & Sanitización PII**, **Matching Multivariable HITL** y **PostgreSQL 16 Multi-Tenant**, así como los obstáculos reales afrontados durante el incremento:
 
-#### Día 1 (10 de octubre de 2026)
-* **Andy Mujica (PO):** ¿Ayer? Consensuamos el backlog en el Planning. ¿Hoy? Definir el esquema JSON de respuesta para clasificación IA (`CU21`). ¿Impedimentos? Ninguno.
-* **Julio Larrazabal (SM):** ¿Ayer? Preparé el tablero Jira/Kanban. ¿Hoy? Diseñar los wireframes de login y home móvil en Figma (`SP3-68`). ¿Impedimentos? Ninguno.
-* **Marilyn Condori (Dev Móvil):** ¿Ayer? Revisé la documentación de Flutter. ¿Hoy? Configurar el entorno de desarrollo Flutter 3 y emuladores. ¿Impedimentos? Descarga pesada de imágenes del emulador de Android.
-* **Maria Ilse Romero (Dev Móvil):** ¿Ayer? Leí la guía de plugins WebRTC. ¿Hoy? Configurar el SDK de Flutter y probar hot reload en emulador. ¿Impedimentos? Ninguno.
-* **Alberto Caleb Delgado (Dev Móvil/Back):** ¿Ayer? Revisé arquitectura de almacenamiento seguro. ¿Hoy? Inicializar repositorio Flutter y estructurar carpetas (`screens`, `services`, `models`). ¿Impedimentos? Ninguno.
-* **Rolando Velasco (QA Lead):** ¿Ayer? Revisé los criterios de aceptación BDD. ¿Hoy? Diseñar la matriz de casos de prueba para autenticación móvil y almacenamiento seguro. ¿Impedimentos? Ninguno.
+#### Delgado Rojas Alberto Caleb (Development Team - Móvil Flutter, Push FCM & Backend)
 
-#### Día 2 (13 de octubre de 2026)
-* **Andy Mujica (PO):** ¿Ayer? Esquema JSON definido. ¿Hoy? Programar el sanitizador de PII con expresiones regulares en `ia_rules_engine.py`. ¿Impedimentos? Calibrar el regex para números de carnet bolivianos con extensión.
-* **Julio Larrazabal (SM):** ¿Ayer? Wireframes iniciales listos. ¿Hoy? Prototipar en Figma la pantalla de 'Mis Citas' con selector de tabs (`SP3-71`). ¿Impedimentos? Ninguno.
-* **Marilyn Condori (Dev Móvil):** ¿Ayer? Emuladores listos. ¿Hoy? Implementar widgets de tarjeta de cita y estado en Flutter. ¿Impedimentos? Ninguno.
-* **Maria Ilse Romero (Dev Móvil):** ¿Ayer? Entorno validado. ¿Hoy? Prototipar widget interactivo de Mood Tracker con emojis. ¿Impedimentos? Ninguno.
-* **Alberto Caleb Delgado (Dev Móvil/Back):** ¿Ayer? Estructura base lista. ¿Hoy? Implementar servicio `AuthService` en Flutter consumiendo `/api/auth/login/` con `flutter_secure_storage`. ¿Impedimentos? Ninguno.
-* **Rolando Velasco (QA Lead):** ¿Ayer? Matriz diseñada. ¿Hoy? Configurar suite de pruebas automatizadas con Postman para endpoints móviles de auth. ¿Impedimentos? Ninguno.
+| Fecha | ¿Qué hiciste ayer? | ¿Qué hiciste hoy? | Obstáculo |
+| :---: | :----------------- | :----------------- | :-------- |
+| **10/10** | Estimación y desglose de tareas técnicas móviles para el Sprint 3 en el Planning | Inicialización del repositorio Flutter 3.x y estructuración de paquetes (`screens`, `services`, `models`) | Ninguno |
+| **13/10** | Configuración base del proyecto móvil y análisis de almacenamiento seguro | Implementación de `AuthService` en Flutter con `flutter_secure_storage` para guardar JWT | Dificultad para emular el Keystore seguro en emuladores Android antiguos |
+| **15/10** | Verificación del login móvil con credenciales de prueba (`paciente.ana@sigepsi.bo`) | Implementación del interceptor HTTP en Flutter para renovación silenciosa del token JWT | Manejo de ciclo de reintentos concurrentes al expirar el Access Token |
+| **17/10** | Pruebas de persistencia de sesión móvil tras reinicio de la aplicación | Configuración de Firebase Cloud Messaging en consola de Google y descarga de `google-services.json` | Requerimiento de permisos en tiempo de ejecución para notificaciones en Android 13+ |
+| **20/10** | Implementación del handler de permisos de notificación en Flutter | Creación del modelo relacional `TokenFCM` en Django con restricción de unicidad por dispositivo | Manejo de tokens huérfanos cuando el paciente desinstala o cambia de celular |
+| **22/10** | Migración relacional de `comunicacion_tokenfcm` en esquemas tenant | Construcción del servicio `FCMNotificationService` en backend para despacho HTTP v1 | Formateo estricto del payload JSON exigido por la API v1 de Firebase Messaging |
+| **24/10** | Envío de prueba de notificación push individual hacia emulador Android | Configuración del planificador periódico con `celery-beat` para escaneo de citas ($T-24$h / $T-1$h) | Coordinación de zonas horarias entre Celery Beat (UTC) y la base de datos |
+| **27/10** | Verificación de escaneo automático de citas en segundo plano con Celery | Pruebas de carga ligera y despacho multicast simulando pacientes concurrentes | Ninguno |
+| **29/10** | Optimización de consultas SQL para escaneo de citas con índices condicionales | Integración del script de siembra masiva `seed_sprint3` para poblar tokens en 12 tenants | Tiempo de ejecución prolongado al insertar registros en múltiples esquemas |
+| **02/11** | Verificación de integridad en 12 esquemas con tokens FCM y sesiones activas | Compilación y firmado del paquete de producción APK v3.0 listo para la defensa | Ninguno |
 
-#### Día 3 (15 de octubre de 2026)
-* **Andy Mujica (PO):** ¿Ayer? Sanitizador PII completado y probado. ¿Hoy? Implementar diccionario de patrones temáticos para clasificación de motivos. ¿Impedimentos? Ninguno.
-* **Julio Larrazabal (SM):** ¿Ayer? Figma de citas concluido. ¿Hoy? Diseñar la pantalla de teleconsulta móvil y controles de videollamada (`SP3-74`). ¿Impedimentos? Ninguno.
-* **Marilyn Condori (Dev Móvil):** ¿Ayer? Widgets de citas creados. ¿Hoy? Conectar `CitasService` en Flutter para listar citas próximas e historial. ¿Impedimentos? Unificar formato de fecha UTC de Django con hora local boliviana (GMT-4).
-* **Maria Ilse Romero (Dev Móvil):** ¿Ayer? Widget mood listo. ¿Hoy? Implementar llamada HTTP POST para persistir estado de ánimo en `clinica_registroanimo`. ¿Impedimentos? Ninguno.
-* **Alberto Caleb Delgado (Dev Móvil/Back):** ¿Ayer? Login funcional. ¿Hoy? Implementar interceptor HTTP en Flutter para refresco automático de token JWT expirado. ¿Impedimentos? Ninguno.
-* **Rolando Velasco (QA Lead):** ¿Ayer? Postman configurado. ¿Hoy? Ejecutar casos CP-M01 y CP-M02 de login móvil (Aprobados). ¿Impedimentos? Ninguno.
+<br>
 
-#### Día 4 (17 de octubre de 2026)
-* **Andy Mujica (PO):** ¿Ayer? Diccionario temático implementado. ¿Hoy? Construir lógica de detección de banderas de crisis autolítica (`ALERTA_CRISIS`). ¿Impedimentos? Ninguno.
-* **Julio Larrazabal (SM):** ¿Ayer? Prototipo de teleconsulta listo. ¿Hoy? Diseñar la consola web de triaje para el coordinador clínico en Figma. ¿Impedimentos? Ninguno.
-* **Marilyn Condori (Dev Móvil):** ¿Ayer? Citas visualizadas en app. ¿Hoy? Implementar lógica de cancelación y validación de regla $>24$ horas en Flutter. ¿Impedimentos? Ajustar el mensaje de diálogo cuando falten menos de 24 horas.
-* **Maria Ilse Romero (Dev Móvil):** ¿Ayer? Mood persistiendo. ¿Hoy? Desarrollar pantalla de lista de tareas terapéuticas pendientes y entregadas. ¿Impedimentos? Ninguno.
-* **Alberto Caleb Delgado (Dev Móvil/Back):** ¿Ayer? Interceptor HTTP completado. ¿Hoy? Configurar Firebase Cloud Messaging en consola de Firebase y descargar `google-services.json`. ¿Impedimentos? Permisos de notificación en Android 13+ requerían solicitud en runtime.
-* **Rolando Velasco (QA Lead):** ¿Ayer? Auth validada. ¿Hoy? Probar casos CP-M04 y CP-M05 de cancelación oportuna y tardía (Aprobados). ¿Impedimentos? Ninguno.
+#### Mujica Vallejos Andy Mauricio (Product Owner & Fullstack / Backend IA)
 
-#### Día 5 (20 de octubre de 2026)
-* **Andy Mujica (PO):** ¿Ayer? Reglas de crisis funcionando. ¿Hoy? Implementar fórmula multivariable de afinidad en `MatchingPsicologoService` (40% esp, 30% disp, 20% carga, 10% mod). ¿Impedimentos? Ninguno.
-* **Julio Larrazabal (SM):** ¿Ayer? Consola Figma lista. ¿Hoy? Resolver impedimento de Marilyn sobre cálculo de anticipación horaria. Apoyar en UI de cancelación. ¿Impedimentos? Ninguno.
-* **Marilyn Condori (Dev Móvil):** ¿Ayer? Diálogo de cancelación listo. ¿Hoy? Probar cancelación oportuna contra endpoint de backend y refrescar lista reactivamente. ¿Impedimentos? Ninguno.
-* **Maria Ilse Romero (Dev Móvil):** ¿Ayer? Lista de tareas navegando. ¿Hoy? Construir modal de entrega de tarea con escala de dificultad (1-5) y notas reflexivas. ¿Impedimentos? Ninguno.
-* **Alberto Caleb Delgado (Dev Móvil/Back):** ¿Ayer? Firebase configurado. ¿Hoy? Crear modelo `TokenFCM` en Django y endpoint para registrar token desde Flutter. ¿Impedimentos? Ninguno.
-* **Rolando Velasco (QA Lead):** ¿Ayer? Cancelación probada. ¿Hoy? Diseñar casos de prueba BDD para el algoritmo de matching multivariable y crisis. ¿Impedimentos? Ninguno.
+| Fecha | ¿Qué hiciste ayer? | ¿Qué hiciste hoy? | Obstáculo |
+| :---: | :----------------- | :----------------- | :-------- |
+| **10/10** | Presentación de objetivos del Sprint 3 y aprobación del backlog de historias móviles e IA | Especificación del contrato de interfaz y esquema JSON para clasificación IA (`CU21`) | Definir taxonomía de motivos clínicos alineada al marco psicoterapéutico |
+| **13/10** | Revisión de requisitos éticos de IA con literatura médica y normativa boliviana | Programación del módulo de sanitización de PII con expresiones regulares en Django | Calibración de expresiones regulares para formatos de cédula boliviana con sufijos |
+| **15/10** | Validación de anonimización en 20 textos de prueba con datos sintéticos | Implementación de diccionario heurístico de términos para clasificación de motivos clínicos | Balancear frecuencias para evitar falsos positivos en categorías solapadas |
+| **17/10** | Calibración de umbrales léxicos y prueba de asignación en 5 categorías principales | Construcción de la lógica de detección de banderas de crisis autolítica (`ALERTA_CRISIS`) | Delimitar rigurosamente los términos detonantes para garantizar 0 omisiones |
+| **20/10** | Verificación de disparo inmediato de `alerta_crisis = TRUE` ante textos de riesgo | Formulación matemática del algoritmo de afinidad multivariable en `MatchingPsicologoService` | Ajustar los pesos ponderados (40% esp, 30% disp, 20% carga, 10% mod) |
+| **22/10** | Pruebas de cálculo de afinidad con matrices de psicólogos sintéticos en base de datos | Construcción del endpoint REST `/api/v1/ia/sugerir-psicologo/{paciente_id}/` (Top 3) | Optimizar ordenamiento de psicólogos para responder en menos de 250 ms |
+| **24/10** | Conexión de endpoint de sugerencias con guardas de autenticación y tenant | Desarrollo del endpoint transaccional de asignación definitiva con auditoría médica | Bloquear cualquier guardado desatendido sin validación humana explícita |
+| **27/10** | Supervisión de integración con la consola web Angular del coordinador clínico | Pruebas de caja negra con casos clínicos anonimizados reales y verificación de SHA-256 | Ninguno |
+| **29/10** | Validación del resalte en banner rojo intermitente ante casos con ideación de crisis | Pre-aceptación clínica de las sugerencias generadas y cálculo de métricas de afinidad | Ninguno |
+| **02/11** | Certificación del 100% de criterios de aceptación de IA y matching asistido | Conducción del Sprint Review formal, firma del acta de aceptación y cierre del sprint | Ninguno |
 
-#### Día 6 (22 de octubre de 2026)
-* **Andy Mujica (PO):** ¿Ayer? Algoritmo de matching completado. ¿Hoy? Crear endpoint `/api/v1/ia/sugerir-psicologo/{paciente_id}/` que retorna el Top 3. ¿Impedimentos? Ninguno.
-* **Julio Larrazabal (SM):** ¿Ayer? Soporte técnico concluido. ¿Hoy? Iniciar construcción de componentes Angular para la Consola Web de Triaje (`ConsolaTriageView`). ¿Impedimentos? Ninguno.
-* **Marilyn Condori (Dev Móvil):** ¿Ayer? Cancelación cerrada. ¿Hoy? Integrar recepción de notificaciones push en primer plano con `flutter_local_notifications`. ¿Impedimentos? Configurar canales de notificación en Android.
-* **Maria Ilse Romero (Dev Móvil):** ¿Ayer? Modal de entrega de tarea listo. ¿Hoy? Integrar plugin `jitsi_meet_flutter_sdk` para la sala de teleconsulta. ¿Impedimentos? Conflicto de dependencias en `build.gradle` con versión de Kotlin (resuelto actualizando a Kotlin 1.9).
-* **Alberto Caleb Delgado (Dev Móvil/Back):** ¿Ayer? Endpoint de tokens listo. ¿Hoy? Implementar `FCMNotificationService` en Django para despacho de mensajes push. ¿Impedimentos? Ninguno.
-* **Rolando Velasco (QA Lead):** ¿Ayer? Casos diseñados. ¿Hoy? Probar caso CP-M08 de entrega de tareas y CP-M09 de registro de ánimo (Aprobados). ¿Impedimentos? Ninguno.
+<br>
 
-#### Día 7 (24 de octubre de 2026)
-* **Andy Mujica (PO):** ¿Ayer? Endpoint Top 3 funcional. ¿Hoy? Implementar endpoint de confirmación de asignación con registro de auditoría (`CU22`). ¿Impedimentos? Ninguno.
-* **Julio Larrazabal (SM):** ¿Ayer? Componente triaje avanzado. ¿Hoy? Integrar visualización de sugerencias de IA y botón de aprobación en Angular 17. ¿Impedimentos? Ninguno.
-* **Marilyn Condori (Dev Móvil):** ¿Ayer? Push en foreground listo. ¿Hoy? Probar recepción de recordatorio de cita con notificación emergente en emulador Android. ¿Impedimentos? Ninguno.
-* **Maria Ilse Romero (Dev Móvil):** ¿Ayer? Dependencia resuelta. ¿Hoy? Configurar parámetros de sala Jitsi (nombre único, JWT, audio/video activo) al entrar desde cita virtual. ¿Impedimentos? Ninguno.
-* **Alberto Caleb Delgado (Dev Móvil/Back):** ¿Ayer? Servicio FCM listo. ¿Hoy? Configurar cron job con `celery-beat` para despacho automático de recordatorios a 24h y 1h. ¿Impedimentos? Ninguno.
-* **Rolando Velasco (QA Lead):** ¿Ayer? Tareas y mood certificados. ¿Hoy? Probar caso CP-M06 de registro y recepción push FCM (Aprobado). ¿Impedimentos? Ninguno.
+#### Larrazabal Rojas Julio Cesar (Scrum Master & Frontend Angular 17 / UI/UX)
 
-#### Día 8 (27 de octubre de 2026)
-* **Andy Mujica (PO):** ¿Ayer? Auditoría de asignación cerrada. ¿Hoy? Probar pipeline de clasificación con casos reales de preconsulta anonimizada. ¿Impedimentos? Ninguno.
-* **Julio Larrazabal (SM):** ¿Ayer? Integración Angular lista. ¿Hoy? Conectar consola web con backend de matching y probar flujo completo con Andy. ¿Impedimentos? Ninguno.
-* **Marilyn Condori (Dev Móvil):** ¿Ayer? Push verificado. ¿Hoy? Afinar estilos y transiciones de la pantalla de citas móviles y badges de estado. ¿Impedimentos? Ninguno.
-* **Maria Ilse Romero (Dev Móvil):** ¿Ayer? Parámetros Jitsi configurados. ¿Hoy? Probar llamada WebRTC punto a punto entre app móvil y portal web (audio y video fluidos). ¿Impedimentos? Ninguno.
-* **Alberto Caleb Delgado (Dev Móvil/Back):** ¿Ayer? Cron jobs activos. ¿Hoy? Pruebas de carga ligera en despacho multicast de Firebase. ¿Impedimentos? Ninguno.
-* **Rolando Velasco (QA Lead):** ¿Ayer? Push certificado. ¿Hoy? Ejecutar caso CP-M07 de teleconsulta móvil WebRTC Jitsi (Aprobado). ¿Impedimentos? Ninguno.
+| Fecha | ¿Qué hiciste ayer? | ¿Qué hiciste hoy? | Obstáculo |
+| :---: | :----------------- | :----------------- | :-------- |
+| **10/10** | Facilitación del Sprint Planning 3 y configuración del Scrum Taskboard | Diseño de wireframes en Figma para pantallas de login, perfil y home del paciente móvil | Adaptar la guía de estilos web a lineamientos ergonómicos móviles Material 3 |
+| **13/10** | Aprobación de mockups de acceso móvil con el Product Owner | Prototipado en Figma de la interfaz interactiva de 'Mis Citas' con tabs de navegación | Representar con claridad visual los estados (Pendiente, Confirmada, Cancelada) |
+| **15/10** | Diseño de diálogos modales para cancelación de cita y políticas de anticipación | Wireframes de la sala de teleconsulta móvil con controles de micrófono y cámara | Búsqueda de layout óptimo para vista de video vertical sin tapar controles |
+| **17/10** | Diseño de componentes de lista de tareas y widget interactivo de Mood Tracker | Diseño de la Consola Web de Triaje y Matching Asistido para el Coordinador Clínico | Diseñar el panel de visualización del Top 3 de psicólogos con desglose de afinidad |
+| **20/10** | Apoyo en la resolución técnica de validación horaria de cancelación ($>24$h) en móvil | Creación de componentes Angular Standalone para la Consola Web (`ConsolaTriageView`) | Disposición responsiva de la tabla de solicitudes clínicas pendientes de triaje |
+| **22/10** | Maquetación del panel de detalles de preconsulta con badges de severidad | Integración de tarjetas comparativas del Top 3 de psicólogos recomendados por la IA | Formateo estético de barras de progreso porcentual para los 4 factores de afinidad |
+| **24/10** | Implementación del modal de confirmación con aviso legal de supervisión humana | Conexión reactiva entre componentes Angular y endpoints de backend de IA | Sincronización de eventos para refrescar la lista tras confirmar la asignación |
+| **27/10** | Pruebas integradas de flujo completo de triaje en Web junto a Andy Mujica | Ajustes ergonómicos en la presentación visual de la alerta de crisis (banner rojo pulsante) | Ninguno |
+| **29/10** | Auditoría visual de coherencia estética entre portal Angular web y app móvil Flutter | Verificación de tiempo de respuesta en carga de directores y tarjetas de psicólogos | Ninguno |
+| **02/11** | Facilitación formal de la sesión de Retrospectiva y consolidación de Burndown/Burnup | Presentación de las vistas web de triaje y matching en la sesión de Sprint Review | Ninguno |
 
-#### Día 9 (29 de octubre de 2026)
-* **Andy Mujica (PO):** ¿Ayer? Casos probados. ¿Hoy? Validar que la bandera de crisis autolítica dispare el banner rojo en la consola web. ¿Impedimentos? Ninguno.
-* **Julio Larrazabal (SM):** ¿Ayer? Flujo probado. ¿Hoy? Revisión de consistencia visual entre Angular web y Flutter móvil. ¿Impedimentos? Ninguno.
-* **Marilyn Condori (Dev Móvil):** ¿Ayer? Estilos pulidos. ¿Hoy? Pruebas de navegación en modo offline para consulta de citas cacheadas. ¿Impedimentos? Ninguno.
-* **Maria Ilse Romero (Dev Móvil):** ¿Ayer? Llamada WebRTC certificada. ¿Hoy? Revisar guardado de notas de entrega y actualización inmediata de estado en la UI. ¿Impedimentos? Ninguno.
-* **Alberto Caleb Delgado (Dev Móvil/Back):** ¿Ayer? Pruebas multicast OK. ¿Hoy? Integrar script de siembra `seed_sprint3` para poblar datos de prueba en los 12 tenants. ¿Impedimentos? Ninguno.
-* **Rolando Velasco (QA Lead):** ¿Ayer? Teleconsulta OK. ¿Hoy? Ejecutar casos CP-M10, CP-M11, CP-M12 y CP-M13 del motor de IA y matching (Todos aprobados). ¿Impedimentos? Ninguno.
+<br>
 
-#### Día 10 (02 de noviembre de 2026)
-* **Andy Mujica (PO):** ¿Ayer? Banderas de crisis certificadas. ¿Hoy? Conducir la demo del Sprint Review, verificar los 8 criterios de la cátedra y redactar el acta de aceptación formal para la defensa del 03 y 05 de noviembre. ¿Impedimentos? Ninguno.
-* **Julio Larrazabal (SM):** ¿Ayer? Consistencia visual OK. ¿Hoy? Moderar la Retrospectiva del Sprint 3 y consolidar métricas de burndown y burnup. ¿Impedimentos? Ninguno.
-* **Marilyn Condori (Dev Móvil):** ¿Ayer? Pruebas concluidas. ¿Hoy? Congelar código de agenda y push en rama `sprint3_movil_citas`. ¿Impedimentos? Ninguno.
-* **Maria Ilse Romero (Dev Móvil):** ¿Ayer? Entregas validadas. ¿Hoy? Congelar código de teleconsulta y mood en rama `sprint3_movil_seguimiento`. ¿Impedimentos? Ninguno.
-* **Alberto Caleb Delgado (Dev Móvil/Back):** ¿Ayer? Siembra completada. ¿Hoy? Ejecutar validación de base de datos multi-tenant y congelar backend en `main`. ¿Impedimentos? Ninguno.
-* **Rolando Velasco (QA Lead):** ¿Ayer? Batería BDD finalizada. ¿Hoy? Emitir el reporte oficial de pruebas de calidad con 100% de casos aprobados (13/13). ¿Impedimentos? Ninguno.
+#### Condori Diaz Marilyn Esther (Development Team - Móvil Flutter & Agenda de Citas)
+
+| Fecha | ¿Qué hiciste ayer? | ¿Qué hiciste hoy? | Obstáculo |
+| :---: | :----------------- | :----------------- | :-------- |
+| **10/10** | Revisión de especificaciones funcionales de la agenda móvil en el Planning | Configuración del entorno de desarrollo Flutter 3 y puesta en marcha de emuladores | Descarga prolongada de imágenes del emulador de Android Studio |
+| **13/10** | Familiarización con arquitectura de estados BLoC y modelos de datos | Construcción de widgets reutilizables para tarjetas de cita y chips de estado clínico | Alineación visual de fecha, hora y modalidad (Virtual/Presencial) en tarjeta |
+| **15/10** | Estructuración del servicio `CitasService` consumiendo endpoints REST de agenda | Conexión de la vista móvil con backend para listar citas próximas e historial | Desfase de 4 horas en visualización por conversión UTC de Django a GMT-4 Bolivia |
+| **17/10** | Solución del desfase horario normalizando fechas con paquete `intl` en Flutter | Implementación de la lógica de cancelación y validación de la regla $>24$ horas | Controlar el bloqueo del botón de cancelación cuando restan menos de 24 horas |
+| **20/10** | Pruebas de cancelación oportuna liberando el bloque horario en base de datos | Diseño del cuadro de diálogo informativo que explica la penalización por fuera de plazo | Redacción de mensaje asertivo que invite a contactar a recepción en cancelaciones tardías |
+| **22/10** | Verificación de refresco automático de la lista de citas tras cancelación exitosa | Integración del plugin `flutter_local_notifications` para recepción en primer plano | Configuración manual de canales de notificación y prioridades en AndroidManifest |
+| **24/10** | Prueba de recepción de notificación push de recordatorio con la app abierta | Configuración de listeners para navegación automática al tocar el banner push | Manejo de rutas profundas (Deep Linking) hacia el detalle de la cita recibida |
+| **27/10** | Ajustes visuales de tipografía, espaciados y animaciones en la pantalla de citas | Pruebas de visualización en pantallas de distintas densidades y factores de forma | Ninguno |
+| **29/10** | Verificación de funcionamiento offline con caché local de citas previamente leídas | Pruebas de estrés navegando repetidamente entre citas próximas y pasadas | Ninguno |
+| **02/11** | Cierre de incidencias menores y congelamiento de rama `sprint3_movil_citas` | Participación en la sesión de Sprint Review demostrando la agenda móvil fluida | Ninguno |
+
+<br>
+
+#### Romero Saavedra Maria Ilse (Development Team - Móvil Flutter & Seguimiento Terapéutico)
+
+| Fecha | ¿Qué hiciste ayer? | ¿Qué hiciste hoy? | Obstáculo |
+| :---: | :----------------- | :----------------- | :-------- |
+| **10/10** | Revisión de casos de uso de tareas y teleconsulta móvil en el Planning | Configuración del SDK de Flutter y validación de hot reload en dispositivo físico | Ninguno |
+| **13/10** | Diseño de maqueta para el registro diario de estado de ánimo en Flutter | Desarrollo del widget interactivo de Mood Tracker con selector de 5 emojis | Dificultad para capturar selección múltiple de factores contextuales (Trabajo, Familia, etc.) |
+| **15/10** | Estructuración de chips de contexto dinámicos y campo de notas reflexivas | Implementación de llamada HTTP POST para persistir registro en `clinica_registroanimo` | Restricción de base de datos de un único registro por paciente por fecha (manejado con UX) |
+| **17/10** | Verificación de actualización en tiempo real del registro de ánimo | Desarrollo de la pantalla de lista de tareas terapéuticas asignadas por el terapeuta | Diferenciación clara entre tareas pendientes, entregadas y revisadas |
+| **20/10** | Implementación del modal de entrega de tarea con escala de dificultad (1 a 5) | Consumo de endpoint de entrega enviando conclusiones y calificación de esfuerzo | Validar que el paciente no pueda re-entregar una tarea ya calificada por el terapeuta |
+| **22/10** | Pruebas de envío de evidencia reflexiva con visualización inmediata de estado | Integración del plugin `jitsi_meet_flutter_sdk` para la sala de teleconsulta WebRTC | Conflicto de dependencias en `build.gradle` con versión de Kotlin (resuelto con Kotlin 1.9) |
+| **24/10** | Resolución de configuración de ProGuard y permisos de audio/cámara en Android | Configuración de parámetros de sala Jitsi (nombre criptográfico, JWT, audio/video) | Asegurar que el botón de ingreso se active estrictamente dentro de la ventana de la cita |
+| **27/10** | Pruebas de llamada WebRTC punto a punto entre smartphone Android y navegador web | Validación de calidad de audio y video en tiempo real sin latencia perceptible | Ajuste de permisos de micrófono en caliente durante la llamada |
+| **29/10** | Pruebas de reconexión automática de videollamada ante micro-cortes de red WiFi | Verificación de cierre ordenado de hardware (cámara/mic) al finalizar la sesión | Ninguno |
+| **02/11** | Congelamiento de código en rama `sprint3_movil_seguimiento` y preparación de demo | Demostración en vivo en el Sprint Review de teleconsulta y mood tracker móvil | Ninguno |
+
+<br>
+
+#### Velasco Soliz Rolando (Development Team - QA Lead & Automatización BDD)
+
+| Fecha | ¿Qué hiciste ayer? | ¿Qué hiciste hoy? | Obstáculo |
+| :---: | :----------------- | :----------------- | :-------- |
+| **10/10** | Análisis de criterios de aceptación BDD de las 9 Historias de Usuario (HU-40 a HU-48) | Diseño de la matriz de casos de prueba de caja negra para autenticación y almacenamiento | Discrepancias sobre cómo automatizar la validación de almacenamiento seguro en Keystore |
+| **13/10** | Configuración de colección de pruebas automatizadas con Newman / Postman | Ejecución de casos CP-M01 y CP-M02 sobre endpoints móviles de login y tokens JWT | Ninguno |
+| **15/10** | Verificación de expiración y rotación de tokens JWT en backend | Diseño de casos de prueba CP-M04 y CP-M05 para la política de cancelación $>24$ horas | Simulación de fechas futuras y pasadas manipulando reloj del servidor de test |
+| **17/10** | Ejecución de pruebas de cancelación oportuna y bloqueo tardío (Ambas Aprobadas) | Configuración de entorno de prueba para recepción de notificaciones push FCM | Demora en entrega de push en emuladores sin Google Play Services activos |
+| **20/10** | Verificación de entrega de recordatorios push en dispositivo físico Android | Diseño de escenarios de prueba para el algoritmo multivariable de matching clínico | Construcción de matrices matemáticas de prueba con combinaciones de 4 ponderaciones |
+| **22/10** | Ejecución de pruebas de carga sobre el motor de sugerencias de psicólogos (Top 3) | Certificación de casos CP-M08 (entrega de tareas) y CP-M09 (registro diario de ánimo) | Ninguno |
+| **24/10** | Ejecución de caso CP-M06 de ciclo completo de notificación push FCM (Aprobado) | Diseño de pruebas de contingencia y estrés para videollamadas WebRTC Jitsi Meet | Medición empírica de uso de ancho de banda y latencia en enlaces móviles 4G |
+| **27/10** | Certificación de caso CP-M07 de teleconsulta móvil con audio/video fluidos | Pruebas de seguridad sobre anonimización PII verificando ausencia de carnets y nombres | Simular textos de intake con múltiples formatos de números telefónicos bolivianos |
+| **29/10** | Ejecución de casos CP-M10, CP-M11, CP-M12 y CP-M13 de clasificación y crisis | Certificación formal del disparo de alerta roja ante ideación autolítica | Ninguno |
+| **02/11** | Consolidación del reporte final de aseguramiento de calidad con 13/13 casos aprobados | Emisión de la certificación oficial de calidad sin defectos bloqueantes para Review | Ninguno |
+
+<br>
 
 ---
 
 ## 7.4 SPRINT REVIEW (REVISIÓN DE SPRINT)
 
-* **Fecha de Realización:** 02 de noviembre de 2026
-* **Lugar:** Sala Virtual de Coordinación SCRUM SIGEPSI / Laboratorio de Sistemas
-* **Participantes:**
-  * **Mujica Vallejos Andy Mauricio** (Product Owner)
-  * **Larrazabal Rojas Julio Cesar** (Scrum Master)
-  * **Condori Diaz Marilyn Esther** (Development Team - Móvil)
-  * **Romero Saavedra Maria Ilse** (Development Team - Móvil)
-  * **Delgado Rojas Alberto Caleb** (Development Team - Móvil/Backend)
-  * **Velasco Soliz Rolando** (Development Team - QA Lead)
+| **Revisión de Sprint :** Sprint 3 |
+| :-------------------------------- |
+| **Objetivos del Sprint**<br>*(Objetivos establecidos durante la planificación del sprint y evaluación del progreso como equipo)*<br>• **App Móvil Nativa en Flutter 3.x para Pacientes:** Desarrollar la aplicación móvil ubicua multiplataforma orientada al paciente con arquitectura modular, navegación reactiva y diseño ergonómico Material 3.<br>• **Autenticación Persistente y Almacenamiento Seguro JWT (HU-40):** Implementar el inicio de sesión multi-tenant con guardado cifrado de credenciales en el hardware seguro del smartphone (Keystore en Android / Keychain en iOS) y renovación silenciosa de tokens.<br>• **Agenda Móvil y Cancelación Oportuna de Citas (HU-41, HU-42):** Permitir la consulta interactiva de citas próximas e historial, implementando la validación estricta de la regla de cancelación con más de 24 horas de anticipación ($>24$h) y liberación inmediata del bloque horario.<br>• **Notificaciones Push Automáticas de Recordatorio (HU-43 / CU12):** Desplegar la infraestructura de mensajería en segundo plano con Firebase Cloud Messaging (FCM v1) y planificador Celery Beat para alertas preventivas a $T-24$h y $T-1$h.<br>• **Sala Virtual de Teleconsulta WebRTC Nativa (HU-44 / CU13):** Integrar salas de videollamada cifradas punto a punto (E2EE) con Jitsi Meet SDK en Flutter sin necesidad de aplicaciones externas ni desvíos de navegación.<br>• **Seguimiento de Tareas Terapéuticas y Evidencias (HU-45 / CU17):** Facilitar el cumplimiento de compromisos terapéuticos inter-sesión con envío de conclusiones reflexivas y calificación de esfuerzo percibido.<br>• **Autorreporte Diario de Estado de Ánimo - Mood Tracker (HU-46 / CU17):** Implementar la bitácora emocional cotidiana con selector de 5 estados afectivos, factores contextuales multivariables y notas cualitativas.<br>• **Clasificación Asistiva de Motivos de Consulta y Detección de Crisis (HU-47 / CU21):** Construir el pipeline de lenguaje natural con anonimización estricta de datos personales (PII), categorización diagnóstica en 5 áreas clínicas y activación automática de alerta roja ante riesgo autolítico.<br>• **Emparejamiento Multivariable de Psicólogos con Validación Humana (HU-48 / CU22):** Implementar el algoritmo de afinidad clínica (40% especialidad, 30% disponibilidad, 20% balanceo de carga, 10% modalidad) con presentación del Top 3 y supervisión humana obligatoria (*Human-in-the-Loop*).<br>• **Evaluación del equipo:** **100% de los objetivos cumplidos.** La totalidad de las 11 tareas técnicas (`SP3-68` a `SP3-78`) y las 9 Historias de Usuario (`HU-40` a `HU-48`) fueron completadas con éxito, certificadas en 13 casos de prueba BDD y aprobadas unánimemente por el Product Owner. |
 
-### Demostración del Incremento Funcional Realizado
+<br>
 
-1. **Demostración de la App Móvil en Flutter (SP3-68 a SP3-76):**
-   * Inicio de sesión del paciente con credenciales de prueba (`paciente.ana@sigepsi.bo`), almacenamiento seguro de JWT en Keystore y redirección al Dashboard.
-   * Consulta interactiva de citas en tabs 'Próximas' e 'Historial'.
-   * Cancelación exitosa de una cita programada para dentro de 48 horas ($>24$h) con liberación inmediata del bloque horario.
-   * Intento bloqueado de cancelación de una cita a 6 horas del inicio, mostrando la alerta informativa y el contacto con recepción.
-   * Ingreso fluido a sala de teleconsulta WebRTC nativa (Jitsi Meet) sin salir de la app, con video y audio en tiempo real.
-   * Visualización de tarea asignada, redacción de conclusiones y envío de evidencia con calificación de dificultad (3/5).
-   * Registro diario de estado de ánimo (*Mood Tracker*) con emoji y factores contextuales.
-2. **Demostración de Notificaciones Push FCM (CU12):**
-   * Despacho automatizado de recordatorio preventivo de cita y visualización del banner emergente en la bandeja del sistema operativo móvil Android.
-3. **Demostración de Inteligencia Artificial Asistiva (CU21 y CU22):**
-   * Ingesta de un intake clínico con sintomatología ansiosa; sanitización automática de datos personales (PII).
-   * Clasificación automática como `ANSIEDAD_FOBIAS`, severidad `ALTA` (confianza 88%) y cálculo de Checksum SHA-256.
-   * Simulación de intake con ideación autolítica; disparo inmediato de `ALERTA_CRISIS = TRUE` con severidad `CRITICA` y resalte rojo en consola.
-   * Ejecución del algoritmo multivariable de matching; presentación del Top 3 de psicólogos candidatos en la consola web de triaje.
-   * Aprobación humana explícita por parte del Coordinador Clínico (*Human-in-the-Loop*), registrando la auditoría completa en base de datos.
+| **Participantes** | |
+| :---------------- | :-------------------------------------------------------------------- |
+| **Nombre** | **Rol en el Sprint 3** |
+| **Mujica Vallejos Andy Mauricio** | Product Owner & Desarrollo de Motores de IA y Matching Asistido |
+| **Larrazabal Rojas Julio Cesar** | Scrum Master & Desarrollo Frontend Angular 17 (Consola de Triaje) |
+| **Condori Diaz Marilyn Esther** | Development Team (Desarrollo Móvil Flutter - Agenda y Citas) |
+| **Romero Saavedra Maria Ilse** | Development Team (Desarrollo Móvil Flutter - Tareas, Mood y Jitsi) |
+| **Delgado Rojas Alberto Caleb** | Development Team (Desarrollo Móvil Flutter - Auth JWT y Despacho FCM) |
+| **Velasco Soliz Rolando** | Development Team (Aseguramiento de Calidad - QA Lead & Pruebas BDD) |
 
-### Acta Formal de Aceptación del Product Owner
+<br>
 
-| Criterio Clínico y Técnico Evaluado | Observaciones del Product Owner (Andy Mauricio Mujica) | Veredicto |
-| :---------------------------------- | :----------------------------------------------------- | :-------: |
-| **Cumplimiento del Alcance Móvil** | La app en Flutter responde con total fluidez en emuladores y dispositivos físicos. La teleconsulta WebRTC no experimentó cortes ni latencia perceptible. | **APROBADO** |
-| **Seguridad y Persistencia JWT** | Los tokens de acceso y refresco se almacenan cifrados en el hardware seguro del smartphone y el refresco es transparente. | **APROBADO** |
-| **Precisión del Motor de IA (CU21)** | La categorización refleja fielmente la sintomatología clínica y las banderas de crisis se disparan sin excepción, garantizando la seguridad del paciente. | **APROBADO** |
-| **Algoritmo de Matching (CU22)** | La ponderación multivariable balancea la carga de pacientes y prioriza adecuadamente la especialidad y disponibilidad horaria. | **APROBADO** |
-| **Supervisión Humana Obligatoria** | Ninguna asignación se consolida de forma autónoma; la consola exige la aprobación auditada del coordinador clínico. | **APROBADO** |
-| **Calidad y Batería de Pruebas BDD** | El 100% de los 13 casos de prueba de caja negra fueron certificados formalmente sin defectos bloqueantes pendientes. | **APROBADO** |
+| **Presentación del incremento** | |
+| :----------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Función presentada** *(Elemento de trabajo presentado)* | **Retroalimentación** *(Preguntas, observaciones y comentarios del Product Owner)* |
+| **Autenticación Móvil y Almacenamiento Seguro JWT** *(HU-40 - CU2 Móvil)* | **Aprobado con distinción.** La persistencia de sesión en Flutter utilizando el Keystore/Keychain protege rigurosamente los tokens criptográficos. El refresco silencioso evita interrupciones molestas al paciente y la auto-resolución de subdominio multi-tenant opera de forma transparente y segura. |
+| **Agenda Móvil y Cancelación de Citas $>24$h** *(HU-41, HU-42 - CU11 Móvil)* | **Aprobado con felicitación.** La interfaz con selector de tabs 'Próximas' e 'Historial' es intuitiva y ergonómica. La aplicación estricta de la regla de cancelación con $>24$ horas libera de inmediato el cupo en el consultorio del psicólogo, y el bloqueo informativo para cancelaciones fuera de plazo previene ausencias imprevistas sin perjudicar al profesional. |
+| **Notificaciones Push Automáticas de Recordatorio** *(HU-43 - CU12 FCM)* | **Aprobado.** La pasarela FCM HTTP v1 despacha con total puntualidad las alertas programadas por Celery Beat. El banner emergente en el smartphone despierta la aplicación en segundo plano y conduce al usuario directamente a la cita con un solo toque, reduciendo drásticamente el absentismo a sesiones. |
+| **Sala Virtual de Teleconsulta WebRTC Nativa** *(HU-44 - CU13 Móvil)* | **Aprobado con máxima distinción.** La integración del SDK nativo de Jitsi Meet dentro de la propia app de Flutter proporciona una experiencia médica de primer nivel. El cifrado punto a punto (SRTP/TLS), los controles de cámara/micrófono y la ausencia de latencia perceptible garantizan la máxima confidencialidad en sesiones remotas. |
+| **Seguimiento de Tareas Terapéuticas y Evidencias** *(HU-45 - CU17 Móvil)* | **Aprobado.** El paciente dispone de un canal claro para revisar los ejercicios asignados inter-sesión, redactar sus conclusiones y autoevaluar su nivel de dificultad (1 a 5). Esta funcionalidad fortalece activamente la adherencia terapéutica y nutre el expediente del psicólogo con información objetiva. |
+| **Autorreporte Diario de Estado de Ánimo - Mood Tracker** *(HU-46 - CU17 Móvil)* | **Aprobado con distinción.** La escala visual de 5 emojis y los selectores contextuales (Trabajo, Familia, Pareja, Sueño, Social) permiten registrar el estado afectivo en menos de 30 segundos diarios. La restricción de unicidad por fecha evita duplicidades y alimenta métricas longitudinales valiosas. |
+| **Clasificación Asistiva de Motivos y Detección de Crisis** *(HU-47 - CU21 IA)* | **Aprobado con máxima distinción.** La anonimización de datos sensibles PII antes de cualquier inferencia cumple estrictamente con el secreto médico. La precisión en la categorización diagnóstica en 5 áreas y, sobre todo, el disparo inmediato de `ALERTA_CRISIS = TRUE` ante ideación autolítica salvaguarda la vida del paciente antes del triaje. |
+| **Emparejamiento Multivariable con Supervisión Humana** *(HU-48 - CU22 IA)* | **Aprobado con felicitación.** El algoritmo balancea de forma armónica la especialidad (40%), disponibilidad (30%), carga actual (20%) y modalidad (10%). La presentación del Top 3 en la consola web con supervisión humana obligatoria (*Human-in-the-Loop*) respeta fielmente la directriz médica de que la IA asiste pero nunca reemplaza el criterio profesional. |
+| **Certificación de Batería de Pruebas de Calidad BDD** *(13 Casos Totales)* | **Aprobado.** La cobertura del 100% sobre los 13 casos de prueba de caja negra BDD ejecutados sobre emuladores y backend certifica la estabilidad y robustez del release sin incidencias bloqueantes pendientes. |
+
+<br>
 
 > **Dictamen Final del Product Owner:**  
 > En mi calidad de Product Owner del proyecto SIGEPSI, certifico que el incremento de software entregado en el **Sprint 3** satisface plenamente la totalidad de los criterios de aceptación clínicos, requerimientos funcionales y lineamientos técnicos de la cátedra. **Se otorga la Aceptación Formal al 100%** y se autoriza el paso a producción del release.  
 >  
 > *(Firmado digitalmente)*: **Andy Mauricio Mujica Vallejos – Product Owner SIGEPSI**
 
+<br>
+
 ---
 
 ## 7.5 SPRINT RETROSPECTIVE (RETROSPECTIVA DE SPRINT)
 
-Bajo el principio central de Scrum destacado por la docente en cátedra (*"todo lo bueno lo tengo que repetir y todo lo malo lo tengo que eliminar, son mejoras continuas"*), el equipo realizó la sesión retrospectiva analizando su desempeño técnico y organizativo:
+| **Retrospectiva de Sprint :** Sprint 3 | |
+| :------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Fecha :** 02 de noviembre de 2026 | |
+| **Facilitador :** Larrazabal Rojas Julio Cesar (Scrum Master) | |
+| **Objetivo :** | Analizar el desempeño del equipo durante el Sprint 3, reflexionar sobre los desafíos de la transición hacia el desarrollo móvil nativo en Flutter 3.x, la integración de teleconsulta WebRTC con Jitsi Meet, la arquitectura de mensajería push con Firebase Cloud Messaging (FCM v1), los motores de procesamiento de lenguaje natural y matching con salvaguardas éticas, y definir compromisos de mejora. |
+| **Nombres de asistentes :** | • **Mujica Vallejos Andy Mauricio** (Product Owner)<br>• **Larrazabal Rojas Julio Cesar** (Scrum Master)<br>• **Condori Diaz Marilyn Esther** (Development Team)<br>• **Romero Saavedra Maria Ilse** (Development Team)<br>• **Delgado Rojas Alberto Caleb** (Development Team)<br>• **Velasco Soliz Rolando** (Development Team) |
+| **Temas a tratar :** | • Implementación exitosa de la experiencia móvil nativa en Flutter 3.x (Auth segura JWT, agenda con regla $>24$h, teleconsulta WebRTC y seguimiento terapéutico).<br>• Infraestructura de mensajería push en segundo plano con Firebase Cloud Messaging (FCM v1) y Celery Beat.<br>• Pipeline de Inteligencia Artificial con sanitización PII, clasificación diagnóstica y detección preventiva de crisis.<br>• Algoritmo de matching multivariable con supervisión humana obligatoria (*Human-in-the-Loop*).<br>• Rotación exitosa de roles técnicos hacia desarrollo móvil y lecciones aprendidas para el mantenimiento y soporte final. |
 
-```
- +---------------------------------------------------------------------------------------------------+
- |                             RETROSPECTIVA DEL SPRINT 3 (SIGEPSI)                                  |
- +-------------------------------------+-------------------------------------------------------------+
- | ¿QUÉ FUNCIONÓ MUY BIEN?             | • La rotación de desarrolladores web a móvil en Flutter     |
- | (Repetir en el próximo Sprint)      |   (Condori y Romero) fue sumamente exitosa gracias a la     |
- |                                     |   arquitectura modular y al acompañamiento de Delgado.      |
- |                                     | • El Product Owner (Mujica) desarrolló tareas técnicas de IA |
- |                                     |   sin descuidar la gestión del backlog ni los criterios.    |
- |                                     | • Excelente precisión en la sanitización PII y el matching. |
- |                                     | • Cero defectos bloqueantes detectados en la fase de QA.    |
- +-------------------------------------+-------------------------------------------------------------+
- | ¿QUÉ DIFICULTADES ENCONTRAMOS?      | • La configuración de certificados FCM y plugins de Jitsi    |
- | (Problemas superados durante el SP) |   en Android requirió ajustes manuales en Gradle y ProGuard.|
- |                                     | • La unificación de zonas horarias entre Django (UTC) y     |
- |                                     |   Flutter (GMT-4 Bolivia) requirió calibración inicial.     |
- |                                     | • Calibración inicial de las ponderaciones de carga para no |
- |                                     |   penalizar injustamente a psicólogos nuevos sin pacientes. |
- +-------------------------------------+-------------------------------------------------------------+
- | PLAN DE ACCIÓN PARA SPRINT 4        | 1. Mantener preconfigurado el entorno de emulación móvil    |
- | (Compromisos de mejora continua)    |    para evitar pérdidas de tiempo en la fase de integración.|
- |                                     | 2. Implementar pruebas automatizadas end-to-end antes de la |
- |                                     |    entrega final del sistema SaaS en el Sprint 4.           |
- |                                     | 3. Abordar el módulo de pasarela de pagos/suscripciones     |
- |                                     |    (CU26) y resúmenes de IA con la misma disciplina técnica.|
- +-------------------------------------+-------------------------------------------------------------+
-```
+<br>
+
+| **Discusión** | | |
+| :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **¿Qué salió bien?** | **¿Qué no salió bien?** | **¿Qué haremos de manera diferente?** |
+| • **Adopción acelerada y exitosa de Flutter:** La rotación de desarrolladores de frontend web a móvil (Condori y Romero) fue fluida gracias a la arquitectura modular de widgets y al acompañamiento técnico de Delgado.<br>• **Excelente calidad en teleconsulta WebRTC:** La integración del SDK nativo de Jitsi Meet en Flutter y Angular funcionó sin cortes de streaming ni latencia perceptible.<br>• **Solidez en salvaguardas éticas de IA:** La sanitización de datos PII y el protocolo de alerta roja ante crisis operaron sin fallas ni omisiones.<br>• **Cumplimiento estricto del principio Human-in-the-Loop:** Ninguna asignación se consolidó de forma desatendida; el coordinador clínico mantiene siempre la última palabra.<br>• **Cero defectos bloqueantes en QA:** La totalidad de los 13 escenarios BDD fueron aprobados con métricas de respuesta óptimas. | • **Complejidad inicial en configuración de dependencias móviles:** La resolución de compatibilidad de Kotlin y ProGuard en Gradle con los plugins de Jitsi y Firebase demandó horas imprevistas.<br>• **Desfase de husos horarios:** La conversión entre Django ORM (UTC) y la aplicación Flutter en hora local boliviana (GMT-4) requirió ajustes adicionales.<br>• **Carga del emulador de Android:** El consumo intensivo de memoria RAM en emuladores ralentizó las pruebas simultáneas de videollamada y push en algunas estaciones de trabajo.<br>• **Calibración inicial de pesos de matching:** Se requirió afinar el factor de carga de pacientes para no penalizar en exceso a profesionales recién incorporados sin citas previas. | • **Estandarizar entornos de emulación con dispositivos físicos:** Priorizar pruebas de teleconsulta y notificaciones push directamente sobre smartphones físicos vía depuración USB inalámbrica para optimizar recursos de cómputo.<br>• **Manejo uniforme de zonas horarias en la capa de servicios:** Utilizar siempre fechas normalizadas con serializadores centralizados antes de consumir en frontend móvil o web.<br>• **Automatización de pruebas de regresión móvil:** Implementar scripts de prueba automatizada de integración (Flutter Driver) para flujos críticos de citas y teleconsulta.<br>• **Documentación de dependencias nativas:** Mantener un registro exhaustivo de versiones de Gradle, Java y Kotlin en el repositorio para evitar incompatibilidades en futuros incrementos. |
+
+<br>
+
+#### Matriz de Evaluación Individualizada por Integrante (En conformidad con Audio K6)
+
+En estricta conformidad con las exigencias metodológicas de la cátedra de Sistemas de Información II (Audio K6), a continuación se presenta la **evaluación individualizada en tres columnas por cada uno de los 6 integrantes del equipo Scrum**, analizando su desempeño particular durante el incremento del Sprint 3:
+
+| Integrante / Rol en Sprint 3 | 1. ¿Qué salió bien? (Prácticas exitosas a mantener) | 2. ¿Qué no salió bien? (Fallas o problemas detectados) | 3. ¿Qué se debe repetir o mejorar para el próximo sprint? |
+| :-------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Mujica Vallejos Andy Mauricio**<br>*(Product Owner & Backend IA)* | • Conducción rigurosa de los criterios de aceptación y priorización del backlog móvil e IA.<br>• Implementación exitosa del pipeline de clasificación NLP con sanitización PII.<br>• Algoritmo de matching multivariable con balanceo ponderado y salvaguarda *Human-in-the-Loop*. | • Ajuste iterativo de umbrales en el diccionario heurístico de síntomas para evitar solapamientos en motivos mixtos.<br>• Esfuerzo adicional en calibración de la fórmula de afinidad. | • Consolidar bancos de pruebas de texto clínico sintético antes de iniciar la codificación de reglas.<br>• Mantener la estricta vigilancia sobre la supervisión humana en herramientas de IA asistiva. |
+| **Larrazabal Rojas Julio Cesar**<br>*(Scrum Master & Frontend Angular)* | • Facilitación ágil sin impedimentos bloqueantes a lo largo de las 10 ceremonias del Daily Scrum.<br>• Diseño ergonómico sobresaliente en Figma alineado a estándares Material 3.<br>• Construcción de la Consola Web de Triaje en Angular 17 con resalte visual de alertas de crisis. | • Complejidad al coordinar pruebas entre la consola web del coordinador y los dispositivos móviles de pacientes.<br>• Ajustes imprevistos de responsividad en tarjetas comparativas del Top 3. | • Continuar prototipando en Figma con componentes compartidos antes de pasar a código frontend.<br>• Automatizar la sincronización de estados reactivos en tiempo real mediante WebSockets. |
+| **Condori Diaz Marilyn Esther**<br>*(Development Team - Móvil Agenda)* | • Rápida adaptación al framework Flutter 3 y construcción de vistas de agenda con tabs intuitivos.<br>• Lógica de validación de cancelación con anticipación mayor a 24 horas ($>24$h) y liberación inmediata del cupo.<br>• Integración fluida de `flutter_local_notifications`. | • Desfase temporal inicial de 4 horas por discrepancia entre UTC de Django y GMT-4 de Bolivia.<br>• Manejo de deep linking en notificaciones push que requirió soporte técnico. | • Estandarizar funciones de conversión de fecha/hora en una librería utilitaria compartida.<br>• Realizar pruebas de interfaz móvil en dispositivos de pantalla compacta desde etapas tempranas. |
+| **Romero Saavedra Maria Ilse**<br>*(Development Team - Móvil Teleconsulta)* | • Implementación exitosa del widget interactivo de Mood Tracker con selector de 5 estados emocionales.<br>• Integración de salas de videollamada WebRTC de alta fidelidad con `jitsi_meet_flutter_sdk`.<br>• Modal de entrega de tareas con calificación de dificultad y notas reflexivas. | • Conflicto de dependencias en `build.gradle` con la versión de Kotlin del plugin de Jitsi Meet.<br>• Captura de permisos de micrófono y cámara en caliente durante la teleconsulta. | • Verificar compatibilidad de versiones de plugins nativos en pub.dev antes de integrarlos al proyecto.<br>• Probar flujos multimedia directamente sobre hardware físico móvil. |
+| **Delgado Rojas Alberto Caleb**<br>*(Development Team - Móvil Auth & FCM)* | • Arquitectura sólida de almacenamiento seguro de tokens JWT con `flutter_secure_storage` en Keystore.<br>• Servicio backend de notificaciones push FCM v1 y planificador periódico con Celery Beat.<br>• Generación del paquete APK de producción v3.0 con soporte multi-tenant transparente. | • Configuración inicial de credenciales de servicio de Google Cloud FCM y permisos de Android 13+.<br>• Dificultad para emular almacenamiento seguro en emuladores de desarrollo desactualizados. | • Mantener plantillas de configuración de servicios cloud pre-validadas para agilizar despliegues.<br>• Continuar utilizando interceptores HTTP para refresco transparente de tokens en clientes cliente. |
+| **Velasco Soliz Rolando**<br>*(Development Team - QA Lead & BDD)* | • Cobertura integral del 100% sobre los 13 casos de prueba de caja negra BDD diseñados y ejecutados.<br>• Certificación de calidad en flujos móviles, políticas de cancelación, videollamadas y motores de IA.<br>• Cero defectos bloqueantes detectados al cierre del Sprint 3. | • Tiempo adicional invertido en la simulación de fechas futuras para verificar la regla de cancelación $>24$h.<br>• Medición de ancho de banda y latencia en teleconsulta bajo enlaces variables. | • Diseñar utilidades de simulación temporal en el backend para acelerar pruebas de reglas basadas en tiempo.<br>• Mantener suites de pruebas automatizadas continuas en pipelines de integración. |
 
 ---
 
 ## 7.6 BURNDOWN Y BURNUP
 
 ### 7.6.1 Gráfica Burndown (Horas Restantes: Ideal vs. Real)
+
+![Gráfica Burndown del Sprint 3](./imagenes/burndown_sprint3.png)
 
 El Sprint 3 se desarrolló a lo largo de **10 ceremonias ágiles entre el 10 de octubre y el 02 de noviembre de 2026** sobre un alcance planificado de **59 horas técnicas**:
 
@@ -3030,6 +7344,8 @@ Horas
 ---
 
 ### 7.6.2 Gráfica Burnup (Tareas y Puntos Completados vs. Alcance Total)
+
+![Gráfica Burnup del Sprint 3](./imagenes/burnup_sprint3.png)
 
 El Burnup refleja la progresión acumulada de finalización de las 11 tareas técnicas y los 51 Puntos de Historia de Usuario (PHU):
 
@@ -3087,6 +7403,8 @@ A continuación se detalla la comparativa analítica de horas entre lo planifica
 
 ### 7.7.2 Gráfica Comparativa de Esfuerzo por Integrante
 
+![Gráfica Comparativa de Esfuerzo por Integrante - Sprint 3](./imagenes/esfuerzo_sprint3.png)
+
 ```
 Horas
  18 +                                                 [13h / 13h]
@@ -3131,7 +7449,7 @@ Al cierre formal del Sprint 3, el estado del tablero Kanban/Scrum certifica la f
 
 ## CONSOLIDACIÓN FINAL DE LOS 8 CRITERIOS GENERALES DE LA CÁTEDRA
 
-En conformidad con la observación expresa de la docente en `datos/Sprint3.txt` (*"ya tenemos más del 50%... de los ocho puntos algunos no han cumplido, para lo que sería el sprint 3 debería estar completamente finalizado porque sería como una última opción"*), se certifica el estado de cumplimiento definitivo de cada uno de los 8 criterios de evaluación de la cátedra de Sistemas-2:
+En conformidad con la observación expresa de la docente en `datos/Sprint3-01-v2.txt` (*"ya tenemos más del 50%... de los ocho puntos algunos no han cumplido, para lo que sería el sprint 3 debería estar completamente finalizado porque sería como una última opción"*), se certifica el estado de cumplimiento definitivo de cada uno de los 8 criterios de evaluación de la cátedra de Sistemas-2:
 
 ```
 +----+--------------------------------------------+------------------------------------------------------------+---------------+

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import '../services/clinica_service.dart';
 import '../core/theme/app_theme.dart';
 import 'login_screen.dart';
 import 'users_screen.dart';
@@ -876,6 +877,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       );
                     },
                   ),
+                  _buildMenuCard(
+                    context,
+                    title: 'Registro Diario de Ánimo (Mood Tracker)',
+                    subtitle: 'Autorreporte reflexivo con emojis y factores contextuales',
+                    tag: 'Mood Tracker • CU17 • Sprint 3',
+                    icon: Icons.mood_rounded,
+                    color: const Color(0xFFEC4899),
+                    onTap: () => _mostrarDialogoMoodTracker(context),
+                  ),
                 ],
 
                 // ═════════════════════════════════════════════════════════════
@@ -1258,4 +1268,201 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
+
+  void _mostrarDialogoMoodTracker(BuildContext context) {
+    int selectedValor = 4;
+    String selectedEstado = 'FELIZ';
+    final List<String> factoresDisponibles = [
+      'Familia', 'Trabajo', 'Estudio', 'Descanso', 'Ejercicio', 'Alimentación', 'Clima', 'Medicación', 'Social'
+    ];
+    final Set<String> factoresSeleccionados = {'Descanso', 'Familia'};
+    final notaController = TextEditingController();
+    bool isSaving = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.cardBg,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final moods = [
+              {'val': 1, 'code': 'MUY_TRISTE', 'emoji': '😢', 'label': 'Muy Mal'},
+              {'val': 2, 'code': 'TRISTE', 'emoji': '😔', 'label': 'Desanimado'},
+              {'val': 3, 'code': 'NEUTRAL', 'emoji': '😐', 'label': 'Regular'},
+              {'val': 4, 'code': 'FELIZ', 'emoji': '🙂', 'label': 'Bien'},
+              {'val': 5, 'code': 'MUY_FELIZ', 'emoji': '😄', 'label': 'Excelente'},
+            ];
+
+            return Padding(
+              padding: EdgeInsets.only(
+                top: 20,
+                left: 20,
+                right: 20,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: AppTheme.textSubtle.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    const Row(
+                      children: [
+                        Icon(Icons.mood_rounded, color: Color(0xFFEC4899), size: 26),
+                        SizedBox(width: 10),
+                        Text(
+                          '¿Cómo te sientes hoy?',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.textMain),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Registra tu estado de ánimo diario para que tu terapeuta monitoree tu evolución inter-sesión.',
+                      style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                    ),
+                    const SizedBox(height: 18),
+                    // Emojis row
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: moods.map((m) {
+                        final isSel = selectedValor == m['val'];
+                        return GestureDetector(
+                          onTap: () {
+                            setModalState(() {
+                              selectedValor = m['val'] as int;
+                              selectedEstado = m['code'] as String;
+                            });
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: isSel ? const Color(0xFFEC4899).withOpacity(0.2) : Colors.transparent,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: isSel ? const Color(0xFFEC4899) : Colors.transparent,
+                                width: 2,
+                              ),
+                            ),
+                            child: Column(
+                              children: [
+                                Text(m['emoji'] as String, style: const TextStyle(fontSize: 32)),
+                                const SizedBox(height: 4),
+                                Text(
+                                  m['label'] as String,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
+                                    color: isSel ? const Color(0xFFEC4899) : AppTheme.textMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Factores contextuales asociados:',
+                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppTheme.textMain),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: factoresDisponibles.map((f) {
+                        final isSel = factoresSeleccionados.contains(f);
+                        return FilterChip(
+                          label: Text(f, style: TextStyle(fontSize: 11, color: isSel ? Colors.white : AppTheme.textMain)),
+                          selected: isSel,
+                          selectedColor: const Color(0xFFEC4899),
+                          checkmarkColor: Colors.white,
+                          backgroundColor: AppTheme.background,
+                          onSelected: (val) {
+                            setModalState(() {
+                              if (val) {
+                                factoresSeleccionados.add(f);
+                              } else {
+                                factoresSeleccionados.remove(f);
+                              }
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: notaController,
+                      maxLines: 2,
+                      decoration: InputDecoration(
+                        labelText: 'Nota reflexiva o comentarios (opcional)',
+                        hintText: 'Ej: Hoy sentí menos ansiedad luego de dar un paseo...',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFEC4899),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        onPressed: isSaving
+                            ? null
+                            : () async {
+                                setModalState(() => isSaving = true);
+                                final cs = ClinicaService(authService: widget.authService);
+                                final res = await cs.registrarEstadoAnimo(
+                                  estadoAnimo: selectedEstado,
+                                  escalaValor: selectedValor,
+                                  factoresContexto: factoresSeleccionados.toList(),
+                                  notaReflexiva: notaController.text.trim(),
+                                );
+                                if (context.mounted) {
+                                  Navigator.pop(ctx);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(res['success'] == true
+                                          ? '¡Registro de ánimo guardado exitosamente!'
+                                          : (res['error'] ?? 'Error al guardar ánimo.')),
+                                      backgroundColor: res['success'] == true ? AppTheme.success : AppTheme.danger,
+                                    ),
+                                  );
+                                }
+                              },
+                        icon: isSaving
+                            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                            : const Icon(Icons.check_circle_rounded),
+                        label: Text(isSaving ? 'Guardando...' : 'Guardar Estado de Ánimo'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
 }

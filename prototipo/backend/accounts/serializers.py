@@ -322,6 +322,7 @@ class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
     tenant = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    subdominio = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
     def validate(self, attrs):
         """
@@ -336,7 +337,9 @@ class LoginSerializer(serializers.Serializer):
         """
         email = attrs.get('email', '').strip()
         password = attrs.get('password')
-        tenant_param = attrs.get('tenant')
+        tenant_param = attrs.get('tenant') or attrs.get('subdominio')
+        if tenant_param and isinstance(tenant_param, str) and '.' in tenant_param:
+            tenant_param = tenant_param.split('.')[0].strip()
 
         if not email or not password:
             raise serializers.ValidationError("Debe ingresar correo y contraseña.")
@@ -416,6 +419,8 @@ class LoginSerializer(serializers.Serializer):
         return {
             'access': str(refresh.access_token),
             'refresh': str(refresh),
+            'access_token': str(refresh.access_token),
+            'refresh_token': str(refresh),
             'rol': rol_nombre,
             'usuario': UsuarioSerializer(user).data,
             'tenant': tenant_data,

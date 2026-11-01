@@ -317,9 +317,41 @@ class RespuestaPreConsultaViewSet(viewsets.ModelViewSet):
         user = self.request.user
         # Si el usuario es un paciente autenticado y no se indicó paciente, asignar el suyo
         if hasattr(user, 'perfil_paciente') and not serializer.validated_data.get('paciente'):
-            serializer.save(paciente=user.perfil_paciente)
+            resp = serializer.save(paciente=user.perfil_paciente)
         else:
-            serializer.save()
+            resp = serializer.save()
+
+        # CU21 (Sprint 3 / Diagrama 311): Clasificación asistida por IA y detección de crisis automática
+        try:
+            from clinica.ia_rules_engine import ClasificadorMotivoConsulta
+            from clinica.models import ClasificacionIA
+
+            motivo = resp.motivo_consulta or ""
+            resp_det = resp.respuestas_detalle or {}
+            sintomas_list = resp_det.get('sintomas_frecuentes', [])
+            sintomas_str = ", ".join(sintomas_list) if isinstance(sintomas_list, list) else str(sintomas_list)
+
+            resultado = ClasificadorMotivoConsulta.clasificar(
+                motivo=motivo,
+                sintomas=sintomas_str,
+                urgencia_percibida=resp.nivel_urgencia or 3
+            )
+
+            ClasificacionIA.objects.update_or_create(
+                respuestapreconsulta=resp,
+                defaults={
+                    'categoria_principal': resultado['categoria_principal'],
+                    'confianza_score': resultado['confianza_score'],
+                    'nivel_severidad': resultado['nivel_severidad'],
+                    'alerta_crisis': resultado['alerta_crisis'],
+                    'palabras_clave_detectadas': resultado['palabras_clave_detectadas'],
+                    'explicacion_heuristica': resultado['explicacion_heuristica'],
+                    'hash_trazabilidad_sha256': resultado['hash_trazabilidad_sha256']
+                }
+            )
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning(f"Error clasificando intake automáticamente: {e}")
 
     @action(detail=False, methods=['get'], url_path='por-cita')
     def por_cita(self, request):
@@ -837,6 +869,7 @@ class TareaTerapeuticaViewSet(viewsets.ModelViewSet):
         return qs
 
     @action(detail=True, methods=['post'], url_path='evidencia')
+    @transaction.atomic
     def registrar_evidencia(self, request, pk=None):
         """
         CU17 Paso 2: POST /api/v1/tareas/{id}/evidencia/ (Multipart Form-Data)
@@ -906,6 +939,11 @@ class TareaTerapeuticaViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'], url_path='subir_evidencia')
     def subir_evidencia_alias(self, request, pk=None):
+        return self.registrar_evidencia(request, pk)
+
+    @action(detail=True, methods=['post'], url_path='entregar')
+    def entregar_tarea_alias(self, request, pk=None):
+        """Entrega de tarea terapéutica desde la app móvil Flutter (CU17 / HU-45)."""
         return self.registrar_evidencia(request, pk)
 
     @action(detail=True, methods=['post'], url_path='revisar_tarea')
@@ -1652,3 +1690,210 @@ class ChatbotViewSet(viewsets.ViewSet):
             return Response({"error": "Conversación no encontrada."}, status=status.HTTP_404_NOT_FOUND)
 
 
+
+
+# ==============================================================================
+# SPRINT 3: VISTAS REST PARA CLASIFICACIÓN IA, TRIAJE, MATCHING Y MOOD TRACKER
+# ==============================================================================
+from rest_framework.views import APIView
+from django.utils import timezone
+from django.db import models
+from clinica.models import TokenFCM, RegistroAnimo, ClasificacionIA, SugerenciaMatching
+from clinica.serializers import (
+    TokenFCMSerializer, RegistroAnimoSerializer,
+    ClasificacionIASerializer, SugerenciaMatchingSerializer
+)
+from clinica.ia_rules_engine import ClasificadorMotivoConsulta, MatchingPsicologoService
+
+class ClasificacionIAViewSet(viewsets.ModelViewSet):
+    queryset = ClasificacionIA.objects.select_related('respuestapreconsulta__paciente__usuario').all()
+    serializer_class = ClasificacionIASerializer
+    permission_classes = [IsAuthenticated]
+
+class ClasificarIntakeView(APIView):
+    """Ejecuta la inferencia asistida de IA para un formulario intake (CU21 / HU-47)."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            resp = RespuestaPreConsulta.objects.select_related('paciente__usuario').get(id=pk)
+        except RespuestaPreConsulta.DoesNotExist:
+            return Response({"error": "Respuesta de preconsulta no encontrada."}, status=status.HTTP_404_NOT_FOUND)
+
+        resultado = ClasificadorMotivoConsulta.clasificar(
+            motivo=resp.motivo_consulta or "",
+            sintomas=resp.sintomas_principales or "",
+            urgencia_percibida=resp.escala_malestar or 3
+        )
+
+        clasif, _ = ClasificacionIA.objects.update_or_create(
+            respuestapreconsulta=resp,
+            defaults={
+                'categoria_principal': resultado['categoria_principal'],
+                'confianza_score': resultado['confianza_score'],
+                'nivel_severidad': resultado['nivel_severidad'],
+                'alerta_crisis': resultado['alerta_crisis'],
+                'palabras_clave_detectadas': resultado['palabras_clave_detectadas'],
+                'explicacion_heuristica': resultado['explicacion_heuristica'],
+                'hash_trazabilidad_sha256': resultado['hash_trazabilidad_sha256']
+            }
+        )
+        return Response(ClasificacionIASerializer(clasif).data, status=status.HTTP_200_OK)
+
+class AlertasCrisisView(APIView):
+    """Lista las alertas de riesgo vital y triaje prioritario para el Coordinador Clínico."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        alertas = ClasificacionIA.objects.filter(
+            models.Q(alerta_crisis=True) | models.Q(nivel_severidad='CRITICA')
+        ).select_related('respuestapreconsulta__paciente__usuario')
+        return Response(ClasificacionIASerializer(alertas, many=True).data, status=status.HTTP_200_OK)
+
+class SugerenciaMatchingViewSet(viewsets.ModelViewSet):
+    queryset = SugerenciaMatching.objects.select_related('paciente__usuario', 'psicologo_sugerido__usuario', 'clasificacion').all()
+    serializer_class = SugerenciaMatchingSerializer
+    permission_classes = [IsAuthenticated]
+
+class GenerarMatchingView(APIView):
+    """Genera el Top 3 de sugerencias de terapeutas por IA (CU22 / HU-48)."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, paciente_id):
+        """CU22: GET /api/v1/ia/sugerir-psicologo/{paciente_id}/ (Diagrama 312)."""
+        return self.post(request, paciente_id)
+
+    def post(self, request, paciente_id):
+        try:
+            paciente = Paciente.objects.select_related('usuario').get(id=paciente_id)
+        except Paciente.DoesNotExist:
+            return Response({"error": "Paciente no encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+        clasif = ClasificacionIA.objects.filter(respuestapreconsulta__paciente=paciente).first()
+        especialidad_req = clasif.categoria_principal if clasif else request.data.get('especialidad', 'ANSIEDAD_FOBIAS')
+        modalidad_req = request.data.get('modalidad', 'MIXTA')
+
+        psicologos_qs = Psicologo.objects.filter(activo=True).select_related('usuario').prefetch_related('especialidades', 'horarios_disponibilidad', 'pacientes_asignados')
+        candidatos = MatchingPsicologoService.sugerir_psicologos(especialidad_req, modalidad_req, psicologos_qs)
+
+        # Limpiar sugerencias pendientes previas
+        SugerenciaMatching.objects.filter(paciente=paciente, estado_decision='PENDIENTE_VALIDACION').delete()
+
+        creadas = []
+        for i, cand in enumerate(candidatos, 1):
+            psico = Psicologo.objects.get(id=cand['psicologo_id'])
+            sug = SugerenciaMatching.objects.create(
+                paciente=paciente,
+                clasificacion=clasif,
+                psicologo_sugerido=psico,
+                ranking_posicion=i,
+                score_afinidad=cand['score_compatibilidad'],
+                factores_ponderacion=cand['factores'],
+                estado_decision='PENDIENTE_VALIDACION'
+            )
+            creadas.append(sug)
+
+        return Response(SugerenciaMatchingSerializer(creadas, many=True).data, status=status.HTTP_201_CREATED)
+
+class AsignarPsicologoHITLView(APIView):
+    """Supervisión humana obligatoria (HITL) para consolidar asignación de terapeuta (CU22 / HU-48)."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        sugerencia_id = request.data.get('sugerencia_id')
+        paciente_id = request.data.get('paciente_id')
+        psicologo_id = request.data.get('psicologo_id')
+        justificacion = request.data.get('justificacion_clinica', 'Asignación validada y aprobada por Coordinador Clínico.')
+
+        if sugerencia_id:
+            try:
+                sug = SugerenciaMatching.objects.select_related('paciente', 'psicologo_sugerido').get(id=sugerencia_id)
+                paciente = sug.paciente
+                psico = sug.psicologo_sugerido
+            except SugerenciaMatching.DoesNotExist:
+                return Response({"error": "Sugerencia no encontrada."}, status=status.HTTP_404_NOT_FOUND)
+        elif paciente_id and psicologo_id:
+            try:
+                paciente = Paciente.objects.get(id=paciente_id)
+                psico = Psicologo.objects.get(id=psicologo_id)
+                sug = SugerenciaMatching.objects.filter(paciente=paciente, psicologo_sugerido=psico).first()
+            except (Paciente.DoesNotExist, Psicologo.DoesNotExist):
+                return Response({"error": "Paciente o Psicólogo no encontrado."}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response({"error": "Debe proporcionar sugerencia_id o paciente_id y psicologo_id."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Aplicar decisión HITL
+        es_manual = not bool(sugerencia_id)
+        if sug:
+            sug.estado_decision = 'RECHAZADO_MANUAL' if es_manual else 'APROBADO'
+            sug.validado_por_coordinador = request.user
+            sug.justificacion_clinica = justificacion
+            sug.fecha_decision = timezone.now()
+            sug.save()
+            # Descartar las demás sugerencias del paciente
+            SugerenciaMatching.objects.filter(paciente=paciente, estado_decision='PENDIENTE_VALIDACION').exclude(id=sug.id).update(estado_decision='DESCARTADO')
+        elif es_manual:
+            # Descartar cualquier sugerencia previa
+            SugerenciaMatching.objects.filter(paciente=paciente, estado_decision='PENDIENTE_VALIDACION').update(estado_decision='DESCARTADO')
+
+        # Asignar formalmente en historia clínica o paciente
+        if hasattr(paciente, 'psicologo_asignado'):
+            paciente.psicologo_asignado = psico
+            paciente.save(update_fields=['psicologo_asignado'])
+        elif hasattr(paciente, 'historia_clinica') and paciente.historia_clinica:
+            paciente.historia_clinica.psicologo_apertura = psico
+            paciente.historia_clinica.save(update_fields=['psicologo_apertura'])
+
+        return Response({
+            "mensaje": "Asignación confirmada y validada exitosamente con supervisión humana (HITL)." if not es_manual else "Asignación manual registrada con bitácora de auditoría.",
+            "paciente_id": str(paciente.id),
+            "psicologo_asignado": psico.usuario.get_full_name(),
+            "estado_decision": "RECHAZADO_MANUAL" if es_manual else "APROBADO",
+            "asignacion_consolidada": True,
+            "asignacion_manual_auditada": es_manual
+        }, status=status.HTTP_200_OK)
+
+class RegistroAnimoViewSet(viewsets.ModelViewSet):
+    """Módulo de Registro Diario de Estado de Ánimo (Mood Tracker - CU17 / HU-46)."""
+    queryset = RegistroAnimo.objects.select_related('paciente__usuario').all().order_by('-fecha_registro')
+    serializer_class = RegistroAnimoSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        user = self.request.user
+        if hasattr(user, 'perfil_paciente'):
+            return qs.filter(paciente=user.perfil_paciente)
+        paciente_id = self.request.query_params.get('paciente')
+        if paciente_id:
+            return qs.filter(paciente_id=paciente_id)
+        return qs
+
+    def create(self, request, *args, **kwargs):
+        user = request.user
+        paciente = getattr(user, 'perfil_paciente', None)
+        if not paciente:
+            paciente_id = request.data.get('paciente')
+            if paciente_id:
+                paciente = Paciente.objects.filter(id=paciente_id).first()
+        if not paciente:
+            paciente = Paciente.objects.first()
+
+        fecha_reg = request.data.get('fecha_registro') or timezone.now().date()
+        estado = request.data.get('estado_animo', 'NEUTRAL')
+        valor = int(request.data.get('escala_valor', 3))
+        factores = request.data.get('factores_contexto', [])
+        nota = request.data.get('nota_reflexiva', '')
+
+        reg, created = RegistroAnimo.objects.update_or_create(
+            paciente=paciente,
+            fecha_registro=fecha_reg,
+            defaults={
+                'estado_animo': estado,
+                'escala_valor': valor,
+                'factores_contexto': factores,
+                'nota_reflexiva': nota
+            }
+        )
+        status_code = status.HTTP_201_CREATED if created else status.HTTP_200_OK
+        return Response(RegistroAnimoSerializer(reg).data, status=status_code)
