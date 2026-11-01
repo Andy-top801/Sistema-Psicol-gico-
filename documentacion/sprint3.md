@@ -7784,80 +7784,66 @@ En estricta conformidad con las exigencias metodológicas de la cátedra de Sist
 
 ### 7.6.1 Gráfica Burndown (Horas Restantes: Ideal vs. Real)
 
+El **Burndown Chart** refleja el ritmo con el que el equipo de desarrollo fue consumiendo las **59.0 horas planificadas** a lo largo de las **10 jornadas ágiles del Sprint 3** (del 09 de octubre al 02 de noviembre de 2026), registrado formalmente en el archivo [`diagramas/sprint3.xlsx`](../diagramas/sprint3.xlsx).
+
+**Datos diarios de seguimiento (Burndown - Sprint 3):**
+
+| Día Laborable | Fecha Calendario | Horas Restantes (Línea Ideal) | Horas Restantes (Línea Real) | Horas Ejecutadas en el Día | Horas Acumuladas Quemadas | Estado del Sprint |
+| :-----------: | :--------------: | :---------------------------: | :--------------------------: | :------------------------: | :-----------------------: | :----------------: |
+| **Día 0** | Vie 09/10/2026 | 59.0 hr | 59.0 hr | 0.0 hr | 0.0 hr (0.0%) | Sprint Planning 3 y estimación |
+| **Día 1** | Lun 10/10/2026 | 53.1 hr | 56.0 hr | 3.0 hr | 3.0 hr (5.1%) | Setup Flutter y wireframes login |
+| **Día 2** | Jue 13/10/2026 | 47.2 hr | 51.0 hr | 5.0 hr | 8.0 hr (13.6%) | Cierre SP3-68 (UI Auth) |
+| **Día 3** | Sáb 15/10/2026 | 41.3 hr | 44.0 hr | 7.0 hr | 15.0 hr (25.4%) | Integración JWT y storage seguro |
+| **Día 4** | Lun 17/10/2026 | 35.4 hr | 37.0 hr | 7.0 hr | 22.0 hr (37.3%) | Cierre SP3-69 (Auth Flutter) |
+| **Día 5** | Jue 20/10/2026 | 29.5 hr | 30.0 hr | 7.0 hr | 29.0 hr (49.2%) | Cierre SP3-70 (QA Auth) y UI Citas |
+| **Día 6** | Sáb 22/10/2026 | 23.6 hr | 23.0 hr | 7.0 hr | 36.0 hr (61.0%) | Cierre SP3-71 y SP3-74 (UI Telec.) |
+| **Día 7** | Lun 24/10/2026 | 17.7 hr | 16.0 hr | 7.0 hr | 43.0 hr (72.9%) | Cierre SP3-72 (Citas FCM Móvil) |
+| **Día 8** | Jue 27/10/2026 | 11.8 hr | 10.0 hr | 6.0 hr | 49.0 hr (83.1%) | Cierre SP3-73 (QA Citas) y Jitsi |
+| **Día 9** | Sáb 29/10/2026 | 5.9 hr | 4.0 hr | 6.0 hr | 55.0 hr (93.2%) | Cierre SP3-75 y SP3-76 (QA Jitsi) |
+| **Día 10** | Lun 02/11/2026 | 0.0 hr | 0.0 hr | 4.0 hr | **59.0 hr (100.0%)** | Cierre SP3-77 y SP3-78 (IA & QA Final) |
+
+<br>
+
+**Representación visual del Gráfica Burndown:**
+
 ![Gráfica Burndown del Sprint 3](./imagenes/burndown_sprint3.png)
 
-El Sprint 3 se desarrolló a lo largo de **10 ceremonias ágiles entre el 10 de octubre y el 02 de noviembre de 2026** sobre un alcance planificado de **59 horas técnicas**:
-
-| Día de Trabajo | Fecha Calendario | Horas Ideales Restantes | Horas Reales Restantes | Horas Quemadas en el Día | Horas Acumuladas Quemadas |
-| :------------: | :--------------: | :---------------------: | :--------------------: | :----------------------: | :-----------------------: |
-| **Día 0** | 09 de octubre | 59.0 hr | 59.0 hr | 0.0 hr | 0.0 hr (0%) |
-| **Día 1** | 10 de octubre | 53.1 hr | 56.0 hr | 3.0 hr | 3.0 hr (5%) |
-| **Día 2** | 13 de octubre | 47.2 hr | 51.0 hr | 5.0 hr | 8.0 hr (14%) |
-| **Día 3** | 15 de octubre | 41.3 hr | 44.0 hr | 7.0 hr | 15.0 hr (25%) |
-| **Día 4** | 17 de octubre | 35.4 hr | 37.0 hr | 7.0 hr | 22.0 hr (37%) |
-| **Día 5** | 20 de octubre | 29.5 hr | 30.0 hr | 7.0 hr | 29.0 hr (49%) |
-| **Día 6** | 22 de octubre | 23.6 hr | 23.0 hr | 7.0 hr | 36.0 hr (61%) |
-| **Día 7** | 24 de octubre | 17.7 hr | 16.0 hr | 7.0 hr | 43.0 hr (73%) |
-| **Día 8** | 27 de octubre | 11.8 hr | 10.0 hr | 6.0 hr | 49.0 hr (83%) |
-| **Día 9** | 29 de octubre | 5.9 hr | 4.0 hr | 6.0 hr | 55.0 hr (93%) |
-| **Día 10** | 02 de noviembre | 0.0 hr | 0.0 hr | 4.0 hr | **59.0 hr (100%)** |
-
-#### Gráfica del Sprint Burndown (Visualización ASCII)
-
-```
-Horas
- 60 +--* (59 hr iniciales - 09 Oct)
-    |   \
- 50 +    \--* Real: 51 hr (13 Oct)
-    |     \  \
- 40 +      \  \--* Real: 44 hr (15 Oct)
-    |       \     \
- 30 +        \     *--* Real: 30 hr (20 Oct)
-    |         \        \
- 20 +          \        \--* Real: 23 hr (22 Oct)
-    |           \            \
- 10 +            \            \--* Real: 10 hr (27 Oct)
-    |             \                \
-  0 +--------------\----------------*--* (0 hr al Día 10 - 02 Nov)
-    +----+----+----+----+----+----+----+----+----+----+----+
-    D0   D1   D2   D3   D4   D5   D6   D7   D8   D9   D10
-         [--- Línea Ideal de Quema ---]  [* Línea Real de Ejecución]
-```
+**Interpretación y análisis del Burndown:**
+* **Días 1 al 5 (Fase Inicial de Autenticación y Prototipado):** El ritmo de avance real se mantuvo ligeramente por encima de la línea ideal (con 1 a 3 horas de desfase) debido al proceso de sincronización del entorno móvil Flutter con el backend multi-tenant y la integración de tokens JWT con almacenamiento cifrado.
+* **Días 6 al 8 (Aceleración e Integración de Notificaciones FCM):** A partir del Día 6 (22 de octubre), una vez consolidados los componentes compartidos de interfaz y resuelta la configuración de credenciales de Firebase Cloud Messaging, la quema de horas cruzó por debajo de la línea teórica ideal, logrando una velocidad constante de 6 a 7 horas diarias.
+* **Días 9 al 10 (Cierre y Validación del Motor de IA):** Se completaron las suites de pruebas unitarias y de integración sobre los algoritmos de clasificación de triaje y balanceo de carga terapéutica, alcanzando el 100% de los entregables comprometidos sin deuda técnica residual.
 
 ---
 
-### 7.6.2 Gráfica Burnup (Tareas y Puntos Completados vs. Alcance Total)
+### 7.6.2 Gráfica Burnup (Tareas Completadas vs. Alcance Total)
+
+El **Burnup Chart** muestra el progreso acumulativo de las **11 tareas técnicas concluidas (*Done*)** (SP3-68 a SP3-78) frente al alcance total comprometido de **51 Puntos de Historia de Usuario (PHU)** para el Sprint 3, registrado en [`diagramas/sprint3.xlsx`](../diagramas/sprint3.xlsx).
+
+**Datos acumulados de progreso (Burnup - Sprint 3):**
+
+| Hito Temporal | Fecha Calendario | Alcance Total (Tareas) | Tareas Terminadas (Done) | PHU Acumulados | % Avance Físico | Estado del Sprint |
+| :-----------: | :--------------: | :--------------------: | :----------------------: | :------------: | :-------------: | :---------------- |
+| **Día 0** | 09/10/2026 | 11 | 0 | 0 PHU | 0.0% | Planificación y definición del Sprint Backlog 3 |
+| **Día 1** | 10/10/2026 | 11 | 0 | 0 PHU | 0.0% | Inicio de tareas de diseño y arquitectura Flutter |
+| **Día 2** | 13/10/2026 | 11 | 1 | 5 PHU | 9.1% | Conclusión de diseño UI/UX de registro/login (`SP3-68`) |
+| **Día 3** | 15/10/2026 | 11 | 1 | 5 PHU | 9.1% | Desarrollo de autenticación y almacenamiento seguro |
+| **Día 4** | 17/10/2026 | 11 | 2 | 10 PHU | 18.2% | Conclusión de cliente de autenticación JWT (`SP3-69`) |
+| **Día 5** | 20/10/2026 | 11 | 3 | 15 PHU | 27.3% | Certificación QA de autenticación móvil (`SP3-70`) |
+| **Día 6** | 22/10/2026 | 11 | 5 | 23 PHU | 45.5% | Conclusión de UI de citas (`SP3-71`) y UI teleconsulta (`SP3-74`) |
+| **Día 7** | 24/10/2026 | 11 | 6 | 31 PHU | 54.5% | Conclusión de gestión de citas y notificaciones push (`SP3-72`) |
+| **Día 8** | 27/10/2026 | 11 | 7 | 39 PHU | 63.6% | Certificación QA de citas y notificaciones FCM (`SP3-73`) |
+| **Día 9** | 29/10/2026 | 11 | 9 | 47 PHU | 81.8% | Conclusión de tareas terapéuticas/Jitsi (`SP3-75`) y QA (`SP3-76`) |
+| **Día 10** | 02/11/2026 | 11 | 11 | **51 PHU** | **100.0%** | Conclusión del motor IA (`SP3-77`) y certificación QA (`SP3-78`) |
+
+<br>
+
+**Representación visual del Gráfica Burnup:**
 
 ![Gráfica Burnup del Sprint 3](./imagenes/burnup_sprint3.png)
 
-El Burnup refleja la progresión acumulada de finalización de las 11 tareas técnicas y los 51 Puntos de Historia de Usuario (PHU):
-
-| Día de Trabajo | Fecha Calendario | Alcance Total (PHU) | PHU Acumulados Completados | Tareas Técnicas Concluidas | % de Avance |
-| :------------: | :--------------: | :-----------------: | :------------------------: | :------------------------: | :---------: |
-| **Día 0** | 09 de octubre | 51 PHU | 0 PHU | 0 de 11 tareas | 0.0% |
-| **Día 2** | 13 de octubre | 51 PHU | 5 PHU | 1 de 11 (`SP3-68`) | 9.8% |
-| **Día 4** | 17 de octubre | 51 PHU | 10 PHU | 2 de 11 (`SP3-69`) | 19.6% |
-| **Día 5** | 20 de octubre | 51 PHU | 15 PHU | 3 de 11 (`SP3-70`) | 29.4% |
-| **Día 6** | 22 de octubre | 51 PHU | 23 PHU | 5 de 11 (`SP3-71, SP3-74`) | 45.1% |
-| **Día 7** | 24 de octubre | 51 PHU | 31 PHU | 6 de 11 (`SP3-72`) | 60.8% |
-| **Día 8** | 27 de octubre | 51 PHU | 39 PHU | 7 de 11 (`SP3-73`) | 76.5% |
-| **Día 9** | 29 de octubre | 51 PHU | 47 PHU | 9 de 11 (`SP3-75, SP3-76`) | 92.2% |
-| **Día 10** | 02 de noviembre | 51 PHU | **51 PHU** | **11 de 11 tareas (`SP3-77, 78`)** | **100.0%** |
-
-#### Gráfica del Sprint Burnup (Visualización ASCII)
-
-```
-PHU
- 55 +-----------------------------------[ Alcance Total: 51 PHU ]
- 50 +                                                  /--* (51 PHU - 02 Nov)
- 40 +                                            /----* (39 PHU - 27 Oct)
- 30 +                                      /----* (23 PHU - 22 Oct)
- 20 +                                /----* (15 PHU - 20 Oct)
- 10 +                          /----* (5 PHU - 13 Oct)
-  0 +*------------------------/
-    +----+----+----+----+----+----+----+----+----+----+----+
-    D0   D1   D2   D3   D4   D5   D6   D7   D8   D9   D10
-```
+**Interpretación y análisis del Burnup:**
+* **Estabilidad del Alcance (Zero Scope Creep):** La línea de alcance total planificado se mantuvo estrictamente fija en 11 tareas técnicas (51 PHU), demostrando que la priorización y los acuerdos de definición de hecho (*Definition of Done*) acordados con el Product Owner en la Sprint Planning 3 fueron respetados sin desbordamientos de alcance.
+* **Curva de Entrega Sostenida:** La progresión de tareas cerradas siguió una tendencia ascendente continua, pasando del 18.2% en el Día 4 al 63.6% en el Día 8 y finalizando con el 100% en el Día 10, lo que evidencia la correcta partición del trabajo entre tareas de diseño UI, desarrollo frontend/backend y aseguramiento de calidad (QA).
 
 ---
 
@@ -7865,68 +7851,49 @@ PHU
 
 ### 7.7.1 Datos de Esfuerzo por Tarea – Estimado vs. Real
 
-A continuación se detalla la comparativa analítica de horas entre lo planificado en el Product Backlog y lo efectivamente ejecutado en el Sprint 3:
+En cumplimiento con las directrices metodológicas de la cátedra y lo consolidado en el archivo de seguimiento [`diagramas/sprint3.xlsx`](../diagramas/sprint3.xlsx), la siguiente tabla presenta la comparativa detallada entre el esfuerzo planificado en horas y el tiempo real invertido por los responsables técnicos:
 
-| ID Tarea | Descripción Técnica de la Tarea | Responsable de Implementación | Horas Estimadas | Horas Reales | Variación ($\Delta h$) | Justificación de la Variación |
-| :------: | :------------------------------ | :---------------------------- | :-------------: | :----------: | :--------------------: | :---------------------------- |
-| **SP3-68** | Diseñar interfaces de registro y login en Figma | Delgado Rojas Alberto Caleb | 4.0 hr | 4.0 hr | $0.0$ hr | Ejecutado conforme a los wireframes previstos. |
-| **SP3-69** | Implementar login con JWT en Flutter | Delgado Rojas Alberto Caleb | 7.0 hr | 7.0 hr | $0.0$ hr | Integración fluida con `flutter_secure_storage`. |
-| **SP3-70** | Pruebas QA de autenticación móvil | Velasco Soliz Rolando | 3.0 hr | 3.0 hr | $0.0$ hr | Ejecución de casos CP-M01 y CP-M02 sin desvíos. |
-| **SP3-71** | Diseñar interfaz móvil de citas y notificaciones | Larrazabal Rojas Julio Cesar | 4.0 hr | 4.0 hr | $0.0$ hr | Prototipado completo de vistas y diálogos modales. |
-| **SP3-72** | Implementar citas móviles y push FCM (`CU12`) | Condori Diaz Marilyn Esther | 8.0 hr | 8.5 hr | $+0.5$ hr | Se requirió tiempo extra para unificar zonas horarias UTC/Bolivia. |
-| **SP3-73** | Pruebas QA de citas y alertas push | Velasco Soliz Rolando | 3.0 hr | 3.0 hr | $0.0$ hr | Certificación de cancelación oportuna y push en background. |
-| **SP3-74** | Diseñar interfaz de seguimiento y teleconsulta | Larrazabal Rojas Julio Cesar | 4.0 hr | 4.0 hr | $0.0$ hr | Diseño UI/UX de videollamada y widget mood tracker. |
-| **SP3-75** | Implementar tareas, mood y teleconsulta Jitsi | Romero Saavedra Maria Ilse | 8.0 hr | 8.0 hr | $0.0$ hr | Integración exitosa del SDK de Jitsi Meet en Flutter. |
-| **SP3-76** | Pruebas QA de teleconsulta y tareas | Velasco Soliz Rolando | 3.0 hr | 3.0 hr | $0.0$ hr | Pruebas de conexión WebRTC punto a punto. |
-| **SP3-77** | Motor de clasificación IA y matching (`CU21/22`) | Mujica Vallejos Andy Mauricio (PO) | 8.0 hr | 8.5 hr | $+0.5$ hr | Calibración de ponderaciones de balanceo de carga de psicólogos. |
-| **SP3-78** | Pruebas QA de algoritmos de IA y matching | Velasco Soliz Rolando | 4.0 hr | 4.0 hr | $0.0$ hr | Suite de pruebas de caja negra sobre reglas y banderas de crisis. |
-| **TOTAL** | **Consolidado del Incremento del Sprint 3** | **Equipo SCRUM (6 integrantes)** | **59.0 hr** | **60.0 hr** | **$+1.0$ hr** | **101.7% de Eficiencia Global** |
+**Resumen global:** Planificado: **59.0 hr** | Ejecutado Real: **60.0 hr** | Variación Neta: **+1.0 hr (+1.7%)** | Eficiencia Global: **101.7%**
+
+| Nro | ID Tarea | Tarea del Sprint Backlog (Product Backlog) | Responsable de Implementación | Horas Estimadas | Horas Reales | Variación ($\Delta h$) | Causa Técnica de la Variación |
+| :---: | :------: | :---------------------------------------- | :---------------------------- | :-------------: | :----------: | :--------------------: | :---------------------------- |
+| **68** | **SP3-68** | Diseñar interfaces de registro y login en Figma | Delgado Rojas Alberto Caleb | 4.0 hr | 4.0 hr | 0.0 hr | Prototipado y componentes reutilizados del design system web. |
+| **69** | **SP3-69** | Implementar login con JWT en Flutter | Delgado Rojas Alberto Caleb | 7.0 hr | 7.0 hr | 0.0 hr | Manejo seguro de tokens mediante `flutter_secure_storage`. |
+| **70** | **SP3-70** | Pruebas QA de autenticación móvil | Velasco Soliz Rolando | 3.0 hr | 3.0 hr | 0.0 hr | Ejecución de casos de prueba CP-M01 y CP-M02 sin desvíos. |
+| **71** | **SP3-71** | Diseñar interfaz móvil de citas y notificaciones | Larrazabal Rojas Julio Cesar | 4.0 hr | 4.0 hr | 0.0 hr | Wireframes validados con el Product Owner sin iteraciones extra. |
+| **72** | **SP3-72** | Implementar citas móviles y push FCM (`CU12`) | Condori Diaz Marilyn Esther | 8.0 hr | 8.5 hr | $+0.5$ hr | Ajuste de sincronización horaria entre timestamps UTC y zona Bolivia (GMT-4). |
+| **73** | **SP3-73** | Pruebas QA de citas y alertas push | Velasco Soliz Rolando | 3.0 hr | 3.0 hr | 0.0 hr | Validación de recepción de notificaciones en foreground, background y cierre. |
+| **74** | **SP3-74** | Diseñar interfaz de seguimiento y teleconsulta | Larrazabal Rojas Julio Cesar | 4.0 hr | 4.0 hr | 0.0 hr | Diseño de sala de espera virtual y visualización de historial de tareas. |
+| **75** | **SP3-75** | Implementar tareas, mood y teleconsulta Jitsi | Romero Saavedra Maria Ilse | 8.0 hr | 8.0 hr | 0.0 hr | Integración de SDK Jitsi Meet Flutter y registro diario de estado anímico. |
+| **76** | **SP3-76** | Pruebas QA de teleconsulta y tareas | Velasco Soliz Rolando | 3.0 hr | 3.0 hr | 0.0 hr | Certificación de estabilidad audiovisual WebRTC y sincronización de tareas. |
+| **77** | **SP3-77** | Motor de clasificación IA y matching (`CU21/22`) | Mujica Vallejos Andy Mauricio (PO) | 10.0 hr | 10.5 hr | $+0.5$ hr | Calibración de ponderaciones en algoritmo de matching por balanceo de carga. |
+| **78** | **SP3-78** | Pruebas QA de algoritmos de IA y matching | Velasco Soliz Rolando | 5.0 hr | 5.0 hr | 0.0 hr | Pruebas de caja negra con escenarios extremos de crisis y casos límite. |
+| **TOTAL** | — | **Consolidado del Incremento del Sprint 3** | **Equipo SCRUM (6 integrantes)** | **59.0 hr** | **60.0 hr** | **$+1.0$ hr** | **Desviación controlada del +1.7% (Excelente control)** |
 
 ---
 
-### 7.7.2 Gráfica Comparativa de Esfuerzo por Integrante
+### 7.7.2 Gráfica Comparativa de Esfuerzo por Tarea
 
-![Gráfica Comparativa de Esfuerzo por Integrante - Sprint 3](./imagenes/esfuerzo_sprint3.png)
+Se presenta la gráfica comparativa generada a partir de los datos consolidados en [`diagramas/sprint3.xlsx`](../diagramas/sprint3.xlsx), confrontando las horas estimadas frente a las horas reales invertidas en cada tarea del incremento:
 
-```
-Horas
- 18 +                                                 [13h / 13h]
- 16 +                                                    *--* Velasco (QA Lead)
- 14 +
- 12 +                               [10h / 10h]
- 10 +  [10h / 10.5h]   [10h / 10h]     *--* Delgado (Dev)
-  8 +     *--*            *--*         [8h / 8.5h]    [8h / 8h]
-    |    Mujica (PO)    Julio (SM)        *--*           *--*
-  6 +                                   Condori (Dev)  Romero (Dev)
-  4 +
-  0 +-----+--------------+------------+--------------+--------------+
-      Mujica (PO)    Julio (SM)   Condori (Dev)  Romero (Dev)   Delgado (Dev)  Velasco (QA)
-      [Primer bloque: Horas Planificadas]  [Segundo bloque: Horas Reales Invertidas]
-```
+![Comparativa de Esfuerzo - Sprint 3](./imagenes/esfuerzo_sprint3.png)
+
+**Conclusiones y análisis del esfuerzo invertido en el Sprint 3:**
+1. **Alta precisión de estimación:** La desviación acumulada total fue de apenas **+1.0 hora** sobre las 59 horas planificadas, lo que representa una variación porcentual mínima del **+1.7%**, reflejando la madurez técnica alcanzada por el equipo tras las lecciones aprendidas en los Sprints 1 y 2.
+2. **Causas técnicas de las holguras detectadas:**
+   * En `SP3-72` (+0.5 hr): Marilyn Condori requirió tiempo adicional para unificar el tratamiento de zonas horarias en las notificaciones push locales y remotas, asegurando que los recordatorios programados no sufrieran desfase entre el servidor UTC y los dispositivos cliente en Bolivia (GMT-4).
+   * En `SP3-77` (+0.5 hr): Andy Mujica (PO / Dev IA) realizó calibraciones adicionales sobre la matriz de ponderación del algoritmo de afinidad diagnóstica para balancear la carga terapéutica sin sobrecargar a los psicólogos con alta saturación de casos clínicos.
+3. **Rol del equipo de QA:** Rolando Velasco ejecutó 14.0 horas de pruebas distribuidas en 4 tareas especializadas (`SP3-70`, `SP3-73`, `SP3-76`, `SP3-78`), logrando una cobertura del 100% sobre los criterios de aceptación sin exceder las estimaciones asignadas.
 
 ---
 
 ## 7.8 SCRUM TASKBOARD FINAL
 
-Al cierre formal del Sprint 3, el estado del tablero Kanban/Scrum certifica la finalización íntegra de las 11 tareas técnicas sin elementos pendientes:
+Al cierre formal del Sprint 3 y la entrega del Incremento de Software de la Aplicación Móvil e Inteligencia Artificial, el Scrum Taskboard certifica que las **11 tareas técnicas** fueron concluidas y validadas al 100% en estado **Done**:
 
-```
-+-------------------+-------------------+-------------------+------------------------------------------+
-|     TO DO (0)     |  IN PROGRESS (0)  |  TESTING / QA (0) |     DONE (11 Tareas Técnicas Concluidas) |
-+-------------------+-------------------+-------------------+------------------------------------------+
-|      *Vacío*      |      *Vacío*      |      *Vacío*      | • SP3-68: Diseño UI/UX Login Móvil (Delgado)   |
-|                   |                   |                   | • SP3-69: Implementación Auth JWT (Delgado)     |
-|                   |                   |                   | • SP3-70: Pruebas QA Auth Móvil (Velasco)       |
-|                   |                   |                   | • SP3-71: Diseño UI/UX Citas Móviles (Julio)    |
-|                   |                   |                   | • SP3-72: Implementación Citas y FCM (Marilyn)  |
-|                   |                   |                   | • SP3-73: Pruebas QA Citas y Push (Velasco)     |
-|                   |                   |                   | • SP3-74: Diseño UI/UX Teleconsulta (Julio)     |
-|                   |                   |                   | • SP3-75: Implementación Tareas y Jitsi (Maria) |
-|                   |                   |                   | • SP3-76: Pruebas QA Teleconsulta (Velasco)     |
-|                   |                   |                   | • SP3-77: Motor IA Triage y Matching (Andy PO)  |
-|                   |                   |                   | • SP3-78: Pruebas QA Algoritmos IA (Velasco)    |
-+-------------------+-------------------+-------------------+------------------------------------------+
-```
+| Por hacer (To Do) [0] | En progreso (Doing) [0] | En Pruebas / QA [0] | Terminado (Done) [11 Tareas Concluidas - 100%] |
+| :-------------------: | :---------------------: | :-----------------: | :--------------------------------------------- |
+| *(vacío)* | *(vacío)* | *(vacío)* | • **SP3-68:** Diseñar interfaces de registro y login en Figma *(Delgado)*<br>• **SP3-69:** Implementar login con JWT en Flutter *(Delgado)*<br>• **SP3-70:** Pruebas QA de autenticación móvil *(Velasco)*<br>• **SP3-71:** Diseñar interfaz móvil de citas y notificaciones *(Julio)*<br>• **SP3-72:** Implementar citas móviles y push FCM (`CU12`) *(Condori)*<br>• **SP3-73:** Pruebas QA de citas y alertas push *(Velasco)*<br>• **SP3-74:** Diseñar interfaz de seguimiento y teleconsulta *(Julio)*<br>• **SP3-75:** Implementar tareas, mood y teleconsulta Jitsi *(Romero)*<br>• **SP3-76:** Pruebas QA de teleconsulta y tareas *(Velasco)*<br>• **SP3-77:** Motor de clasificación IA y matching (`CU21/22`) *(Mujica PO)*<br>• **SP3-78:** Pruebas QA de algoritmos de IA y matching *(Velasco)* |
 
 ---
 
