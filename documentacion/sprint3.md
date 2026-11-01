@@ -5658,7 +5658,16 @@ La suite integral de navegación se estructura en **8 diagramas oficiales**, mod
 
 ##### Diagrama de Navegación 0: Mapa de Navegación Integral Global (Sprint 0 al Sprint 3 Acumulado)
 
-El diagrama global modela el mapa macro de navegación convergente para todos los roles de la plataforma SIGEPSI (**Administrador**, **Psicólogo**, **Coordinador Clínico** y **Paciente** en canales Web y Móvil), integrando el punto de acceso centralizado (`loginGlobalView`), el controlador de autenticación y ruteo multitenant (`authGlobalController`), y la bifurcación hacia los cuatro dashboards y controladores especializados de cada subsistema.
+El diagrama global modela el mapa macro de navegación convergente para todos los roles de la plataforma SIGEPSI (**Administrador**, **Psicólogo Tratante**, **Coordinador Clínico**, **Recepcionista** y **Paciente** en canales Web y Móvil Flutter). Integra de manera holística el punto de acceso unificado (`loginGlobalView` y `authGlobalController`), la bifurcación basada en roles hacia los tableros de control principales, y la navegación modular hacia las pantallas y controladores de los **6 Paquetes del Sistema más el Subsistema Móvil**:
+
+1. **Acceso y Autenticación Centralizada:** Resolución de inquilino multi-tenant y ruteo JWT por perfil de usuario.
+2. **Paquete 1 (Administración y Multi-Tenant):** Directorio de centros y matriz de permisos RBAC con ventanas modales.
+3. **Paquete 2 (Gestión Clínica y Expedientes):** Historia clínica modular, editor inmutable SOAP y protocolos de derivación médica.
+4. **Paquete 3 (Agenda, Comunicación y Teleconsulta):** Calendario de citas web, sala virtual WebRTC Jitsi y agenda móvil.
+5. **Paquete 4 (Formularios y Documentación Legal):** Intake digital por etapas y consentimiento informado con firma SHA-256.
+6. **Paquete 5 (Inteligencia Artificial y Asistencia Clínica):** Consola de triaje NLP y alertas de crisis (`CU21`), matching HITL de especialistas (`CU22`) y asistente chatbot reactivo.
+7. **Paquete 6 (Reportes y Pagos):** Dashboard de analítica y ausentismo con consultas QBE por voz y gestión de suscripciones SaaS.
+8. **Subsistema Móvil Flutter 3.x:** Experiencia integral del paciente con sincronización offline, gestión de citas y mood tracker.
 
 * **Ubicación en Enterprise Architect:** `DIAGRAMAS.eapx` → *Sprint 3* → *9. Navegación de Vistas - Sprint 3* → *Mapa de Navegación Global (Sprint 0 al Sprint 3 Acumulado)* (**Diagrama ID: 280**).
 
@@ -5666,6 +5675,7 @@ El diagrama global modela el mapa macro de navegación convergente para todos lo
 
 ```plantuml
 @startuml
+allowmixing
 skinparam classAttributeIconSize 0
 skinparam backgroundColor #FFFFFF
 skinparam roundcorner 8
@@ -5673,87 +5683,317 @@ skinparam defaultFontName Arial
 skinparam shadowing false
 left to right direction
 
-title Diagrama de Navegación 0: Mapa Global del Sistema SIGEPSI (Sprint 0 a Sprint 3 Acumulado)
+title Diagrama de Navegación 0: Mapa de Navegación Integral del Sistema SIGEPSI (Sprint 0 al Sprint 3 Acumulado)
 
 actor "Administrador" as act_adm
-actor "Psicólogo" as act_psi
+actor "Psicólogo Tratante" as act_psi
 actor "Coordinador Clínico" as act_coo
+actor "Recepcionista" as act_rec
 actor "Paciente (Web y Móvil)" as act_pac
 
-class "loginGlobalView" as v_login {
+package "Acceso Centralizado y Autenticación Multi-Tenant" #F8F9F9 {
+  class "loginGlobalView" as v_login {
     + rolSeleccionado: String
+    + subdominioTenant: String
     + txtEmail: String
     + txtPassword: String
-}
+  }
 
-class "authGlobalController" as c_auth <<controller>> {
+  class "authGlobalController" as c_auth <<controller>> {
     + autenticarJWT(): void
-    + determinarTenantYRol(): void
-    + redireccionarDashboard(): void
+    + despacharPorRol(): void
+    + determinarTenant(): void
+  }
 }
 
-class "dashboardAdminPaquete1y6View" as v_dash_adm {
+package "Paquete 1: Administración, Seguridad y Multi-Tenant" #FCE4D6 {
+  class "dashboardAdminView" as v_dash_adm {
     + kpisMultiTenant: Object
     + tenantsActivos: int
+  }
+
+  class "directorioCentrosView" as v_centros {
+    + filtroEstado: String
+    + listaTenants: List
+  }
+
+  class "centroAdminController" as c_centros <<controller>> {
+    + configurarDominio(): void
+    + registrarTenant(): void
+  }
+
+  class "detalleCentroModalView" as v_modal_centro {
+    + planSuscripcion: String
+    + razonSocial: String
+  }
+
+  class "directorioUsuariosRolesView" as v_roles {
+    + rolFiltro: String
+    + usuariosList: List
+  }
+
+  class "usuarioRolController" as c_roles <<controller>> {
+    + asignarRoles(): void
+    + auditarAcciones(): void
+  }
+
+  class "matrizPermisosModalView" as v_matriz {
+    + nivelAcceso: String
+    + permisosRBAC: List
+  }
 }
 
-class "dashboardClinicoPaquete2y3View" as v_dash_cli {
-    + agendaDelDia: List
-    + pacientesCitados: int
+package "Paquete 2: Gestión Clínica, Historia Clínica y Profesionales" #E8F8F5 {
+  class "dashboardClinicoView" as v_dash_cli {
+    + citasHoy: int
+    + pacientesActivos: int
+  }
+
+  class "historiaClinicaModularView" as v_hc {
+    + anamnesisText: String
+    + numeroExpediente: String
+  }
+
+  class "expedienteClinicoController" as c_exp <<controller>> {
+    + abrirHistoriaClinica(): void
+    + verificarAsignacionRBAC(): void
+  }
+
+  class "editorNotasSOAPView" as v_soap {
+    + subjectiveText: String
+    + objectiveText: String
+    + assessmentText: String
+    + planText: String
+  }
+
+  class "notaSesionController" as c_soap <<controller>> {
+    + autoguardarBorrador(): void
+    + firmarYConsolidar(): void
+  }
+
+  class "ordenDerivacionPsiquiatricaView" as v_deriv {
+    + medicoDestino: String
+    + motivoFarmacologico: String
+    + riesgoClinico: String
+  }
+
+  class "cierreDerivacionController" as c_deriv <<controller>> {
+    + emitirInterconsultaPDF(): void
+    + formalizarAlta(): void
+  }
 }
 
-class "consolaTriajeIAPaquete5View" as v_dash_ia {
-    + alertasCrisis: int
-    + casosPendientesTriaje: List
+package "Paquete 3: Agenda, Comunicación y Seguimiento (Web y Móvil)" #EBF5FB {
+  class "agendaCalendarioView" as v_cal {
+    + fechaSeleccionada: Date
+    + turnosDisponibles: List
+  }
+
+  class "agendaTurnosController" as c_age <<controller>> {
+    + agendarSesion(): void
+    + bloquearHorario(): void
+  }
+
+  class "reservaCitaModalView" as v_res_cita {
+    + modalidad: String
+    + motivoConsulta: String
+  }
+
+  class "salaTeleconsultaJitsiView" as v_jitsi {
+    + controlesConferencia: Widget
+    + salaToken: String
+  }
+
+  class "teleconsultaController" as c_tele <<controller>> {
+    + conectarSalaWebRTC(): void
+    + finalizarLlamada(): void
+  }
 }
 
-class "dashboardMobileAppFlutterView" as v_dash_mov {
-    + citaProxima: Card
-    + moodTracker: Widget
-    + tareasPendientes: int
+package "Paquete 4: Formularios, Consentimientos y Documentación" #FEF9E7 {
+  class "stepperIntakeScreenMovil" as v_intake {
+    + escalaMalestar: int
+    + pasoActual: int
+    + respuestasJSONB: Object
+  }
+
+  class "intakeFormController" as c_intake <<controller>> {
+    + enviarIntakeCompleto(): void
+    + guardarPasoLocal(): void
+  }
+
+  class "visorFirmaConsentimientoScreen" as v_firma {
+    + clausulasTexto: String
+    + firmaCanvasBase64: String
+  }
+
+  class "firmaCriptograficaController" as c_firma <<controller>> {
+    + computarHashSHA256(): void
+    + sellarConsentimientoPDF(): void
+  }
 }
 
-class "moduloAdminSeguridadController" as c_p1 <<controller>> {
-    + gestionarCentros(): void
-    + gestionarUsuariosRBAC(): void
+package "Paquete 5: Inteligencia Artificial y Chatbot (Sprint 3: CU21 y CU22)" #F4ECF7 {
+  class "consolaTriajeIAView" as v_triaje {
+    + alertaCrisisFlag: boolean
+    + filtroSeveridad: String
+    + tablaCasosPendientes: List
+  }
+
+  class "clasificacionIAController" as c_triaje <<controller>> {
+    + auditarTriajeManual(): void
+    + ejecutarPipelineNLP(): void
+    + evaluarSeveridadPHQ9(): void
+  }
+
+  class "modalDetalleTriajeCrisisView" as v_crisis {
+    + protocoloEmergenciaTexto: String
+    + sintomasDetectados: List
+  }
+
+  class "consolaMatchingEspecialistasView" as v_match {
+    + pacienteSeleccionado: String
+    + rankingTop3Terapeutas: List
+  }
+
+  class "matchingIAController" as c_match <<controller>> {
+    + calcularScoreAfinidad(): void
+    + confirmarAsignacionHITL(): void
+  }
+
+  class "burbujaChatbotWidgetView" as v_chat {
+    + estadoAbierto: boolean
+    + mensajeEntrada: String
+  }
+
+  class "chatbotController" as c_chat <<controller>> {
+    + clasificarIntencion(): void
+    + responderFAQ(): void
+  }
 }
 
-class "moduloClinicaAgendaController" as c_p2 <<controller>> {
-    + abrirExpediente(): void
-    + gestionarAgendaCitas(): void
+package "Paquete 6: Reportes y Pagos" #FDEDEC {
+  class "dashboardAnaliticoKPIsView" as v_kpi {
+    + graficosChartJS: Object
+    + tasaAusentismo: double
+  }
+
+  class "reportesAnaliticosController" as c_rep <<controller>> {
+    + calcularMetricasTenant(): void
+    + exportarReportePDF(): void
+  }
+
+  class "gestionSuscripcionTenantView" as v_susc {
+    + planActual: String
+    + profesionalesActivos: int
+  }
+
+  class "suscripcionPagosController" as c_susc <<controller>> {
+    + registrarPagoArancel(): void
+    + renovarSuscripcion(): void
+  }
 }
 
-class "moduloIAPipelineController" as c_p5 <<controller>> {
-    + clasificarNLP(): void
-    + matchingTerapeutas(): void
+package "Subsistema Móvil de Pacientes (Flutter 3.x)" #EAFAF1 {
+  class "dashboardMobileAppFlutterView" as v_dash_mov {
+    + proximaCitaBanner: Card
+    + tareasPendientesBadge: int
+    + widgetMoodTracker: Widget
+  }
+
+  class "misCitasMobileScreen" as v_citas_mov {
+    + listaCitas: List
+    + tabActivo: int
+  }
+
+  class "citaMobileController" as c_cita_mov <<controller>> {
+    + cancelarCita24h(): void
+    + cargarCitasPaciente(): void
+  }
+
+  class "modalCancelacionCitaView" as v_canc_mov {
+    + avisoPolitica24h: String
+    + motivoCancelacion: String
+  }
+
+  class "misTareasMobileScreen" as v_tar_mov {
+    + listaTareasPendientes: List
+    + selectorNivelAnimo: int
+  }
+
+  class "tareasMobileController" as c_tar_mov <<controller>> {
+    + entregarReflexionTarea(): void
+    + registrarMoodTracker(): void
+  }
 }
 
-class "moduloMovilSyncController" as c_mov <<controller>> {
-    + despacharFCM(): void
-    + sincronizarTeleconsulta(): void
-}
-
-' Asociaciones de acceso al login
+' ENTRADAS DE AUTENTICACION
 act_adm --> v_login
 act_psi --> v_login
 act_coo --> v_login
+act_rec --> v_login
 act_pac --> v_login
 
-' Autenticación global
 v_login --> c_auth : <<submit>>
 c_auth ..> v_login : <<build>>
 
-' Redirección por rol hacia Dashboards
-c_auth ..> v_dash_adm : <<build [Rol Administrador]>>
-c_auth ..> v_dash_cli : <<build [Rol Psicólogo]>>
-c_auth ..> v_dash_ia : <<build [Rol Coordinador]>>
-c_auth ..> v_dash_mov : <<build [Rol Paciente Móvil]>>
+' REDIRECCION A DASHBOARDS
+c_auth ..> v_dash_adm : <<build [Rol=Admin]>>
+c_auth ..> v_dash_cli : <<build [Rol=Psicólogo]>>
+c_auth ..> v_triaje : <<build [Rol=Coordinador]>>
+c_auth ..> v_cal : <<build [Rol=Recepcionista]>>
+c_auth ..> v_dash_mov : <<build [Rol=Paciente Móvil]>>
 
-' Controladores de subsistema
-v_dash_adm --> c_p1 : <<submit>>
-v_dash_cli --> c_p2 : <<submit>>
-v_dash_ia --> c_p5 : <<submit>>
-v_dash_mov --> c_mov : <<submit>>
+' FLUJOS INTERNOS DE PAQUETES
+' Paquete 1
+v_dash_adm --> v_centros
+v_centros --> c_centros : <<submit>>
+c_centros ..> v_modal_centro : <<build>>
+
+v_dash_adm --> v_roles
+v_roles --> c_roles : <<submit>>
+c_roles ..> v_matriz : <<build>>
+
+' Paquete 2
+v_dash_cli --> v_hc
+v_hc --> c_exp : <<submit>>
+v_dash_cli --> v_soap
+v_soap --> c_soap : <<submit>>
+v_dash_cli --> v_deriv
+v_deriv --> c_deriv : <<submit>>
+
+' Paquete 3
+v_cal --> c_age : <<submit>>
+c_age ..> v_res_cita : <<build>>
+v_dash_cli --> v_jitsi
+v_jitsi --> c_tele : <<submit>>
+
+' Paquete 4
+v_dash_mov --> v_intake
+v_intake --> c_intake : <<submit>>
+v_dash_mov --> v_firma
+v_firma --> c_firma : <<submit>>
+
+' Paquete 5
+v_triaje --> c_triaje : <<submit>>
+c_triaje ..> v_crisis : <<build [Alerta Crisis]>>
+v_triaje --> v_match
+v_match --> c_match : <<submit>>
+v_dash_mov --> v_chat
+v_chat --> c_chat : <<submit>>
+
+' Paquete 6
+v_dash_adm --> v_kpi
+v_kpi --> c_rep : <<submit>>
+v_dash_adm --> v_susc
+v_susc --> c_susc : <<submit>>
+
+' Subsistema Móvil
+v_dash_mov --> v_citas_mov
+v_citas_mov --> c_cita_mov : <<submit>>
+c_cita_mov ..> v_canc_mov : <<build>>
+v_dash_mov --> v_tar_mov
+v_tar_mov --> c_tar_mov : <<submit>>
 @enduml
 ```
 
