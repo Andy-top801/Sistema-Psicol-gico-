@@ -97,15 +97,17 @@ En cumplimiento directo de la sugerencia docente: *"los que han hecho web hasta 
 
 ### 7.1.1 Objetivos del Sprint 3
 
-El Sprint 3 tiene como propósito consolidar la interacción ubicua del paciente mediante la aplicación móvil nativa (Flutter 3.x) y desplegar las capacidades de inteligencia artificial aplicada al triaje clínico institucional. Al concluir este Sprint, el equipo entrega un incremento de software utilizable y potencialmente desplegable que comprende:
+El **Objetivo General del Sprint 3** es consolidar la experiencia móvil nativa del paciente en Flutter 3.x e implementar los modelos de Inteligencia Artificial para el triaje clínico asistido y la sugerencia terapéutica bajo supervisión humana, asegurando el 100% de cumplimiento operativo del incremento.
 
-1. **Gestión de Recordatorios y Notificaciones Automáticas (CU12):** Implementar la infraestructura de notificaciones push en tiempo real mediante Firebase Cloud Messaging (FCM), configurando recordatorios preventivos de citas (24 horas y 1 hora de anticipación) y avisos de nuevas tareas terapéuticas asignadas.
-2. **Clasificación Asistida del Motivo de Consulta por IA (CU21):** Construir el pipeline de procesamiento lingüístico y heurístico que analiza las respuestas del formulario de preconsulta (intake), sanitizando datos personales (PII), categorizando el motivo en áreas temáticas (ansiedad, depresión, pareja, infanto-juvenil, duelo) y determinando el nivel de severidad y banderas de riesgo.
-3. **Sugerencia y Emparejamiento de Psicólogos por IA (CU22):** Implementar el algoritmo de matching multivariable que calcula la idoneidad clínica de los terapeutas según especialidad requerida, disponibilidad horaria, modalidad (presencial/virtual) y balanceo de carga de pacientes activos.
-4. **Consola Web de Triaje con Validación Humana (CU22):** Proveer al Coordinador Clínico un panel interactivo en Angular 17 para revisar las sugerencias de la IA, auditar las justificaciones y confirmar o reasignar manualmente al profesional, garantizando el principio de supervisión médica obligatoria (*Human-in-the-Loop*).
-5. **Autenticación y Experiencia Móvil de Pacientes en Flutter (SP3-68 a SP3-70):** Construir el acceso móvil seguro de pacientes mediante tokens JWT persistentes en almacenamiento cifrado seguro (`flutter_secure_storage`).
-6. **Agenda y Consulta de Citas Móviles con Políticas de Cancelación (SP3-71 a SP3-73):** Permitir al paciente visualizar sus citas programadas, historial de sesiones y solicitar cancelación o reprogramación sujeta a la política institucional de 24 horas de anticipación.
-7. **Teleconsulta Móvil WebRTC y Seguimiento de Tareas (SP3-74 a SP3-76):** Permitir el ingreso directo a salas virtuales seguras de Jitsi Meet embebidas en Flutter, la visualización de tareas prescritas con autorreflexión y el registro diario de estado de ánimo (*Mood Tracker*).
+Para alcanzar esta meta, el equipo asume los siguientes objetivos específicos:
+
+1. **Implementar recordatorios y notificaciones push automáticas (CU12):** Notificar citas programadas (24h y 1h antes) y avisos de tareas mediante Firebase Cloud Messaging (FCM).
+2. **Clasificar el motivo de consulta mediante IA (CU21):** Categorizar las respuestas del intake en 5 áreas clínicas, anonimizar datos personales (PII) y detectar alertas de crisis.
+3. **Sugerir emparejamiento de psicólogos con IA (CU22):** Calcular la afinidad terapéutica multivariable según especialidad, disponibilidad horaria y balanceo de carga.
+4. **Supervisar el triaje asistido en consola web (CU22):** Proveer al coordinador clínico la validación, auditoría y confirmación obligatoria de asignaciones (*Human-in-the-Loop*).
+5. **Autenticar pacientes en la aplicación móvil (CU2 Móvil / SP3-68 a SP3-70):** Iniciar sesión de forma segura y persistente mediante tokens JWT en almacenamiento cifrado (`flutter_secure_storage`).
+6. **Gestionar la agenda y cancelación de citas móviles (CU11 Móvil / SP3-71 a SP3-73):** Visualizar citas e historial, y validar la regla institucional de cancelación oportuna con más de 24 horas de anticipación.
+7. **Ejecutar teleconsulta virtual y seguimiento terapéutico (CU13, CU17 Móvil / SP3-74 a SP3-76):** Conectar videollamadas con Jitsi Meet embebido, enviar evidencias de tareas y registrar el estado anímico diario (*Mood Tracker*).
 
 #### Casos de Uso Contemplados en el Sprint 3
 
