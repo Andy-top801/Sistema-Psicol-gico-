@@ -157,4 +157,11 @@ class Command(BaseCommand):
         self.stdout.write(self.style.NOTICE("\n==> Asegurando Catálogo SaaS de 12 Centros Psicológicos..."))
         call_command('seed_catalogo_saas')
 
+        # 6. Siembra analítica masiva para Módulo de Reportes y Exportaciones (CU25)
+        self.stdout.write(self.style.NOTICE("\n==> Asegurando datos analíticos e histórico para el Módulo de Reportes..."))
+        try:
+            call_command('seed_reportes', tenant='all')
+        except Exception as e:
+            self.stdout.write(self.style.WARNING(f"  [AVISO] seed_reportes: {e}"))
+
         self.stdout.write(self.style.SUCCESS("\n==> ¡Siembra de datos completada exitosamente! <==\n"))

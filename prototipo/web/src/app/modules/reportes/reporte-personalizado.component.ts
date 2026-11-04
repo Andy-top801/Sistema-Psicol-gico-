@@ -32,7 +32,9 @@
 // 14b. CTR_ReportEngineController --> IU_VisorReporteExportador: 14b: HTTP 200 OK ("Reporte enviado exitosamente")
 // 15b. IU_VisorReporteExportador --> Admin: 15b: modal_confirmacion_envio_correo()
 // ==============================================================================
-import { Component, OnInit, OnDestroy, signal, computed, effect } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, effect, inject } from '@angular/core';
+import { TenantService } from '../../core/services/tenant.service';
+import { Tenant } from '../../core/models';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -143,6 +145,18 @@ import { AuthService } from '../../core/services/auth.service';
             (click)="simularComando('Reporte de citas realizadas de modalidad presencial')">
             <i class="fa-solid fa-play"></i> "Citas realizadas en modalidad presencial"
           </button>
+          <button 
+            type="button" 
+            class="chip-prompt chip-prompt-superadmin" 
+            (click)="simularComando('Psicólogos de la clínica Esperanza')">
+            <i class="fa-solid fa-play"></i> "Psicólogos de la clínica Esperanza"
+          </button>
+          <button 
+            type="button" 
+            class="chip-prompt chip-prompt-superadmin" 
+            (click)="simularComando('Psicólogos de la clínica Oasis')">
+            <i class="fa-solid fa-play"></i> "Psicólogos de la clínica Oasis"
+          </button>
         </div>
 
         <!-- Feedback de Parámetros extraídos por el Parser NLP -->
@@ -164,6 +178,9 @@ import { AuthService } from '../../core/services/auth.service';
             <span class="tag-extracted" *ngIf="ultimoParametrosExtraidos.modalidad">
               <strong>Modalidad:</strong> {{ ultimoParametrosExtraidos.modalidad }}
             </span>
+            <span class="tag-extracted tag-superadmin" *ngIf="ultimoParametrosExtraidos.centro_nombre">
+              <strong>Clínica / Centro:</strong> {{ ultimoParametrosExtraidos.centro_nombre }}
+            </span>
           </div>
           <p class="feedback-note">
             ✓ Filtros QBE actualizados y columnas configuradas automáticamente según el dictado de voz.
@@ -177,6 +194,48 @@ import { AuthService } from '../../core/services/auth.service';
 
       <!-- Configuration Grid / Steps Form -->
       <div class="config-grid">
+        <!-- Filtro Exclusivo SuperAdministrador: Selector de Centro Psicológico (Tenant) -->
+        <div class="config-card full-width superadmin-banner-card" *ngIf="authService.isSuperAdmin()">
+          <div class="superadmin-badge-strip">
+            <span class="badge-superadmin-gold">
+              <i class="fa-solid fa-crown"></i> Exclusivo SuperAdministrador
+            </span>
+            <span class="superadmin-banner-desc">
+              Filtra reportes por centro clínico específico registrado o genera el reporte consolidado global multi-tenant:
+            </span>
+          </div>
+          <div class="superadmin-selector-controls">
+            <div class="selector-field">
+              <label class="superadmin-select-label">
+                <i class="fa-solid fa-hospital-user"></i> Centro Psicológico Registrado (Tenant):
+              </label>
+              <div class="select-with-clear">
+                <select 
+                  [(ngModel)]="centroSeleccionadoSuperAdmin" 
+                  (ngModelChange)="onCentroSuperAdminCambiado($event)"
+                  class="form-control select-superadmin-styled">
+                  <option value="">🏢 Todos los Centros Registrados (Consolidado Multi-Tenant Global)</option>
+                  <option *ngFor="let c of centrosDisponibles" [value]="c.schema_name">
+                    🏥 {{ c.nombre }} ({{ c.slug }})
+                  </option>
+                </select>
+                <button 
+                  type="button" 
+                  *ngIf="centroSeleccionadoSuperAdmin" 
+                  (click)="limpiarCentroSuperAdmin()" 
+                  class="btn-clear-superadmin"
+                  title="Restablecer a todos los centros">
+                  <i class="fa-solid fa-xmark"></i> Ver Todos
+                </button>
+              </div>
+            </div>
+            <div class="superadmin-status-indicator" *ngIf="centroSeleccionadoSuperAdmin">
+              <span class="indicator-dot"></span>
+              Filtrando centro: <strong>{{ getNombreCentroSeleccionado() }}</strong>
+            </div>
+          </div>
+        </div>
+
         <!-- Paso 1: Fuente de Datos -->
         <div class="config-card">
           <div class="step-badge">Paso 1</div>
@@ -1031,6 +1090,136 @@ import { AuthService } from '../../core/services/auth.service';
       border-color: #19734e;
     }
 
+    /* SuperAdmin Exclusive Filter */
+    .superadmin-banner-card {
+      background: linear-gradient(135deg, #fefce8 0%, #fffbeb 100%) !important;
+      border: 1.5px solid #fde047 !important;
+      box-shadow: 0 4px 15px rgba(234, 179, 8, 0.12) !important;
+    }
+
+    .superadmin-badge-strip {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .badge-superadmin-gold {
+      background: linear-gradient(135deg, #ca8a04 0%, #a16207 100%);
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 0.76rem;
+      padding: 4px 12px;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 6px rgba(161, 98, 7, 0.25);
+    }
+
+    .superadmin-banner-desc {
+      font-size: 0.82rem;
+      color: #854d0e;
+      font-weight: 600;
+    }
+
+    .superadmin-selector-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .selector-field {
+      flex: 1;
+      min-width: 280px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .superadmin-select-label {
+      font-size: 0.8rem;
+      font-weight: 800;
+      color: #713f12;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .select-with-clear {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .select-superadmin-styled {
+      background: #ffffff;
+      border: 1.5px solid #eab308;
+      color: #713f12;
+      font-weight: 700;
+      font-size: 0.9rem;
+      padding: 10px 14px;
+      border-radius: 10px;
+      flex: 1;
+    }
+
+    .select-superadmin-styled:focus {
+      outline: none;
+      border-color: #ca8a04;
+      box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.25);
+    }
+
+    .btn-clear-superadmin {
+      background: #fef08a;
+      border: 1px solid #eab308;
+      color: #854d0e;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-clear-superadmin:hover {
+      background: #fde047;
+      color: #713f12;
+    }
+
+    .superadmin-status-indicator {
+      font-size: 0.84rem;
+      color: #854d0e;
+      background: #fef9c3;
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid #fde047;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .indicator-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ca8a04;
+      box-shadow: 0 0 0 2px rgba(202, 138, 4, 0.3);
+    }
+
+    .tag-superadmin {
+      background: #fef9c3 !important;
+      border-color: #fde047 !important;
+      color: #854d0e !important;
+    }
+
     .no-filters-msg {
       padding: 20px;
       text-align: center;
@@ -1533,6 +1722,9 @@ export class ReportePersonalizadoComponent implements OnInit, OnDestroy {
   accessError = '';
   private requests = new Subscription();
   private configuredSource = 'citas';
+  private tenantService = inject(TenantService);
+  centrosDisponibles: Tenant[] = [];
+  centroSeleccionadoSuperAdmin: string = '';
 
   private subs: Subscription[] = [];
   private speechParser: SpeechParserService;
@@ -1564,6 +1756,45 @@ export class ReportePersonalizadoComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.cargarMetadata();
     this.setupSpeechListeners();
+    if (this.authService.isSuperAdmin()) {
+      this.cargarCentrosSuperAdmin();
+    }
+  }
+
+  cargarCentrosSuperAdmin(): void {
+    this.tenantService.getPublicList().subscribe({
+      next: (centros) => {
+        this.centrosDisponibles = (centros || []).filter(c => c.schema_name !== 'public');
+      },
+      error: () => {
+        this.tenantService.getAll().subscribe({
+          next: (centros) => {
+            this.centrosDisponibles = (centros || []).filter(c => c.schema_name !== 'public');
+          }
+        });
+      }
+    });
+  }
+
+  onCentroSuperAdminCambiado(schema: string): void {
+    this.centroSeleccionadoSuperAdmin = schema;
+    if (schema) {
+      this.filtrosValores['tenant'] = schema;
+    } else {
+      delete this.filtrosValores['tenant'];
+    }
+    this.generarReportePersonalizado();
+  }
+
+  limpiarCentroSuperAdmin(): void {
+    this.centroSeleccionadoSuperAdmin = '';
+    delete this.filtrosValores['tenant'];
+    this.generarReportePersonalizado();
+  }
+
+  getNombreCentroSeleccionado(): string {
+    const c = this.centrosDisponibles.find(x => x.schema_name === this.centroSeleccionadoSuperAdmin);
+    return c ? c.nombre : this.centroSeleccionadoSuperAdmin;
   }
 
   ngOnDestroy(): void {
@@ -1626,6 +1857,12 @@ export class ReportePersonalizadoComponent implements OnInit, OnDestroy {
   procesarParametrosVoz(params: ExtractedVoiceParams): void {
     this.ultimoParametrosExtraidos = params;
 
+    // 0. Centro Psicológico (SuperAdmin)
+    if (params.centro && this.authService.isSuperAdmin()) {
+      this.centroSeleccionadoSuperAdmin = params.centro;
+      this.filtrosValores['tenant'] = params.centro;
+    }
+
     // 1. Entidad / Fuente
     if (params.fuente && params.fuente !== this.fuenteSeleccionada) {
       this.fuenteSeleccionada = params.fuente;
@@ -1683,6 +1920,9 @@ export class ReportePersonalizadoComponent implements OnInit, OnDestroy {
       this.configuredSource = this.fuenteSeleccionada;
     }
     this.filtrosValores = {};
+    if (this.authService.isSuperAdmin() && this.centroSeleccionadoSuperAdmin) {
+      this.filtrosValores['tenant'] = this.centroSeleccionadoSuperAdmin;
+    }
     this.columnaOrden = '';
     this.resultado = null;
     this.actualizarConfiguracionFuente();
@@ -1793,6 +2033,9 @@ export class ReportePersonalizadoComponent implements OnInit, OnDestroy {
     const fuenteConsultada = this.fuenteSeleccionada;
     const keyConsultada = fuenteConsultada === 'bitacora' ? this.developerKey : undefined;
     const orden = this.columnaOrden ? { columna: this.columnaOrden, direccion: this.direccionOrden } : undefined;
+    if (this.authService.isSuperAdmin() && this.centroSeleccionadoSuperAdmin) {
+      this.filtrosValores['tenant'] = this.centroSeleccionadoSuperAdmin;
+    }
 
     const request = this.reportService.generarPersonalizado({
       fuente: fuenteConsultada,
@@ -1845,6 +2088,9 @@ export class ReportePersonalizadoComponent implements OnInit, OnDestroy {
   descargarExcelOpenPyXL(): void {
     this.descargandoExcel = true;
     const orden = this.columnaOrden ? { columna: this.columnaOrden, direccion: this.direccionOrden } : undefined;
+    if (this.authService.isSuperAdmin() && this.centroSeleccionadoSuperAdmin) {
+      this.filtrosValores['tenant'] = this.centroSeleccionadoSuperAdmin;
+    }
     const keyConsultada = this.fuenteSeleccionada === 'bitacora' ? this.developerKey : undefined;
 
     this.reportService.exportarPersonalizadoExcel({
@@ -1982,6 +2228,9 @@ export class ReportePersonalizadoComponent implements OnInit, OnDestroy {
     const fuenteEnviada = this.fuenteSeleccionada;
     const keyEnviada = fuenteEnviada === 'bitacora' ? this.developerKey : undefined;
     const orden = this.columnaOrden ? { columna: this.columnaOrden, direccion: this.direccionOrden } : undefined;
+    if (this.authService.isSuperAdmin() && this.centroSeleccionadoSuperAdmin) {
+      this.filtrosValores['tenant'] = this.centroSeleccionadoSuperAdmin;
+    }
 
     const emailServiceCall = (this.reportService.enviarEmail || this.reportService.exportarPersonalizadoEmail).bind(this.reportService);
     this.requests.add(emailServiceCall({
