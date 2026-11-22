@@ -359,6 +359,15 @@ class VerifySessionView(APIView):
                 suscripcion.stripe_customer_id = checkout_session.customer
                 suscripcion.save()
 
+                # 7b. HU-55 (c): Emitir FacturaSaaS de forma idempotente
+                from subscriptions.services import registrar_factura_saas_idempotente
+                registrar_factura_saas_idempotente(
+                    suscripcion=suscripcion,
+                    stripe_session_id=session_id,
+                    stripe_invoice_id=getattr(checkout_session, 'invoice', None),
+                    estado='PAGADA',
+                )
+
         except Exception as e:
             return Response(
                 {'error': f'Error al crear el centro: {str(e)}'},
@@ -389,3 +398,135 @@ class VerifySessionView(APIView):
             },
             status=status.HTTP_201_CREATED,
         )
+
+
+# ==============================================================================
+# HU-55: WEBHOOK IDEMPOTENTE DE STRIPE Y CONSOLA SUPERADMIN SAAS (USD)
+# ==============================================================================
+class StripeWebhookView(APIView):
+    """
+    POST /api/subscriptions/webhook/
+    Recibe eventos Stripe (checkout.session.completed / invoice.paid) y garantiza
+    idempotencia por stripe_session_id para nunca duplicar FacturaSaaS.
+    """
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        connection.set_schema_to_public()
+        webhook_secret = getattr(settings, 'STRIPE_WEBHOOK_SECRET', '')
+        sig_header = request.META.get('HTTP_STRIPE_SIGNATURE', '')
+
+        if webhook_secret:
+            try:
+                event = stripe.Webhook.construct_event(request.body, sig_header, webhook_secret)
+            except Exception:
+                return Response({'error': 'Firma de webhook Stripe inválida.'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            event = request.data if isinstance(request.data, dict) else {}
+
+        event_type = event.get('type', '')
+        data_obj = (event.get('data') or {}).get('object') or {}
+        session_id = data_obj.get('id') or data_obj.get('checkout_session') or event.get('stripe_session_id')
+
+        if event_type in ('checkout.session.completed', 'invoice.paid') and session_id:
+            susc = Suscripcion.objects.filter(stripe_session_id=session_id).first()
+            if susc:
+                from subscriptions.services import registrar_factura_saas_idempotente
+                factura, creada = registrar_factura_saas_idempotente(
+                    suscripcion=susc,
+                    stripe_session_id=session_id,
+                    stripe_invoice_id=data_obj.get('invoice'),
+                    estado='PAGADA',
+                )
+                return Response({
+                    'received': True,
+                    'factura_id': str(factura.id),
+                    'numero_factura': factura.numero_factura,
+                    'idempotente_duplicado': not creada,
+                })
+
+        return Response({'received': True, 'ignored': True})
+
+
+class SuperAdminSaaSDashboardView(APIView):
+    """GET /api/subscriptions/admin/dashboard/ — Consola SuperAdmin de MRR y Suscripciones (USD)."""
+    def get_permissions(self):
+        from accounts.permissions import EsSuperAdmin
+        return [EsSuperAdmin()]
+
+    def get(self, request):
+        from subscriptions.services import obtener_dashboard_saas
+        return Response(obtener_dashboard_saas())
+
+
+class SuperAdminTenantPlanUpdateView(APIView):
+    """PATCH /api/subscriptions/admin/tenants/<uuid:tenant_id>/ — Cambiar plan o estado del centro."""
+    def get_permissions(self):
+        from accounts.permissions import EsSuperAdmin
+        return [EsSuperAdmin()]
+
+    def patch(self, request, tenant_id):
+        from subscriptions.services import actualizar_suscripcion_tenant
+        nuevo_plan = request.data.get('plan')
+        nuevo_estado = request.data.get('estado')
+        try:
+            res = actualizar_suscripcion_tenant(
+                tenant_id=tenant_id,
+                nuevo_plan=nuevo_plan,
+                nuevo_estado=nuevo_estado,
+                usuario=request.user,
+            )
+            return Response(res)
+        except Tenant.DoesNotExist:
+            return Response({'error': 'Tenant no encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+        except ValueError as exc:
+            return Response({'error': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class SuperAdminFacturasListView(APIView):
+    """GET /api/subscriptions/admin/facturas/ — Historial global de FacturaSaaS en USD."""
+    def get_permissions(self):
+        from accounts.permissions import EsSuperAdmin
+        return [EsSuperAdmin()]
+
+    def get(self, request):
+        from subscriptions.models import FacturaSaaS
+        from subscriptions.services import asegurar_suscripciones_catalogo
+        asegurar_suscripciones_catalogo()
+        connection.set_schema_to_public()
+        qs = FacturaSaaS.objects.select_related('tenant', 'suscripcion').order_by('-fecha_emision')
+        tenant_id = request.query_params.get('tenant_id')
+        if tenant_id:
+            qs = qs.filter(tenant_id=tenant_id)
+        return Response([
+            {
+                'id': str(f.id),
+                'numero_factura': f.numero_factura,
+                'tenant_id': str(f.tenant_id) if f.tenant_id else None,
+                'tenant_nombre': f.tenant.nombre if f.tenant else f.suscripcion.nombre_centro,
+                'plan': f.plan,
+                'monto_usd': float(f.monto_usd),
+                'moneda': f.moneda,
+                'estado': f.estado,
+                'stripe_session_id': f.stripe_session_id,
+                'fecha_emision': timezone.localtime(f.fecha_emision).strftime('%Y-%m-%d %H:%M'),
+                'fecha_renovacion': f.fecha_renovacion.isoformat() if f.fecha_renovacion else None,
+            }
+            for f in qs[:200]
+        ])
+
+
+class TenantQuotasView(APIView):
+    """GET /api/subscriptions/quotas/ — Retorna límites y uso actual del plan del tenant."""
+    def get_permissions(self):
+        from rest_framework.permissions import IsAuthenticated
+        return [IsAuthenticated()]
+
+    def get(self, request):
+        from subscriptions.quotas import obtener_uso_cupos_tenant
+        tenant = getattr(request, 'tenant', None)
+        if not tenant or tenant.schema_name == 'public':
+            return Response({'detail': 'Disponible en contexto de centro tenant.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(obtener_uso_cupos_tenant(tenant))
+

@@ -59,6 +59,12 @@ import { AlertasCrisisBadgeComponent } from './alertas-crisis-badge.component';
               <span>Centros Psicológicos</span>
             </a>
 
+            <!-- Consola SaaS Suscripciones y Facturas USD (SuperAdmin HU-55) -->
+            <a *ngIf="authService.isSuperAdmin()" routerLink="/suscripciones-saas" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
+              <i class="fa-solid fa-crown nav-icon"></i>
+              <span>Suscripciones SaaS (USD)</span>
+            </a>
+
             <!-- Copias de Seguridad & Restauración (SuperAdmin HU-39) -->
             <a *ngIf="authService.isSuperAdmin()" routerLink="/backups" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
               <i class="fa-solid fa-cloud-arrow-up nav-icon"></i>
@@ -86,6 +92,25 @@ import { AlertasCrisisBadgeComponent } from './alertas-crisis-badge.component';
             <a routerLink="/reportes" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
               <i class="fa-solid fa-chart-pie nav-icon"></i>
               <span>Reportes Clínicos</span>
+            </a>
+
+            <!-- Dashboard Financiero Gerencial >= 2 Años (HU-53) -->
+            <a routerLink="/finanzas/dashboard" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
+              <i class="fa-solid fa-chart-line nav-icon"></i>
+              <span>Dashboard Financiero (Bs.)</span>
+            </a>
+          </ng-container>
+
+          <!-- FINANZAS CLÍNICAS & HONORARIOS (Sprint 4 - HU-52 / HU-54) -->
+          <ng-container *ngIf="!authService.isSuperAdmin() || authService.isInTenantContext()">
+            <div class="nav-section-title">FINANZAS & CAJA (Bs.)</div>
+            <a routerLink="/finanzas/caja" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
+              <i class="fa-solid fa-cash-register nav-icon"></i>
+              <span>{{ authService.isPaciente() ? 'Mi Estado de Cuenta' : 'Caja y Extracto 20 Años' }}</span>
+            </a>
+            <a *ngIf="!authService.isPaciente() && !authService.isRecepcionista()" routerLink="/finanzas/liquidaciones" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
+              <i class="fa-solid fa-file-invoice-dollar nav-icon"></i>
+              <span>Liquidación Honorarios</span>
             </a>
           </ng-container>
 
@@ -135,6 +160,12 @@ import { AlertasCrisisBadgeComponent } from './alertas-crisis-badge.component';
             <a *ngIf="authService.isAdminCentro()" routerLink="/triaje-ia" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
               <i class="fa-solid fa-brain nav-icon"></i>
               <span>Triaje IA y Asignación</span>
+            </a>
+
+            <!-- CU24 (HU-50, HU-51): Consola de Alertas Prioritarias de Riesgo IA -->
+            <a *ngIf="authService.canAccessHistoriasClinicas()" routerLink="/alertas-riesgo-ia" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
+              <i class="fa-solid fa-triangle-exclamation nav-icon"></i>
+              <span>Alertas de Riesgo IA</span>
             </a>
             
             <a *ngIf="!authService.isRecepcionista()" routerLink="/tareas-terapeuticas" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">

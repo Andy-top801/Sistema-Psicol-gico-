@@ -30,6 +30,28 @@ class ExcelExporter:
             # Fallback a CSV si openpyxl no estuviera disponible
             return CSVExporter.generar(resultado, nombre)
 
+        # Modo streaming write_only para reportes masivos (>2000 filas)
+        if len(resultado.get("datos", [])) > 2000:
+            wb = openpyxl.Workbook(write_only=True)
+            ws = wb.create_sheet(title="Reporte Clínico")
+            col_labels = [c["label"] for c in resultado["columnas"]]
+            col_keys = [c["key"] for c in resultado["columnas"]]
+            ws.append([f"SIGEPSI — REPORTE OFICIAL: {nombre.upper().replace('_', ' ')} — {tenant_name.upper()}"])
+            ws.append([f"Emisión: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')} | Registros: {resultado['total']}"])
+            ws.append([])
+            ws.append(col_labels)
+            for fila in resultado["datos"]:
+                ws.append([fila.get(k, "") for k in col_keys])
+            buffer = io.BytesIO()
+            wb.save(buffer)
+            buffer.seek(0)
+            response = HttpResponse(
+                buffer.getvalue(),
+                content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+            response["Content-Disposition"] = f'attachment; filename="{nombre}.xlsx"'
+            return response
+
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.title = "Reporte Clínico"
@@ -471,3 +493,121 @@ class HTMLExporter:
 </body>
 </html>"""
         return html
+
+
+class PDFExporter:
+    """
+    Exportador oficial a PDF multipágina con ReportLab para cualquier fuente
+    del motor de reportes SIGEPSI (HU-53).
+    """
+
+    @staticmethod
+    def generar(resultado, nombre="reporte", tenant_name="Centro Psicológico"):
+        from reportlab.lib import colors
+        from reportlab.lib.pagesizes import letter, landscape
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+        from finanzas.pdf_utils import NumberedCanvas
+
+        col_labels = [c["label"] for c in resultado["columnas"]]
+        col_keys = [c["key"] for c in resultado["columnas"]]
+        num_cols = max(1, len(col_labels))
+
+        pagesize = landscape(letter) if num_cols > 5 else letter
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=pagesize,
+            rightMargin=28,
+            leftMargin=28,
+            topMargin=32,
+            bottomMargin=36,
+        )
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle(
+            "RepPdfTitle", parent=styles["Heading1"], fontSize=13.5,
+            textColor=colors.HexColor("#0F2922"), spaceAfter=4,
+        )
+        meta_style = ParagraphStyle(
+            "RepPdfMeta", parent=styles["Normal"], fontSize=8.5,
+            textColor=colors.HexColor("#475569"), spaceAfter=10,
+        )
+        cell_style = ParagraphStyle(
+            "RepPdfCell", parent=styles["Normal"], fontSize=7.5,
+            leading=9.5, textColor=colors.HexColor("#0F172A"),
+        )
+        header_style = ParagraphStyle(
+            "RepPdfHdr", parent=styles["Normal"], fontSize=7.5,
+            leading=9.5, textColor=colors.white, fontName="Helvetica-Bold",
+        )
+
+        fecha_emision = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        story = [
+            Paragraph(f"SIGEPSI — REPORTE OFICIAL: {nombre.upper().replace('_', ' ')} ({tenant_name.upper()})", title_style),
+            Paragraph(
+                f"Emisión: <b>{fecha_emision}</b> &nbsp;|&nbsp; Total registros: <b>{resultado.get('total', 0)}</b>",
+                meta_style,
+            ),
+        ]
+
+        usable_w = pagesize[0] - 56
+        col_width = usable_w / num_cols
+
+        table_data = [[Paragraph(str(lbl), header_style) for lbl in col_labels]]
+        for fila in resultado.get("datos", []):
+            row_cells = []
+            for key in col_keys:
+                val = fila.get(key, "")
+                if key in ("costo", "monto", "tarifa_base", "debe", "haber", "saldo_pendiente", "monto_bruto", "monto_neto_psicologo", "comision_centro") and val not in ("", None):
+                    try:
+                        val_str = f"Bs. {float(val):,.2f}"
+                    except Exception:
+                        val_str = str(val)
+                elif key == "monto_usd" and val not in ("", None):
+                    try:
+                        val_str = f"$ {float(val):,.2f}"
+                    except Exception:
+                        val_str = str(val)
+                else:
+                    val_str = str(val) if val is not None else ""
+                row_cells.append(Paragraph(val_str[:180], cell_style))
+            table_data.append(row_cells)
+
+        if len(table_data) == 1:
+            table_data.append([Paragraph("Sin registros para los filtros seleccionados", cell_style)] + [""] * (num_cols - 1))
+
+        tbl = Table(table_data, colWidths=[col_width] * num_cols, repeatRows=1)
+        tbl.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0F2922")),
+            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F8FAFC")]),
+            ("GRID", (0, 0), (-1, -1), 0.35, colors.HexColor("#CBD5E1")),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("TOPPADDING", (0, 0), (-1, -1), 4),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+        ]))
+        story.append(tbl)
+
+        resumen = resultado.get("resumen", {})
+        if resumen:
+            story.append(Spacer(1, 12))
+            story.append(Paragraph("Resumen Consolidado", styles["Heading3"]))
+            res_rows = [["Indicador", "Valor"]]
+            for k, v in resumen.items():
+                if not isinstance(v, dict):
+                    res_rows.append([k.replace("_", " ").title(), str(v)])
+            if len(res_rows) > 1:
+                res_tbl = Table(res_rows, colWidths=[usable_w * 0.45, usable_w * 0.55])
+                res_tbl.setStyle(TableStyle([
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0D9488")),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 8.5),
+                    ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#CBD5E1")),
+                ]))
+                story.append(res_tbl)
+
+        doc.build(story, canvasmaker=NumberedCanvas)
+        buffer.seek(0)
+        response = HttpResponse(buffer.getvalue(), content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="reporte_{nombre}.pdf"'
+        return response

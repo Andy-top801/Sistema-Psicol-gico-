@@ -24,6 +24,9 @@ urlpatterns = [
     # Endpoints de reportes personalizables - Sprint 2
     path('api/reportes/', include('reportes.urls')),
     path('api/v1/reportes/', include('reportes.urls')),
+    # Endpoints de finanzas clínicas y honorarios (Bs.) - Sprint 4
+    path('api/finanzas/', include('finanzas.urls')),
+    path('api/v1/finanzas/', include('finanzas.urls')),
     # Endpoints de suscripciones y pagos Stripe (Punto 7+8)
     path('api/subscriptions/', include('subscriptions.urls')),
 ]

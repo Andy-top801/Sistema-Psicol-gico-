@@ -31,6 +31,12 @@ import { BackupRestoreConsoleComponent } from './modules/backups/backup-restore-
 // Punto 7+8: Landing Page SaaS con Stripe
 import { LandingPageComponent } from './modules/landing/landing-page.component';
 import { CheckoutSuccessComponent } from './modules/landing/checkout-success.component';
+// Incremento Funcional Sprint 4 (HU-49 a HU-55)
+import { CajaClinicaComponent } from './modules/finanzas/caja-clinica.component';
+import { DashboardFinancieroComponent } from './modules/finanzas/dashboard-financiero.component';
+import { LiquidacionesHonorariosComponent } from './modules/finanzas/liquidaciones-honorarios.component';
+import { SaasAdminDashboardComponent } from './modules/suscripciones/saas-admin-dashboard.component';
+import { ConsolaAlertasRiesgoComponent } from './modules/alertas-riesgo/consola-alertas-riesgo.component';
 
 export const routes: Routes = [
   // Rutas públicas — Landing Page y Suscripción (Punto 7+8)
@@ -63,6 +69,12 @@ export const routes: Routes = [
       { path: 'reportes/:fuente', component: ReporteVisorComponent, canActivate: [adminCentroGuard] },
       // Incremento Funcional Sprint 3 (CU21, CU22 - Triaje IA & Matching HITL)
       { path: 'triaje-ia', component: ConsolaTriageComponent, canActivate: [adminCentroGuard] },  // CU21/CU22: Coordinador Clínico
+      // Incremento Funcional Sprint 4 (HU-49 a HU-55: Finanzas Bs., Extracto 20 años, SaaS USD y Alertas Riesgo IA)
+      { path: 'finanzas/caja', component: CajaClinicaComponent },
+      { path: 'finanzas/dashboard', component: DashboardFinancieroComponent, canActivate: [adminCentroGuard] },
+      { path: 'finanzas/liquidaciones', component: LiquidacionesHonorariosComponent },
+      { path: 'suscripciones-saas', component: SaasAdminDashboardComponent, canActivate: [superAdminGuard] },
+      { path: 'alertas-riesgo-ia', component: ConsolaAlertasRiesgoComponent, canActivate: [clinicalStaffGuard] },
       // Incremento Funcional Sprint 2 — Rutas con RBAC Clínico (HU-26)
       { path: 'intake', component: IntakeConfigComponent },  // Todos: Paciente responde, Psicólogo/Admin configura
       { path: 'historias-clinicas', component: HistoriaClinicaListComponent, canActivate: [clinicalStaffGuard] },

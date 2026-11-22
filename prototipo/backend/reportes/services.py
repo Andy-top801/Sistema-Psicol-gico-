@@ -12,7 +12,9 @@ from django.utils import timezone
 
 from accounts.models import Usuario, Rol
 from agenda.models import Cita, Teleconsulta, Alerta
-from clinica.models import Psicologo, Paciente, Especialidad
+from clinica.models import Psicologo, Paciente, Especialidad, AlertaRiesgoIA, ResumenClinicoIA
+from finanzas.models import CuentaPaciente, PagoConsulta, MovimientoFinanciero, LiquidacionHonorario
+from subscriptions.models import FacturaSaaS
 from audit.services import read_events, parse_date
 
 
@@ -195,6 +197,137 @@ FUENTES_DISPONIBLES = {
              "opciones": ["true", "false"]},
         ],
     },
+    # ─── NUEVAS FUENTES SPRINT 4 (HU-52, HU-53, HU-54, HU-49, HU-50, HU-55) ───
+    "pagos": {
+        "label": "Cobros y Pagos en Caja (Bs.)",
+        "columnas": [
+            {"key": "fecha_pago", "label": "Fecha Pago"},
+            {"key": "numero_recibo", "label": "N° Recibo"},
+            {"key": "paciente_nombre", "label": "Paciente"},
+            {"key": "expediente", "label": "Expediente"},
+            {"key": "metodo_pago", "label": "Método"},
+            {"key": "monto", "label": "Monto (Bs.)"},
+            {"key": "referencia_externa", "label": "Referencia"},
+            {"key": "registrado_por", "label": "Registrado Por"},
+        ],
+        "filtros": [
+            {"key": "fecha_desde", "label": "Fecha Desde", "type": "date"},
+            {"key": "fecha_hasta", "label": "Fecha Hasta", "type": "date"},
+            {"key": "metodo_pago", "label": "Método de Pago", "type": "select",
+             "opciones": ["EFECTIVO", "QR_BANCARIO", "TRANSFERENCIA", "TARJETA_STRIPE"]},
+            {"key": "paciente_id", "label": "Paciente", "type": "text"},
+        ],
+    },
+    "cuentas_pacientes": {
+        "label": "Estado de Cuentas y Morosidad (Bs.)",
+        "columnas": [
+            {"key": "expediente", "label": "Expediente"},
+            {"key": "paciente_nombre", "label": "Paciente"},
+            {"key": "total_cargado", "label": "Total Cargado (Bs.)"},
+            {"key": "total_pagado", "label": "Total Pagado (Bs.)"},
+            {"key": "saldo_pendiente", "label": "Saldo Pendiente (Bs.)"},
+            {"key": "ultima_actualizacion", "label": "Última Actualización"},
+        ],
+        "filtros": [
+            {"key": "solo_deudores", "label": "Solo con Saldo Pendiente", "type": "select",
+             "opciones": ["true", "false"]},
+        ],
+    },
+    "extracto_pagos": {
+        "label": "Extracto Histórico de Pagos (hasta 20 años)",
+        "columnas": [
+            {"key": "fecha", "label": "Fecha"},
+            {"key": "expediente", "label": "Expediente"},
+            {"key": "paciente_nombre", "label": "Paciente"},
+            {"key": "tipo", "label": "Tipo"},
+            {"key": "numero_documento", "label": "Documento"},
+            {"key": "concepto", "label": "Concepto"},
+            {"key": "metodo_pago", "label": "Método"},
+            {"key": "debe", "label": "Debe (Bs.)"},
+            {"key": "haber", "label": "Haber (Bs.)"},
+        ],
+        "filtros": [
+            {"key": "fecha_desde", "label": "Fecha Desde", "type": "date"},
+            {"key": "fecha_hasta", "label": "Fecha Hasta", "type": "date"},
+            {"key": "tipo", "label": "Tipo", "type": "select", "opciones": ["CARGO", "ABONO", "AJUSTE"]},
+            {"key": "metodo_pago", "label": "Método", "type": "select",
+             "opciones": ["EFECTIVO", "QR_BANCARIO", "TRANSFERENCIA", "TARJETA_STRIPE"]},
+            {"key": "paciente_id", "label": "Paciente", "type": "text"},
+        ],
+    },
+    "liquidaciones": {
+        "label": "Liquidaciones de Honorarios (Bs.)",
+        "columnas": [
+            {"key": "codigo_liquidacion", "label": "Código"},
+            {"key": "psicologo_nombre", "label": "Psicólogo"},
+            {"key": "fecha_inicio", "label": "Periodo Desde"},
+            {"key": "fecha_fin", "label": "Periodo Hasta"},
+            {"key": "total_sesiones", "label": "Sesiones"},
+            {"key": "monto_bruto", "label": "Bruto (Bs.)"},
+            {"key": "comision_centro", "label": "Comisión Centro (Bs.)"},
+            {"key": "monto_neto_psicologo", "label": "Neto Psicólogo (Bs.)"},
+            {"key": "estado", "label": "Estado"},
+            {"key": "referencia_bancaria", "label": "Ref. Bancaria"},
+        ],
+        "filtros": [
+            {"key": "fecha_desde", "label": "Fecha Desde", "type": "date"},
+            {"key": "fecha_hasta", "label": "Fecha Hasta", "type": "date"},
+            {"key": "estado", "label": "Estado", "type": "select", "opciones": ["GENERADA", "PAGADA", "ANULADA"]},
+            {"key": "psicologo_id", "label": "Psicólogo", "type": "text"},
+        ],
+    },
+    "alertas_riesgo_ia": {
+        "label": "Alertas Longitudinales de Riesgo IA",
+        "columnas": [
+            {"key": "fecha_deteccion", "label": "Fecha Detección"},
+            {"key": "expediente", "label": "Expediente"},
+            {"key": "paciente_nombre", "label": "Paciente"},
+            {"key": "tipo", "label": "Tipo Riesgo"},
+            {"key": "severidad", "label": "Severidad"},
+            {"key": "score_riesgo", "label": "Score (0-100)"},
+            {"key": "estado", "label": "Estado"},
+            {"key": "nota_intervencion", "label": "Intervención Clínica"},
+        ],
+        "filtros": [
+            {"key": "severidad", "label": "Severidad", "type": "select", "opciones": ["CRITICO", "ALTO", "MEDIO", "BAJO"]},
+            {"key": "estado", "label": "Estado", "type": "select", "opciones": ["ABIERTA", "EN_ATENCION", "RESUELTA", "DESCARTADA"]},
+            {"key": "fecha_desde", "label": "Fecha Desde", "type": "date"},
+            {"key": "fecha_hasta", "label": "Fecha Hasta", "type": "date"},
+        ],
+    },
+    "resumenes_ia": {
+        "label": "Auditoría de Resúmenes Clínicos IA (HITL)",
+        "columnas": [
+            {"key": "fecha_generacion", "label": "Fecha Generación"},
+            {"key": "expediente", "label": "Expediente"},
+            {"key": "paciente_nombre", "label": "Paciente"},
+            {"key": "estado", "label": "Estado HITL"},
+            {"key": "fuente_modelo", "label": "Modelo"},
+            {"key": "total_notas_analizadas", "label": "Notas Analizadas"},
+            {"key": "hash_sha256", "label": "Hash SHA-256"},
+        ],
+        "filtros": [
+            {"key": "estado", "label": "Estado", "type": "select", "opciones": ["BORRADOR_IA", "APROBADO_HITL", "DESCARTADO"]},
+            {"key": "fecha_desde", "label": "Fecha Desde", "type": "date"},
+            {"key": "fecha_hasta", "label": "Fecha Hasta", "type": "date"},
+        ],
+    },
+    "facturas_saas": {
+        "label": "Facturación SaaS por Centro (USD)",
+        "columnas": [
+            {"key": "fecha_emision", "label": "Fecha Emisión"},
+            {"key": "numero_factura", "label": "N° Factura"},
+            {"key": "tenant_nombre", "label": "Centro Psicológico"},
+            {"key": "plan", "label": "Plan"},
+            {"key": "monto_usd", "label": "Monto (USD)"},
+            {"key": "estado", "label": "Estado"},
+            {"key": "stripe_session_id", "label": "Stripe Session"},
+        ],
+        "filtros": [
+            {"key": "estado", "label": "Estado", "type": "select", "opciones": ["PAGADA", "PENDIENTE", "FALLIDA", "ANULADA"]},
+            {"key": "plan", "label": "Plan", "type": "select", "opciones": ["basico", "profesional", "empresarial"]},
+        ],
+    },
 }
 
 
@@ -217,10 +350,11 @@ class ReportEngine:
                 for k, v in FUENTES_DISPONIBLES.items()}
 
     @classmethod
-    def generar(cls, fuente, columnas=None, filtros=None, orden=None):
+    def generar(cls, fuente, columnas=None, filtros=None, orden=None, page=None, page_size=None):
         """
         Genera un reporte según la fuente, columnas, filtros y orden.
-        Retorna: { "columnas": [...], "datos": [[...], ...], "total": int, "resumen": {} }
+        Soporta paginación opcional (page, page_size) para consultas web grandes.
+        Retorna: { "columnas": [...], "datos": [...], "total": int, "resumen": {} }
         """
         filtros = filtros or {}
         handler = {
@@ -232,6 +366,13 @@ class ReportEngine:
             "teleconsultas": cls._reporte_teleconsultas,
             "bitacora": cls._reporte_bitacora,
             "usuarios": cls._reporte_usuarios,
+            "pagos": cls._reporte_pagos,
+            "cuentas_pacientes": cls._reporte_cuentas_pacientes,
+            "extracto_pagos": cls._reporte_extracto_pagos,
+            "liquidaciones": cls._reporte_liquidaciones,
+            "alertas_riesgo_ia": cls._reporte_alertas_riesgo_ia,
+            "resumenes_ia": cls._reporte_resumenes_ia,
+            "facturas_saas": cls._reporte_facturas_saas,
         }.get(fuente)
         if not handler:
             raise ValueError(f"Fuente de datos '{fuente}' no reconocida.")
@@ -260,12 +401,29 @@ class ReportEngine:
             reverse = orden.get("direccion", "ASC").upper() == "DESC"
             datos_filtrados.sort(key=lambda x: _safe_str(x.get(col_ord, "")), reverse=reverse)
 
-        return {
+        total = len(datos_filtrados)
+        paginacion = None
+        if page is not None and page_size is not None:
+            p = max(1, int(page))
+            ps = max(1, min(500, int(page_size)))
+            offset = (p - 1) * ps
+            datos_filtrados = datos_filtrados[offset: offset + ps]
+            paginacion = {
+                "page": p,
+                "page_size": ps,
+                "total_registros": total,
+                "total_paginas": max(1, (total + ps - 1) // ps),
+            }
+
+        resp = {
             "columnas": col_defs,
             "datos": datos_filtrados,
-            "total": len(datos_filtrados),
+            "total": total,
             "resumen": resumen,
         }
+        if paginacion:
+            resp["paginacion"] = paginacion
+        return resp
 
     # ─────────────────────── CITAS ───────────────────────
     @classmethod
@@ -381,6 +539,7 @@ class ReportEngine:
 
         return filas, {"total_registros": len(filas)}
 
+
     # ─────────────────────── PACIENTES ───────────────────────
     @classmethod
     def _reporte_pacientes(cls, filtros):
@@ -418,6 +577,7 @@ class ReportEngine:
             })
 
         return filas, {"total_registros": len(filas)}
+
 
     # ─────────────────────── ALERTAS ───────────────────────
     @classmethod
@@ -535,6 +695,7 @@ class ReportEngine:
 
         return filas, {"total_registros": len(filas)}
 
+
     # ─────────────────────── BITÁCORA ───────────────────────
     @classmethod
     def _reporte_bitacora(cls, filtros):
@@ -579,6 +740,7 @@ class ReportEngine:
 
         return filas, {"total_registros": len(filas)}
 
+
     # ─────────────────────── USUARIOS ───────────────────────
     @classmethod
     def _reporte_usuarios(cls, filtros):
@@ -601,3 +763,229 @@ class ReportEngine:
             })
 
         return filas, {"total_registros": len(filas)}
+
+
+    # ─────────────────────── PAGOS CAJA (Bs.) ───────────────────────
+    @classmethod
+    def _reporte_pagos(cls, filtros):
+        qs = PagoConsulta.objects.filter(anulado=False).select_related(
+            "cuenta__paciente__usuario", "registrado_por"
+        )
+        if filtros.get("fecha_desde"):
+            qs = qs.filter(fecha_pago__date__gte=filtros["fecha_desde"])
+        if filtros.get("fecha_hasta"):
+            qs = qs.filter(fecha_pago__date__lte=filtros["fecha_hasta"])
+        if filtros.get("metodo_pago"):
+            qs = qs.filter(metodo_pago=filtros["metodo_pago"].upper())
+        if filtros.get("paciente_id"):
+            val = str(filtros["paciente_id"]).strip()
+            q = Q(cuenta__paciente__usuario__nombre__icontains=val) | Q(cuenta__paciente__usuario__apellido__icontains=val)
+            try:
+                q |= Q(cuenta__paciente_id=uuid.UUID(val))
+            except (ValueError, TypeError):
+                pass
+            qs = qs.filter(q)
+
+        filas = []
+        total_bob = Decimal("0.00")
+        for p in qs.order_by("-fecha_pago"):
+            pac = p.cuenta.paciente
+            total_bob += p.monto
+            filas.append({
+                "fecha_pago": timezone.localtime(p.fecha_pago).strftime("%Y-%m-%d %H:%M"),
+                "numero_recibo": p.numero_recibo,
+                "paciente_nombre": f"{pac.usuario.nombre} {pac.usuario.apellido}".strip(),
+                "expediente": pac.codigo_expediente,
+                "metodo_pago": p.metodo_pago,
+                "monto": float(p.monto),
+                "referencia_externa": p.referencia_externa or "-",
+                "registrado_por": f"{p.registrado_por.nombre} {p.registrado_por.apellido}".strip() if p.registrado_por else "Sistema",
+            })
+        return filas, {"total_pagos": len(filas), "total_recaudado_bob": round(float(total_bob), 2)}
+
+    # ─────────────────────── CUENTAS PACIENTES ───────────────────────
+    @classmethod
+    def _reporte_cuentas_pacientes(cls, filtros):
+        qs = CuentaPaciente.objects.select_related("paciente__usuario").all()
+        if str(filtros.get("solo_deudores", "")).lower() in ("true", "1"):
+            qs = qs.filter(saldo_pendiente__gt=0)
+
+        filas = []
+        total_por_cobrar = Decimal("0.00")
+        for c in qs.order_by("-saldo_pendiente"):
+            total_por_cobrar += c.saldo_pendiente
+            filas.append({
+                "expediente": c.paciente.codigo_expediente,
+                "paciente_nombre": f"{c.paciente.usuario.nombre} {c.paciente.usuario.apellido}".strip(),
+                "total_cargado": float(c.total_cargado),
+                "total_pagado": float(c.total_pagado),
+                "saldo_pendiente": float(c.saldo_pendiente),
+                "ultima_actualizacion": timezone.localtime(c.ultima_actualizacion).strftime("%Y-%m-%d %H:%M"),
+            })
+        return filas, {"total_cuentas": len(filas), "cartera_por_cobrar_bob": round(float(total_por_cobrar), 2)}
+
+    # ─────────────────────── EXTRACTO HISTÓRICO PAGOS ───────────────────────
+    @classmethod
+    def _reporte_extracto_pagos(cls, filtros):
+        qs = MovimientoFinanciero.objects.select_related("cuenta__paciente__usuario").all()
+        if filtros.get("fecha_desde"):
+            qs = qs.filter(fecha_movimiento__date__gte=filtros["fecha_desde"])
+        if filtros.get("fecha_hasta"):
+            qs = qs.filter(fecha_movimiento__date__lte=filtros["fecha_hasta"])
+        if filtros.get("tipo"):
+            qs = qs.filter(tipo=filtros["tipo"].upper())
+        if filtros.get("metodo_pago"):
+            qs = qs.filter(metodo_pago=filtros["metodo_pago"].upper())
+        if filtros.get("paciente_id"):
+            val = str(filtros["paciente_id"]).strip()
+            q = Q(cuenta__paciente__usuario__nombre__icontains=val) | Q(cuenta__paciente__usuario__apellido__icontains=val)
+            try:
+                q |= Q(cuenta__paciente_id=uuid.UUID(val))
+            except (ValueError, TypeError):
+                pass
+            qs = qs.filter(q)
+
+        filas = []
+        total_debe = Decimal("0.00")
+        total_haber = Decimal("0.00")
+        for m in qs.order_by("fecha_movimiento", "fecha_creacion").iterator(chunk_size=1000):
+            pac = m.cuenta.paciente
+            total_debe += m.debe
+            total_haber += m.haber
+            filas.append({
+                "fecha": timezone.localtime(m.fecha_movimiento).strftime("%Y-%m-%d %H:%M"),
+                "expediente": pac.codigo_expediente,
+                "paciente_nombre": f"{pac.usuario.nombre} {pac.usuario.apellido}".strip(),
+                "tipo": m.tipo,
+                "numero_documento": m.numero_documento or "-",
+                "concepto": m.concepto,
+                "metodo_pago": m.metodo_pago or "-",
+                "debe": float(m.debe),
+                "haber": float(m.haber),
+            })
+        return filas, {
+            "total_movimientos": len(filas),
+            "total_debe_bob": round(float(total_debe), 2),
+            "total_haber_bob": round(float(total_haber), 2),
+            "saldo_neto_bob": round(float(total_debe - total_haber), 2),
+        }
+
+    # ─────────────────────── LIQUIDACIONES HONORARIOS ───────────────────────
+    @classmethod
+    def _reporte_liquidaciones(cls, filtros):
+        qs = LiquidacionHonorario.objects.select_related("psicologo__usuario").all()
+        if filtros.get("fecha_desde"):
+            qs = qs.filter(fecha_inicio__gte=filtros["fecha_desde"])
+        if filtros.get("fecha_hasta"):
+            qs = qs.filter(fecha_fin__lte=filtros["fecha_hasta"])
+        if filtros.get("estado"):
+            qs = qs.filter(estado=filtros["estado"].upper())
+        if filtros.get("psicologo_id"):
+            val = str(filtros["psicologo_id"]).strip()
+            q = Q(psicologo__usuario__nombre__icontains=val) | Q(psicologo__usuario__apellido__icontains=val)
+            try:
+                q |= Q(psicologo_id=uuid.UUID(val))
+            except (ValueError, TypeError):
+                pass
+            qs = qs.filter(q)
+
+        filas = []
+        tot_bruto = Decimal("0.00")
+        tot_neto = Decimal("0.00")
+        for l in qs.order_by("-fecha_emision"):
+            if l.estado != "ANULADA":
+                tot_bruto += l.monto_bruto
+                tot_neto += l.monto_neto_psicologo
+            filas.append({
+                "codigo_liquidacion": l.codigo_liquidacion,
+                "psicologo_nombre": f"Lic. {l.psicologo.usuario.nombre} {l.psicologo.usuario.apellido}".strip(),
+                "fecha_inicio": l.fecha_inicio.isoformat(),
+                "fecha_fin": l.fecha_fin.isoformat(),
+                "total_sesiones": l.total_sesiones,
+                "monto_bruto": float(l.monto_bruto),
+                "comision_centro": float(l.comision_centro),
+                "monto_neto_psicologo": float(l.monto_neto_psicologo),
+                "estado": l.estado,
+                "referencia_bancaria": l.referencia_bancaria or "-",
+            })
+        return filas, {
+            "total_liquidaciones": len(filas),
+            "monto_bruto_bob": round(float(tot_bruto), 2),
+            "total_honorarios_psicologos_bob": round(float(tot_neto), 2),
+        }
+
+    # ─────────────────────── ALERTAS RIESGO IA ───────────────────────
+    @classmethod
+    def _reporte_alertas_riesgo_ia(cls, filtros):
+        qs = AlertaRiesgoIA.objects.select_related("paciente__usuario").all()
+        if filtros.get("severidad"):
+            qs = qs.filter(severidad=filtros["severidad"].upper())
+        if filtros.get("estado"):
+            qs = qs.filter(estado=filtros["estado"].upper())
+        if filtros.get("fecha_desde"):
+            qs = qs.filter(fecha_deteccion__date__gte=filtros["fecha_desde"])
+        if filtros.get("fecha_hasta"):
+            qs = qs.filter(fecha_deteccion__date__lte=filtros["fecha_hasta"])
+
+        filas = []
+        for a in qs.order_by("-score_riesgo", "-fecha_deteccion"):
+            filas.append({
+                "fecha_deteccion": timezone.localtime(a.fecha_deteccion).strftime("%Y-%m-%d %H:%M"),
+                "expediente": a.paciente.codigo_expediente,
+                "paciente_nombre": f"{a.paciente.usuario.nombre} {a.paciente.usuario.apellido}".strip(),
+                "tipo": a.tipo,
+                "severidad": a.severidad,
+                "score_riesgo": a.score_riesgo,
+                "estado": a.estado,
+                "nota_intervencion": a.nota_intervencion or "-",
+            })
+        return filas, {"total_alertas_riesgo": len(filas)}
+
+    # ─────────────────────── RESÚMENES CLÍNICOS IA ───────────────────────
+    @classmethod
+    def _reporte_resumenes_ia(cls, filtros):
+        qs = ResumenClinicoIA.objects.select_related("paciente__usuario").all()
+        if filtros.get("estado"):
+            qs = qs.filter(estado=filtros["estado"].upper())
+        if filtros.get("fecha_desde"):
+            qs = qs.filter(fecha_generacion__date__gte=filtros["fecha_desde"])
+        if filtros.get("fecha_hasta"):
+            qs = qs.filter(fecha_generacion__date__lte=filtros["fecha_hasta"])
+
+        filas = []
+        for r in qs.order_by("-fecha_generacion"):
+            filas.append({
+                "fecha_generacion": timezone.localtime(r.fecha_generacion).strftime("%Y-%m-%d %H:%M"),
+                "expediente": r.paciente.codigo_expediente,
+                "paciente_nombre": f"{r.paciente.usuario.nombre} {r.paciente.usuario.apellido}".strip(),
+                "estado": r.estado,
+                "fuente_modelo": r.fuente_modelo,
+                "total_notas_analizadas": r.total_notas_analizadas,
+                "hash_sha256": r.hash_sha256[:16] + "...",
+            })
+        return filas, {"total_resumenes_ia": len(filas)}
+
+    # ─────────────────────── FACTURAS SAAS (USD - PUBLIC) ───────────────────────
+    @classmethod
+    def _reporte_facturas_saas(cls, filtros):
+        qs = FacturaSaaS.objects.select_related("tenant", "suscripcion").all()
+        if filtros.get("estado"):
+            qs = qs.filter(estado=filtros["estado"].upper())
+        if filtros.get("plan"):
+            qs = qs.filter(plan=filtros["plan"].lower())
+
+        filas = []
+        total_usd = Decimal("0.00")
+        for f in qs.order_by("-fecha_emision"):
+            if f.estado == "PAGADA":
+                total_usd += f.monto_usd
+            filas.append({
+                "fecha_emision": timezone.localtime(f.fecha_emision).strftime("%Y-%m-%d %H:%M"),
+                "numero_factura": f.numero_factura,
+                "tenant_nombre": f.tenant.nombre if f.tenant else f.suscripcion.nombre_centro,
+                "plan": f.plan,
+                "monto_usd": float(f.monto_usd),
+                "estado": f.estado,
+                "stripe_session_id": f.stripe_session_id,
+            })
+        return filas, {"total_facturas": len(filas), "total_facturado_usd": round(float(total_usd), 2)}

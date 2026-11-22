@@ -82,6 +82,14 @@ class PsicologoViewSet(viewsets.ModelViewSet):
 
         return qs.distinct()
 
+    def create(self, request, *args, **kwargs):
+        # HU-55 (b): Validar cupo máximo de psicólogos activos según plan SaaS del tenant
+        from subscriptions.quotas import validar_cupo_psicologos
+        ok, err_payload = validar_cupo_psicologos(getattr(request, 'tenant', None))
+        if not ok:
+            return Response(err_payload, status=status.HTTP_403_FORBIDDEN)
+        return super().create(request, *args, **kwargs)
+
     def update(self, request, *args, **kwargs):
         kwargs['partial'] = True
         return super().update(request, *args, **kwargs)
@@ -177,6 +185,14 @@ class PacienteViewSet(viewsets.ModelViewSet):
             )
 
         return qs
+
+    def create(self, request, *args, **kwargs):
+        # HU-55 (b): Validar cupo máximo de pacientes según plan SaaS del tenant
+        from subscriptions.quotas import validar_cupo_pacientes
+        ok, err_payload = validar_cupo_pacientes(getattr(request, 'tenant', None))
+        if not ok:
+            return Response(err_payload, status=status.HTTP_403_FORBIDDEN)
+        return super().create(request, *args, **kwargs)
 
     def update(self, request, *args, **kwargs):
         kwargs['partial'] = True

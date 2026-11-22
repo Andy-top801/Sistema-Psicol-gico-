@@ -1137,4 +1137,164 @@ class SugerenciaMatching(models.Model):
             ]
 
 
+# ==============================================================================
+# SPRINT 4: RESUMEN CLÍNICO LONGITUDINAL POR IA CON HITL (CU23 / HU-49)
+# ==============================================================================
+class ResumenClinicoIA(models.Model):
+    ESTADO_CHOICES = [
+        ('BORRADOR_IA', 'Borrador IA — Requiere Revisión Profesional'),
+        ('APROBADO_HITL', 'Aprobado por Profesional (HITL)'),
+        ('DESCARTADO', 'Descartado'),
+    ]
+
+    FUENTE_CHOICES = [
+        ('HUGGINGFACE', 'Hugging Face Space'),
+        ('FALLBACK_LOCAL', 'Fallback Extractivo Determinístico'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    paciente = models.ForeignKey(
+        Paciente,
+        on_delete=models.CASCADE,
+        related_name='resumenes_ia',
+        verbose_name='Paciente',
+    )
+    historia_clinica = models.ForeignKey(
+        HistoriaClinica,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='resumenes_ia',
+        verbose_name='Historia Clínica',
+    )
+    estado = models.CharField(
+        max_length=20,
+        choices=ESTADO_CHOICES,
+        default='BORRADOR_IA',
+        verbose_name='Estado HITL',
+    )
+    fuente_modelo = models.CharField(
+        max_length=25,
+        choices=FUENTE_CHOICES,
+        default='FALLBACK_LOCAL',
+        verbose_name='Fuente de Generación',
+    )
+    etiqueta_cumplimiento = models.CharField(
+        max_length=120,
+        default='Borrador IA — Requiere Revisión Profesional',
+        verbose_name='Etiqueta de Cumplimiento',
+    )
+    contenido_estructurado = models.JSONField(
+        default=dict,
+        verbose_name='Secciones del Resumen (Motivo, SOAP, Mood, Tareas)',
+    )
+    texto_resumen = models.TextField(verbose_name='Texto Consolidado del Resumen')
+    hash_sha256 = models.CharField(max_length=64, verbose_name='Hash SHA-256 de Integridad')
+    total_notas_analizadas = models.PositiveIntegerField(default=0, verbose_name='Notas/Evoluciones Analizadas')
+    generado_por = models.ForeignKey(
+        Usuario,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='resumenes_ia_generados',
+        verbose_name='Generado Por',
+    )
+    aprobado_por = models.ForeignKey(
+        Usuario,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='resumenes_ia_aprobados',
+        verbose_name='Aprobado Por (HITL)',
+    )
+    fecha_generacion = models.DateTimeField(auto_now_add=True)
+    fecha_aprobacion = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'clinica_resumenclinicoia'
+        verbose_name = 'Resumen Clínico IA (HITL)'
+        verbose_name_plural = 'Resúmenes Clínicos IA (HITL)'
+        ordering = ['-fecha_generacion']
+        indexes = [
+            models.Index(fields=['paciente', 'estado'], name='idx_resumenia_pac_est'),
+            models.Index(fields=['fecha_generacion'], name='idx_resumenia_fecha'),
+        ]
+
+    def __str__(self):
+        return f"Resumen IA {self.paciente.codigo_expediente} ({self.estado})"
+
+
+# ==============================================================================
+# SPRINT 4: DETECCIÓN LONGITUDINAL DE RIESGO Y CONSOLA DE ALERTAS (CU24 / HU-50, HU-51)
+# ==============================================================================
+class AlertaRiesgoIA(models.Model):
+    TIPO_CHOICES = [
+        ('RIESGO_VITAL', 'Riesgo Vital / Autolítico'),
+        ('RETROCESO_AGUDO', 'Retroceso Clínico Agudo'),
+        ('RIESGO_ABANDONO', 'Riesgo de Deserción / Abandono'),
+        ('CAIDA_ADHERENCIA', 'Caída de Adherencia Terapéutica'),
+    ]
+
+    SEVERIDAD_CHOICES = [
+        ('BAJO', 'Bajo'),
+        ('MEDIO', 'Medio'),
+        ('ALTO', 'Alto'),
+        ('CRITICO', 'Crítico'),
+    ]
+
+    ESTADO_CHOICES = [
+        ('ABIERTA', 'Abierta'),
+        ('EN_ATENCION', 'En Atención'),
+        ('RESUELTA', 'Resuelta'),
+        ('DESCARTADA', 'Descartada'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    paciente = models.ForeignKey(
+        Paciente,
+        on_delete=models.CASCADE,
+        related_name='alertas_riesgo_ia',
+        verbose_name='Paciente',
+    )
+    tipo = models.CharField(max_length=25, choices=TIPO_CHOICES, verbose_name='Tipo de Alerta')
+    score_riesgo = models.PositiveSmallIntegerField(default=0, verbose_name='Score de Riesgo (0-100)')
+    severidad = models.CharField(max_length=15, choices=SEVERIDAD_CHOICES, default='MEDIO', verbose_name='Severidad')
+    estado = models.CharField(max_length=15, choices=ESTADO_CHOICES, default='ABIERTA', verbose_name='Estado Operativo')
+    factores_detectados = models.JSONField(default=list, verbose_name='Desglose de Factores Detectados')
+    explicacion = models.TextField(verbose_name='Explicabilidad Clínica de la Alerta')
+    nota_intervencion = models.TextField(blank=True, default='', verbose_name='Bitácora de Intervención Clínica')
+    atendido_por = models.ForeignKey(
+        Usuario,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='alertas_riesgo_atendidas',
+        verbose_name='Responsable de Intervención',
+    )
+    fecha_deteccion = models.DateTimeField(default=timezone.now, verbose_name='Fecha de Detección')
+    ultima_evaluacion = models.DateTimeField(auto_now=True, verbose_name='Última Re-evaluación')
+    fecha_resolucion = models.DateTimeField(null=True, blank=True, verbose_name='Fecha de Resolución')
+
+    class Meta:
+        db_table = 'clinica_alertariesgoia'
+        verbose_name = 'Alerta Longitudinal de Riesgo IA'
+        verbose_name_plural = 'Alertas Longitudinales de Riesgo IA'
+        ordering = ['-score_riesgo', '-fecha_deteccion']
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(score_riesgo__gte=0) & models.Q(score_riesgo__lte=100),
+                name='chk_alertariesgo_score_0_100',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['estado', 'severidad', 'score_riesgo'], name='idx_alertaia_est_sev_scr'),
+            models.Index(fields=['paciente', 'tipo', 'estado'], name='idx_alertaia_pac_tip_est'),
+            models.Index(fields=['fecha_deteccion'], name='idx_alertaia_fecha'),
+        ]
+
+    def __str__(self):
+        return f"[{self.severidad}] {self.tipo} ({self.score_riesgo}/100) — {self.paciente.codigo_expediente}"
+
+
+
 
