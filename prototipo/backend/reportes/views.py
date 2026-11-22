@@ -3,18 +3,86 @@
 # DESCRIPCIÓN: Endpoints REST para el módulo de Reportes Personalizables.
 #              Acceso restringido a SuperAdmin y Admin Centro.
 # ==============================================================================
+import re
+import unicodedata
+from contextlib import nullcontext
+
+from django_tenants.utils import get_public_schema_name, schema_context
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-from accounts.permissions import EsAdminCentro
+from accounts.permissions import EsAdminCentro, EsSuperAdmin
 from audit.permissions import AuditDeveloperPermission
+from tenants.models import Tenant
 from .services import ReportEngine, FUENTES_DISPONIBLES
 
 
 class ReportesPermission:
     """Mixin: permite SuperAdmin O Admin Centro."""
     permission_classes = [EsAdminCentro]
+
+
+# Palabras genéricas que se ignoran al comparar nombres: "Clínica Esperanza" == "esperanza".
+_RELLENO_CLINICA = {"clinica", "centro", "y", "psicologico", "psicologica", "psicologia", "de", "del", "la", "el", "los", "las"}
+
+
+def _normalizar_clinica(texto):
+    texto = unicodedata.normalize("NFKD", texto or "").encode("ascii", "ignore").decode().lower()
+    return " ".join(w for w in re.findall(r"[a-z0-9]+", texto) if w not in _RELLENO_CLINICA)
+
+
+def resolver_clinica(request):
+    """
+    El SuperAdmin puede pedir el reporte de una clínica concreta enviando "clinica" (nombre o slug).
+    Devuelve (tenant | None, Response de error | None). Un Admin de Centro nunca puede saltar a otro tenant.
+    """
+    nombre = str(request.data.get("clinica") or "").strip()
+    if not nombre:
+        return None, None
+    if not EsSuperAdmin().has_permission(request, None):
+        return None, Response(
+            {"error": "Solo el SuperAdmin puede elegir la clínica del reporte."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    buscado = _normalizar_clinica(nombre)
+    tenants = list(Tenant.objects.exclude(schema_name=get_public_schema_name()))
+    if not buscado:
+        candidatos = []
+    else:
+        exactos = [t for t in tenants if buscado in (_normalizar_clinica(t.nombre), _normalizar_clinica(t.slug))]
+        candidatos = exactos or [
+            t for t in tenants
+            if buscado in _normalizar_clinica(t.nombre) or buscado in _normalizar_clinica(t.slug)
+        ]
+
+    if not candidatos:
+        return None, Response(
+            {"error": f"No se encontró la clínica '{nombre}'.", "clinicas_disponibles": sorted(t.nombre for t in tenants)},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+    if len(candidatos) > 1:
+        return None, Response(
+            {"error": f"'{nombre}' coincide con varias clínicas, sé más específico.", "clinicas_disponibles": sorted(t.nombre for t in candidatos)},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    tenant = candidatos[0]
+    if not tenant.activo:
+        return None, Response(
+            {"error": f"La clínica '{tenant.nombre}' está suspendida o inactiva."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+    return tenant, None
+
+
+def generar_en_clinica(tenant, *args):
+    """Ejecuta el ReportEngine dentro del esquema de la clínica elegida (o el del request si no se eligió)."""
+    with schema_context(tenant.schema_name) if tenant else nullcontext():
+        resultado = ReportEngine.generar(*args)
+    if tenant:
+        resultado["clinica"] = tenant.nombre
+    return resultado
 
 
 # ─────────────────────────────────────────────────────────────
@@ -138,14 +206,18 @@ class ReportePersonalizadoView(ReportesPermission, APIView):
         orden = request.data.get("orden")
         formato = (request.data.get("formato") or "").upper()
 
+        clinica, error = resolver_clinica(request)
+        if error:
+            return error
+        tenant_obj = clinica or getattr(request, 'tenant', None)
+
         try:
             # CU25 Pasos 8 a 12: construir_query_dinamico y proyectar dataset relacional
-            resultado = ReportEngine.generar(fuente, columnas, filtros, orden)
+            resultado = generar_en_clinica(clinica, fuente, columnas, filtros, orden)
 
             # CU25 Pasos 13a a 17a: Canal Descarga Directa Excel (.xlsx con OpenPyXL)
             if formato in ["EXCEL", "XLSX"]:
                 from .exporters import ExcelExporter
-                tenant_obj = getattr(request, 'tenant', None)
                 nombre_centro = tenant_obj.nombre if tenant_obj else "Centro Psicológico"
                 response = ExcelExporter.generar(resultado, fuente, tenant_name=nombre_centro)
                 response['Content-Disposition'] = f'attachment; filename="reporte_{fuente}.xlsx"'
@@ -188,7 +260,6 @@ class ReportePersonalizadoView(ReportesPermission, APIView):
 
                 try:
                     from .exporters import ExcelExporter
-                    tenant_obj = getattr(request, 'tenant', None)
                     nombre_centro = tenant_obj.nombre if tenant_obj else "Centro Psicológico"
                     excel_resp = ExcelExporter.generar(resultado, fuente, tenant_name=nombre_centro)
                     msg.attach(f"reporte_{fuente}.xlsx", excel_resp.content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
@@ -355,8 +426,12 @@ class ReporteEmailView(ReportesPermission, APIView):
         filtros = request.data.get("filtros", {})
         columnas = request.data.get("columnas")
 
+        clinica, error = resolver_clinica(request)
+        if error:
+            return error
+
         try:
-            resultado = ReportEngine.generar(fuente, columnas, filtros, None)
+            resultado = generar_en_clinica(clinica, fuente, columnas, filtros, None)
             from .exporters import HTMLExporter
             html_content = HTMLExporter.generar(resultado, titulo=asunto)
 

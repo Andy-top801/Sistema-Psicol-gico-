@@ -14,3 +14,8 @@ stripe>=8.0.0
 requests>=2.31.0
 reportlab>=4.0.0
 openpyxl>=3.1.2
+# CU21 / HU-47: IA zero-shot (torch CPU se instala aparte en el Dockerfile desde el índice CPU)
+torch==2.7.1  # 2.15 no instala en Windows con rutas largas (WinError 206)
+transformers>=4.44,<5
+sentencepiece>=0.2.0
+protobuf>=4.25

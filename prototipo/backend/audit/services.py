@@ -68,6 +68,23 @@ def log_event(**kwargs):
         print(f"[AUDIT WARN] No se pudo escribir evento: {e}")
 
 
+class AuditLog:
+    """CE_AuditLog — bitácora cifrada (Fernet) de eventos de negocio."""
+
+    @staticmethod
+    def registrar_acceso(evento: str, ip: str, **datos) -> bool:
+        """
+        CU11-paso 14 / CU13-paso 17 / CU17-paso 15: registrar_acceso(evento, ip) → CE_AuditLog
+        CU11-paso 15 / CU13-paso 18 / CU17-paso 16: acceso_auditado() [retorno]
+        """
+        try:
+            write_event({"evento": evento, "action": evento, "ip": ip, **datos})
+            return True
+        except Exception as e:
+            print(f"[AUDIT WARN] No se pudo auditar {evento}: {e}")
+            return False
+
+
 def read_events(log_date=None):
     """
     CU5 Pasos 5b a 8b:

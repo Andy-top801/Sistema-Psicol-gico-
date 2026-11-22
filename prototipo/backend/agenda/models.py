@@ -101,6 +101,20 @@ class Cita(models.Model):
         )
         return (cita_dt - ahora).total_seconds() / 3600.0
 
+    @classmethod
+    def obtener_detalle_cita(cls, cita_id) -> dict:
+        """CU12-paso 4: obtener_detalle_cita(cita_id) → CU12-paso 5: detalle_cita(fecha, hora, psicologo) [retorno]."""
+        cita = cls.objects.select_related('psicologo__usuario').get(id=cita_id)
+        u = cita.psicologo.usuario
+        return {
+            "cita_id": str(cita.id),
+            "paciente_id": str(cita.paciente_id),
+            "fecha": cita.fecha,
+            "hora": cita.hora_inicio,
+            "psicologo": f"Lic. {u.nombre} {u.apellido}".strip(),
+            "modalidad": cita.modalidad,
+        }
+
     def permite_cancelacion(self, ahora=None) -> bool:
         """Verifica la politica de cancelacion anticipada (> 24 horas)."""
         if self.estado in ['CANCELADA', 'REALIZADA']:
@@ -112,6 +126,25 @@ class Cita(models.Model):
         self.estado = 'CANCELADA'
         self.motivo_cancelacion = motivo
         self.save(update_fields=['estado', 'motivo_cancelacion', 'fecha_modificacion'])
+
+    # ── CU11 Móvil · Secuencia mensajes 3-4 ─────────────────────────────────
+    @classmethod
+    def consultar_cita(cls, cita_id):
+        """CU11-paso 3: consultar_cita(cita_id) → CU11-paso 4: datos_cita(fecha, hora, estado) [retorno].
+        Bloquea la fila (SELECT FOR UPDATE) para que dos cancelaciones simultáneas no se crucen."""
+        return cls.objects.select_for_update().select_related(
+            'paciente__usuario', 'psicologo__usuario'
+        ).get(id=cita_id)
+
+    # ── CU11 Móvil · Secuencia mensajes 6-7 ─────────────────────────────────
+    def cambiar_estado_cita(self, nuevo_estado: str, motivo: str = ""):
+        """CU11-paso 6: cambiar_estado_cita('CANCELADA') → CU11-paso 7: cita_cancelada() [retorno]."""
+        if nuevo_estado == 'CANCELADA':
+            self.marcar_cancelada(motivo)
+        else:
+            self.estado = nuevo_estado
+            self.save(update_fields=['estado', 'fecha_modificacion'])
+        return self.estado
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -139,6 +172,9 @@ class Teleconsulta(models.Model):
     # HU-18 Paso 3: hora_fin_real y duracion_segundos se registran al finalizar la consulta
     hora_fin_real = models.DateTimeField(blank=True, null=True, verbose_name="Hora Fin Efectiva")
     duracion_segundos = models.IntegerField(default=0, verbose_name="Duración Total (segundos)")
+    # CU11-paso 10: la sala se invalida cuando la cita virtual se cancela
+    ESTADO_SALA_CHOICES = [('ACTIVA', 'Activa'), ('CANCELADA', 'Cancelada')]
+    estado_sala = models.CharField(max_length=12, choices=ESTADO_SALA_CHOICES, default='ACTIVA', verbose_name="Estado de la Sala")
 
     class Meta:
         db_table = "agenda_teleconsulta"
@@ -150,6 +186,13 @@ class Teleconsulta(models.Model):
 
     def __str__(self):
         return f"Teleconsulta Sala: {self.sala_id} (Cita: {self.cita.id})"
+
+    def cancelar_sala(self):
+        """CU11-paso 10: cancelar_sala() → CU11-paso 11: sala_cancelada() [retorno]. Revoca el token de acceso."""
+        self.estado_sala = 'CANCELADA'
+        self.jwt_room_token = None
+        self.save(update_fields=['estado_sala', 'jwt_room_token'])
+        return self.estado_sala
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -227,11 +270,25 @@ class NotificacionCita(models.Model):
         ('SMS', 'Mensaje SMS'),
     ]
 
+    ESTADO_CHOICES = [
+        ('PENDIENTE', 'Pendiente de despacho'),
+        ('ENVIADO', 'Enviado al dispositivo'),
+        ('FALLIDO', 'Fallido'),
+    ]
+
+    # CU12: máximo de reintentos antes de abandonar un recordatorio fallido
+    MAX_INTENTOS = 3
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     cita = models.ForeignKey(Cita, on_delete=models.CASCADE, related_name="notificaciones", verbose_name="Cita Asociada")
     tipo_evento = models.CharField(max_length=30, choices=TIPO_EVENTO_CHOICES, verbose_name="Tipo de Evento")
     canal = models.CharField(max_length=20, choices=CANAL_CHOICES, default='PUSH_FCM', verbose_name="Canal de Despacho")
+    estado = models.CharField(max_length=15, choices=ESTADO_CHOICES, default='PENDIENTE', verbose_name="Estado del Despacho")
     enviada = models.BooleanField(default=False, verbose_name="¿Notificación Enviada?")
+    titulo = models.CharField(max_length=120, blank=True, default="", verbose_name="Título de la Push")
+    cuerpo = models.TextField(blank=True, default="", verbose_name="Cuerpo de la Push")
+    message_id = models.CharField(max_length=200, blank=True, default="", verbose_name="ID de Mensaje FCM")
+    leida = models.BooleanField(default=False, verbose_name="¿Leída por el Paciente?")
     fecha_programada = models.DateTimeField(verbose_name="Fecha Programada de Envío")
     fecha_envio = models.DateTimeField(null=True, blank=True, verbose_name="Fecha Real de Envío")
     error_log = models.TextField(null=True, blank=True, verbose_name="Registro de Error")
@@ -245,8 +302,87 @@ class NotificacionCita(models.Model):
         indexes = [
             models.Index(fields=['fecha_programada', 'enviada'], name='idx_notif_prog_env'),
         ]
+        constraints = [
+            # Idempotencia del Cron: un solo recordatorio de cada tipo por cita
+            models.UniqueConstraint(fields=['cita', 'tipo_evento'], name='uq_notif_cita_tipo'),
+        ]
 
     def __str__(self):
-        status = 'Enviada' if self.enviada else 'Pendiente'
-        return f"[{self.tipo_evento}] Cita {self.cita.id} ({status} - {self.fecha_programada})"
+        return f"[{self.tipo_evento}] Cita {self.cita_id} ({self.estado} - {self.fecha_programada})"
+
+    # ── CU12 · Secuencia mensajes 2-3 ────────────────────────────────────────
+    @classmethod
+    def seleccionar_citas_proximas(cls, ventana_24h=24, ventana_1h=1, ahora=None):
+        """
+        CU12-paso 2: seleccionar_citas_proximas(ventana_24h, ventana_1h)
+        CU12-paso 3: retorna citas_pendientes_notificar (lista de NotificacionCita PENDIENTE).
+
+        Encola un recordatorio por cada cita CONFIRMADA cuyo inicio cae dentro de una ventana:
+          - RECORDATORIO_24H: faltan entre ventana_1h y ventana_24h horas.
+          - RECORDATORIO_1H : faltan entre 0 y ventana_1h horas.
+        La UniqueConstraint (cita, tipo_evento) garantiza que el Cron no duplique avisos.
+        """
+        ahora = ahora or timezone.localtime()
+        hoy = timezone.localdate()
+        candidatas = Cita.objects.filter(
+            estado='CONFIRMADA',
+            fecha__gte=hoy,
+            fecha__lte=hoy + timedelta(days=2),
+        )
+        for cita in candidatas:
+            horas = cita.calcular_horas_restantes(ahora)
+            if 0 < horas <= ventana_1h:
+                tipo = 'RECORDATORIO_1H'
+            elif ventana_1h < horas <= ventana_24h:
+                tipo = 'RECORDATORIO_24H'
+            else:
+                continue
+            cls.objects.get_or_create(
+                cita=cita, tipo_evento=tipo,
+                defaults={'fecha_programada': ahora, 'canal': 'PUSH_FCM'}
+            )
+
+        return list(
+            cls.objects.filter(
+                estado__in=['PENDIENTE', 'FALLIDO'],
+                intentos_entrega__lt=cls.MAX_INTENTOS,
+                fecha_programada__lte=ahora,
+            ).filter(
+                models.Q(cita__estado='CONFIRMADA', tipo_evento__in=['RECORDATORIO_24H', 'RECORDATORIO_1H'])
+                | models.Q(cita__estado='CANCELADA', tipo_evento='CANCELACION')
+            ).select_related('cita')
+        )
+
+    # ── CU11 Móvil · Secuencia mensajes 12-13 ────────────────────────────────
+    EVENTOS_A_TIPO = {'CITA_CANCELADA': 'CANCELACION'}
+
+    @classmethod
+    def encolar_notificacion(cls, cita, evento='CITA_CANCELADA'):
+        """CU11-paso 12: encolar_notificacion('CITA_CANCELADA') → CU11-paso 13: notificacion_encolada() [retorno].
+        Queda PENDIENTE; el Cron de CU12 la despacha por FCM en su siguiente ciclo."""
+        notif, _ = cls.objects.get_or_create(
+            cita=cita, tipo_evento=cls.EVENTOS_A_TIPO[evento],
+            defaults={'fecha_programada': timezone.now(), 'canal': 'PUSH_FCM'}
+        )
+        return notif
+
+    # ── CU12 · Secuencia mensajes 14-15 ──────────────────────────────────────
+    def marcar_enviado(self, estado='ENVIADO', message_id=''):
+        """CU12-paso 14: marcar_enviado(cita_id, estado='ENVIADO') → CU12-paso 15: estado_actualizado() [retorno]."""
+        self.estado = estado
+        self.enviada = True
+        self.message_id = message_id or ''
+        self.fecha_envio = timezone.now()
+        self.intentos_entrega += 1
+        self.error_log = None
+        self.save(update_fields=['estado', 'enviada', 'message_id', 'fecha_envio', 'intentos_entrega', 'error_log'])
+        return self.estado
+
+    def registrar_fallo(self, error: str):
+        """Registra un intento fallido; el Cron reintentará hasta MAX_INTENTOS."""
+        self.estado = 'FALLIDO'
+        self.intentos_entrega += 1
+        self.error_log = error
+        self.save(update_fields=['estado', 'intentos_entrega', 'error_log'])
+        return self.estado
 

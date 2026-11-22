@@ -130,3 +130,20 @@ class IsReferralParticipant(IsTreatingPsychologistOrAdmin):
             except Exception:
                 pass
         return linked
+
+
+class EsCoordinadorClinico(BasePermission):
+    """
+    CU21 / CU22 (HU-47, HU-48): la consola de triaje IA y la asignación HITL son del
+    Coordinador Clínico (y Administrador del Centro / superusuario).
+    """
+    message = "Solo el Coordinador Clínico o el Administrador del Centro pueden operar el triaje IA."
+
+    def has_permission(self, request, view):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        if user.is_superuser:
+            return True
+        rol = (user.rol.nombre if user.rol else '').lower()
+        return 'coordin' in rol or 'admin' in rol or (user.rol and user.rol.nombre == Rol.SUPERADMIN)

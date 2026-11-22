@@ -123,7 +123,8 @@ class Sprint2Service {
   ) async {
     try {
       final url = Uri.parse(
-        '${authService.baseUrl}${ApiConstants.tareas}$tareaId/evidencia/',
+        // CU17-paso 2: POST /api/v1/clinica/tareas/{id}/entregar/ → CTR_SeguimientoMovilController
+        '${authService.baseUrl}${ApiConstants.tareas}$tareaId/entregar/',
       );
       final response = await http.post(
         url,

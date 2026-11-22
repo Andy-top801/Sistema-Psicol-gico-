@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# CU12 / HU-43 — Verifica el Diagrama de Secuencia de Notificaciones Push FCM.
+#   python tests/test_sprint3_fcm.py
 import sys, os
 from datetime import datetime, timedelta
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -11,92 +13,82 @@ from django.utils import timezone
 from django_tenants.utils import schema_context
 from tenants.models import Tenant
 
-def test_fcm_notification_service_and_dispatch():
+
+def _cita(Cita, paciente, psicologo, horas, estado='CONFIRMADA', modalidad='VIRTUAL'):
+    inicio = (timezone.localtime() + timedelta(hours=horas)).replace(second=0, microsecond=0)
+    if inicio.hour == 23:
+        inicio = inicio.replace(minute=0)
+    fin = (datetime.combine(inicio.date(), inicio.time()) + timedelta(minutes=50)).time()
+    return Cita.objects.create(
+        paciente=paciente, psicologo=psicologo, fecha=inicio.date(),
+        hora_inicio=inicio.time(), hora_fin=fin, modalidad=modalidad,
+        estado=estado, motivo_consulta="[TEST CU12]",
+    )
+
+
+def test_cu12_secuencia_recordatorios_push():
     tenant = Tenant.objects.exclude(schema_name='public').first()
-    assert tenant is not None, "Debe existir al menos un tenant para las pruebas."
+    assert tenant is not None
 
     with schema_context(tenant.schema_name):
         from clinica.models import Paciente, TokenFCM, Psicologo
         from agenda.models import Cita, NotificacionCita
-        from agenda.services import FCMNotificationService
+        from agenda.services.notifications import FCMNotificationController
 
         paciente = Paciente.objects.first()
-        assert paciente is not None, "Debe existir un paciente en el tenant."
-
-        # 1. Registrar token FCM
-        token_str = "fcm_test_token_patient_device_12345"
-        TokenFCM.objects.filter(paciente=paciente).delete()
-        token_obj, created = TokenFCM.objects.update_or_create(
-            paciente=paciente,
-            token=token_str,
-            defaults={
-                'plataforma': 'ANDROID',
-                'activo': True
-            }
-        )
-        assert token_obj.activo is True
-
-        # 2. Despachar push al paciente (HU-43 / CU12)
-        exito = FCMNotificationService.enviar_push_paciente(
-            paciente=paciente,
-            titulo="Recordatorio de Consulta Psicológica",
-            cuerpo="Su consulta está programada en 24 horas. Modalidad: Virtual.",
-            payload_data={"tipo": "RECORDATORIO_24H", "paciente_id": str(paciente.id)}
-        )
-        assert exito is True, "El despacho push debe retornar True para paciente con token activo."
-
-        # 3. Caso sin tokens activos -> debe retornar False
-        token_obj.activo = False
-        token_obj.save()
-        exito_inactivo = FCMNotificationService.enviar_push_paciente(
-            paciente=paciente,
-            titulo="Prueba sin token",
-            cuerpo="No debe enviarse."
-        )
-        assert exito_inactivo is False, "No debe enviar push si no hay tokens activos."
-
-        # Restaurar token
-        token_obj.activo = True
-        token_obj.save()
-
-        # 4. Procesar recordatorios automáticos de citas próximas
-        from datetime import time
+        otro = Paciente.objects.exclude(id=paciente.id).first()
         psicologo = Psicologo.objects.first()
-        manana = timezone.now().date() + timedelta(days=1)
-        hora_cita = time(10, 0)
-        hora_fin = time(11, 0)
+        Cita.objects.filter(motivo_consulta="[TEST CU12]").delete()
+        TokenFCM.objects.filter(paciente__in=[paciente, otro]).delete()
 
-        cita = Cita.objects.create(
-            paciente=paciente,
-            psicologo=psicologo,
-            fecha=manana,
-            hora_inicio=hora_cita,
-            hora_fin=hora_fin,
-            modalidad='VIRTUAL',
-            estado='PROGRAMADA',
-            motivo_consulta="Seguimiento de ansiedad"
-        )
+        # (a) token del dispositivo registrado para el paciente
+        TokenFCM.objects.create(paciente=paciente, token="sandbox_test_device", plataforma='ANDROID')
 
-        # Crear notificación en cola programada
-        notif = NotificacionCita.objects.create(
-            cita=cita,
-            tipo_evento='RECORDATORIO_24H',
-            canal='PUSH_FCM',
-            enviada=False,
-            fecha_programada=timezone.now() - timedelta(minutes=5)
-        )
+        c24 = _cita(Cita, paciente, psicologo, 20, modalidad='PRESENCIAL')
+        c1 = _cita(Cita, paciente, psicologo, 0.5, modalidad='VIRTUAL')
+        c_prog = _cita(Cita, paciente, psicologo, 10, estado='PROGRAMADA')   # no confirmada
+        c_lejos = _cita(Cita, paciente, psicologo, 30)                      # fuera de ventana
+        c_sin_token = _cita(Cita, otro, psicologo, 5)
 
-        despachadas = FCMNotificationService.procesar_recordatorios_programados()
-        assert despachadas >= 1, "Debe procesar al menos 1 recordatorio programado."
+        try:
+            # Msg 1 → 16
+            r = FCMNotificationController.ejecutar_despacho_recordatorios()
 
-        notif.refresh_from_db()
-        assert notif.enviada is True, "La notificación debe quedar marcada como enviada."
-        assert notif.fecha_envio is not None
+            n24 = NotificacionCita.objects.get(cita=c24)
+            n1 = NotificacionCita.objects.get(cita=c1)
+            assert n24.tipo_evento == 'RECORDATORIO_24H' and n1.tipo_evento == 'RECORDATORIO_1H'
 
-        # Limpiar datos de prueba
-        notif.delete()
-        cita.delete()
+            # (b) título y contenido: psicólogo, hora y modalidad; Msg 14 estado ENVIADO con message_id
+            for n, cita in [(n24, c24), (n1, c1)]:
+                assert n.estado == 'ENVIADO' and n.enviada and n.message_id, n.error_log
+                assert n.titulo == 'Recordatorio de Consulta'
+                assert cita.hora_inicio.strftime('%H:%M') in n.cuerpo
+                assert psicologo.usuario.nombre in n.cuerpo
+            assert 'Presencial' in n24.cuerpo and 'Teleconsulta' in n1.cuerpo
+
+            # Solo citas CONFIRMADAS y dentro de ventana
+            assert not NotificacionCita.objects.filter(cita__in=[c_prog, c_lejos]).exists()
+
+            # Paciente sin dispositivo → FALLIDO (se reintentará)
+            ns = NotificacionCita.objects.get(cita=c_sin_token)
+            assert ns.estado == 'FALLIDO' and ns.intentos_entrega == 1
+
+            assert r["total_enviadas"] >= 2 and r["total_fallidas"] >= 1
+
+            # Idempotencia del Cron: una segunda ejecución no reenvía
+            FCMNotificationController.ejecutar_despacho_recordatorios()
+            n24.refresh_from_db()
+            assert n24.intentos_entrega == 1
+            assert NotificacionCita.objects.filter(cita=c24).count() == 1
+
+            # (c) payload que abre la pantalla correcta al tocar la notificación
+            ruta = "teleconsulta" if c1.modalidad == 'VIRTUAL' else "detalle_cita"
+            assert ruta == "teleconsulta"
+        finally:
+            Cita.objects.filter(motivo_consulta="[TEST CU12]").delete()
+            TokenFCM.objects.filter(token="sandbox_test_device").delete()
+
 
 if __name__ == "__main__":
-    test_fcm_notification_service_and_dispatch()
-    print("ALL FCM NOTIFICATION TESTS PASSED [OK]")
+    test_cu12_secuencia_recordatorios_push()
+    print("CU12 / HU-43: TODAS LAS PRUEBAS PASARON [OK]")

@@ -247,3 +247,38 @@ class AlertaSerializer(serializers.ModelSerializer):
             "ci": obj.paciente.ci,
             "telefono": u.telefono
         }
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# CU12 / HU-43: Centro de Notificaciones (web y móvil)
+# ──────────────────────────────────────────────────────────────────────────────
+from agenda.models import NotificacionCita
+
+
+class NotificacionCitaSerializer(serializers.ModelSerializer):
+    cita_id = serializers.UUIDField(source='cita.id', read_only=True)
+    modalidad = serializers.CharField(source='cita.modalidad', read_only=True)
+    fecha_cita = serializers.DateField(source='cita.fecha', read_only=True)
+    hora_cita = serializers.TimeField(source='cita.hora_inicio', format='%H:%M', read_only=True)
+    estado_cita = serializers.CharField(source='cita.estado', read_only=True)
+    paciente_nombre = serializers.SerializerMethodField()
+    psicologo_nombre = serializers.SerializerMethodField()
+
+    class Meta:
+        model = NotificacionCita
+        fields = [
+            'id', 'tipo_evento', 'canal', 'estado', 'titulo', 'cuerpo', 'leida',
+            'message_id', 'intentos_entrega', 'error_log',
+            'fecha_programada', 'fecha_envio',
+            'cita_id', 'modalidad', 'fecha_cita', 'hora_cita', 'estado_cita',
+            'paciente_nombre', 'psicologo_nombre',
+        ]
+        read_only_fields = fields
+
+    def get_paciente_nombre(self, obj):
+        u = obj.cita.paciente.usuario
+        return f"{u.nombre} {u.apellido}".strip()
+
+    def get_psicologo_nombre(self, obj):
+        u = obj.cita.psicologo.usuario
+        return f"Lic. {u.nombre} {u.apellido}".strip()

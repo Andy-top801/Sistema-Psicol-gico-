@@ -24,7 +24,6 @@ from clinica.lifecycle import ensure_history_open, lock_history
 from agenda.models import Cita, Teleconsulta, Alerta
 from agenda.serializers import (
     CitaSerializer,
-    CancelarCitaSerializer,
     TeleconsultaSerializer,
     TeleconsultaFinishSerializer,
     AlertaSerializer
@@ -112,34 +111,34 @@ class CitaViewSet(viewsets.ModelViewSet):
         return super().destroy(request, *args, **kwargs)
 
     # ================================================================
-    # HU-17: Cancelación de citas con validación de anticipación
-    # DIAGRAMA DE COMUNICACIÓN CU11 (variante cancelación):
-    #   Paso 2: IU → CTR: POST /api/agenda/citas/{id}/cancelar/
-    #   Paso 3: CancelarCitaSerializer valida motivo y anticipación (2h mínimo)
-    #   Paso 5: estado = 'CANCELADA', cupo liberado en agenda
-    #   Paso 7: CTR → IU: 200 OK con confirmación
+    # CU11 Móvil / HU-42: Cancelación con política > 24 h
+    #   POST /api/v1/citas/{id}/cancelar/  (alias: /api/agenda/citas/{id}/cancelar/)
+    #   Mensajes 2 → 16 / 18 del Diagrama de Secuencia → CTR_CitaMobileController
+    #   El paciente solo puede cancelar SUS citas (get_object aplica el filtro RBAC).
+    #   La política de 24 h aplica al Paciente; el personal del centro cancela sin ella.
     # ================================================================
     @action(detail=True, methods=['post'], url_path='cancelar')
     @transaction.atomic
     def cancelar(self, request, pk=None):
-        """Cancela la cita validando anticipación y registrando el motivo."""
+        from agenda.services.cita_mobile import CitaMobileController, CancelacionError
         cita = self.get_object()
         history = getattr(cita.paciente, 'historia_clinica', None)
         if history:
             ensure_history_open(lock_history(history.pk))
-        serializer = CancelarCitaSerializer(data=request.data, context={'cita': cita, 'request': request})
-        serializer.is_valid(raise_exception=True)
-
-        motivo = serializer.validated_data['motivo']
-        cita.estado = 'CANCELADA'
-        cita.motivo_cancelacion = motivo
-        cita.save(update_fields=['estado', 'motivo_cancelacion', 'fecha_modificacion'])
-
-        return Response({
-            "mensaje": "La cita fue cancelada exitosamente.",
-            "cita_liberada": True,
-            "cita": CitaSerializer(cita).data
-        }, status=status.HTTP_200_OK)
+        es_paciente = bool(request.user.rol and request.user.rol.nombre == "Paciente") and not request.user.is_superuser
+        ip = (request.META.get('HTTP_X_FORWARDED_FOR', '').split(',')[0].strip()
+              or request.META.get('REMOTE_ADDR', 'unknown'))
+        # CU11-paso 2: POST /api/v1/citas/{id}/cancelar/ (motivo) → CTR_CitaMovilController
+        try:
+            data = CitaMobileController.cancelar_cita(
+                cita.id, request.data.get('motivo'), request.user, ip, aplicar_politica=es_paciente
+            )
+        except CancelacionError as e:
+            # CU11-paso 18: HTTP 400 Bad Request {'Plazo expirado: cancelaciones requieren > 24h'} [retorno]
+            return Response(e.body, status=e.status_code)
+        # CU11-paso 16: HTTP 200 OK {'Cita cancelada y bloque liberado'} [retorno]
+        data["cita"] = CitaSerializer(Cita.objects.get(id=cita.id)).data
+        return Response(data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'], url_path='completar')
     def completar(self, request, pk=None):
@@ -179,6 +178,18 @@ class CitaViewSet(viewsets.ModelViewSet):
             return Response({"error": "Formato de fecha inválido. Utilice YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
 
         slots = AvailabilityValidator.obtener_slots_disponibles(psicologo, fecha_obj)
+
+        # Si consulta un paciente, ocultar los horarios que chocan con sus propias citas
+        # (misma regla que CitaConcurrencyService: no puede tener dos citas a la vez).
+        paciente = Paciente.objects.filter(usuario=request.user).first()
+        if paciente:
+            ocupados = list(Cita.objects.filter(
+                paciente=paciente, fecha=fecha_obj, estado__in=['PROGRAMADA', 'CONFIRMADA']
+            ).values_list('hora_inicio', 'hora_fin'))
+            slots = [s for s in slots if not any(
+                str(ini) < str(s['hora_fin']) and str(fin) > str(s['hora_inicio']) for ini, fin in ocupados
+            )]
+
         return Response({
             "psicologo": f"{psicologo.usuario.nombre} {psicologo.usuario.apellido}",
             "fecha": fecha_str,
@@ -189,75 +200,15 @@ class CitaViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], url_path='mis-citas')
     def mis_citas(self, request):
         """
-        Retorna las citas del paciente divididas en 'proximas' e 'historial' (HU-41 / CU11).
-        GET /api/agenda/citas/mis-citas/
+        HU-41 / CU11 Móvil — listar_citas_paciente()
+        GET /api/v1/citas/mis-citas/ → {'proximas': [...], 'historial': [...]} del paciente autenticado.
         """
-        user = request.user
-        paciente = getattr(user, 'perfil_paciente', None)
+        from agenda.services.cita_mobile import CitaMobileController
+        paciente = Paciente.objects.filter(usuario=request.user).first()
         if not paciente:
-            paciente_id = request.query_params.get('paciente_id') or request.query_params.get('paciente')
-            if paciente_id:
-                paciente = Paciente.objects.filter(id=paciente_id).first()
-        if not paciente:
-            paciente = Paciente.objects.first()
-
-        hoy = timezone.localdate()
-        ahora = timezone.localtime()
-
-        qs = Cita.objects.filter(paciente=paciente).select_related(
-            'psicologo__usuario', 'teleconsulta'
-        ).prefetch_related('psicologo__especialidades')
-
-        proximas_qs = qs.filter(
-            Q(fecha__gt=hoy) | Q(fecha=hoy, hora_fin__gte=ahora.time()),
-            estado__in=['PROGRAMADA', 'CONFIRMADA']
-        ).order_by('fecha', 'hora_inicio')
-
-        historial_qs = qs.exclude(
-            id__in=proximas_qs.values_list('id', flat=True)
-        ).order_by('-fecha', '-hora_inicio')
-
-        def format_cita(c):
-            psico = c.psicologo
-            u = psico.usuario
-            esps = [e.nombre for e in psico.especialidades.all()]
-            esp_txt = esps[0] if esps else "Psicología General"
-
-            cita_dt = timezone.make_aware(
-                datetime.combine(c.fecha, c.hora_inicio),
-                timezone.get_current_timezone()
-            )
-            from datetime import timedelta
-            en_ventana = (cita_dt - timedelta(minutes=10) <= ahora <= cita_dt + timedelta(minutes=45)) and (c.modalidad == 'VIRTUAL')
-            puede_cancelar = (cita_dt - ahora > timedelta(hours=24)) and (c.estado in ['PROGRAMADA', 'CONFIRMADA'])
-
-            sala_nombre = ""
-            if c.modalidad == 'VIRTUAL':
-                tele = getattr(c, 'teleconsulta', None)
-                sala_nombre = tele.sala_id if tele else f"sigepsi-{str(c.id)[:8]}"
-
-            return {
-                "id": str(c.id),
-                "fecha": c.fecha.strftime("%Y-%m-%d"),
-                "hora_inicio": c.hora_inicio.strftime("%H:%M"),
-                "hora_fin": c.hora_fin.strftime("%H:%M"),
-                "modalidad": c.modalidad,
-                "estado": c.estado,
-                "psicologo_id": str(psico.id),
-                "psicologo_nombre": f"Lic. {u.nombre} {u.apellido}".strip(),
-                "especialidad": esp_txt,
-                "motivo_consulta": c.motivo_consulta,
-                "costo": float(c.costo),
-                "sala_jitsi_token": sala_nombre,
-                "puede_entrar_teleconsulta": en_ventana,
-                "puede_cancelar": puede_cancelar
-            }
-
-        return Response({
-            "paciente_id": str(paciente.id) if paciente else None,
-            "proximas": [format_cita(c) for c in proximas_qs],
-            "historial": [format_cita(c) for c in historial_qs]
-        }, status=status.HTTP_200_OK)
+            return Response({"error": "Solo los pacientes tienen agenda personal de citas."},
+                            status=status.HTTP_403_FORBIDDEN)
+        return Response(CitaMobileController.listar_citas_paciente(paciente), status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get'], url_path='calendario')
     def calendario(self, request):
@@ -317,6 +268,7 @@ class TeleconsultaAccessView(APIView):
 
     @transaction.atomic
     def get(self, request, cita_id):
+        # CU13-paso 5: consultar_cita_virtual() → CE_Cita (trae también paciente y psicólogo para CU13-paso 7 y CU13-paso 9)
         try:
             cita = Cita.objects.select_for_update().select_related('psicologo__usuario', 'paciente__usuario').get(id=cita_id)
         except Cita.DoesNotExist:
@@ -329,7 +281,8 @@ class TeleconsultaAccessView(APIView):
             cita.modalidad = 'VIRTUAL'
             cita.save(update_fields=['modalidad'])
 
-        if cita.estado in ['CANCELADA', 'REALIZADA']:
+        # CU13-paso 6: cita_confirmada(hora, estado='CONFIRMADA') [retorno] — solo se acepta PROGRAMADA o CONFIRMADA
+        if cita.estado not in ['PROGRAMADA', 'CONFIRMADA']:
             return Response({
                 "error": f"Esta sesión de teleconsulta ya ha concluido o fue cancelada (Estado: {cita.estado}).",
                 "codigo": "SESSION_CLOSED"
@@ -346,27 +299,48 @@ class TeleconsultaAccessView(APIView):
         fin_ventana = cita_dt + timedelta(minutes=45)
 
         es_admin = bool(request.user.rol and ('admin' in request.user.rol.nombre.lower() or 'coord' in request.user.rol.nombre.lower())) or request.user.is_superuser
+        # CU13-paso 3: validar_ventana_acceso() — se calcula aquí en el CTR: 10 min antes a 45 min después (HU-44 a);
+        #              el diagrama indica 15 min antes.
+        # CU13-paso 4: resultado_ventana(en_ventana) [retorno]
+        # else [en_ventana_acceso == false]
+        # CU13-paso 21: HTTP 403 Forbidden {'Sala disponible solo ... antes de cita'} [retorno]
         if not es_admin and not (inicio_ventana <= ahora <= fin_ventana):
             return Response({
                 "error": "La sala de teleconsulta solo está disponible desde 10 minutos antes y hasta 45 minutos después del horario programado.",
                 "codigo": "OUTSIDE_TELECONSULTA_WINDOW"
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=status.HTTP_403_FORBIDDEN)
 
         try:
+            # alt [en_ventana_acceso == true]
+            # CU13-paso 7 a CU13-paso 12 y CU13-paso 15-16 ocurren en JitsiTokenGenerator.generar_acceso():
+            #   datos del paciente y del psicólogo, iniciar_sala() y generar_token_jitsi_jwt()
             datos_acceso = JitsiTokenGenerator.generar_acceso(cita, request.user)
-            # Marcar hora de inicio real si aún no se había registrado
+            # CU13-paso 13: registrar_entrada() → CE_Teleconsulta (hora de inicio real si aún no se había registrado)
+            # CU13-paso 14: entrada_registrada() [retorno]
             tele = cita.teleconsulta
             if not tele.hora_inicio_real:
                 tele.hora_inicio_real = timezone.now()
                 tele.save(update_fields=['hora_inicio_real'])
 
+            # CU13-paso 17: registrar_acceso(evento='INGRESO_SALA_TELECONSULTA', ip) → CE_AuditLog
+            # CU13-paso 18: acceso_auditado() [retorno]
+            from audit.services import AuditLog
+            AuditLog.registrar_acceso(
+                'INGRESO_SALA_TELECONSULTA',
+                request.META.get('HTTP_X_FORWARDED_FOR') or request.META.get('REMOTE_ADDR', 'unknown'),
+                cita_id=str(cita.id), usuario=request.user.email, sala=datos_acceso.get('room_name'),
+            )
+
+            # CU13-paso 19: HTTP 200 OK {jitsi_jwt, room_name, server_url} [retorno]
+            datos_acceso['jitsi_jwt'] = datos_acceso.get('jwt_token')
+            datos_acceso['server_url'] = f"https://{datos_acceso.get('domain')}"
             return Response(datos_acceso, status=status.HTTP_200_OK)
         except PermissionError as e:
             return Response({"error": str(e)}, status=status.HTTP_403_FORBIDDEN)
 
     @transaction.atomic
     def post(self, request, cita_id):
-        """CU13: Unirse a sala de teleconsulta vía POST (Diagrama 309)."""
+        """CU13-paso 2: POST /api/v1/teleconsulta/{id}/unirse/ (dispositivo) → CTR_TeleconsultaController."""
         return self.get(request, cita_id)
 
 
@@ -496,20 +470,20 @@ class FCMTokenEnrollView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        user = request.user
-        token = request.data.get('token')
+        """Criterio (a): al iniciar sesión, el token FCM se registra en comunicacion_tokenfcm."""
+        token = (request.data.get('token') or '').strip()
         plataforma = (request.data.get('plataforma') or 'ANDROID').upper()
 
         if not token:
             return Response({"error": "El campo 'token' es obligatorio."}, status=status.HTTP_400_BAD_REQUEST)
 
-        paciente = getattr(user, 'perfil_paciente', None)
+        # Solo un paciente puede asociar dispositivos a SU propio expediente.
+        paciente = Paciente.objects.filter(usuario=request.user).first()
         if not paciente:
-            paciente_id = request.data.get('paciente_id')
-            if paciente_id:
-                paciente = Paciente.objects.filter(id=paciente_id).first()
-        if not paciente:
-            paciente = Paciente.objects.first()
+            return Response(
+                {"error": "Solo los pacientes pueden registrar dispositivos para recordatorios."},
+                status=status.HTTP_403_FORBIDDEN
+            )
 
         from clinica.models import TokenFCM
         plat_valida = plataforma if plataforma in ['ANDROID', 'IOS', 'WEB'] else 'ANDROID'
@@ -528,3 +502,79 @@ class FCMTokenEnrollView(APIView):
             "activo": token_obj.activo,
             "plataforma": token_obj.plataforma
         }, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+    def delete(self, request):
+        """Al cerrar sesión el dispositivo deja de recibir pushes de este paciente."""
+        from clinica.models import TokenFCM
+        token = (request.data.get('token') or request.query_params.get('token') or '').strip()
+        n = TokenFCM.objects.filter(paciente__usuario=request.user, token=token, activo=True).update(activo=False)
+        return Response({"desactivados": n}, status=status.HTTP_200_OK)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# CU12 / HU-43: Centro de Notificaciones (IU_CentroNotificaciones web + móvil)
+#   GET  /api/agenda/notificaciones/             → Paciente: sus avisos recibidos
+#                                                  Personal: bitácora de despachos
+#   POST /api/agenda/notificaciones/{id}/leer/   → marca como leída (Paciente)
+#   POST /api/agenda/notificaciones/leer-todas/  → marca todas (Paciente)
+#   POST /api/agenda/notificaciones/despachar/   → dispara CU12-paso 1 manualmente (Personal)
+# ──────────────────────────────────────────────────────────────────────────────
+from datetime import timedelta
+from agenda.models import NotificacionCita
+from agenda.serializers import NotificacionCitaSerializer
+from agenda.services.notifications import FCMNotificationController
+
+
+def _es_paciente(user):
+    return bool(user.rol and user.rol.nombre == "Paciente") and not user.is_superuser
+
+
+class NotificacionCitaViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = NotificacionCitaSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = NotificacionCita.objects.select_related(
+            'cita__paciente__usuario', 'cita__psicologo__usuario'
+        )
+        if _es_paciente(user):
+            return qs.filter(cita__paciente__usuario=user, estado='ENVIADO').order_by('-fecha_envio')
+        rol = user.rol.nombre if user.rol else ""
+        if rol in ["Psicólogo", "Psicologo / Terapeuta"] and not user.is_superuser:
+            qs = qs.filter(cita__psicologo__usuario=user)
+        return qs.order_by('-fecha_programada')
+
+    def list(self, request, *args, **kwargs):
+        qs = self.get_queryset()
+        data = NotificacionCitaSerializer(qs[:40], many=True).data
+        if _es_paciente(request.user):
+            resumen = {"no_leidas": qs.filter(leida=False).count()}
+        else:
+            hace_24h = timezone.now() - timedelta(hours=24)
+            resumen = {
+                "enviadas_24h": qs.filter(estado='ENVIADO', fecha_envio__gte=hace_24h).count(),
+                "pendientes": qs.filter(estado='PENDIENTE').count(),
+                "fallidas": qs.filter(estado='FALLIDO').count(),
+            }
+        return Response({"es_paciente": _es_paciente(request.user), "resumen": resumen, "resultados": data})
+
+    @action(detail=True, methods=['post'], url_path='leer')
+    def leer(self, request, pk=None):
+        notif = self.get_object()
+        if _es_paciente(request.user) and not notif.leida:
+            notif.leida = True
+            notif.save(update_fields=['leida'])
+        return Response(NotificacionCitaSerializer(notif).data)
+
+    @action(detail=False, methods=['post'], url_path='leer-todas')
+    def leer_todas(self, request):
+        n = self.get_queryset().filter(leida=False).update(leida=True) if _es_paciente(request.user) else 0
+        return Response({"marcadas": n})
+
+    @action(detail=False, methods=['post'], url_path='despachar')
+    def despachar(self, request):
+        """Ejecución manual del CU12-paso 1 (el Cron lo hace automáticamente)."""
+        if _es_paciente(request.user):
+            return Response({"error": "No autorizado."}, status=status.HTTP_403_FORBIDDEN)
+        return Response(FCMNotificationController.ejecutar_despacho_recordatorios())

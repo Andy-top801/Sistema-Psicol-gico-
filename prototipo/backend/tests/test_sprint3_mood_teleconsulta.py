@@ -92,7 +92,7 @@ def test_teleconsulta_window_mood_and_task_delivery():
         force_authenticate(req_access_bad, user=usuario_paciente)
         resp_access_bad = view_access(req_access_bad, cita_id=str(cita_futura.id))
 
-        assert resp_access_bad.status_code == 400, "Debe rechazar acceso fuera de ventana horaria"
+        assert resp_access_bad.status_code == 403, "Debe rechazar acceso fuera de ventana horaria (CU13 Msg 21: 403)"
         assert resp_access_bad.data.get('codigo') == 'OUTSIDE_TELECONSULTA_WINDOW'
 
         # ------------------------------------------------------------------

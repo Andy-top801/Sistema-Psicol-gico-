@@ -8,6 +8,7 @@ export interface ExtractedVoiceParams {
   mesNumero?: number;
   psicologo?: string;
   paciente?: string;
+  clinica?: string;
   estado?: string;
   modalidad?: string;
   fecha_desde?: string;
@@ -141,10 +142,36 @@ export class SpeechParserService {
    * Mapeo semántico de entidad, filtros temporales, psicólogo y modalidad.
    */
   public parseInstruction(rawText: string): ExtractedVoiceParams {
-    const text = rawText.toLowerCase().trim();
+    let text = rawText.toLowerCase().replace(/[,.;:¿?¡!]/g, ' ').replace(/\s+/g, ' ').trim();
     const result: ExtractedVoiceParams = {
       transcript: rawText,
     };
+
+    // 0. Clínica / tenant (solo lo usa el SuperAdmin): "citas de la clínica Esperanza en octubre".
+    // Se toma el nombre hasta la primera palabra que ya es otro filtro, y se quita del texto
+    // para que "Esperanza" no termine leyéndose como psicólogo.
+    const mc = text.match(/\b(?:cl[ií]nica|centro|tenant)\s+(.+)$/);
+    if (mc) {
+      const paradas = new Set([
+        'de', 'del', 'en', 'con', 'para', 'por', 'y', 'que', 'desde', 'hasta', 'durante', 'sobre', 'este', 'esta',
+        'mes', 'hoy', 'ayer', 'semana', 'año', 'ano', 'modalidad', 'estado', 'presencial', 'virtual', 'psicologo',
+        'psicólogo', 'psicologa', 'psicóloga', 'doctor', 'doctora', 'licenciado', 'licenciada', 'paciente',
+        'cita', 'citas', 'realizadas', 'confirmadas', 'canceladas', 'programadas', 'pendientes', 'reporte',
+        'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'setiembre',
+        'octubre', 'noviembre', 'diciembre',
+      ]);
+      const palabras = mc[1].split(' ');
+      let i = 0;
+      while (i < palabras.length && ['de', 'del', 'la', 'el', 'los', 'las'].includes(palabras[i])) i++; // "clínica de la Esperanza"
+      const nombre: string[] = [];
+      for (; i < palabras.length && !paradas.has(palabras[i]) && !/^\d/.test(palabras[i]); i++) nombre.push(palabras[i]);
+      if (nombre.length) {
+        result.clinica = nombre.map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        const inicio = mc.index ?? 0;
+        const consumido = mc[0].split(' ').slice(0, 1 + i).join(' ');
+        text = (text.slice(0, inicio) + ' ' + text.slice(inicio + consumido.length)).replace(/\s+/g, ' ').trim();
+      }
+    }
 
     // 1. Detección de entidad/fuente
     if (text.includes('cita') || text.includes('atencion') || text.includes('atención') || text.includes('sesion') || text.includes('sesión') || text.includes('agenda')) {
@@ -185,28 +212,71 @@ export class SpeechParserService {
       { nombre: 'diciembre', num: 12, dias: 31 },
     ];
 
+    const fmt = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const hoy = new Date();
+    const anioDicho = text.match(/\b(20\d{2})\b/);
+    const anio = anioDicho ? Number(anioDicho[1]) : hoy.getFullYear();
+
     for (const m of meses) {
-      if (text.includes(m.nombre)) {
+      if (new RegExp(`\\b${m.nombre}\\b`).test(text)) {
         result.mes = m.nombre === 'setiembre' ? 'septiembre' : m.nombre;
         result.mesNumero = m.num;
-        // Asignar rango temporal automático para el año actual
-        const currentYear = new Date().getFullYear();
-        const mm = String(m.num).padStart(2, '0');
-        const dd = String(m.dias).padStart(2, '0');
-        result.fecha_desde = `${currentYear}-${mm}-01`;
-        result.fecha_hasta = `${currentYear}-${mm}-${dd}`;
+        result.fecha_desde = fmt(new Date(anio, m.num - 1, 1));
+        result.fecha_hasta = fmt(new Date(anio, m.num, 0)); // último día real (bisiestos incluidos)
         break;
       }
     }
 
-    // 3. Detección de psicólogo (ej: "de Carlos", "con Carlos", "psicólogo Carlos")
-    const matchPsicologo = text.match(/(?:de|del psic[oó]logo|con el psic[oó]logo|doctor|licenciado|psic[oó]logo|con)\s+([a-záéíóúñ]+)/i);
-    if (matchPsicologo && matchPsicologo[1]) {
-      const candidato = matchPsicologo[1].trim();
-      // Descartar palabras que sean meses o fuentes
-      const noNombres = ['septiembre', 'setiembre', 'octubre', 'noviembre', 'diciembre', 'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'citas', 'pacientes', 'mes', 'año', 'semana'];
-      if (!noNombres.includes(candidato.toLowerCase())) {
-        result.psicologo = candidato.charAt(0).toUpperCase() + candidato.slice(1);
+    // Rangos relativos: "hoy", "esta semana", "este mes", "mes pasado", "este año", o solo "2025"
+    if (!result.fecha_desde) {
+      if (/\bhoy\b/.test(text)) {
+        result.fecha_desde = result.fecha_hasta = fmt(hoy);
+      } else if (/\bayer\b/.test(text)) {
+        const ayer = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 1);
+        result.fecha_desde = result.fecha_hasta = fmt(ayer);
+      } else if (/(esta|la) semana/.test(text)) {
+        const lunes = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - ((hoy.getDay() + 6) % 7));
+        result.fecha_desde = fmt(lunes);
+        result.fecha_hasta = fmt(new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + 6));
+      } else if (/mes pasado|[uú]ltimo mes|mes anterior/.test(text)) {
+        result.fecha_desde = fmt(new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1));
+        result.fecha_hasta = fmt(new Date(hoy.getFullYear(), hoy.getMonth(), 0));
+      } else if (/(este|del|el) mes/.test(text)) {
+        result.fecha_desde = fmt(new Date(hoy.getFullYear(), hoy.getMonth(), 1));
+        result.fecha_hasta = fmt(new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0));
+      } else if (anioDicho || /este a[nñ]o/.test(text)) {
+        result.fecha_desde = `${anio}-01-01`;
+        result.fecha_hasta = `${anio}-12-31`;
+      }
+    }
+
+    // 3. Detección de psicólogo / paciente.
+    // Palabras que nunca son nombres (antes "de modalidad" o "de la" se tomaban como psicólogo y vaciaban el reporte).
+    const noNombres = new Set([
+      ...meses.map(m => m.nombre), 'mes', 'año', 'ano', 'semana', 'hoy', 'ayer', 'modalidad', 'estado', 'tipo',
+      'reporte', 'reportes', 'lista', 'listado', 'cita', 'citas', 'paciente', 'pacientes', 'psicologo', 'psicólogo',
+      'psicologos', 'psicólogos', 'psicologa', 'psicóloga', 'sesion', 'sesión', 'sesiones', 'atencion', 'atención',
+      'atenciones', 'agenda', 'alertas', 'ingresos', 'pagos', 'teleconsultas', 'usuarios', 'bitacora', 'bitácora',
+      'clinica', 'clínica', 'centro', 'tenant', 'la', 'el', 'los', 'las', 'un', 'una', 'este', 'esta', 'ese', 'esa', 'todo', 'todos', 'todas', 'mi', 'mis',
+      'presencial', 'virtual', 'realizadas', 'confirmadas', 'canceladas', 'programadas', 'pendientes',
+    ]);
+    const nombreValido = (w?: string) => !!w && !noNombres.has(w) && !/^\d+$/.test(w);
+    const cap = (w: string) => w.charAt(0).toUpperCase() + w.slice(1);
+
+    const pac = text.match(/paciente\s+([a-záéíóúñü]+)/);
+    if (pac && nombreValido(pac[1])) result.paciente = cap(pac[1]);
+
+    const psicExplicito = text.match(/(?:psic[oó]log[oa]|doctor[a]?|dr[a]?\.?|licenciad[oa]|lic\.?|terapeuta)\s+([a-záéíóúñü]+)/);
+    if (psicExplicito && nombreValido(psicExplicito[1])) {
+      result.psicologo = cap(psicExplicito[1]);
+    } else {
+      // "citas de Carlos", "con Carlos": revisar TODAS las apariciones, no solo la primera "de"
+      for (const m of text.matchAll(/\b(?:de|del|con)\s+([a-záéíóúñü]+)/g)) {
+        if (nombreValido(m[1]) && cap(m[1]) !== result.paciente) {
+          result.psicologo = cap(m[1]);
+          break;
+        }
       }
     }
 

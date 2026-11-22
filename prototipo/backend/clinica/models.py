@@ -36,6 +36,10 @@ class Especialidad(models.Model):
     def __str__(self):
         return self.nombre
 
+    def obtener_nombre(self) -> str:
+        """CU22-paso 11: obtener_nombre() → CU22-paso 12: nombre_especialidad [retorno]."""
+        return self.nombre
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # ENTIDAD: Psicologo — CE_Usuario_y_Psicologo (Diagrama de Comunicación CU6)
@@ -68,6 +72,9 @@ class Psicologo(models.Model):
     # CU8 Paso 4: El controlador verifica que el terapeuta esté activo
     activo = models.BooleanField(default=True, verbose_name="Activo en el Centro")
     fecha_ingreso = models.DateField(default=timezone.localdate, verbose_name="Fecha de Incorporación")
+    # CU22 / HU-48: carga de pacientes activos asignados y cupo máximo (factor BalanceCarga)
+    carga_actual = models.PositiveIntegerField(default=0, verbose_name="Pacientes Activos Asignados")
+    cupo_maximo = models.PositiveIntegerField(default=20, verbose_name="Cupo Máximo de Pacientes")
     # CU6 Paso 5: Relación M:N con especialidades se establece al crear el perfil
     especialidades = models.ManyToManyField(
         Especialidad,
@@ -88,9 +95,32 @@ class Psicologo(models.Model):
     def __str__(self):
         return f"Lic. {self.usuario.nombre} {self.usuario.apellido} (Col. {self.numero_colegiado})"
 
-    def incrementar_carga(self):
-        """Metodo de dominio para actualizar estadisticas de asignacion activa."""
-        pass
+    @property
+    def cupo_completo(self) -> bool:
+        return self.carga_actual >= self.cupo_maximo
+
+    def incrementar_carga(self) -> int:
+        """CU22-paso 24 / CU22-paso 34: incrementar_carga() → CU22-paso 25 / CU22-paso 35: carga_actualizada [retorno].
+        Atómico en BD (F expression)."""
+        Psicologo.objects.filter(pk=self.pk).update(carga_actual=models.F('carga_actual') + 1)
+        self.refresh_from_db(fields=['carga_actual'])
+        return self.carga_actual
+
+    @classmethod
+    def listar_candidatos_activos(cls):
+        """CU22-paso 7: listar_candidatos_activos() → CU22-paso 8: psicologos_activos [retorno]."""
+        return (cls.objects.filter(activo=True, usuario__activo=True)
+                .select_related('usuario')
+                .prefetch_related('disponibilidades'))
+
+    def bloques_semanales(self) -> int:
+        """Bloques de atención semanales publicados (factor Disponibilidad de HU-48)."""
+        total = 0
+        for d in self.disponibilidades.all():  # usa el prefetch de listar_candidatos_activos
+            if d.activo and d.duracion_bloque_min > 0:
+                minutos = (d.hora_fin.hour * 60 + d.hora_fin.minute) - (d.hora_inicio.hour * 60 + d.hora_inicio.minute)
+                total += max(0, minutos) // d.duracion_bloque_min
+        return total
 
 
 class PsicologoEspecialidad(models.Model):
@@ -105,6 +135,11 @@ class PsicologoEspecialidad(models.Model):
 
     def __str__(self):
         return f"{self.psicologo} - {self.especialidad.nombre}"
+
+    @classmethod
+    def verificar_especialidad(cls, psicologo_id) -> list:
+        """CU22-paso 9: verificar_especialidad(psicologo_id) → CU22-paso 10: areas_experiencia [retorno]."""
+        return [pe.especialidad for pe in cls.objects.filter(psicologo_id=psicologo_id).select_related('especialidad')]
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -165,6 +200,32 @@ class Disponibilidad(models.Model):
     def __str__(self):
         return f"{self.psicologo.usuario.nombre} - Día {self.get_dia_semana_display()} ({self.hora_inicio} - {self.hora_fin})"
 
+    @classmethod
+    def liberar_bloque_horario(cls, psicologo, fecha, hora_inicio, hora_fin) -> dict:
+        """
+        CU11-paso 8: liberar_bloque_horario() → CU11-paso 9: bloque_liberado() [retorno].
+        Los slots se calculan como (franjas de Disponibilidad) - (citas PROGRAMADA/CONFIRMADA),
+        por lo que al pasar la cita a CANCELADA el bloque vuelve a estar libre. Aquí se verifica
+        que ninguna otra cita activa lo ocupe y si cae dentro del horario de atención publicado.
+        """
+        from agenda.models import Cita
+        ocupado = Cita.objects.filter(
+            psicologo=psicologo, fecha=fecha, estado__in=['PROGRAMADA', 'CONFIRMADA'],
+            hora_inicio__lt=hora_fin, hora_fin__gt=hora_inicio,
+        ).exists()
+        dia_db = (fecha.weekday() + 1) % 7  # Python lunes=0 → modelo domingo=0
+        en_horario = cls.objects.filter(
+            psicologo=psicologo, dia_semana=dia_db, activo=True,
+            hora_inicio__lte=hora_inicio, hora_fin__gte=hora_fin,
+        ).exists()
+        return {
+            "liberado": not ocupado,
+            "disponible_para_reserva": (not ocupado) and en_horario,
+            "fecha": fecha.isoformat(),
+            "hora_inicio": hora_inicio.strftime('%H:%M'),
+            "hora_fin": hora_fin.strftime('%H:%M'),
+        }
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # ENTIDAD: Paciente — CE_Paciente_y_Expediente (Diagrama de Comunicación CU7)
@@ -202,6 +263,9 @@ class Paciente(models.Model):
     tutor_legal_nombre = models.CharField(max_length=120, blank=True, default="", verbose_name="Tutor Legal (Nombre)")
     tutor_legal_ci = models.CharField(max_length=20, blank=True, default="", verbose_name="Tutor Legal (CI)")
     fecha_registro = models.DateField(default=timezone.localdate, verbose_name="Fecha de Registro Clínico")
+    # CU22 / HU-48: preferencia de modalidad (factor Modalidad) y asignación confirmada por HITL
+    modalidad_preferencia = models.CharField(max_length=20, choices=Psicologo.MODALIDAD_CHOICES, default='MIXTA', verbose_name="Modalidad Preferida")
+    psicologo_asignado = models.ForeignKey(Psicologo, on_delete=models.SET_NULL, null=True, blank=True, related_name="pacientes_asignados", verbose_name="Psicólogo Asignado (HITL)")
 
     class Meta:
         db_table = "clinica_paciente"
@@ -221,6 +285,26 @@ class Paciente(models.Model):
         hoy = date.today()
         nac = self.fecha_nacimiento
         return hoy.year - nac.year - ((hoy.month, hoy.day) < (nac.month, nac.day))
+
+    @classmethod
+    def obtener_paciente_asociado(cls, paciente_id) -> dict:
+        """CU12-paso 6: obtener_paciente_asociado(paciente_id) → CU12-paso 7: datos_paciente(nombre, expediente) [retorno]."""
+        pac = cls.objects.select_related('usuario').get(id=paciente_id)
+        return {
+            "paciente_id": str(pac.id),
+            "nombre": pac.usuario.nombre,
+            "apellido": pac.usuario.apellido,
+            "expediente": pac.codigo_expediente,
+        }
+
+    @classmethod
+    def obtener_paciente(cls, paciente_id) -> dict:
+        """CU21-paso 5 / CU22-paso 5: obtener_paciente() → CU21-paso 6 / CU22-paso 6: datos_paciente(...) [retorno]."""
+        datos = cls.obtener_paciente_asociado(paciente_id)
+        pac = cls.objects.only('modalidad_preferencia', 'psicologo_asignado_id').get(id=paciente_id)
+        datos["modalidad_preferencia"] = pac.modalidad_preferencia
+        datos["psicologo_asignado_id"] = str(pac.psicologo_asignado_id) if pac.psicologo_asignado_id else None
+        return datos
 
     @property
     def es_menor_de_edad(self):
@@ -293,6 +377,21 @@ class RespuestaPreConsulta(models.Model):
     @property
     def tiene_urgencia_alta(self):
         return self.nivel_urgencia_percibido >= 4
+
+    def sanitizar_pii(self, texto_motivo: str) -> str:
+        """
+        CU21-paso 3: sanitizar_pii(texto_motivo) → CU21-paso 4: texto_anonimizado [retorno].
+        HU-47 (a): elimina teléfono, carnet y email, y además el nombre/apellido del propio paciente,
+        antes de que el texto llegue al modelo de IA.
+        """
+        import re
+        from clinica.ia_rules_engine import PreconsultaRulesEngine
+        texto = PreconsultaRulesEngine.sanitizar_pii(texto_motivo or "")
+        usuario = self.paciente.usuario
+        partes = f"{usuario.nombre or ''} {usuario.apellido or ''}".split()
+        for parte in sorted({p for p in partes if len(p) >= 3}, key=len, reverse=True):
+            texto = re.sub(rf'\b{re.escape(parte)}\b', '[NOMBRE ANONIMIZADO]', texto, flags=re.IGNORECASE)
+        return texto
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -631,6 +730,10 @@ class AuditoriaIA(models.Model):
     fecha_analisis = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Análisis")
     fecha_decision = models.DateTimeField(null=True, blank=True, verbose_name="Fecha de Decisión")
     ip_origen = models.CharField(max_length=45, default="127.0.0.1", verbose_name="IP del Solicitante")
+    # CU21-paso 15 / CU21-paso 23: registrar_auditoria_inferencia(modelo, hash, alerta)
+    modelo_ia = models.CharField(max_length=100, blank=True, default="", verbose_name="Modelo de IA Utilizado")
+    alerta_crisis = models.BooleanField(default=False, verbose_name="¿Alerta de Crisis Emitida?")
+    clasificacion = models.ForeignKey('ClasificacionIA', on_delete=models.SET_NULL, null=True, blank=True, related_name="auditorias", verbose_name="Clasificación Auditada")
 
     class Meta:
         db_table = "clinica_auditoriaia"
@@ -640,6 +743,49 @@ class AuditoriaIA(models.Model):
 
     def __str__(self):
         return f"Auditoría IA [{self.prioridad_sugerida}] - Decisión: {self.evaluacion_humana}"
+
+    @staticmethod
+    def generar_hash_sha256(input: str, inferencia: dict) -> str:
+        """CU21-paso 13 / CU21-paso 21: generar_hash_sha256(input, inferencia) → CU21-paso 14 / CU21-paso 22: hash_generado."""
+        import hashlib, json
+        payload = (input or '') + json.dumps(inferencia, sort_keys=True, ensure_ascii=False, default=str)
+        return hashlib.sha256(payload.encode('utf-8')).hexdigest()
+
+    @classmethod
+    def registrar_auditoria_inferencia(cls, modelo: str, hash: str, alerta: bool, clasificacion,
+                                       ip: str = '127.0.0.1', usuario=None) -> 'AuditoriaIA':
+        """
+        CU21-paso 15 / CU21-paso 23: registrar_auditoria_inferencia(modelo, hash, alerta)
+        → CU21-paso 16 / CU21-paso 24: auditoria_ia_registrada [retorno].
+        El diagrama usa modelo='HF-ClinicalBert'; aquí se guarda el nombre del modelo realmente usado.
+        Guarda la traza en BD y en la bitácora cifrada del sistema (sin texto clínico).
+        """
+        from audit.services import log_event
+        aud = cls.objects.create(
+            formulario_respuesta_id=clasificacion.respuestapreconsulta_id,
+            hash_prompt=hash,
+            resumen_generado=clasificacion.explicacion_heuristica,
+            prioridad_sugerida=clasificacion.nivel_severidad,
+            reglas_aplicadas=list(clasificacion.palabras_clave_detectadas or []),
+            modelo_ia=modelo,
+            alerta_crisis=alerta,
+            clasificacion=clasificacion,
+            ip_origen=(ip or '127.0.0.1')[:45],
+        )
+        from django.db import connection
+        log_event(
+            action='IA_INFERENCIA_TRIAJE',
+            modulo='CU21',
+            user=getattr(usuario, 'email', None) or 'sistema',
+            tenant=getattr(connection, 'schema_name', None),
+            clasificacion_id=str(clasificacion.id),
+            modelo_ia=modelo,
+            hash=hash,
+            alerta_crisis=alerta,
+            severidad=clasificacion.nivel_severidad,
+            ip=ip,
+        )
+        return aud
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -735,6 +881,16 @@ class TokenFCM(models.Model):
     def __str__(self):
         return f"[{self.plataforma}] Paciente {self.paciente.id} - {self.token[:20]}..."
 
+    @classmethod
+    def obtener_tokens_activos_paciente(cls, paciente_id) -> list:
+        """CU12-paso 8: obtener_tokens_activos_paciente(paciente_id) → CU12-paso 9: tokens_fcm_activos [retorno]."""
+        return list(cls.objects.filter(paciente_id=paciente_id, activo=True))
+
+    def desactivar(self):
+        """Desactiva un token revocado/no registrado según la respuesta de FCM."""
+        self.activo = False
+        self.save(update_fields=['activo', 'actualizado_en'])
+
 
 # ==============================================================================
 # SPRINT 3: REGISTRO DIARIO DE ESTADO DE ÁNIMO (MOOD TRACKER - CU17 / HU-46)
@@ -784,11 +940,16 @@ class ClasificacionIA(models.Model):
         ('OTRO', 'Otro Motivo Clínico'),
     ]
 
+    # HU-47 (b): BAJA, MODERADA, ALTA, CRITICA
     SEVERIDAD_CHOICES = [
-        ('LEVE', 'Leve'),
-        ('MODERADO', 'Moderado'),
-        ('SEVERO', 'Severo'),
+        ('BAJA', 'Baja'),
+        ('MODERADA', 'Moderada'),
+        ('ALTA', 'Alta'),
         ('CRITICA', 'Crítica / Riesgo Inmediato'),
+    ]
+    NIVEL_ATENCION_CHOICES = [
+        ('CRITICO', 'Protocolo Crisis'),
+        ('REGULAR', 'Atención Ordinaria'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -800,6 +961,10 @@ class ClasificacionIA(models.Model):
     palabras_clave_detectadas = models.JSONField(default=list, blank=True, verbose_name="Palabras Clave Detectadas")
     explicacion_heuristica = models.TextField(verbose_name="Explicación Heurística de Inferencia")
     hash_trazabilidad_sha256 = models.CharField(max_length=64, verbose_name="Hash Criptográfico SHA-256")
+    puntaje_severidad = models.PositiveSmallIntegerField(default=1, verbose_name="Puntaje de Severidad (1-5)")
+    score_severidad = models.DecimalField(max_digits=4, decimal_places=3, default=0, verbose_name="Score de Severidad (0 a 1)")
+    nivel_atencion = models.CharField(max_length=10, choices=NIVEL_ATENCION_CHOICES, default='REGULAR', verbose_name="Nivel de Atención")
+    modelo_ia = models.CharField(max_length=100, blank=True, default="", verbose_name="Modelo de IA Utilizado")
     fecha_analisis = models.DateTimeField(auto_now_add=True, verbose_name="Fecha y Hora del Análisis")
 
     class Meta:
@@ -817,10 +982,52 @@ class ClasificacionIA(models.Model):
         return f"[{self.categoria_principal}] {self.nivel_severidad}{crisis_tag} (Confianza: {self.confianza_score})"
 
     def marcar_crisis_prioritaria(self):
-        """Eleva la clasificacion a severidad CRITICA y activa bandera de alerta."""
+        """CU21-paso 11: marcar_crisis_prioritaria() → CU21-paso 12: crisis_marcada [retorno]."""
         self.alerta_crisis = True
         self.nivel_severidad = 'CRITICA'
-        self.save(update_fields=['alerta_crisis', 'nivel_severidad'])
+        self.puntaje_severidad = 5
+        self.nivel_atencion = 'CRITICO'
+        self.save(update_fields=['alerta_crisis', 'nivel_severidad', 'puntaje_severidad', 'nivel_atencion'])
+
+    @classmethod
+    def persistir_clasificacion(cls, respuesta, resultado: dict, nivel: str) -> 'ClasificacionIA':
+        """
+        CU21-paso 9 (nivel='CRITICO') / CU21-paso 19 (nivel='REGULAR'): persistir_clasificacion(categoria, severidad, nivel)
+        → CU21-paso 10 / CU21-paso 20: clasificacion_guardada(id) [retorno].
+        Una sola clasificación vigente por intake (se reemplaza al reclasificar).
+        """
+        clasif, _ = cls.objects.update_or_create(
+            respuestapreconsulta=respuesta,
+            defaults={
+                'categoria_principal': resultado['categoria_principal'],
+                'confianza_score': resultado['confianza_score'],
+                'nivel_severidad': resultado['nivel_severidad'],
+                'puntaje_severidad': resultado['puntaje_severidad'],
+                'score_severidad': resultado['score_severidad'],
+                'alerta_crisis': resultado['alerta_crisis'],
+                'palabras_clave_detectadas': resultado['palabras_clave_detectadas'],
+                'explicacion_heuristica': resultado['explicacion_heuristica'],
+                'hash_trazabilidad_sha256': resultado['hash_trazabilidad_sha256'],
+                'modelo_ia': resultado['modelo_ia'],
+                'nivel_atencion': nivel,
+            },
+        )
+        return clasif
+
+    @classmethod
+    def extraer_triaje(cls, paciente_id) -> dict | None:
+        """CU22-paso 3: extraer_triaje(paciente_id) → CU22-paso 4: triaje(categoria, severidad) [retorno]."""
+        clasif = (cls.objects.filter(respuestapreconsulta__paciente_id=paciente_id)
+                  .order_by('-fecha_analisis').first())
+        if not clasif:
+            return None
+        return {
+            'clasificacion_id': str(clasif.id),
+            'categoria': clasif.categoria_principal,
+            'severidad': clasif.nivel_severidad,
+            'alerta_crisis': clasif.alerta_crisis,
+            'clasificacion': clasif,
+        }
 
 
 # ==============================================================================
@@ -846,6 +1053,8 @@ class SugerenciaMatching(models.Model):
     justificacion_clinica = models.TextField(null=True, blank=True, verbose_name="Justificación Clínica")
     fecha_generacion = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Generación")
     fecha_decision = models.DateTimeField(null=True, blank=True, verbose_name="Fecha de Decisión")
+    aprobado_hitl = models.BooleanField(null=True, blank=True, verbose_name="¿Aprobado por HITL?")
+    psicologo_asignado_final = models.ForeignKey(Psicologo, on_delete=models.SET_NULL, null=True, blank=True, related_name="+", verbose_name="Psicólogo Asignado Finalmente")
 
     class Meta:
         db_table = "clinica_sugerenciamatching"
@@ -859,21 +1068,73 @@ class SugerenciaMatching(models.Model):
     def __str__(self):
         return f"Top #{self.ranking_posicion}: Dr(a). {self.psicologo_sugerido.usuario.get_full_name()} -> {self.paciente.usuario.get_full_name()} ({self.score_afinidad}%)"
 
-    def marcar_aprobada(self, coordinador=None, justificacion: str = ""):
-        """Consolida la aprobacion humana HITL de la sugerencia."""
+    def marcar_aprobada(self):
+        """CU22-paso 22: marcar_aprobada() → CU22-paso 23: sugerencia_aprobada [retorno]."""
         self.estado_decision = 'APROBADO'
-        self.validado_por_coordinador = coordinador
-        self.justificacion_clinica = justificacion or "Aprobado por Coordinador Clínico (HITL)."
         self.fecha_decision = timezone.now()
-        self.save(update_fields=['estado_decision', 'validado_por_coordinador', 'justificacion_clinica', 'fecha_decision'])
+        self.save(update_fields=['estado_decision', 'fecha_decision'])
 
-    def marcar_rechazada_manual(self, coordinador=None, justificacion: str = ""):
-        """Registra la reasignacion manual que descarta la sugerencia IA."""
+    def marcar_rechazada_manual(self, motivo: str):
+        """CU22-paso 32: marcar_rechazada_manual(motivo) → CU22-paso 33: rechazo_registrado [retorno]."""
         self.estado_decision = 'RECHAZADO_MANUAL'
-        self.validado_por_coordinador = coordinador
-        self.justificacion_clinica = justificacion or "Reasignado manualmente por criterio clínico."
+        self.justificacion_clinica = motivo
         self.fecha_decision = timezone.now()
-        self.save(update_fields=['estado_decision', 'validado_por_coordinador', 'justificacion_clinica', 'fecha_decision'])
+        self.save(update_fields=['estado_decision', 'justificacion_clinica', 'fecha_decision'])
+
+    def asignacion_auditada(self, aprobado_hitl: bool, coordinador, psicologo_final, justificacion: str = ''):
+        """
+        CU22-paso 26: asignacion_auditada(aprobado_hitl=true, coordinador_id) → CU22-paso 27: auditoria_asignacion_guardada.
+        También la usa CU22-paso 36 (aprobado_hitl=false) → CU22-paso 37: auditoria_reasignacion_guardada.
+        HU-48 (c): la decisión queda registrada en la bitácora cifrada del sistema.
+        """
+        from django.db import connection
+        from audit.services import log_event
+        self.aprobado_hitl = aprobado_hitl
+        self.validado_por_coordinador = coordinador
+        self.psicologo_asignado_final = psicologo_final
+        if aprobado_hitl:
+            self.justificacion_clinica = justificacion or "Sugerencia IA aprobada por el Coordinador Clínico (HITL)."
+        self.save(update_fields=['aprobado_hitl', 'validado_por_coordinador', 'psicologo_asignado_final',
+                                 'justificacion_clinica'])
+        log_event(
+            action='MATCHING_HITL_APROBADO' if aprobado_hitl else 'MATCHING_REASIGNACION_MANUAL',
+            modulo='CU22',
+            user=getattr(coordinador, 'email', None),
+            user_id=str(coordinador.id) if coordinador else None,
+            tenant=getattr(connection, 'schema_name', None),
+            sugerencia_id=str(self.id),
+            paciente_id=str(self.paciente_id),
+            psicologo_sugerido_id=str(self.psicologo_sugerido_id),
+            psicologo_asignado_id=str(psicologo_final.id),
+            score_sugerido=float(self.score_afinidad),
+            ranking=self.ranking_posicion,
+            justificacion=self.justificacion_clinica,
+        )
+
+    def asignacion_manual_auditada(self, coordinador, psicologo_final, justificacion: str):
+        """CU22-paso 36: asignacion_manual_auditada(aprobado_hitl=false, justificacion=motivo) → CU22-paso 37 [retorno]."""
+        self.asignacion_auditada(False, coordinador, psicologo_final, justificacion)
+
+    @classmethod
+    def persistir_top3_candidatos(cls, paciente, clasificacion, candidatos: list) -> list:
+        """
+        CU22-paso 16: persistir_top3_candidatos(top3_candidatos) → CU22-paso 17: candidatos_persistidos [retorno].
+        Reemplaza las sugerencias pendientes previas del paciente.
+        """
+        from django.db import transaction
+        with transaction.atomic():
+            cls.objects.filter(paciente=paciente, estado_decision='PENDIENTE_VALIDACION').delete()
+            return [
+                cls.objects.create(
+                    paciente=paciente,
+                    clasificacion=clasificacion,
+                    psicologo_sugerido=c['psicologo'],
+                    ranking_posicion=i,
+                    score_afinidad=c['score'],
+                    factores_ponderacion={'factores': c['factores'], 'cupo_completo': c['cupo_completo']},
+                )
+                for i, c in enumerate(candidatos, 1)
+            ]
 
 
 

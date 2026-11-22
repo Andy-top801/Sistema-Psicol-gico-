@@ -182,4 +182,68 @@ export class AgendaService {
       { nota_resolucion: notaResolucion || 'Alerta atendida por equipo clínico y registrada en expediente.' }
     );
   }
+
+  // --------------------------------------------------------------------------
+  // CU12 / HU-43: RECORDATORIOS AUTOMÁTICOS Y NOTIFICACIONES PUSH (FCM)
+  // --------------------------------------------------------------------------
+  /** Criterio (a): registra el token del dispositivo/navegador del paciente. */
+  registrarTokenFCM(token: string, plataforma: 'WEB' | 'ANDROID' | 'IOS' = 'WEB'): Observable<any> {
+    return this.http.post(`${this.apiUrl}/fcm-token/`, { token, plataforma });
+  }
+
+  desactivarTokenFCM(token: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/fcm-token/`, { body: { token } });
+  }
+
+  getNotificaciones(): Observable<NotificacionesResponse> {
+    return this.http.get<NotificacionesResponse>(`${this.apiUrl}/notificaciones/`);
+  }
+
+  marcarNotificacionLeida(id: string): Observable<NotificacionCita> {
+    return this.http.post<NotificacionCita>(`${this.apiUrl}/notificaciones/${id}/leer/`, {});
+  }
+
+  marcarTodasLeidas(): Observable<{ marcadas: number }> {
+    return this.http.post<{ marcadas: number }>(`${this.apiUrl}/notificaciones/leer-todas/`, {});
+  }
+
+  /** Mensaje 1 del diagrama de secuencia, ejecutado manualmente por el personal. */
+  ejecutarDespachoRecordatorios(): Observable<ResumenDespacho> {
+    return this.http.post<ResumenDespacho>(`${this.apiUrl}/notificaciones/despachar/`, {});
+  }
+}
+
+export interface NotificacionCita {
+  id: string;
+  tipo_evento: 'RECORDATORIO_24H' | 'RECORDATORIO_1H' | 'CANCELACION' | 'REPROGRAMACION' | 'NUEVA_TAREA';
+  canal: string;
+  estado: 'PENDIENTE' | 'ENVIADO' | 'FALLIDO';
+  titulo: string;
+  cuerpo: string;
+  leida: boolean;
+  message_id: string;
+  intentos_entrega: number;
+  error_log: string | null;
+  fecha_programada: string;
+  fecha_envio: string | null;
+  cita_id: string;
+  modalidad: 'PRESENCIAL' | 'VIRTUAL';
+  fecha_cita: string;
+  hora_cita: string;
+  estado_cita: string;
+  paciente_nombre: string;
+  psicologo_nombre: string;
+}
+
+export interface NotificacionesResponse {
+  es_paciente: boolean;
+  resumen: { no_leidas?: number; enviadas_24h?: number; pendientes?: number; fallidas?: number };
+  resultados: NotificacionCita[];
+}
+
+export interface ResumenDespacho {
+  modo_fcm: 'REAL' | 'SANDBOX';
+  total_evaluadas: number;
+  total_enviadas: number;
+  total_fallidas: number;
 }

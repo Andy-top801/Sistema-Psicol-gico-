@@ -37,6 +37,10 @@ interface ReportCard {
 
         <div class="header-actions">
           <a routerLink="/reportes/personalizado" class="btn-custom-builder">
+            <i class="fa-solid fa-microphone-lines"></i>
+            <span>Reporte por Voz</span>
+          </a>
+          <a routerLink="/reportes/personalizado" class="btn-custom-builder">
             <i class="fa-solid fa-wand-magic-sparkles"></i>
             <span>Constructor Personalizado</span>
           </a>
@@ -204,6 +208,8 @@ interface ReportCard {
       margin: 0;
       line-height: 1.5;
     }
+
+    .header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 
     .btn-custom-builder {
       display: inline-flex;

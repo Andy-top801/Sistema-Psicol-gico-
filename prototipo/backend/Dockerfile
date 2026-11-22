@@ -19,8 +19,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Copiar e instalar dependencias Python
 COPY requirements.txt /app/
+# CU21: torch solo-CPU (evita ~2 GB de librerías CUDA) antes del resto de dependencias
 RUN pip install --upgrade pip && \
+    pip install --no-cache-dir torch==2.7.1 --index-url https://download.pytorch.org/whl/cpu && \
     pip install --no-cache-dir -r requirements.txt
+
+# CU21: cache del modelo Hugging Face dentro de la imagen.
+# docker build --build-arg PRELOAD_IA=1 ...  descarga el modelo en el build (arranque sin internet).
+ENV HF_HOME=/app/.hf_cache
+ARG PRELOAD_IA=0
+RUN if [ "$PRELOAD_IA" = "1" ]; then python -c "from transformers import pipeline; pipeline('zero-shot-classification', model='MoritzLaurer/mDeBERTa-v3-base-mnli-xnli')"; fi
 
 # Copiar el código del proyecto
 COPY . /app/

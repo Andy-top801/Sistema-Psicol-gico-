@@ -46,7 +46,8 @@ class _LoginScreenState extends State<LoginScreen> {
         _tenants = list;
         if (list.isNotEmpty) {
           if (_selectedTenant == null || !_tenants.any((t) => t.slug == _selectedTenant!.slug)) {
-            _selectedTenant = list.first;
+            // Demo: Centro Psicológico Esperanza tiene los datos de prueba (paciente, citas, tareas)
+            _selectedTenant = list.firstWhere((t) => t.slug == 'centro_esperanza', orElse: () => list.first);
           }
         }
       });
@@ -126,8 +127,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         onPressed: () => urlController.text = 'http://10.0.2.2:8000/api',
                       ),
                       ActionChip(
-                        label: const Text('Wi-Fi PC (10.134.123.170)', style: TextStyle(fontSize: 11)),
-                        onPressed: () => urlController.text = 'http://10.134.123.170:8000/api',
+                        label: const Text('Wi-Fi PC (192.168.0.10)', style: TextStyle(fontSize: 11)),
+                        onPressed: () => urlController.text = 'http://192.168.0.10:8000/api',
+                      ),
+                      ActionChip(
+                        label: const Text('Nube (Render)', style: TextStyle(fontSize: 11)),
+                        onPressed: () => urlController.text = 'https://sigepsi-backend.onrender.com/api',
                       ),
                     ],
                   ),
@@ -826,6 +831,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                 icon: Icons.psychology_rounded,
                                 color: AppTheme.success,
                                 onTap: () => _fillDemo('carlos.mendoza@centroesperanza.com', 'Psicologo123*', false, 'centro_esperanza'),
+                              ),
+                              _buildDemoChip(
+                                label: 'Paciente',
+                                role: 'Valeria (Demo)',
+                                icon: Icons.person_rounded,
+                                color: AppTheme.warning,
+                                // Datos creados con: python manage.py preparar_demo_movil
+                                onTap: () => _fillDemo('paciente.demo@sigepsi.com', 'Demo1234*', false, 'centro_esperanza'),
                               ),
                             ],
                           ),

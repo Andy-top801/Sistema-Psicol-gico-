@@ -1183,16 +1183,28 @@ class RegistroAnimoSerializer(serializers.ModelSerializer):
 
 class ClasificacionIASerializer(serializers.ModelSerializer):
     paciente_nombre = serializers.SerializerMethodField()
+    paciente_id = serializers.UUIDField(source='respuestapreconsulta.paciente_id', read_only=True)
+    paciente_expediente = serializers.CharField(source='respuestapreconsulta.paciente.codigo_expediente', read_only=True)
+    psicologo_asignado_nombre = serializers.SerializerMethodField()
+    categoria_display = serializers.CharField(source='get_categoria_principal_display', read_only=True)
+    confianza_score = serializers.FloatField(read_only=True)
+    score_severidad = serializers.FloatField(read_only=True)
 
     class Meta:
         model = ClasificacionIA
         fields = [
-            'id', 'respuestapreconsulta', 'paciente_nombre', 'categoria_principal',
-            'confianza_score', 'nivel_severidad', 'alerta_crisis',
+            'id', 'respuestapreconsulta', 'paciente_id', 'paciente_nombre', 'paciente_expediente',
+            'psicologo_asignado_nombre', 'categoria_principal', 'categoria_display',
+            'confianza_score', 'nivel_severidad', 'puntaje_severidad', 'score_severidad',
+            'nivel_atencion', 'alerta_crisis', 'modelo_ia',
             'palabras_clave_detectadas', 'explicacion_heuristica',
             'hash_trazabilidad_sha256', 'fecha_analisis'
         ]
-        read_only_fields = ['id', 'fecha_analisis', 'hash_trazabilidad_sha256']
+        read_only_fields = fields
+
+    def get_psicologo_asignado_nombre(self, obj):
+        psico = obj.respuestapreconsulta.paciente.psicologo_asignado if obj.respuestapreconsulta_id else None
+        return psico.usuario.get_full_name() if psico else None
 
     def get_paciente_nombre(self, obj):
         if obj.respuestapreconsulta and obj.respuestapreconsulta.paciente:
@@ -1210,9 +1222,10 @@ class SugerenciaMatchingSerializer(serializers.ModelSerializer):
             'id', 'paciente', 'paciente_nombre', 'clasificacion', 'psicologo_sugerido',
             'psicologo_nombre', 'psicologo_colegiado', 'ranking_posicion', 'score_afinidad',
             'factores_ponderacion', 'estado_decision', 'validado_por_coordinador',
+            'aprobado_hitl', 'psicologo_asignado_final',
             'justificacion_clinica', 'fecha_generacion', 'fecha_decision'
         ]
-        read_only_fields = ['id', 'fecha_generacion']
+        read_only_fields = fields
 
     def get_psicologo_nombre(self, obj):
         return f'{obj.psicologo_sugerido.usuario.nombre} {obj.psicologo_sugerido.usuario.apellido}'.strip() or obj.psicologo_sugerido.usuario.email

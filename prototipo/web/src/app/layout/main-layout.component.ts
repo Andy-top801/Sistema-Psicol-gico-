@@ -2,12 +2,15 @@ import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../core/services/auth.service';
+import { AgendaService } from '../core/services/agenda.service';
 import { ChatbotWidgetComponent } from './chatbot-widget.component';
+import { NotificacionesBellComponent } from './notificaciones-bell.component';
+import { AlertasCrisisBadgeComponent } from './alertas-crisis-badge.component';
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule, ChatbotWidgetComponent],
+  imports: [CommonModule, RouterModule, ChatbotWidgetComponent, NotificacionesBellComponent, AlertasCrisisBadgeComponent],
   template: `
     <div class="app-layout">
       <!-- Backdrop for mobile sidebar drawer -->
@@ -127,6 +130,12 @@ import { ChatbotWidgetComponent } from './chatbot-widget.component';
               <i class="fa-solid fa-clipboard-question nav-icon"></i>
               <span>{{ authService.isPaciente() ? 'Pre-Consulta (Intake)' : 'Intake Digital & IA' }}</span>
             </a>
+
+            <!-- CU21 / CU22 (HU-47, HU-48): consola del Coordinador Clínico -->
+            <a *ngIf="authService.isAdminCentro()" routerLink="/triaje-ia" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
+              <i class="fa-solid fa-brain nav-icon"></i>
+              <span>Triaje IA y Asignación</span>
+            </a>
             
             <a *ngIf="!authService.isRecepcionista()" routerLink="/tareas-terapeuticas" routerLinkActive="active" (click)="closeSidebar()" class="nav-link">
               <i class="fa-solid fa-list-check nav-icon"></i>
@@ -203,6 +212,10 @@ import { ChatbotWidgetComponent } from './chatbot-widget.component';
             <span class="badge" [ngClass]="authService.isPaciente() ? 'badge-info' : 'badge-primary'">
               <i class="fa-solid fa-shield"></i> {{ authService.getRolNombre() }}
             </span>
+            <!-- CU12 / HU-43: Centro de Notificaciones y recordatorios push -->
+            <app-notificaciones-bell *ngIf="authService.isInTenantContext()"></app-notificaciones-bell>
+            <!-- CU21 / HU-47 (c): notificación prioritaria de crisis para el Coordinador Clínico -->
+            <app-alertas-crisis-badge *ngIf="authService.isInTenantContext() && authService.isAdminCentro()"></app-alertas-crisis-badge>
           </div>
         </header>
 
@@ -607,7 +620,7 @@ import { ChatbotWidgetComponent } from './chatbot-widget.component';
 export class MainLayoutComponent {
   isSidebarOpen = signal<boolean>(false);
 
-  constructor(public authService: AuthService, private router: Router) {}
+  constructor(public authService: AuthService, private router: Router, private agendaService: AgendaService) {}
 
   toggleSidebar() {
     this.isSidebarOpen.update(v => !v);
@@ -636,6 +649,13 @@ export class MainLayoutComponent {
   onLogout() {
     // --- Paso 1: Click en 'Cerrar Sesión' ---
     // El Actor hace click en el botón de logout del Navbar
+
+    // CU12: el navegador deja de recibir recordatorios de este paciente
+    let fcmToken: string | null = null;
+    try { fcmToken = localStorage.getItem('sigepsi_fcm_web_token'); } catch {}
+    if (fcmToken && this.authService.isPaciente()) {
+      this.agendaService.desactivarTokenFCM(fcmToken).subscribe({ error: () => {} });
+    }
 
     // --- Paso 2: POST /api/auth/logout/ {refresh} + Bearer JWT ---
     // IU_Navbar envía el refresh token al CTR_AuthLogout

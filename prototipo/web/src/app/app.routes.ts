@@ -62,7 +62,7 @@ export const routes: Routes = [
       { path: 'reportes/personalizado', component: ReportePersonalizadoComponent, canActivate: [adminCentroGuard] },
       { path: 'reportes/:fuente', component: ReporteVisorComponent, canActivate: [adminCentroGuard] },
       // Incremento Funcional Sprint 3 (CU21, CU22 - Triaje IA & Matching HITL)
-      { path: 'triaje-ia', component: ConsolaTriageComponent, canActivate: [clinicalStaffGuard] },
+      { path: 'triaje-ia', component: ConsolaTriageComponent, canActivate: [adminCentroGuard] },  // CU21/CU22: Coordinador Clínico
       // Incremento Funcional Sprint 2 — Rutas con RBAC Clínico (HU-26)
       { path: 'intake', component: IntakeConfigComponent },  // Todos: Paciente responde, Psicólogo/Admin configura
       { path: 'historias-clinicas', component: HistoriaClinicaListComponent, canActivate: [clinicalStaffGuard] },

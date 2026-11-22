@@ -166,6 +166,9 @@ declare const JitsiMeetExternalAPI: any;
       padding: 20px;
       text-align: center;
     }
+    /* Legibilidad sobre el fondo oscuro de la sala */
+    .loading-overlay h3, .error-overlay h3 { color: #f8fafc; margin: 8px 0 6px; }
+    .loading-overlay p, .error-overlay p { color: #cbd5e1 !important; max-width: 460px; }
     .ms-2 { margin-left: 8px; }
     .mt-3 { margin-top: 14px; }
 

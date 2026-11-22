@@ -35,6 +35,7 @@ export interface ReporteResultado {
   datos: Record<string, any>[];
   total: number;
   resumen?: Record<string, any>;
+  clinica?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -48,6 +49,11 @@ export class ReportService {
    */
   getMetadata(): Observable<Record<string, FuenteMetadata>> {
     return this.http.get<Record<string, FuenteMetadata>>(`${this.apiUrl}/metadata/`);
+  }
+
+  /** Clínicas activas (para que el SuperAdmin elija de cuál generar el reporte). */
+  listarClinicas(): Observable<{ nombre: string; slug: string; schema_name: string }[]> {
+    return this.http.get<{ nombre: string; slug: string; schema_name: string }[]>(`${environment.apiUrl}/tenants/public/`);
   }
 
   /**
@@ -83,6 +89,7 @@ export class ReportService {
     fuente: string;
     columnas?: string[];
     filtros?: Record<string, any>;
+    clinica?: string;
     orden?: { columna: string; direccion: string };
     formato?: string;
   }, developerKey?: string): Observable<ReporteResultado> {
@@ -99,6 +106,7 @@ export class ReportService {
     fuente: string;
     columnas?: string[];
     filtros?: Record<string, any>;
+    clinica?: string;
     orden?: { columna: string; direccion: string };
   }, developerKey?: string): Observable<Blob> {
     const keyOptions = developerKeyOptions(payload.fuente, developerKey);
@@ -116,6 +124,7 @@ export class ReportService {
     fuente: string;
     columnas?: string[];
     filtros?: Record<string, any>;
+    clinica?: string;
     orden?: { columna: string; direccion: string };
     email: string;
     asunto?: string;
@@ -136,6 +145,7 @@ export class ReportService {
     fuente: string;
     asunto?: string;
     filtros?: Record<string, any>;
+    clinica?: string;
     columnas?: string[];
     orden?: { columna: string; direccion: string };
   }, developerKey?: string): Observable<any> {

@@ -247,3 +247,9 @@ JITSI_USE_JWT = os.environ.get('JITSI_USE_JWT', 'False').lower() in ('true', '1'
 STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
 STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', '')
 STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
+
+# -----------------------------------------------------------------------------
+# CU21 / HU-47: Clasificación del motivo de consulta con IA (Hugging Face zero-shot)
+# -----------------------------------------------------------------------------
+IA_MODELO_HF = os.environ.get('IA_MODELO_HF', 'MoritzLaurer/mDeBERTa-v3-base-mnli-xnli')
+IA_HABILITADA = os.environ.get('IA_HABILITADA', 'True').lower() in ('true', '1', 'yes')

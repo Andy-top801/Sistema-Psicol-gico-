@@ -488,6 +488,10 @@ import { HistoriaClinica, DiagnosticoCIE, CieItem } from '../../core/models/clin
                   <div *ngIf="ev.metadata?.dificultad" class="small mt-1 text-muted">
                     <i class="fa-solid fa-gauge-high me-1"></i> Dificultad percibida por el paciente: <strong>{{ ev.metadata?.dificultad }}/5</strong>
                   </div>
+                  <!-- CU17 / HU-45 (c): reflexión entregada por el paciente desde la app móvil -->
+                  <div *ngIf="ev.metadata?.reflexion" class="small mt-1">
+                    <i class="fa-solid fa-comment-medical me-1"></i> Reflexión del paciente: <em>"{{ ev.metadata?.reflexion }}"</em>
+                  </div>
                 </div>
 
                 <div class="timeline-meta small text-muted d-flex gap-3">

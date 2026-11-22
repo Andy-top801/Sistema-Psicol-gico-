@@ -149,6 +149,9 @@ import { AuthService } from '../../core/services/auth.service';
         <div class="voice-extracted-feedback" *ngIf="ultimoParametrosExtraidos">
           <div class="feedback-badge"><i class="fa-solid fa-check"></i> Parámetros Extraídos (CTR_SpeechParserService):</div>
           <div class="extracted-tags">
+            <span class="tag-extracted" *ngIf="ultimoParametrosExtraidos.clinica && authService.isSuperAdmin()">
+              <strong>Clínica:</strong> {{ ultimoParametrosExtraidos.clinica }}
+            </span>
             <span class="tag-extracted" *ngIf="ultimoParametrosExtraidos.fuente">
               <strong>Entidad:</strong> {{ ultimoParametrosExtraidos.fuente }}
             </span>
@@ -196,6 +199,17 @@ import { AuthService } from '../../core/services/auth.service';
             <option value="usuarios">👥 Catálogo de Usuarios del Sistema</option>
             <option *ngIf="authService.isSuperAdmin()" value="bitacora">📜 Bitácora de Auditoría (Cifrada)</option>
           </select>
+          <div *ngIf="authService.isSuperAdmin() && fuenteSeleccionada !== 'bitacora'" class="filter-field">
+            <label for="clinica-reporte">Clínica (tenant)</label>
+            <input id="clinica-reporte" type="text" list="clinicas-reporte-lista" autocomplete="off"
+              placeholder="Ej: Clínica Esperanza (o dícelo por voz)"
+              [(ngModel)]="clinicaSeleccionada" (change)="onClinicaCambiada()">
+            <datalist id="clinicas-reporte-lista">
+              <option *ngFor="let c of clinicasDisponibles" [value]="c"></option>
+            </datalist>
+            <p *ngIf="clinicaError" role="alert" class="voice-error-msg">{{ clinicaError }}</p>
+            <small *ngIf="resultado?.clinica && !clinicaError">Mostrando datos de: <strong>{{ resultado?.clinica }}</strong></small>
+          </div>
           <div *ngIf="fuenteSeleccionada === 'bitacora'" class="filter-field">
             <label for="custom-audit-key">Clave de desarrollador</label>
             <input id="custom-audit-key" type="password" autocomplete="off" [(ngModel)]="developerKey" (ngModelChange)="keyChanged()">
@@ -1518,6 +1532,11 @@ export class ReportePersonalizadoComponent implements OnInit, OnDestroy {
   voiceError = '';
   ultimoParametrosExtraidos: ExtractedVoiceParams | null = null;
 
+  // Clínica / tenant del reporte (solo SuperAdmin)
+  clinicaSeleccionada = '';
+  clinicasDisponibles: string[] = [];
+  clinicaError = '';
+
   // Pagination
   paginaActual = 1;
   tamanoPagina = 25;
@@ -1564,6 +1583,23 @@ export class ReportePersonalizadoComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.cargarMetadata();
     this.setupSpeechListeners();
+    if (this.authService.isSuperAdmin()) {
+      this.reportService.listarClinicas().subscribe({
+        next: (lista) => this.clinicasDisponibles = lista.filter(c => c.schema_name !== 'public').map(c => c.nombre),
+        error: () => this.clinicasDisponibles = []
+      });
+    }
+  }
+
+  /** Solo el SuperAdmin manda "clinica"; el backend rechaza el campo para cualquier otro rol. */
+  private clinicaPayload(): { clinica?: string } {
+    const clinica = this.clinicaSeleccionada.trim();
+    return clinica && this.authService.isSuperAdmin() ? { clinica } : {};
+  }
+
+  onClinicaCambiada(): void {
+    this.resultado = null; // no dejar en pantalla datos de otra clínica
+    this.generarReportePersonalizado();
   }
 
   ngOnDestroy(): void {
@@ -1625,6 +1661,13 @@ export class ReportePersonalizadoComponent implements OnInit, OnDestroy {
    */
   procesarParametrosVoz(params: ExtractedVoiceParams): void {
     this.ultimoParametrosExtraidos = params;
+    // Cada comando de voz es una consulta nueva: no arrastrar filtros del dictado anterior
+    this.filtrosValores = {};
+
+    // 0. Clínica (solo SuperAdmin). Si el dictado no nombra clínica, se mantiene la ya elegida.
+    if (params.clinica && this.authService.isSuperAdmin()) {
+      this.clinicaSeleccionada = params.clinica;
+    }
 
     // 1. Entidad / Fuente
     if (params.fuente && params.fuente !== this.fuenteSeleccionada) {
@@ -1635,17 +1678,14 @@ export class ReportePersonalizadoComponent implements OnInit, OnDestroy {
     // 2. Filtro temporal (mes)
     if (params.mes) {
       // Capitalizar para opciones de dropdown: "Septiembre"
-      const mesCap = params.mes.charAt(0).toUpperCase() + params.mes.slice(1);
-      this.filtrosValores['mes'] = mesCap;
-      if (params.fecha_desde) this.filtrosValores['fecha_desde'] = params.fecha_desde;
-      if (params.fecha_hasta) this.filtrosValores['fecha_hasta'] = params.fecha_hasta;
+      this.filtrosValores['mes'] = params.mes.charAt(0).toUpperCase() + params.mes.slice(1);
     }
+    if (params.fecha_desde) this.filtrosValores['fecha_desde'] = params.fecha_desde;
+    if (params.fecha_hasta) this.filtrosValores['fecha_hasta'] = params.fecha_hasta;
 
-    // 3. Psicólogo
-    if (params.psicologo) {
-      this.filtrosValores['psicologo'] = params.psicologo;
-      delete this.filtrosValores['psicologo_id'];
-    }
+    // 3. Psicólogo / paciente (el backend busca por nombre o apellido)
+    if (params.psicologo) this.filtrosValores['psicologo'] = params.psicologo;
+    if (params.paciente) this.filtrosValores['paciente'] = params.paciente;
 
     // 4. Estado y modalidad
     if (params.estado) {
@@ -1793,22 +1833,31 @@ export class ReportePersonalizadoComponent implements OnInit, OnDestroy {
     const fuenteConsultada = this.fuenteSeleccionada;
     const keyConsultada = fuenteConsultada === 'bitacora' ? this.developerKey : undefined;
     const orden = this.columnaOrden ? { columna: this.columnaOrden, direccion: this.direccionOrden } : undefined;
+    const clinicaConsultada = this.clinicaSeleccionada;
+    this.clinicaError = '';
 
     const request = this.reportService.generarPersonalizado({
       fuente: fuenteConsultada,
       columnas: this.columnasSeleccionadas,
       filtros: this.filtrosValores,
-      orden: orden
+      orden: orden,
+      ...this.clinicaPayload()
     }, keyConsultada);
     this.requests.add(request.subscribe({
       next: (res) => {
-        if (fuenteConsultada !== this.fuenteSeleccionada || (fuenteConsultada === 'bitacora' && (keyConsultada !== this.developerKey || !this.authService.isAuthenticated()))) return;
+        if (fuenteConsultada !== this.fuenteSeleccionada || clinicaConsultada !== this.clinicaSeleccionada || (fuenteConsultada === 'bitacora' && (keyConsultada !== this.developerKey || !this.authService.isAuthenticated()))) return;
         this.resultado = res;
         this.generando = false;
         this.paginaActual = 1;
       },
       error: (err) => {
-        if (fuenteConsultada !== this.fuenteSeleccionada || (fuenteConsultada === 'bitacora' && (keyConsultada !== this.developerKey || !this.authService.isAuthenticated()))) return;
+        if (fuenteConsultada !== this.fuenteSeleccionada || clinicaConsultada !== this.clinicaSeleccionada || (fuenteConsultada === 'bitacora' && (keyConsultada !== this.developerKey || !this.authService.isAuthenticated()))) return;
+        if (this.clinicaPayload().clinica && [400, 403, 404].includes(err.status) && fuenteConsultada !== 'bitacora') {
+          // Clínica no encontrada / ambigua / inactiva: avisar y no mostrar datos de otra clínica
+          const opciones: string[] = err.error?.clinicas_disponibles || [];
+          this.clinicaError = (err.error?.error || 'No se pudo usar esa clínica.') + (opciones.length ? ` Opciones: ${opciones.join(', ')}.` : '');
+          this.resultado = null;
+        }
         if (fuenteConsultada === 'bitacora') this.accessError = err.status === 401 || err.status === 403
           ? 'Acceso denegado. Verificá la clave de desarrollador y tu sesión de SuperAdmin.'
           : 'No se pudo generar la bitácora. Verificá la clave e intentá nuevamente.';
@@ -1851,7 +1900,8 @@ export class ReportePersonalizadoComponent implements OnInit, OnDestroy {
       fuente: this.fuenteSeleccionada,
       columnas: this.columnasSeleccionadas,
       filtros: this.filtrosValores,
-      orden: orden
+      orden: orden,
+      ...this.clinicaPayload()
     }, keyConsultada).subscribe({
       next: (blob) => {
         this.descargandoExcel = false;
@@ -1922,7 +1972,7 @@ export class ReportePersonalizadoComponent implements OnInit, OnDestroy {
 
   exportarPDF(): void {
     if (!this.resultado) return;
-    const currentTenant = this.authService.currentTenant()?.nombre;
+    const currentTenant = this.resultado?.clinica || this.authService.currentTenant()?.nombre;
     const currentUser = this.authService.currentUser()?.nombre || 'Administrador Clínico';
     const res = {
       ...this.resultado,
@@ -1935,7 +1985,7 @@ export class ReportePersonalizadoComponent implements OnInit, OnDestroy {
 
   exportarExcel(): void {
     if (!this.resultado) return;
-    const currentTenant = this.authService.currentTenant()?.nombre;
+    const currentTenant = this.resultado?.clinica || this.authService.currentTenant()?.nombre;
     const currentUser = this.authService.currentUser()?.nombre || 'Administrador Clínico';
     const res = {
       ...this.resultado,
@@ -1990,7 +2040,8 @@ export class ReportePersonalizadoComponent implements OnInit, OnDestroy {
       asunto: this.emailAsunto,
       filtros: this.filtrosValores,
       columnas: this.columnasSeleccionadas,
-      orden: orden
+      orden: orden,
+      ...this.clinicaPayload()
     }, keyEnviada).subscribe({
       next: (res) => {
         if (fuenteEnviada !== this.fuenteSeleccionada || (fuenteEnviada === 'bitacora' && (keyEnviada !== this.developerKey || !this.authService.isAuthenticated()))) return;

@@ -1,29 +1,26 @@
 // ==============================================================================
 // MÓDULO: mis_tareas_screen.dart
 // CAPA BCE: BOUNDARY (Interfaz de Usuario Móvil – Flutter) — IU_GestionTareas
-// CASO DE USO: CU17 – Asignación y Cumplimiento de Tareas Terapéuticas Inter-Sesiones (HU-29, HU-30)
+// CASO DE USO: CU17 Móvil – Tareas Terapéuticas y Mood Tracker Diario (HU-45, HU-46)
 //
-// DIAGRAMA DE SECUENCIA UML (CU17 - Tareas Terapéuticas y Cumplimiento):
-// ------------------------------------------------------------------------------
-// 1. Paciente Móvil -> IU_GestionTareas: 1: reportar_cumplimiento(tarea_id, texto_reflexion, archivo_adjunto)
-// 2. IU_GestionTareas -> CTR_TareasController: 2: POST /api/v1/tareas/{id}/evidencia/ (Multipart Form-Data)
-// 3. CTR_TareasController -> CTR_TareasController: 3: validar_plazo_limite_y_tipo_archivo()
-// [Alt: Entrega en Plazo (Cumplimiento Exitoso)]
-// 4. CTR_TareasController -> CE_TareaTerapeutica: 4: INSERT clinica_evidenciatarea & UPDATE clinica_tareaterapeutica (estado='COMPLETADA')
-// 5. CE_TareaTerapeutica --> CTR_TareasController: 5: evidencia_persistida()
-// 6. CTR_TareasController --> IU_GestionTareas: 6: HTTP 200 OK {estado: 'COMPLETADA', fecha_cumplimiento}
-// 7. IU_GestionTareas --> Paciente Móvil: 7: actualizar_indicador_progreso(100% completado)
-// [Alt: Fuera de Plazo (Entrega Extemporánea)]
-// 8. CTR_TareasController -> CE_TareaTerapeutica: 8: UPDATE clinica_tareaterapeutica SET estado='COMPLETADA_CON_RETRASO'
-// 9. CE_TareaTerapeutica --> CTR_TareasController: 9: tarea_actualizada_con_retraso()
-// 10. CTR_TareasController --> IU_GestionTareas: 10: HTTP 200 OK (warning_retraso=true)
-// 11. IU_GestionTareas --> Paciente Móvil: 11: mostrar_aviso_retraso('Tarea entregada fuera de plazo')
+// DIAGRAMA DE SECUENCIA "Secuencia_Corregido_CU17_Tareas_Mood_Movil":
+//   1 : Paciente → IU_SeguimientoTerapeuticoMovil.entregar_tarea_y_animo(tarea_id, reflexión, dificultad, ánimo)
+//   2 : IU → CTR  POST /api/clinica/tareas/{id}/entregar/
+//   3-6 : CTR valida plazo/archivo y actualiza estado → 'COMPLETADA' (se muestra 'Entregada')
+//   alt [plazo_valido && archivo_valido]
+//     7-16 : persistir_evidencia · obtener_paciente · registrar_animo · supervisar_avance · registrar_acceso
+//     17-18: 200 OK → mostrar_entrega_exito('Tarea entregada y ánimo registrado')
+//   else
+//     19-20: 400 Bad Request → mostrar_error_entrega('No se puede entregar la tarea fuera de plazo')
+// HU-45 (a) etiqueta 'Pendiente' + fecha límite · (b) 'Completar Tarea' abre reflexión + dificultad 1-5
+//       (c) estado 'Entregada', edición bloqueada; el psicólogo la ve en la historia clínica web.
 // ==============================================================================
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../core/theme/app_theme.dart';
 import '../services/auth_service.dart';
 import '../services/sprint2_service.dart';
+import 'mood_tracker_sheet.dart';
 
 class MisTareasScreen extends StatefulWidget {
   final AuthService authService;
@@ -88,8 +85,8 @@ class _MisTareasScreenState extends State<MisTareasScreen> with TickerProviderSt
 
   String _getEstadoLabel(String estado) {
     switch (estado.toUpperCase()) {
-      case 'COMPLETADA': return 'Completada';
-      case 'COMPLETADA_CON_RETRASO': return 'Completada con retraso';
+      case 'COMPLETADA': return 'Entregada';
+      case 'COMPLETADA_CON_RETRASO': return 'Entregada con retraso';
       case 'PENDIENTE': return 'Pendiente';
       case 'EN_PROGRESO': return 'En Progreso';
       case 'VENCIDA': return 'Vencida';
@@ -118,9 +115,26 @@ class _MisTareasScreenState extends State<MisTareasScreen> with TickerProviderSt
     }
   }
 
+  bool _estaEntregada(String estado) => estado == 'COMPLETADA' || estado == 'COMPLETADA_CON_RETRASO';
+
+  /// Plazo vencido: la entrega móvil se rechaza (CU17-paso 19 → 400 'Plazo expirado').
+  bool _plazoVencido(Map<String, dynamic> tarea) {
+    final limite = DateTime.tryParse((tarea['fecha_limite'] ?? '').toString());
+    if (limite == null) return false;
+    final hoy = DateTime.now();
+    return limite.isBefore(DateTime(hoy.year, hoy.month, hoy.day));
+  }
+
+  String _formatearFecha(dynamic valor) {
+    final dt = DateTime.tryParse((valor ?? '').toString());
+    return dt == null ? (valor ?? '').toString() : DateFormat('dd MMM yyyy', 'es').format(dt);
+  }
+
+  /// HU-45 (b): formulario con reflexión libre + dificultad 1-5 (+ ánimo opcional, HU-46).
   void _showReportModal(Map<String, dynamic> tarea) {
     final reflexionController = TextEditingController();
-    double dificultad = 3;
+    int dificultad = 3;
+    int? animo;
     bool isSubmitting = false;
 
     showModalBottomSheet(
@@ -130,10 +144,9 @@ class _MisTareasScreenState extends State<MisTareasScreen> with TickerProviderSt
       builder: (ctx) {
         return StatefulBuilder(
           builder: (context, setModalState) {
+            final reflexionValida = reflexionController.text.trim().isNotEmpty;
             return Container(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
-              ),
+              padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
               decoration: const BoxDecoration(
                 color: AppTheme.cardBg,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -149,19 +162,13 @@ class _MisTareasScreenState extends State<MisTareasScreen> with TickerProviderSt
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Handle
                     Center(
                       child: Container(
                         width: 40, height: 4,
-                        decoration: BoxDecoration(
-                          color: AppTheme.borderSubtle,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
+                        decoration: BoxDecoration(color: AppTheme.borderSubtle, borderRadius: BorderRadius.circular(2)),
                       ),
                     ),
                     const SizedBox(height: 20),
-
-                    // Header
                     Row(
                       children: [
                         Container(
@@ -170,88 +177,111 @@ class _MisTareasScreenState extends State<MisTareasScreen> with TickerProviderSt
                             color: AppTheme.success.withOpacity(0.15),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(Icons.check_circle_outline_rounded, color: AppTheme.success, size: 24),
+                          child: const Icon(Icons.task_alt_rounded, color: AppTheme.success, size: 24),
                         ),
                         const SizedBox(width: 14),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Reportar Cumplimiento',
-                                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppTheme.textMain),
-                              ),
-                              Text(
-                                tarea['titulo'] ?? 'Tarea',
-                                style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                              const Text('Completar Tarea',
+                                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppTheme.textMain)),
+                              Text(tarea['titulo'] ?? 'Tarea',
+                                  style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                                  maxLines: 2, overflow: TextOverflow.ellipsis),
                             ],
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
 
-                    // Reflexión
-                    const Text(
-                      'NOTAS DE AUTORREFLEXIÓN',
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppTheme.primaryLight, letterSpacing: 0.5),
+                    // Instrucciones completas y fecha límite (HU-45 conversación)
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppTheme.background,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppTheme.borderSubtle),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('INSTRUCCIONES',
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppTheme.primaryLight, letterSpacing: 0.5)),
+                          const SizedBox(height: 6),
+                          Text((tarea['descripcion'] ?? '').toString(),
+                              style: const TextStyle(fontSize: 13, color: AppTheme.textMain, height: 1.4)),
+                          if (tarea['fecha_limite'] != null) ...[
+                            const SizedBox(height: 8),
+                            Text('Fecha límite: ${_formatearFecha(tarea['fecha_limite'])}',
+                                style: const TextStyle(fontSize: 11, color: AppTheme.textSubtle)),
+                          ],
+                        ],
+                      ),
                     ),
+                    const SizedBox(height: 20),
+
+                    const Text('TUS REFLEXIONES',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppTheme.primaryLight, letterSpacing: 0.5)),
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: reflexionController,
                       maxLines: 4,
                       maxLength: 500,
+                      onChanged: (_) => setModalState(() {}),
                       style: const TextStyle(color: AppTheme.textMain, fontSize: 14),
                       decoration: InputDecoration(
                         hintText: '¿Cómo te sentiste realizando el ejercicio? ¿Qué descubriste?',
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                       ),
                     ),
-                    const SizedBox(height: 20),
-
-                    // Dificultad
-                    const Text(
-                      'DIFICULTAD PERCIBIDA',
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppTheme.primaryLight, letterSpacing: 0.5),
-                    ),
                     const SizedBox(height: 12),
+
+                    // Dificultad 1-5 (estrellas, prototipo Figma)
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('1 - Fácil', style: TextStyle(fontSize: 11, color: AppTheme.success)),
-                        Text(
-                          '${dificultad.round()}/5',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w900,
-                            color: _getDificultadColor(dificultad),
-                          ),
-                        ),
-                        const Text('5 - Difícil', style: TextStyle(fontSize: 11, color: AppTheme.danger)),
+                        const Text('DIFICULTAD DE LA TAREA',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppTheme.primaryLight, letterSpacing: 0.5)),
+                        const Spacer(),
+                        Text('$dificultad/5',
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: _getDificultadColor(dificultad.toDouble()))),
                       ],
                     ),
-                    SliderTheme(
-                      data: SliderThemeData(
-                        activeTrackColor: _getDificultadColor(dificultad),
-                        inactiveTrackColor: _getDificultadColor(dificultad).withOpacity(0.15),
-                        thumbColor: _getDificultadColor(dificultad),
-                        overlayColor: _getDificultadColor(dificultad).withOpacity(0.2),
-                        trackHeight: 6,
-                      ),
-                      child: Slider(
-                        value: dificultad,
-                        min: 1,
-                        max: 5,
-                        divisions: 4,
-                        onChanged: (v) => setModalState(() => dificultad = v),
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(5, (i) {
+                        final n = i + 1;
+                        return IconButton(
+                          tooltip: 'Dificultad $n de 5',
+                          iconSize: 34,
+                          onPressed: () => setModalState(() => dificultad = n),
+                          icon: Icon(
+                            n <= dificultad ? Icons.star_rounded : Icons.star_outline_rounded,
+                            color: n <= dificultad ? _getDificultadColor(dificultad.toDouble()) : AppTheme.textSubtle,
+                          ),
+                        );
+                      }),
+                    ),
+                    const Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('1 - Muy fácil', style: TextStyle(fontSize: 10, color: AppTheme.textSubtle)),
+                        Text('5 - Muy difícil', style: TextStyle(fontSize: 10, color: AppTheme.textSubtle)),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    // HU-46: ánimo del día (opcional) — lo guarda CU17-paso 11 registrar_animo_diario en el servidor
+                    const Text('¿CÓMO TE SIENTES HOY? (OPCIONAL)',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppTheme.primaryLight, letterSpacing: 0.5)),
+                    const SizedBox(height: 8),
+                    MoodSelector(
+                      seleccionado: animo,
+                      onChanged: (v) => setModalState(() => animo = animo == v ? null : v),
                     ),
                     const SizedBox(height: 24),
 
-                    // Submit button
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.success,
@@ -260,68 +290,42 @@ class _MisTareasScreenState extends State<MisTareasScreen> with TickerProviderSt
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
                       icon: isSubmitting
-                          ? const SizedBox(
-                              width: 18, height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                            )
+                          ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                           : const Icon(Icons.send_rounded, size: 18),
-                      label: Text(
-                        isSubmitting ? 'Enviando...' : 'Enviar a mi Psicólogo/a',
-                        style: const TextStyle(fontWeight: FontWeight.w800),
-                      ),
-                      // CU17 Paso 1: reportar_cumplimiento(tarea_id, texto_reflexion, archivo_adjunto)
-                      // CU17 Paso 2: POST /api/v1/tareas/{id}/evidencia/ (Multipart Form-Data)
-                      onPressed: isSubmitting
+                      label: Text(isSubmitting ? 'Enviando...' : 'Enviar a mi Psicólogo/a',
+                          style: const TextStyle(fontWeight: FontWeight.w800)),
+                      // CU17-paso 1: entregar_tarea_y_animo(tarea_id, archivo, animo_val, nota) — el Paciente pulsa 'Enviar'
+                      // CU17-paso 2: POST /api/v1/clinica/tareas/{id}/entregar/ (vía Sprint2Service.enviarEvidenciaTarea)
+                      onPressed: isSubmitting || !reflexionValida
                           ? null
                           : () async {
                               setModalState(() => isSubmitting = true);
-                              // CU17 Paso 1 y 2: Invocar servicio enviando payload de reflexión y dificultad
+                              final messenger = ScaffoldMessenger.of(this.context);
+                              final opcion = animo == null ? null : kMoodOpciones.firstWhere((m) => m['val'] == animo);
                               final result = await _sprint2Service.enviarEvidenciaTarea(
                                 tarea['id'].toString(),
                                 {
                                   'texto_reflexion': reflexionController.text.trim(),
-                                  'dificultad_percibida': dificultad.round(),
+                                  'dificultad_percibida': dificultad,
+                                  if (opcion != null) 'escala_animo': opcion['val'],
+                                  if (opcion != null) 'estado_animo': opcion['code'],
                                 },
                               );
-                              if (context.mounted) {
-                                Navigator.pop(context);
-                                if (result['success'] == true) {
-                                  final data = result['data'] is Map ? result['data'] as Map<String, dynamic> : <String, dynamic>{};
-                                  final bool warningRetraso = data['warning_retraso'] == true ||
-                                      (data['estado'] ?? '').toString().toUpperCase() == 'COMPLETADA_CON_RETRASO';
-                                  if (warningRetraso) {
-                                    // CU17 Paso 10: HTTP 200 OK (warning_retraso=true)
-                                    // CU17 Paso 11: mostrar_aviso_retraso('Tarea entregada fuera de plazo')
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('⚠️ Tarea entregada fuera de plazo (completada con retraso)'),
-                                        backgroundColor: Color(0xFFF97316),
-                                        behavior: SnackBarBehavior.floating,
-                                      ),
-                                    );
-                                  } else {
-                                    // CU17 Paso 6: HTTP 200 OK {estado: 'COMPLETADA', fecha_cumplimiento}
-                                    // CU17 Paso 7: actualizar_indicador_progreso(100% completado)
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('✅ Reporte enviado exitosamente (100% completado)'),
-                                        backgroundColor: AppTheme.success,
-                                        behavior: SnackBarBehavior.floating,
-                                      ),
-                                    );
-                                  }
-                                  _loadTareas(); // Refresh list y actualizar_indicador_progreso
-
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(result['error'] ?? 'Error al enviar reporte'),
-                                      backgroundColor: AppTheme.danger,
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
-                                  );
-                                }
-                              }
+                              if (!context.mounted) return;
+                              Navigator.pop(context);
+                              final ok = result['success'] == true;
+                              final data = result['data'] is Map ? result['data'] as Map : const {};
+                              // CU17-paso 17 / CU17-paso 19: respuesta 200 OK o 400 Bad Request [retorno]
+                              // CU17-paso 18: mostrar_animacion_exito_y_racha('Entrega confirmada') si ok
+                              // CU17-paso 20: mostrar_error_entrega('No se puede entregar la tarea fuera de plazo') si falla
+                              messenger.showSnackBar(SnackBar(
+                                content: Text(ok
+                                    ? '✅ ${data['mensaje'] ?? 'Tarea entregada'}'
+                                    : (result['error'] ?? 'No se pudo entregar la tarea.').toString()),
+                                backgroundColor: ok ? AppTheme.success : AppTheme.danger,
+                                behavior: SnackBarBehavior.floating,
+                              ));
+                              if (mounted) _loadTareas();
                             },
                     ),
                     const SizedBox(height: 12),
@@ -456,7 +460,7 @@ class _MisTareasScreenState extends State<MisTareasScreen> with TickerProviderSt
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '$_completadas de $_total tareas completadas',
+                      '$_completadas de $_total tareas entregadas',
                       style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
                     ),
                     const SizedBox(height: 6),
@@ -464,7 +468,7 @@ class _MisTareasScreenState extends State<MisTareasScreen> with TickerProviderSt
                       children: [
                         _buildMiniKpi('Pendientes', '${_total - _completadas}', AppTheme.warning),
                         const SizedBox(width: 12),
-                        _buildMiniKpi('Completadas', '$_completadas', AppTheme.success),
+                        _buildMiniKpi('Entregadas', '$_completadas', AppTheme.success),
                       ],
                     ),
                   ],
@@ -504,21 +508,14 @@ class _MisTareasScreenState extends State<MisTareasScreen> with TickerProviderSt
 
   Widget _buildTareaCard(Map<String, dynamic> tarea) {
     final estado = (tarea['estado'] ?? 'PENDIENTE').toString().toUpperCase();
-    final isCompletada = estado == 'COMPLETADA' || estado == 'COMPLETADA_CON_RETRASO';
+    final isCompletada = _estaEntregada(estado);
+    final vencida = !isCompletada && _plazoVencido(tarea);
 
     final categoria = tarea['categoria']?.toString() ?? '';
     final categoriaColor = _getCategoriaColor(categoria);
     final estadoColor = _getEstadoColor(estado);
 
-    String fechaLimite = '';
-    if (tarea['fecha_limite'] != null) {
-      try {
-        final dt = DateTime.parse(tarea['fecha_limite'].toString());
-        fechaLimite = DateFormat('dd MMM yyyy', 'es').format(dt);
-      } catch (_) {
-        fechaLimite = tarea['fecha_limite'].toString();
-      }
-    }
+    final fechaLimite = tarea['fecha_limite'] == null ? '' : _formatearFecha(tarea['fecha_limite']);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -610,7 +607,10 @@ class _MisTareasScreenState extends State<MisTareasScreen> with TickerProviderSt
                   ),
                 ],
                 const Spacer(),
-                if (!isCompletada)
+                if (vencida)
+                  const Text('Plazo vencido',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppTheme.danger)),
+                if (!isCompletada && !vencida)
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.success,
@@ -619,8 +619,8 @@ class _MisTareasScreenState extends State<MisTareasScreen> with TickerProviderSt
                       visualDensity: VisualDensity.compact,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
-                    icon: const Icon(Icons.check_rounded, size: 16),
-                    label: const Text('Reportar', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
+                    icon: const Icon(Icons.task_alt_rounded, size: 16),
+                    label: const Text('Completar Tarea', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
                     onPressed: () => _showReportModal(tarea),
                   ),
                 if (isCompletada)
@@ -629,7 +629,7 @@ class _MisTareasScreenState extends State<MisTareasScreen> with TickerProviderSt
                       Icon(Icons.check_circle_rounded, size: 16, color: AppTheme.success),
                       const SizedBox(width: 4),
                       Text(
-                        'Enviada',
+                        'Entregada',
                         style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.success),
                       ),
                     ],

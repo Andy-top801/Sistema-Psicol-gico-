@@ -7,7 +7,10 @@ import 'users_screen.dart';
 import 'roles_screen.dart';
 import 'centro_config_screen.dart';
 import 'tenants_screen.dart';
+import 'reportes_screen.dart';
 import 'mis_citas_screen.dart';
+// CU11 Móvil (HU-41 / HU-42): agenda personal del paciente
+import 'mis_citas_movil_screen.dart';
 import 'reservar_cita_screen.dart';
 import 'paciente_perfil_screen.dart';
 import 'teleconsulta_jitsi_screen.dart';
@@ -15,8 +18,12 @@ import '../models/cita_model.dart';
 // Sprint 2 - Módulos Clínicos Móviles (CU14, CU17, CU18)
 import 'intake_form_screen.dart';
 import 'mis_tareas_screen.dart';
+import 'mood_tracker_sheet.dart';
 import 'consentimiento_firma_screen.dart';
 import 'chatbot_screen.dart';
+// Sprint 3 - CU12 / HU-43: Recordatorios y notificaciones push
+import 'centro_notificaciones_screen.dart';
+import '../services/notificaciones_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   final AuthService authService;
@@ -39,6 +46,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _refreshProfileSilent() async {
     await widget.authService.refreshProfile();
     if (mounted) setState(() {});
+    // CU12 (a): al iniciar sesión el paciente registra el token de su dispositivo
+    if (widget.authService.isPaciente) {
+      NotificacionesService.instance.iniciar(widget.authService);
+    }
+  }
+
+  void _abrirCentroNotificaciones() {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const CentroNotificacionesScreen()));
+  }
+
+  Widget _campanaNotificaciones() {
+    final svc = NotificacionesService.instance;
+    return ListenableBuilder(
+      listenable: svc,
+      builder: (context, _) => IconButton(
+        tooltip: 'Centro de Notificaciones',
+        onPressed: _abrirCentroNotificaciones,
+        icon: Badge(
+          isLabelVisible: svc.noLeidas > 0,
+          label: Text('${svc.noLeidas > 9 ? '9+' : svc.noLeidas}'),
+          backgroundColor: AppTheme.danger,
+          child: Icon(
+            svc.noLeidas > 0 ? Icons.notifications_active_rounded : Icons.notifications_none_rounded,
+            color: AppTheme.primaryLight,
+            size: 22,
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _manualRefresh() async {
@@ -99,6 +135,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _logout(BuildContext context) async {
+    await NotificacionesService.instance.detener();
     await widget.authService.logout();
     if (context.mounted) {
       Navigator.pushReplacement(
@@ -217,7 +254,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => MisCitasScreen(authService: widget.authService),
+                      builder: (context) => widget.authService.isPaciente
+                          ? MisCitasMovilScreen(authService: widget.authService)
+                          : MisCitasScreen(authService: widget.authService),
                     ),
                   );
                 },
@@ -270,10 +309,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: const Icon(Icons.psychology_outlined, size: 20, color: Colors.white),
             ),
             const SizedBox(width: 10),
-            const Text('SIGEPSI', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+            const Flexible(
+              child: Text('SIGEPSI', overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+            ),
           ],
         ),
         actions: [
+          // CU12 / HU-43: Centro de Notificaciones del paciente
+          if (widget.authService.isPaciente) _campanaNotificaciones(),
           // Botón para sincronizar rol y permisos en caliente
           IconButton(
             icon: _isRefreshing
@@ -286,8 +329,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             tooltip: 'Sincronizar rol y permisos con el servidor',
             onPressed: _manualRefresh,
           ),
-          // Chip indicador de sede / tenant
-          Container(
+          // Chip indicador de sede / tenant (el paciente ya lo ve en su tarjeta de bienvenida)
+          if (!widget.authService.isPaciente) Container(
             margin: const EdgeInsets.symmetric(vertical: 10),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
@@ -332,7 +375,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           color: AppTheme.primary,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(20.0),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 96),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -420,6 +463,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                         ],
                       ),
+                      if (!isPaciente) ...[
                       const SizedBox(height: 18),
                       const Divider(height: 1, color: AppTheme.borderSubtle),
                       const SizedBox(height: 14),
@@ -438,6 +482,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           _buildQuickKpi('SPRINT', 'Sprint 2', Icons.flag_outlined, AppTheme.accent),
                         ],
                       ),
+                      ],
                     ],
                   ),
                 ),
@@ -446,7 +491,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 // ═════════════════════════════════════════════════════════════
                 // BANNER DE ACCESO DIRECTO: TELECONSULTA / VIDEOLLAMADA (CU13)
                 // ═════════════════════════════════════════════════════════════
-                Container(
+                if (isPaciente) _buildAccesosPaciente(context),
+                if (!isPaciente) Container(
                   margin: const EdgeInsets.only(bottom: 20),
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -534,7 +580,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           isSuperAdmin
                               ? 'Acceso irrestricto a todos los módulos y configuración'
                               : isPaciente
-                                  ? 'Casos de uso para Pacientes (Sprint 1)'
+                                  ? 'Citas, expediente, consentimientos y orientación'
                                   : isPsico
                                       ? 'Gestión de citas y teleconsulta Jitsi'
                                       : isAdmin
@@ -563,6 +609,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 // ROL 1: SUPERADMINISTRADOR (Acceso Total a Todos los Módulos)
                 // ═════════════════════════════════════════════════════════════
                 if (isSuperAdmin) ...[
+                  _buildReportesCard(context, 'Pacientes, psicólogos, citas e ingresos por clínica'),
                   _buildMenuCard(
                     context,
                     title: 'Gestión de Centros Psicológicos',
@@ -638,7 +685,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => MisCitasScreen(authService: widget.authService),
+                          builder: (context) => widget.authService.isPaciente
+                          ? MisCitasMovilScreen(authService: widget.authService)
+                          : MisCitasScreen(authService: widget.authService),
                         ),
                       );
                     },
@@ -757,6 +806,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 if (isPaciente) ...[
                   _buildMenuCard(
                     context,
+                    title: 'Centro de Notificaciones',
+                    subtitle: 'Recordatorios automáticos 24 h y 1 h antes de tus citas',
+                    tag: 'Push FCM • CU12',
+                    icon: Icons.notifications_active_rounded,
+                    color: AppTheme.warning,
+                    onTap: _abrirCentroNotificaciones,
+                  ),
+                  _buildMenuCard(
+                    context,
                     title: 'Mis Citas y Agenda',
                     subtitle: 'Consulta de sesiones, historial y estado de turnos',
                     tag: 'Citas • CU11',
@@ -766,19 +824,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => MisCitasScreen(authService: widget.authService),
+                          builder: (context) => widget.authService.isPaciente
+                          ? MisCitasMovilScreen(authService: widget.authService)
+                          : MisCitasScreen(authService: widget.authService),
                         ),
                       );
                     },
-                  ),
-                  _buildMenuCard(
-                    context,
-                    title: 'Sala de Teleconsulta / Videollamada',
-                    subtitle: 'Acceso a videollamada Jitsi Meet WebRTC con tu terapeuta',
-                    tag: 'Videollamada • CU13',
-                    icon: Icons.video_camera_front_rounded,
-                    color: const Color(0xFF10B981),
-                    onTap: () => _abrirTeleconsultaDirecta(context),
                   ),
                   _buildMenuCard(
                     context,
@@ -831,22 +882,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   _buildMenuCard(
                     context,
-                    title: 'Mis Tareas Terapéuticas',
-                    subtitle: 'Ejercicios inter-sesiones y reporte de avance',
-                    tag: 'Seguimiento • CU17 • Sprint 2',
-                    icon: Icons.checklist_rounded,
-                    color: const Color(0xFF8B5CF6),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => MisTareasScreen(authService: widget.authService),
-                        ),
-                      );
-                    },
-                  ),
-                  _buildMenuCard(
-                    context,
                     title: 'Consentimientos Informados',
                     subtitle: 'Firma digital con canvas táctil y SHA-256',
                     tag: 'Consentimiento Legal • CU18 • Sprint 2',
@@ -877,15 +912,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       );
                     },
                   ),
-                  _buildMenuCard(
-                    context,
-                    title: 'Registro Diario de Ánimo (Mood Tracker)',
-                    subtitle: 'Autorreporte reflexivo con emojis y factores contextuales',
-                    tag: 'Mood Tracker • CU17 • Sprint 3',
-                    icon: Icons.mood_rounded,
-                    color: const Color(0xFFEC4899),
-                    onTap: () => _mostrarDialogoMoodTracker(context),
-                  ),
                 ],
 
                 // ═════════════════════════════════════════════════════════════
@@ -903,7 +929,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => MisCitasScreen(authService: widget.authService),
+                          builder: (context) => widget.authService.isPaciente
+                          ? MisCitasMovilScreen(authService: widget.authService)
+                          : MisCitasScreen(authService: widget.authService),
                         ),
                       );
                     },
@@ -950,7 +978,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => MisCitasScreen(authService: widget.authService),
+                          builder: (context) => widget.authService.isPaciente
+                          ? MisCitasMovilScreen(authService: widget.authService)
+                          : MisCitasScreen(authService: widget.authService),
                         ),
                       );
                     },
@@ -977,6 +1007,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 // ROL 5: ADMINISTRADOR DEL CENTRO (CU3, CU4, CU1, CU11, CU13)
                 // ═════════════════════════════════════════════════════════════
                 if (isAdmin) ...[
+                  _buildReportesCard(context, 'Pacientes, psicólogos, citas e ingresos de tu clínica'),
                   _buildMenuCard(
                     context,
                     title: 'Personal y Terapeutas',
@@ -1036,7 +1067,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => MisCitasScreen(authService: widget.authService),
+                          builder: (context) => widget.authService.isPaciente
+                          ? MisCitasMovilScreen(authService: widget.authService)
+                          : MisCitasScreen(authService: widget.authService),
                         ),
                       );
                     },
@@ -1128,6 +1161,69 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return AppTheme.secondary;
   }
 
+  /// Paciente: accesos directos a CU13 (teleconsulta) y CU17 (tareas + ánimo).
+  Widget _buildAccesosPaciente(BuildContext context) {
+    Widget tile(String titulo, String detalle, IconData icono, Color color, VoidCallback onTap) {
+      return Expanded(
+        child: Material(
+          color: color.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(16),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: onTap,
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: color.withOpacity(0.35)),
+              ),
+              child: Column(
+                children: [
+                  Icon(icono, color: color, size: 28),
+                  const SizedBox(height: 8),
+                  Text(titulo,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: AppTheme.textMain)),
+                  const SizedBox(height: 2),
+                  Text(detalle,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 10.5, color: AppTheme.textMuted)),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    void abrir(Widget pantalla) =>
+        Navigator.push(context, MaterialPageRoute(builder: (_) => pantalla));
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 22),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('MI SEGUIMIENTO DE HOY',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 0.5, color: AppTheme.textMuted)),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              tile('Teleconsulta', 'Entrar a mi sala', Icons.videocam_rounded, const Color(0xFF10B981),
+                  () => abrir(MisCitasMovilScreen(authService: widget.authService))),
+              const SizedBox(width: 10),
+              tile('Mis tareas', 'Completar y entregar', Icons.checklist_rounded, const Color(0xFF8B5CF6),
+                  () => abrir(MisTareasScreen(authService: widget.authService))),
+              const SizedBox(width: 10),
+              tile('Mi ánimo', 'Registrar hoy', Icons.mood_rounded, const Color(0xFFEC4899),
+                  () => mostrarMoodTrackerSheet(context, widget.authService)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildQuickKpi(String title, String value, IconData icon, Color color) {
     return Expanded(
       child: Container(
@@ -1161,6 +1257,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
+
+  Widget _buildReportesCard(BuildContext context, String subtitle) => _buildMenuCard(
+        context,
+        title: 'Reportes',
+        subtitle: subtitle,
+        tag: 'Reportes • CU25',
+        icon: Icons.insert_chart_outlined_rounded,
+        color: const Color(0xFF8B5CF6),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => ReportesScreen(authService: widget.authService)),
+        ),
+      );
 
   Widget _buildMenuCard(
     BuildContext context, {

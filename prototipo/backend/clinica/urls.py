@@ -25,6 +25,7 @@ from clinica.views import (
     SugerenciaMatchingViewSet,
     GenerarMatchingView,
     AsignarPsicologoHITLView,
+    CTR_MatchingController,
     RegistroAnimoViewSet
 )
 
@@ -55,6 +56,9 @@ router.register(r'chatbot', ChatbotViewSet, basename='chatbot')
 # Rutas Incremento Sprint 3
 router.register(r'clasificacion-ia', ClasificacionIAViewSet, basename='clasificacion-ia')
 router.register(r'sugerencias-matching', SugerenciaMatchingViewSet, basename='sugerencias-matching')
+# CU22-paso 2: GET matching/sugerencias/ · CU22-paso 21: POST matching/{id}/aprobar/ ·
+# CU22-paso 31: POST matching/{id}/rechazar_y_reasignar/
+router.register(r'matching', CTR_MatchingController, basename='matching')
 router.register(r'registro-animo', RegistroAnimoViewSet, basename='registro-animo')
 
 urlpatterns = [
@@ -63,6 +67,8 @@ urlpatterns = [
     path('triaje/asignar/', AsignarPsicologoHITLView.as_view(), name='triaje-asignar'),
     path('intake/respuestas/', RespuestaPreConsultaViewSet.as_view({'post': 'create', 'get': 'list'}), name='intake-respuestas'),
     path('intake/<uuid:pk>/clasificar/', ClasificarIntakeView.as_view(), name='intake-clasificar'),
+    # CU21-paso 2: POST /api/v1/ia/clasificar-triaje/ (payload) → CTR_ClasificacionIAController
+    path('ia/clasificar-triaje/', ClasificarIntakeView.as_view(), name='ia-clasificar-triaje'),
     path('ia/sugerir-psicologo/<uuid:paciente_id>/', GenerarMatchingView.as_view(), name='ia-sugerir-psicologo'),
     path('ia/confirmar-asignacion/', AsignarPsicologoHITLView.as_view(), name='ia-confirmar-asignacion'),
     path('ia/asignacion-manual/', AsignarPsicologoHITLView.as_view(), name='ia-asignacion-manual'),

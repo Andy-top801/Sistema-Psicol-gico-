@@ -58,6 +58,9 @@ echo "=========================================================="
 echo "🔥 Arrancando Gunicorn en el puerto $PORT..."
 echo "=========================================================="
 
+# CU21: cada worker precarga el modelo de IA en segundo plano (~1.2 GB de RAM por worker).
+export IA_PRECARGAR="${IA_PRECARGAR:-True}"
+
 exec gunicorn sigepsi.wsgi:application \
     --bind "0.0.0.0:$PORT" \
     --workers 2 \

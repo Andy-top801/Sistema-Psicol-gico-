@@ -36,6 +36,8 @@ class JitsiTokenGenerator:
         # Si aún no existe el registro, se genera un identificador de sala
         # con formato 'sigepsi-{cita_id_corto}-{usuario_id_corto}'.
         # ====================================================================
+        # CU13-paso 11: iniciar_sala() → CE_Teleconsulta (crea la sala si todavía no existe)
+        # CU13-paso 12: sala_iniciada(room_id) [retorno]
         teleconsulta, _ = Teleconsulta.objects.get_or_create(
             cita=cita,
             defaults={'sala_id': f"sigepsi-{str(cita.id)[:8]}-{usuario.id.hex[:4]}"}
@@ -46,6 +48,11 @@ class JitsiTokenGenerator:
         # Determinar el rol del usuario: Psicólogo (moderador) o Paciente (invitado).
         # Si no es ninguno de los dos, se deniega el acceso (PermissionError).
         # ====================================================================
+        # CU13-paso 7: obtener_paciente() → CE_Paciente
+        # CU13-paso 8: datos_paciente(nombre, expediente) [retorno]
+        # CU13-paso 9: obtener_perfil() → CE_Psicologo
+        # CU13-paso 10: datos_psicologo(nombre, alias_jitsi) [retorno]
+        #   (cita.paciente y cita.psicologo llegan precargados con select_related desde el CTR)
         es_psicologo = (cita.psicologo.usuario_id == usuario.id)
         es_paciente = (cita.paciente.usuario_id == usuario.id)
         es_admin = bool(usuario.rol and ('admin' in usuario.rol.nombre.lower() or 'coord' in usuario.rol.nombre.lower()))
@@ -92,6 +99,7 @@ class JitsiTokenGenerator:
             }
         }
 
+        # CU13-paso 15: generar_token_jitsi_jwt() → CE_Teleconsulta
         token = jwt.encode(payload, app_secret, algorithm="HS256")
         if isinstance(token, bytes):
             token = token.decode('utf-8')
@@ -99,6 +107,7 @@ class JitsiTokenGenerator:
         teleconsulta.jwt_room_token = token
         teleconsulta.save(update_fields=['jwt_room_token'])
 
+        # CU13-paso 16: jwt_token_generado() [retorno]
         return {
             "sala_id": teleconsulta.sala_id,
             "room_name": teleconsulta.sala_id,

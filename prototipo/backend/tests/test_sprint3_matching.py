@@ -1,79 +1,78 @@
 # -*- coding: utf-8 -*-
+# CU22 / HU-48 — fórmula transparente: Score = 0.4×Afinidad + 0.3×Disponibilidad + 0.2×BalanceCarga + 0.1×Modalidad
+#   python tests/test_sprint3_matching.py
 import sys, os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'sigepsi.settings')
 
-def test_matching_psicologo_service_weights_and_hitl():
-    from clinica.ia_rules_engine import MatchingPsicologoService
+import django
+django.setup()
 
-    # Mock psychologists queryset/objects
-    class MockUsuario:
-        def __init__(self, nombre, email, is_active=True):
-            self.first_name = nombre
-            self.email = email
-            self.is_active = is_active
-        def get_full_name(self):
-            return self.first_name
+from clinica.ia_rules_engine import MatchingPsicologoService as M
 
-    class MockEspecialidadRel:
-        def __init__(self, codes):
-            self.codes = codes
-        def all(self):
-            class EspObj:
-                def __init__(self, nom):
-                    self.nombre = nom
-            return [EspObj(c) for c in self.codes]
-        def filter(self, **kwargs):
-            class FilterResult:
-                def __init__(self, match):
-                    self._match = match
-                def exists(self):
-                    return self._match
-            code = kwargs.get('codigo') or kwargs.get('nombre__icontains')
-            return FilterResult(any(code.lower() in c.lower() for c in self.codes))
 
-    class MockCountRel:
-        def __init__(self, count):
-            self._count = count
-        def filter(self, **kwargs):
-            return self
-        def count(self):
-            return self._count
+class _Esp:
+    def __init__(self, nombre, descripcion=''):
+        self.nombre, self.descripcion = nombre, descripcion
 
-    class MockPsicologo:
-        def __init__(self, id_str, nombre, especialidades, bloques_disp, pacientes_activos, max_cap, modalidad):
-            self.id = id_str
-            self.usuario = MockUsuario(nombre, f"{nombre.lower()}@sigepsi.bo")
-            self.numero_colegiado = f"COL-{id_str}"
-            self.especialidades = MockEspecialidadRel(especialidades)
-            self.horarios_disponibilidad = MockCountRel(bloques_disp)
-            self.pacientes_asignados = MockCountRel(pacientes_activos)
-            self.carga_maxima_pacientes = max_cap
-            self.modalidad = modalidad
+    def obtener_nombre(self):
+        return self.nombre
 
-    p1 = MockPsicologo("1", "Dra. Elena Ramos", ["ANSIEDAD_FOBIAS"], bloques_disp=8, pacientes_activos=5, max_cap=20, modalidad="MIXTA")
-    p2 = MockPsicologo("2", "Dr. Carlos Mendez", ["DEPRESION_ANIMO"], bloques_disp=6, pacientes_activos=3, max_cap=20, modalidad="VIRTUAL")
-    p3 = MockPsicologo("3", "Lic. Sofia Castro", ["ANSIEDAD_FOBIAS"], bloques_disp=2, pacientes_activos=19, max_cap=20, modalidad="PRESENCIAL") # casi saturada
-    p4 = MockPsicologo("4", "Dr. Hugo Vaca (Saturado)", ["ANSIEDAD_FOBIAS"], bloques_disp=10, pacientes_activos=20, max_cap=20, modalidad="MIXTA") # 100% saturado
 
-    candidatos = MatchingPsicologoService.sugerir_psicologos(
-        especialidad_req="ANSIEDAD_FOBIAS",
-        modalidad_req="VIRTUAL",
-        psicologos_queryset=[p1, p2, p3, p4]
-    )
+def test_formula_hu48():
+    r = M.calcular_score(1.0, (5, 20), 32, 'MIXTA', 'VIRTUAL')
+    assert r['factores'] == {'afinidad': 1.0, 'disponibilidad': 0.8, 'balance_carga': 0.75, 'modalidad': 1.0}
+    assert r['score'] == 89.0
+    assert r['cupo_completo'] is False
 
-    # Must return Top 3
-    assert len(candidatos) <= 3
-    # Top 1 should be Dra. Elena Ramos (has specialty, good availability, good capacity balance)
-    assert candidatos[0]['psicologo_id'] == "1"
-    assert candidatos[0]['score_compatibilidad'] >= 80.0
-    assert candidatos[0]['factores']['afinidad_especialidad'] == 40.0
 
-    # Hugo Vaca is 100% saturated (20/20), so his balance_carga must be 0.0
-    saturated = [c for c in candidatos if c['psicologo_id'] == "4"]
-    if saturated:
-        assert saturated[0]['factores']['balance_carga'] == 0.0
+def test_limites_de_factores():
+    r = M.calcular_score(0.0, (20, 20), 40, 'PRESENCIAL', 'VIRTUAL')
+    assert r['factores'] == {'afinidad': 0.0, 'disponibilidad': 1.0, 'balance_carga': 0.0, 'modalidad': 0.0}
+    assert r['score'] == 30.0 and r['cupo_completo'] is True
+    # cupo 0 se trata como lleno (no división por cero)
+    assert M.calcular_score(1.0, (0, 0), 0, 'VIRTUAL', 'VIRTUAL')['cupo_completo'] is True
+    assert M.calcular_score(1.0, (25, 20), 0, 'VIRTUAL', 'MIXTA')['factores']['balance_carga'] == 0.0
+
+
+def test_afinidad_por_categoria():
+    tcc = _Esp("Terapia Cognitivo-Conductual (TCC)", "Reestructuración cognitiva y abordaje de esquemas desadaptativos y ansiedad.")
+    fam = _Esp("Terapia Familiar y Sistémica", "Intervención sistémica orientada a conflictos vinculares y de pareja.")
+    inf = _Esp("Psicología Infantil y del Desarrollo", "Trastornos del neurodesarrollo en infancia y adolescencia.")
+    pal = _Esp("Psicooncología y Cuidados Paliativos", "Acompañamiento en enfermedades crónicas, duelo y trauma.")
+    clin = _Esp("Psicología Clínica y de la Salud", "Tratamiento de trastornos emocionales y del estado de ánimo.")
+    assert M.afinidad('ANSIEDAD_FOBIAS', [fam, tcc]) == 1.0
+    assert M.afinidad('ANSIEDAD_FOBIAS', [fam]) == 0.0
+    assert M.afinidad('PAREJA_FAMILIA', [fam]) == 1.0
+    assert M.afinidad('INFANTO_JUVENIL', [inf]) == 1.0
+    assert M.afinidad('DUELO_ADAPTACION', [pal]) == 1.0
+    assert M.afinidad('DEPRESION_ANIMO', [clin]) == 1.0
+    assert M.afinidad('OTRO', [clin, tcc]) == 0.0
+    assert M.afinidad('ANSIEDAD_FOBIAS', []) == 0.0
+
+
+def test_top3_saturados_al_final():
+    candidatos = [
+        {'id': 'A', **M.calcular_score(1.0, (20, 20), 10, 'MIXTA', 'MIXTA')},   # 80, saturado
+        {'id': 'B', **M.calcular_score(1.0, (19, 20), 10, 'MIXTA', 'MIXTA')},   # 81, saturado no
+        {'id': 'C', **M.calcular_score(0.0, (2, 20), 2, 'MIXTA', 'MIXTA')},     # bajo pero con cupo
+        {'id': 'D', **M.calcular_score(1.0, (30, 20), 10, 'MIXTA', 'MIXTA')},   # saturado
+    ]
+    top = M.ordenar_top3(candidatos)
+    assert [c['id'] for c in top] == ['B', 'C', 'A']
+    assert all(c['factores']['balance_carga'] == 0.0 for c in candidatos if c['cupo_completo'])
+
+
+def test_todos_saturados_igual_devuelve_top3():
+    cands = [{'id': i, **M.calcular_score(1.0, (20, 20), i, 'MIXTA', 'MIXTA')} for i in range(5)]
+    top = M.ordenar_top3(cands)
+    assert len(top) == 3 and all(c['cupo_completo'] for c in top)
+    assert [c['id'] for c in top] == [4, 3, 2]
 
 
 if __name__ == "__main__":
-    test_matching_psicologo_service_weights_and_hitl()
+    for nombre, fn in list(globals().items()):
+        if nombre.startswith('test_'):
+            fn()
+            print(f"  ok  {nombre}")
     print("ALL MATCHING TESTS PASSED [OK]")

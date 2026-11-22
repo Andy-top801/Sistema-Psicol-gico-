@@ -9,7 +9,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { AgendaService } from '../../core/services/agenda.service';
 import { ClinicaService } from '../../core/services/clinica.service';
 import { ClinicaSprint2Service } from '../../core/services/clinica-sprint2.service';
@@ -898,12 +898,20 @@ export class CalendarioAgendaComponent implements OnInit {
     private agendaService: AgendaService,
     private clinicaService: ClinicaService,
     private clinicaSprint2Service: ClinicaSprint2Service,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     this.cargarDatosMaestros();
     this.cargarCitas();
+    // CU12 (c): al abrir una notificación push se navega a /agenda?cita=<id> y se muestra su detalle
+    this.route.queryParamMap.subscribe(params => {
+      const citaId = params.get('cita');
+      if (citaId) {
+        this.agendaService.getCitaById(citaId).subscribe({ next: (c) => this.verDetalleCita(c) });
+      }
+    });
   }
 
   cargarDatosMaestros(): void {

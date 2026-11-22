@@ -38,6 +38,10 @@ class ApiConstants {
   static const String agendaDashboard = '/agenda/dashboard/kpis/';
   static const String alertas = '/agenda/alertas/';
 
+  // Reportes (CU25)
+  static const String reportesMetadata = '/reportes/metadata/';
+  static const String reportesPersonalizado = '/reportes/personalizado/';
+
   // Sprint 2 - Clinica Endpoints (HU-24, HU-30, HU-32, HU-35)
   static const String formulariosPreconsulta = '/clinica/formularios-preconsulta/';
   static const String respuestasPreconsulta = '/clinica/respuestas-preconsulta/';
@@ -48,7 +52,11 @@ class ApiConstants {
 
   // Sprint 3 - Móvil & IA Endpoints (HU-41, HU-43, HU-46, HU-47, HU-48)
   static const String misCitas = '/agenda/citas/mis-citas/';
+  // CU11 Móvil (HU-41 / HU-42) — rutas del Diagrama de Secuencia: /api/v1/citas/...
+  static const String citasV1 = '/v1/citas/';
+  static const String misCitasV1 = '/v1/citas/mis-citas/';
   static const String fcmToken = '/agenda/fcm-token/';
+  static const String notificaciones = '/agenda/notificaciones/';
   static const String registroAnimo = '/clinica/registro-animo/';
   static const String clasificacionIA = '/clinica/clasificacion-ia/';
   static const String triajeAlertas = '/clinica/triaje/alertas/';

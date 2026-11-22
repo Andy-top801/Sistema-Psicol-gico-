@@ -72,6 +72,8 @@ class AgendaService {
             final firstVal = body.values.first;
             if (firstVal is List && firstVal.isNotEmpty) {
               errorMsg = firstVal.first.toString();
+            } else if (firstVal is String && firstVal.isNotEmpty) {
+              errorMsg = firstVal; // p. ej. {"paciente": "El paciente ya cuenta con otra cita..."}
             }
           }
         }
@@ -110,8 +112,10 @@ class AgendaService {
   /// HU-18 / HU-19: Obtener credenciales y sala de teleconsulta Jitsi Meet
   Future<Map<String, dynamic>> getTeleconsultaAccess(String citaId) async {
     try {
-      final url = Uri.parse('${authService.baseUrl}${ApiConstants.teleconsultaAccess}$citaId/access/');
-      final response = await http.get(url, headers: authService.getHeaders());
+      // CU13-paso 2: POST teleconsulta/{id}/unirse/ (dispositivo) → CTR_TeleconsultaController
+      //   200 = CU13-paso 19 {jitsi_jwt, room_name, server_url} · 403 = CU13-paso 21 (fuera de horario)
+      final url = Uri.parse('${authService.baseUrl}${ApiConstants.teleconsultaAccess}$citaId/unirse/');
+      final response = await http.post(url, headers: authService.getHeaders());
       final body = jsonDecode(utf8.decode(response.bodyBytes));
 
       if (response.statusCode == 200) {
@@ -161,4 +165,35 @@ class AgendaService {
     return {'proximas': [], 'historial': []};
   }
 
+  // ───────────────────────────────────────────────────────────────────────────
+  // CU11 Móvil — CTR_CitaMobileController (HU-41 / HU-42)
+  // ───────────────────────────────────────────────────────────────────────────
+
+  /// HU-41: listar_citas_paciente() → GET /api/v1/citas/mis-citas/
+  Future<Map<String, dynamic>> listarCitasPaciente() async {
+    try {
+      final url = Uri.parse('${authService.baseUrl}${ApiConstants.misCitasV1}');
+      final response = await http.get(url, headers: authService.getHeaders()).timeout(const Duration(seconds: 10));
+      final body = jsonDecode(utf8.decode(response.bodyBytes));
+      if (response.statusCode == 200) return {'success': true, ...Map<String, dynamic>.from(body)};
+      return {'success': false, 'error': body is Map ? (body['error'] ?? 'Error ${response.statusCode}') : 'Error'};
+    } catch (e) {
+      return {'success': false, 'error': 'No se pudo conectar con el servidor.'};
+    }
+  }
+
+  /// CU11-paso 2: POST /api/v1/citas/{id}/cancelar/ (motivo) → CTR_CitaMovilController (HU-42)
+  /// Retorna el cuerpo del servidor + 'status' (200 = CU11-paso 16, 400 = CU11-paso 18).
+  Future<Map<String, dynamic>> cancelarCitaMovil(String citaId, String motivo) async {
+    try {
+      final url = Uri.parse('${authService.baseUrl}${ApiConstants.citasV1}$citaId/cancelar/');
+      final response = await http
+          .post(url, headers: authService.getHeaders(), body: jsonEncode({'motivo': motivo}))
+          .timeout(const Duration(seconds: 12));
+      final body = jsonDecode(utf8.decode(response.bodyBytes));
+      return {'status': response.statusCode, ...(body is Map ? Map<String, dynamic>.from(body) : {})};
+    } catch (e) {
+      return {'status': 0, 'error': 'No se pudo conectar con el servidor. Revisa tu conexión.'};
+    }
+  }
 }

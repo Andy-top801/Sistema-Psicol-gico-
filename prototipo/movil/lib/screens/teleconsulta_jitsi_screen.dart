@@ -1,17 +1,33 @@
 // ==============================================================================
 // MÓDULO: teleconsulta_jitsi_screen.dart
-// CAPA BCE: BOUNDARY (Interfaz de Usuario Móvil) — IU_Teleconsulta
-// CASOS DE USO: CU13: Gestión de Teleconsultas y Videoconferencias Jitsi Meet (HU-18, HU-19)
-// DESCRIPCIÓN: Pantalla móvil Flutter para conexión cifrada WebRTC a teleconsulta médica,
-//              controles de audio, video y cámara, cronómetro de sesión y finalización clínica.
-//              Implementa los pasos 1, 2, 7 y 8 del Diagrama de Comunicación BCE.
+// CAPA BCE: BOUNDARY — IU_SalaTeleconsultaMovil
+// CASO DE USO: CU13 Móvil – Sesión de Teleconsulta Nativa WebRTC Jitsi Meet (HU-44)
+//
+// DIAGRAMA DE SECUENCIA "Secuencia_Corregido_CU13_Teleconsulta_Movil_WebRTC":
+//   1 : Paciente → IU.presionar_ingresar_teleconsulta(teleconsulta_id)
+//   2 : IU → CTR  POST /api/agenda/teleconsulta/{id}/unirse/
+//   3-18: CTR valida ventana, consulta cita/paciente/psicólogo, inicia sala,
+//         registra entrada, genera JWT y audita INGRESO_SALA_TELECONSULTA
+//   alt [en_ventana_acceso == true]
+//     19: 200 OK {jitsi_jwt, room_name, server_url}
+//     20: IU → Paciente.conectar_webrtc(jitsi_jwt, room_name)   ← SDK nativo Jitsi Meet
+//   else
+//     21: 403 Forbidden {'Sala disponible solo 10 min antes…'}
+//     22: IU → Paciente.mostrar_alerta_horario_invalido()
+//
+// HU-44 (a) ventana 10 min antes / 45 min después (validada en el servidor)
+//       (b) el SDK pide permisos de cámara/micrófono y muestra silenciar, cámara
+//           frontal/trasera y colgar
+//       (c) al colgar vuelve al detalle de la cita con agradecimiento + invitación
+//           a registrar el estado de ánimo (Mood Tracker, HU-46)
 // ==============================================================================
-import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:jitsi_meet_flutter_sdk/jitsi_meet_flutter_sdk.dart';
 import '../services/auth_service.dart';
 import '../services/agenda_service.dart';
 import '../models/cita_model.dart';
 import '../core/theme/app_theme.dart';
+import 'mood_tracker_sheet.dart';
 
 class TeleconsultaJitsiScreen extends StatefulWidget {
   final AuthService authService;
@@ -29,598 +45,248 @@ class TeleconsultaJitsiScreen extends StatefulWidget {
 
 class _TeleconsultaJitsiScreenState extends State<TeleconsultaJitsiScreen> {
   late final AgendaService _agendaService;
+  final JitsiMeet _jitsi = JitsiMeet();
 
-  bool _isLoadingAccess = true;
-  String? _errorMessage;
-  Map<String, dynamic>? _accessData;
+  bool _conectando = true;
+  bool _enLlamada = false;
+  bool _terminada = false;
+  String? _error;
+  Map<String, dynamic> _acceso = const {};
+  DateTime? _inicioLlamada;
 
-  // Estado de la llamada
-  bool _isMicMuted = false;
-  bool _isVideoOff = false;
-  bool _isFrontCamera = true;
-  int _secondsElapsed = 0;
-  Timer? _callTimer;
-  bool _isEnding = false;
+  bool get _esDemo => widget.cita.id == 'demo-teleconsulta';
+
+  String get _nombreRemoto => widget.cita.psicologoNombre.isNotEmpty
+      ? widget.cita.psicologoNombre
+      : widget.cita.pacienteNombre;
 
   @override
   void initState() {
     super.initState();
     _agendaService = AgendaService(authService: widget.authService);
-    _obtenerAcceso();
+    _ingresar();
   }
 
-  @override
-  void dispose() {
-    _callTimer?.cancel();
-    super.dispose();
-  }
-
-  /// ═══════════════════════════════════════════════════════════════════════════
-  /// CU13: Gestión de Teleconsultas y Videoconferencias Jitsi Meet (HU-18, HU-19)
-  /// Diagrama de Comunicación – Pasos del Flujo:
-  ///   Actor  → Paciente / Terapeuta
-  ///   IU     → IU_Teleconsulta (TeleconsultaJitsiScreen)
-  ///   CTR    → CTR_Teleconsulta (Django REST - GET /api/agenda/teleconsulta/{id}/access/)
-  ///   CE     → CE_Teleconsulta_y_Cita (PostgreSQL)
-  ///   SRV    → SRV_JitsiServer (WebRTC Cluster)
-  /// ═══════════════════════════════════════════════════════════════════════════
-  Future<void> _obtenerAcceso() async {
-    // --- Paso 1: Clic en 'Unirse a Teleconsulta' en IU_Teleconsulta > ---
+  /// CU13-paso 1: presionar_ingresar_teleconsulta(teleconsulta_id) — el Paciente entra a IU_SalaTeleconsultaMovil.
+  Future<void> _ingresar() async {
     setState(() {
-      _isLoadingAccess = true;
-      _errorMessage = null;
+      _conectando = true;
+      _error = null;
     });
 
-    if (widget.cita.id == 'demo-teleconsulta') {
+    Map<String, dynamic> acceso;
+    if (_esDemo) {
+      acceso = {'room_name': 'sigepsi-teleconsulta-demo', 'server_url': 'https://meet.jit.si', 'es_moderador': true};
+    } else {
+      // CU13-paso 2: POST teleconsulta/{id}/unirse/ (dispositivo) → CTR_TeleconsultaController
+      final res = await _agendaService.getTeleconsultaAccess(widget.cita.id);
+      if (!mounted) return;
+      if (res['success'] != true) {
+        // CU13-paso 21: HTTP 403 Forbidden {'Sala disponible solo ... antes de cita'} [retorno]
+        // CU13-paso 22: mostrar_alerta_horario_invalido('Sala no habilitada') — se muestra con _error
+        setState(() {
+          _conectando = false;
+          _error = (res['error'] ?? 'No fue posible acceder a la sala de teleconsulta.').toString();
+        });
+        return;
+      }
+      // CU13-paso 19: HTTP 200 OK {jitsi_jwt, room_name, server_url} [retorno]
+      acceso = Map<String, dynamic>.from(res['data'] as Map);
+    }
+    _acceso = acceso;
+    await _conectarWebRTC();
+  }
+
+  /// CU13-paso 20: conectar_webrtc_jitsi(room_name, token) con el SDK nativo de Jitsi Meet.
+  Future<void> _conectarWebRTC() async {
+    final serverUrl = (_acceso['server_url'] ?? 'https://meet.jit.si').toString();
+    final usuario = widget.authService.currentUser;
+    // ponytail: meet.jit.si público rechaza JWT propios; el token solo se envía a
+    // un servidor Jitsi propio configurado con JITSI_DOMAIN/JITSI_APP_SECRET.
+    final usarToken = !serverUrl.contains('meet.jit.si');
+
+    final opciones = JitsiMeetConferenceOptions(
+      serverURL: serverUrl,
+      room: (_acceso['room_name'] ?? 'sigepsi-sala').toString(),
+      token: usarToken ? _acceso['jitsi_jwt']?.toString() : null,
+      configOverrides: {
+        'startWithAudioMuted': false,
+        'startWithVideoMuted': false,
+        'subject': _nombreRemoto.isNotEmpty ? 'Sesión con $_nombreRemoto' : 'Teleconsulta SIGEPSI',
+      },
+      featureFlags: {
+        'welcomepage.enabled': false,
+        'prejoinpage.enabled': false,
+        'unsaferoomwarning.enabled': false,
+        'invite.enabled': false,
+        'add-people.enabled': false,
+        'calendar.enabled': false,
+        'recording.enabled': false,
+        'live-streaming.enabled': false,
+      },
+      userInfo: JitsiMeetUserInfo(
+        displayName: usuario == null ? 'Paciente' : '${usuario.nombre} ${usuario.apellido}'.trim(),
+        email: usuario?.email,
+      ),
+    );
+
+    final listener = JitsiMeetEventListener(
+      conferenceJoined: (url) {
+        if (!mounted) return;
+        setState(() {
+          _conectando = false;
+          _enLlamada = true;
+          _inicioLlamada = DateTime.now();
+        });
+      },
+      conferenceTerminated: (url, error) => _alColgar(),
+      readyToClose: _alColgar,
+    );
+
+    try {
+      await _jitsi.join(opciones, listener);
+      if (mounted) setState(() => _conectando = false);
+    } catch (e) {
+      if (!mounted) return;
       setState(() {
-        _accessData = {
-          'room_name': 'sigepsi-teleconsulta-demo',
-          'es_moderador': true,
-        };
-        _isLoadingAccess = false;
+        _conectando = false;
+        _error = 'No se pudo abrir la sala de video en este dispositivo. '
+            'La teleconsulta nativa requiere la app en Android o iOS.\n($e)';
       });
-      _iniciarCronometro();
-      return;
-    }
-
-    // --- Paso 2: GET /api/agenda/teleconsulta/{id}/access/ + JWT > ---
-    // IU_Teleconsulta solicita credenciales y sala al CTR_Teleconsulta
-    final res = await _agendaService.getTeleconsultaAccess(widget.cita.id);
-
-    if (mounted) {
-      // --- Paso 7: 200 OK {room_name, jwt_token, rol_moderador} < ---
-      // CTR_Teleconsulta valida ventana horaria y retorna sala y token JWT
-      if (res['success'] == true) {
-        // --- Paso 8: Embeber sala Jitsi Meet con controles de llamada en IU_Teleconsulta < ---
-        setState(() {
-          _accessData = res['data'];
-          _isLoadingAccess = false;
-        });
-        _iniciarCronometro();
-      } else {
-        // Modo sala de prueba: permite probar cámara, micrófono y llamada en vivo
-        setState(() {
-          _accessData = {
-            'room_name': 'sigepsi-sala-${widget.cita.id.length > 8 ? widget.cita.id.substring(0, 8) : widget.cita.id}',
-            'es_moderador': true,
-          };
-          _isLoadingAccess = false;
-        });
-        _iniciarCronometro();
-      }
     }
   }
 
-  void _iniciarCronometro() {
-    _callTimer?.cancel();
-    _callTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (mounted) {
-        setState(() => _secondsElapsed++);
-      }
-    });
-  }
+  /// HU-44 (c): al colgar, volver al detalle de la cita con agradecimiento
+  /// e invitación a registrar el estado de ánimo.
+  Future<void> _alColgar() async {
+    if (_terminada || !mounted) return;
+    _terminada = true;
 
-  String _formatearTiempo(int totalSegundos) {
-    final minutos = totalSegundos ~/ 60;
-    final segundos = totalSegundos % 60;
-    return '${minutos.toString().padLeft(2, '0')}:${segundos.toString().padLeft(2, '0')}';
-  }
+    final duracion = _inicioLlamada == null ? 0 : DateTime.now().difference(_inicioLlamada!).inSeconds;
+    // Solo el psicólogo (moderador) cierra la cita como REALIZADA; si el paciente
+    // se desconecta puede volver a entrar mientras la ventana siga abierta.
+    if (!_esDemo && _acceso['es_moderador'] == true) {
+      await _agendaService.finishTeleconsulta(widget.cita.id, duracion);
+    }
+    if (!mounted) return;
 
-  void _confirmarFinalizar() {
+    final nav = Navigator.of(context);
+    final auth = widget.authService;
+    nav.pop(true);
     showDialog(
-      context: context,
+      context: nav.context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.cardBg,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
-          children: [
-            Icon(Icons.call_end_rounded, color: AppTheme.danger, size: 24),
-            SizedBox(width: 8),
-            Text('Finalizar Consulta', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-          ],
-        ),
-        content: Text(
-          '¿Deseas dar por terminada la videollamada?\n\nDuración actual: ${_formatearTiempo(_secondsElapsed)}\nLa cita se registrará automáticamente como REALIZADA.',
-          style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
+        title: const Row(children: [
+          Icon(Icons.favorite_rounded, color: kMoodColor, size: 24),
+          SizedBox(width: 8),
+          Expanded(child: Text('¡Gracias por tu sesión!', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))),
+        ]),
+        content: const Text(
+          'Tu teleconsulta ha finalizado. Registrar cómo te sientes hoy ayuda a tu psicólogo/a a acompañar tu proceso.',
+          style: TextStyle(color: AppTheme.textMuted, fontSize: 13),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Continuar en llamada', style: TextStyle(color: AppTheme.textMuted)),
+            child: const Text('Ahora no', style: TextStyle(color: AppTheme.textMuted)),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.danger),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(backgroundColor: kMoodColor, foregroundColor: Colors.white),
             onPressed: () {
               Navigator.pop(ctx);
-              _finalizarConsulta();
+              mostrarMoodTrackerSheet(nav.context, auth);
             },
-            child: const Text('Finalizar Sesión'),
+            icon: const Icon(Icons.mood_rounded, size: 18),
+            label: const Text('Registrar mi ánimo'),
           ),
         ],
       ),
     );
   }
 
-  Future<void> _finalizarConsulta() async {
-    setState(() => _isEnding = true);
-    _callTimer?.cancel();
-
-    if (widget.cita.id != 'demo-teleconsulta') {
-      await _agendaService.finishTeleconsulta(widget.cita.id, _secondsElapsed);
-    }
-
-    if (mounted) {
-      setState(() => _isEnding = false);
-
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (ctx) => AlertDialog(
-          backgroundColor: AppTheme.cardBg,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Row(
-            children: [
-              Icon(Icons.verified_rounded, color: AppTheme.success, size: 24),
-              SizedBox(width: 8),
-              Text('Consulta Concluida', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('La sesión clínica ha finalizado correctamente.', style: TextStyle(color: AppTheme.textMuted, fontSize: 13)),
-              const SizedBox(height: 14),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Duración total:', style: TextStyle(color: AppTheme.textSubtle, fontSize: 12)),
-                  Text(_formatearTiempo(_secondsElapsed), style: const TextStyle(color: AppTheme.textMain, fontWeight: FontWeight.bold)),
-                ],
-              ),
-              const SizedBox(height: 6),
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Estado:', style: TextStyle(color: AppTheme.textSubtle, fontSize: 12)),
-                  Text('REALIZADA', style: TextStyle(color: AppTheme.success, fontWeight: FontWeight.bold)),
-                ],
-              ),
-            ],
-          ),
-          actions: [
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                Navigator.pop(context, true); // Devuelve true para recargar lista de citas
-              },
-              child: const Text('Aceptar'),
-            ),
-          ],
-        ),
-      );
-    }
+  @override
+  void dispose() {
+    if (_enLlamada && !_terminada) _jitsi.hangUp();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoadingAccess) {
-      return Scaffold(
-        backgroundColor: AppTheme.background,
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: AppTheme.primary.withOpacity(0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: const CircularProgressIndicator(color: AppTheme.primaryLight),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Conectando a Teleconsulta Segura...',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textMain),
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                'Generando tokens WebRTC y validando sala Jitsi Meet',
-                style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    if (_errorMessage != null) {
-      return Scaffold(
-        backgroundColor: AppTheme.background,
-        appBar: AppBar(title: const Text('Teleconsulta')),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(28.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: AppTheme.danger.withOpacity(0.15),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.videocam_off_rounded, color: AppTheme.danger, size: 48),
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'No se pudo ingresar a la sala',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textMain),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  _errorMessage!,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton.icon(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.arrow_back_rounded),
-                  label: const Text('Volver a Mis Citas'),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    final roomName = _accessData?['room_name'] ?? 'sigepsi-sala';
-    final esModerador = _accessData?['es_moderador'] == true;
-    final nombreRemoto = widget.cita.psicologoNombre.isNotEmpty
-        ? widget.cita.psicologoNombre
-        : widget.cita.pacienteNombre;
-
     return Scaffold(
-      backgroundColor: const Color(0xFF070B14),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            // Video Principal (Simulación Feed WebRTC Activo)
-            Positioned.fill(
-              child: Container(
-                color: const Color(0xFF0F172A),
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: AppTheme.primary.withOpacity(0.5), width: 3),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppTheme.primary.withOpacity(0.2),
-                              blurRadius: 30,
-                              spreadRadius: 8,
-                            ),
-                          ],
-                        ),
-                        child: CircleAvatar(
-                          radius: 54,
-                          backgroundColor: AppTheme.cardBgElevated,
-                          child: Text(
-                            nombreRemoto.isNotEmpty ? nombreRemoto[0].toUpperCase() : 'T',
-                            style: const TextStyle(fontSize: 42, fontWeight: FontWeight.bold, color: AppTheme.primaryLight),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 18),
-                      Text(
-                        nombreRemoto,
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppTheme.textMain),
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: const BoxDecoration(
-                              color: AppTheme.success,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          const Text(
-                            'Transmisión WebRTC En Vivo • Audio HD',
-                            style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            // Video Preview PiP (Propio) en esquina superior derecha
-            Positioned(
-              top: 70,
-              right: 16,
-              child: Container(
-                width: 100,
-                height: 140,
-                decoration: BoxDecoration(
-                  color: AppTheme.cardBg,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppTheme.primaryLight.withOpacity(0.4), width: 1.5),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.5),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(15),
-                  child: Stack(
-                    children: [
-                      Container(
-                        color: _isVideoOff ? Colors.black87 : const Color(0xFF1E293B),
-                        child: Center(
-                          child: _isVideoOff
-                              ? const Icon(Icons.videocam_off, color: AppTheme.danger, size: 28)
-                              : Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const Icon(Icons.person, color: AppTheme.primaryLight, size: 36),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      _isFrontCamera ? 'Frontal' : 'Trasera',
-                                      style: const TextStyle(fontSize: 9, color: AppTheme.textSubtle),
-                                    ),
-                                  ],
-                                ),
-                        ),
-                      ),
-                      Positioned(
-                        bottom: 4,
-                        left: 4,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.black54,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: const Text('Tú', style: TextStyle(fontSize: 9, color: Colors.white)),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            // Top Bar: Sala, Cronómetro y Cifrado
-            Positioned(
-              top: 12,
-              left: 16,
-              right: 16,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.6),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppTheme.borderSubtle),
-                ),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: Colors.white),
-                      onPressed: _confirmarFinalizar,
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(Icons.lock_outline, size: 12, color: AppTheme.success),
-                              const SizedBox(width: 4),
-                              Text(
-                                roomName,
-                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            esModerador ? 'Rol: Terapeuta (Moderador)' : 'Rol: Paciente (Invitado)',
-                            style: const TextStyle(fontSize: 10, color: AppTheme.primaryLight),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Cronómetro Badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: AppTheme.danger.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: AppTheme.danger.withOpacity(0.4)),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: const BoxDecoration(
-                              color: AppTheme.danger,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            _formatearTiempo(_secondsElapsed),
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              fontFeatures: [],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // Barra Inferior de Controles (Micrófono, Cámara, Cambiar Cámara, Colgar)
-            Positioned(
-              bottom: 24,
-              left: 20,
-              right: 20,
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0F172A).withOpacity(0.92),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: AppTheme.borderSubtle),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.4),
-                      blurRadius: 16,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    // Botón Silenciar Micrófono
-                    _buildControlButton(
-                      icon: _isMicMuted ? Icons.mic_off_rounded : Icons.mic_rounded,
-                      isActive: !_isMicMuted,
-                      activeColor: AppTheme.surface,
-                      inactiveColor: AppTheme.danger,
-                      onTap: () => setState(() => _isMicMuted = !_isMicMuted),
-                    ),
-                    // Botón Apagar Cámara
-                    _buildControlButton(
-                      icon: _isVideoOff ? Icons.videocam_off_rounded : Icons.videocam_rounded,
-                      isActive: !_isVideoOff,
-                      activeColor: AppTheme.surface,
-                      inactiveColor: AppTheme.danger,
-                      onTap: () => setState(() => _isVideoOff = !_isVideoOff),
-                    ),
-                    // Botón Alternar Cámara
-                    _buildControlButton(
-                      icon: Icons.flip_camera_ios_rounded,
-                      isActive: true,
-                      activeColor: AppTheme.surface,
-                      inactiveColor: AppTheme.surface,
-                      onTap: () => setState(() => _isFrontCamera = !_isFrontCamera),
-                    ),
-                    // Botón Colgar / Finalizar Consulta
-                    _buildControlButton(
-                      icon: Icons.call_end_rounded,
-                      isActive: false,
-                      activeColor: AppTheme.danger,
-                      inactiveColor: AppTheme.danger,
-                      isEndCall: true,
-                      onTap: _confirmarFinalizar,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // Indicador de Cerrando Sesión
-            if (_isEnding)
-              Container(
-                color: Colors.black87,
-                child: const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CircularProgressIndicator(color: AppTheme.danger),
-                      SizedBox(height: 16),
-                      Text(
-                        'Registrando duración y cerrando sesión...',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-          ],
+      backgroundColor: AppTheme.background,
+      appBar: AppBar(title: const Text('Sala de Teleconsulta')),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(28),
+          child: _error != null ? _buildError() : _buildEstado(),
         ),
       ),
     );
   }
 
-  Widget _buildControlButton({
-    required IconData icon,
-    required bool isActive,
-    required Color activeColor,
-    required Color inactiveColor,
-    bool isEndCall = false,
-    required VoidCallback onTap,
-  }) {
-    final color = isEndCall ? AppTheme.danger : (isActive ? AppTheme.cardBgElevated : AppTheme.danger);
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        width: 52,
-        height: 52,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: isEndCall ? AppTheme.danger : AppTheme.borderSubtle,
-            width: 1.5,
-          ),
-          boxShadow: isEndCall
-              ? [BoxShadow(color: AppTheme.danger.withOpacity(0.4), blurRadius: 10, offset: const Offset(0, 3))]
-              : null,
+  Widget _buildEstado() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.15), shape: BoxShape.circle),
+          child: _conectando
+              ? const CircularProgressIndicator(color: AppTheme.primaryLight)
+              : const Icon(Icons.videocam_rounded, color: AppTheme.primaryLight, size: 40),
         ),
-        child: Icon(
-          icon,
-          color: Colors.white,
-          size: 24,
+        const SizedBox(height: 20),
+        Text(
+          _conectando ? 'Conectando a la sala segura...' : 'Sesión en curso',
+          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppTheme.textMain),
         ),
-      ),
+        const SizedBox(height: 8),
+        Text(
+          _conectando
+              ? 'Validando tu cita y preparando la videollamada cifrada WebRTC.'
+              : 'La videollamada${_nombreRemoto.isNotEmpty ? ' con $_nombreRemoto' : ''} está abierta. '
+                  'Usa los controles de la sala para silenciar, cambiar de cámara o colgar.',
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 13, color: AppTheme.textMuted),
+        ),
+        const SizedBox(height: 16),
+        const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.lock_outline, size: 14, color: AppTheme.success),
+            SizedBox(width: 6),
+            Text('Conexión cifrada', style: TextStyle(fontSize: 12, color: AppTheme.success)),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildError() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(color: AppTheme.warning.withOpacity(0.15), shape: BoxShape.circle),
+          child: const Icon(Icons.schedule_rounded, color: AppTheme.warning, size: 48),
+        ),
+        const SizedBox(height: 20),
+        const Text(
+          'Sala no habilitada',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textMain),
+        ),
+        const SizedBox(height: 10),
+        Text(_error!, textAlign: TextAlign.center, style: const TextStyle(color: AppTheme.textMuted, fontSize: 13)),
+        const SizedBox(height: 24),
+        ElevatedButton.icon(
+          onPressed: () => Navigator.pop(context),
+          icon: const Icon(Icons.arrow_back_rounded),
+          label: const Text('Volver a mis citas'),
+        ),
+      ],
     );
   }
 }

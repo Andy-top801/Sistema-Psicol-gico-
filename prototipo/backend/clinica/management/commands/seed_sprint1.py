@@ -636,14 +636,14 @@ class Command(BaseCommand):
                         'nota_resolucion': 'Se coordinó interconsulta con psiquiatría y se entrenó en técnica de desactivación respiratoria.'
                     }
                 )
-                Alerta.objects.get_or_create(
-                    paciente=pac_rodrigo,
-                    tipo='URGENCIA_CLINICA',
-                    defaults={
-                        'severidad': 'MEDIA',
-                        'descripcion': 'Cita en menos de 24 horas sin cuestionario de preconsulta diligenciado (Formulario Pendiente).',
-                        'resuelta': False
-                    }
-                )
+                # Puede haber alertas auto-generadas por la cita de mañana; solo sembrar si no existe ninguna.
+                if not Alerta.objects.filter(paciente=pac_rodrigo, tipo='URGENCIA_CLINICA').exists():
+                    Alerta.objects.create(
+                        paciente=pac_rodrigo,
+                        tipo='URGENCIA_CLINICA',
+                        severidad='MEDIA',
+                        descripcion='Cita en menos de 24 horas sin cuestionario de preconsulta diligenciado (Formulario Pendiente).',
+                        resuelta=False
+                    )
 
                 self.stdout.write(self.style.SUCCESS(f"  [OK] Citas operativas (hoy, pasadas, teleconsulta, manana, canceladas) y alertas clinicas sembradas."))
