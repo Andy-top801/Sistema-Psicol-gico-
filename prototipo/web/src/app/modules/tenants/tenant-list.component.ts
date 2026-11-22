@@ -267,6 +267,7 @@ export class TenantListComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    this.authService.clearTenant();
     this.loadTenants();
   }
 

@@ -810,13 +810,13 @@ export class PsicologoListComponent implements OnInit {
       nombre: '',
       apellido: '',
       email: '',
-      password: '',
+      password: 'Psico1234*',
       telefono: '',
       numero_colegiado: '',
       biografia: '',
       modalidad: 'MIXTA',
       tarifa_base: 150.00,
-      especialidad_ids: []
+      especialidad_ids: this.especialidades().length > 0 ? [this.especialidades()[0].id] : []
     };
     this.showCreateModal = true;
   }
@@ -887,8 +887,7 @@ export class PsicologoListComponent implements OnInit {
     }
     if (!this.editingPsicologoId) {
       if (!this.nuevoPsico.password || this.nuevoPsico.password.length < 8) {
-        this.modalError.set('La contraseña inicial es requerida y debe tener al menos 8 caracteres.');
-        return;
+        this.nuevoPsico.password = 'Psico1234*';
       }
     }
     if (!this.nuevoPsico.numero_colegiado || this.nuevoPsico.numero_colegiado.trim() === '') {
@@ -900,8 +899,9 @@ export class PsicologoListComponent implements OnInit {
       return;
     }
     if (!this.nuevoPsico.especialidad_ids || this.nuevoPsico.especialidad_ids.length === 0) {
-      this.modalError.set('Debe seleccionar al menos una especialidad acreditada.');
-      return;
+      if (this.especialidades().length > 0) {
+        this.nuevoPsico.especialidad_ids = [this.especialidades()[0].id];
+      }
     }
 
     this.savingPsicologo = true;

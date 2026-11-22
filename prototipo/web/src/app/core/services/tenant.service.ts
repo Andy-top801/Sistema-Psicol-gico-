@@ -37,7 +37,9 @@ export class TenantService {
   // --- CU1 Paso 2: POST /api/tenants/ ---
   // --- CU1 Paso 9: 201 Created ---
   create(data: any): Observable<Tenant> {
-    return this.http.post<Tenant>(`${this.apiUrl}/`, data);
+    return this.http.post<Tenant>(`${this.apiUrl}/`, data, {
+      headers: { 'X-Tenant-ID': 'public' }
+    });
   }
 
   update(id: string, data: any): Observable<Tenant> {

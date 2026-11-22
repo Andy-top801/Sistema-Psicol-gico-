@@ -228,6 +228,8 @@ class PsicologoSerializer(serializers.ModelSerializer):
         # CU6 Paso 5d: Vincular especialidades seleccionadas (relación M:N)
         if especialidades:
             psicologo.especialidades.set(especialidades)
+        elif Especialidad.objects.exists():
+            psicologo.especialidades.add(Especialidad.objects.first())
         # CU6/CU8 Paso 5e: Crear disponibilidad por defecto (L-V, 08-12, 14-18)
         crear_disponibilidad_default(psicologo)
         # CU6 Paso 6: Retornar psicólogo creado exitosamente

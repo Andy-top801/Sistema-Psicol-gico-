@@ -4,9 +4,9 @@ from datetime import timedelta
 from corsheaders.defaults import default_headers
 from dotenv import load_dotenv
 
-load_dotenv(override=True)
-
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(BASE_DIR / '.env', override=True)
 
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'sigepsi-insecure-key-django-sprint0-dev-2026-very-secret')
 

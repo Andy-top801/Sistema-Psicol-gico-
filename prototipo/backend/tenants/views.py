@@ -40,6 +40,14 @@ class TenantViewSet(viewsets.ModelViewSet):
             return [AllowAny()]
         return [EsSuperAdmin()]
 
+    def create(self, request, *args, **kwargs):
+        """Asegura que el aprovisionamiento de un nuevo Tenant se ejecute siempre en el esquema public."""
+        from django.db import connection
+        from django_tenants.utils import schema_context
+        with schema_context('public'):
+            connection.set_schema_to_public()
+            return super().create(request, *args, **kwargs)
+
     @action(detail=False, methods=['get'], permission_classes=[AllowAny], url_path='public')
     def public_list(self, request):
         """Retorna la lista de centros activos para el selector en pantallas de login."""

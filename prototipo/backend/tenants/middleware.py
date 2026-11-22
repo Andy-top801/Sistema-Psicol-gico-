@@ -24,6 +24,11 @@ class SigepsiTenantMiddleware(MiddlewareMixin):
         connection.set_schema_to_public()
         request.tenant = None
 
+        # Si la petición es para listar, crear o aprovisionar tenants en la plataforma global, forzar public
+        norm_path = request.path.rstrip('/')
+        if norm_path in ['/api/tenants', '/api/tenants/public'] and request.method in ['GET', 'POST']:
+            return None
+
         # 1. Verificar Header X-Tenant-ID / X-Tenant-Slug / META / GET
         # --- Paso 3: Validar tenant y conmutar schema ---
         tenant_header = (

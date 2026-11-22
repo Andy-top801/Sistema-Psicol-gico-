@@ -560,7 +560,7 @@ export class PacienteListComponent implements OnInit {
       nombre: '',
       apellido: '',
       email: '',
-      password: '',
+      password: 'Paciente1234*',
       telefono: '',
       ci: '',
       fecha_nacimiento: '',
@@ -646,8 +646,7 @@ export class PacienteListComponent implements OnInit {
     }
     if (!this.editingPacienteId) {
       if (!this.nuevoPaciente.password || this.nuevoPaciente.password.length < 8) {
-        this.modalError.set('La contraseña inicial es obligatoria y debe tener al menos 8 caracteres.');
-        return;
+        this.nuevoPaciente.password = 'Paciente1234*';
       }
     }
 
