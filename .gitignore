@@ -31,6 +31,9 @@ venv.bak/
 .env
 .env.local
 .env.*.local
+# Local AI Chatbot playground (excluded from Git)
+chatbot_ia/
+.pytest_cache/
 
 # Databases
 *.sqlite3
@@ -100,6 +103,7 @@ update_sprint3_bce.py
 check_used_images.py
 documentacion/*.py
 documentacion/*backup*.md
+documentacion/*copia*
 
 # Unused/Test images
 documentacion/imagenes/test_*.png
