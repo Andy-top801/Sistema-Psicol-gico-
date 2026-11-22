@@ -25,7 +25,13 @@ class _ReportesScreenState extends State<ReportesScreen> {
     'pacientes': 'Pacientes',
     'psicologos': 'Psicólogos',
     'ingresos': 'Ingresos',
+    'pagos': 'Cobros Caja (Bs.)',
+    'cuentas_pacientes': 'Cuentas / Morosidad',
+    'extracto_pagos': 'Extracto 20 Años',
+    'liquidaciones': 'Honorarios',
     'alertas': 'Alertas',
+    'alertas_riesgo_ia': 'Alertas Riesgo IA',
+    'resumenes_ia': 'Resúmenes IA',
     'teleconsultas': 'Teleconsultas',
   };
 

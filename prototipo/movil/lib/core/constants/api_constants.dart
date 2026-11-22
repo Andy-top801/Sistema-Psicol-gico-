@@ -61,4 +61,19 @@ class ApiConstants {
   static const String clasificacionIA = '/clinica/clasificacion-ia/';
   static const String triajeAlertas = '/clinica/triaje/alertas/';
   static const String triajeAsignar = '/clinica/triaje/asignar/';
+
+  // Sprint 4 - Finanzas (Bs.), IA Longitudinal (HITL/Riesgo) y SaaS (USD)
+  static const String finanzasCuentas = '/finanzas/cuentas/';
+  static const String finanzasPagos = '/finanzas/pagos/';
+  static const String finanzasExtracto = '/finanzas/extracto/';
+  static const String finanzasDashboard = '/finanzas/dashboard/';
+  static const String finanzasLiquidaciones = '/finanzas/liquidaciones/';
+  static const String finanzasLiquidacionesPreview = '/finanzas/liquidaciones/preview/';
+  static const String alertasRiesgoIA = '/clinica/alertas-riesgo/';
+  static const String alertasRiesgoEvaluar = '/clinica/alertas-riesgo/evaluar/';
+  static const String resumenesIA = '/clinica/resumenes-ia/';
+  static const String saasAdminDashboard = '/subscriptions/admin/dashboard/';
+  static const String saasAdminFacturas = '/subscriptions/admin/facturas/';
+  static const String saasAdminTenants = '/subscriptions/admin/tenants/';
+  static const String saasQuotas = '/subscriptions/quotas/';
 }

@@ -24,6 +24,13 @@ import 'chatbot_screen.dart';
 // Sprint 3 - CU12 / HU-43: Recordatorios y notificaciones push
 import 'centro_notificaciones_screen.dart';
 import '../services/notificaciones_service.dart';
+// Sprint 4 - Finanzas (Bs.), IA Longitudinal (HITL/Riesgo) y SaaS (USD)
+import 'estado_cuenta_screen.dart';
+import 'dashboard_financiero_screen.dart';
+import 'liquidaciones_screen.dart';
+import 'alertas_riesgo_ia_screen.dart';
+import 'resumen_ia_screen.dart';
+import 'saas_admin_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final AuthService authService;
@@ -612,6 +619,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   _buildReportesCard(context, 'Pacientes, psicólogos, citas e ingresos por clínica'),
                   _buildMenuCard(
                     context,
+                    title: 'Suscripciones SaaS y Facturas (USD)',
+                    subtitle: 'MRR mensual, planes Stripe, cupos y facturación por centro',
+                    tag: 'Consola SaaS • HU-55 • Sprint 4',
+                    icon: Icons.workspace_premium_rounded,
+                    color: const Color(0xFF0D9488),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => SaasAdminScreen(authService: widget.authService)),
+                    ),
+                  ),
+                  _buildMenuCard(
+                    context,
                     title: 'Gestión de Centros Psicológicos',
                     subtitle: 'Alta, suspensión y suscripciones multi-tenant',
                     tag: 'SaaS Multi-Tenant • CU1',
@@ -806,6 +825,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 if (isPaciente) ...[
                   _buildMenuCard(
                     context,
+                    title: 'Mi Estado de Cuenta y Extracto (Bs.)',
+                    subtitle: 'Saldo pendiente, recibos verificados e historial de hasta 20 años',
+                    tag: 'Finanzas • HU-52 • Sprint 4',
+                    icon: Icons.account_balance_wallet_rounded,
+                    color: const Color(0xFF0D9488),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => EstadoCuentaScreen(authService: widget.authService)),
+                    ),
+                  ),
+                  _buildMenuCard(
+                    context,
                     title: 'Centro de Notificaciones',
                     subtitle: 'Recordatorios automáticos 24 h y 1 h antes de tus citas',
                     tag: 'Push FCM • CU12',
@@ -920,6 +951,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 if (isPsico) ...[
                   _buildMenuCard(
                     context,
+                    title: 'Resumen Clínico Longitudinal IA (HITL)',
+                    subtitle: 'Borradores IA anonimizados de notas SOAP y aprobación humana',
+                    tag: 'IA Clínica • HU-49 • Sprint 4',
+                    icon: Icons.auto_awesome_rounded,
+                    color: const Color(0xFF0D9488),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => ResumenIaScreen(authService: widget.authService)),
+                    ),
+                  ),
+                  _buildMenuCard(
+                    context,
+                    title: 'Alertas de Riesgo Clínico IA',
+                    subtitle: 'Detección longitudinal de riesgo vital y deserción terapéutica',
+                    tag: 'Alertas IA • HU-50/51 • Sprint 4',
+                    icon: Icons.warning_amber_rounded,
+                    color: AppTheme.danger,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => AlertasRiesgoIaScreen(authService: widget.authService)),
+                    ),
+                  ),
+                  _buildMenuCard(
+                    context,
+                    title: 'Mis Liquidaciones de Honorarios (Bs.)',
+                    subtitle: 'Consulta de honorarios devengados y boletas de pago',
+                    tag: 'Honorarios • HU-54 • Sprint 4',
+                    icon: Icons.receipt_long_rounded,
+                    color: AppTheme.success,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => LiquidacionesScreen(authService: widget.authService)),
+                    ),
+                  ),
+                  _buildMenuCard(
+                    context,
                     title: 'Mis Sesiones y Citas',
                     subtitle: 'Pacientes citados, horarios y estado de atención',
                     tag: 'Atención Clínica • CU11',
@@ -969,6 +1036,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 if (isRecep) ...[
                   _buildMenuCard(
                     context,
+                    title: 'Caja Clínica y Extracto 20 Años (Bs.)',
+                    subtitle: 'Registro de cobros, recibos y extracto histórico tipo banco',
+                    tag: 'Caja Bs. • HU-52 • Sprint 4',
+                    icon: Icons.payments_rounded,
+                    color: const Color(0xFF0D9488),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => EstadoCuentaScreen(authService: widget.authService)),
+                    ),
+                  ),
+                  _buildMenuCard(
+                    context,
                     title: 'Agenda y Citas del Centro',
                     subtitle: 'Consulta y coordinación de citas de todos los psicólogos',
                     tag: 'Agenda General • CU11',
@@ -1007,7 +1086,67 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 // ROL 5: ADMINISTRADOR DEL CENTRO (CU3, CU4, CU1, CU11, CU13)
                 // ═════════════════════════════════════════════════════════════
                 if (isAdmin) ...[
-                  _buildReportesCard(context, 'Pacientes, psicólogos, citas e ingresos de tu clínica'),
+                  _buildReportesCard(context, 'Pacientes, psicólogos, citas, pagos, extractos y alertas'),
+                  _buildMenuCard(
+                    context,
+                    title: 'Dashboard Financiero Gerencial (Bs.)',
+                    subtitle: 'Ingreso Bruto vs Honorarios = Margen Neto, estadísticas >= 2 años',
+                    tag: 'Finanzas 24m • HU-53 • Sprint 4',
+                    icon: Icons.insights_rounded,
+                    color: AppTheme.success,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => DashboardFinancieroScreen(authService: widget.authService)),
+                    ),
+                  ),
+                  _buildMenuCard(
+                    context,
+                    title: 'Caja Clínica y Extracto 20 Años (Bs.)',
+                    subtitle: 'Cobros en Bs., estado de cuenta y extracto histórico tipo banco',
+                    tag: 'Caja Bs. • HU-52 • Sprint 4',
+                    icon: Icons.payments_rounded,
+                    color: const Color(0xFF0D9488),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => EstadoCuentaScreen(authService: widget.authService)),
+                    ),
+                  ),
+                  _buildMenuCard(
+                    context,
+                    title: 'Liquidación de Honorarios (Bs.)',
+                    subtitle: 'Cálculo periódico 70/30, pago bancario y control anti-doble pago',
+                    tag: 'Honorarios • HU-54 • Sprint 4',
+                    icon: Icons.receipt_long_rounded,
+                    color: AppTheme.warning,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => LiquidacionesScreen(authService: widget.authService)),
+                    ),
+                  ),
+                  _buildMenuCard(
+                    context,
+                    title: 'Consola de Alertas de Riesgo IA',
+                    subtitle: 'Barrido longitudinal 4 señales e intervención clínica auditada',
+                    tag: 'Riesgo IA • HU-50/51 • Sprint 4',
+                    icon: Icons.warning_amber_rounded,
+                    color: AppTheme.danger,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => AlertasRiesgoIaScreen(authService: widget.authService)),
+                    ),
+                  ),
+                  _buildMenuCard(
+                    context,
+                    title: 'Resúmenes Clínicos IA (HITL)',
+                    subtitle: 'Revisión y aprobación humana de síntesis longitudinales SOAP',
+                    tag: 'IA HITL • HU-49 • Sprint 4',
+                    icon: Icons.auto_awesome_rounded,
+                    color: AppTheme.info,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => ResumenIaScreen(authService: widget.authService)),
+                    ),
+                  ),
                   _buildMenuCard(
                     context,
                     title: 'Personal y Terapeutas',
