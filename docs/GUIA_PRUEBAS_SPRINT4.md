@@ -178,3 +178,80 @@ Para cambiar de usuario en cualquier momento: haz clic en el botón **Cerrar Ses
    ```text
    [CERTIFICADO] 5/5 SUITES DEL SPRINT 4 APROBADAS AL 100%.
    ```
+
+---
+
+## 4. Paso a Paso para Probar en la App Móvil (Flutter)
+
+### 4.1 Levantar la App Móvil
+
+1. Asegúrate de tener corriendo el **Backend Django** en `localhost:8000` (Sección 1).
+2. Si usas un **emulador o celular Android físico por USB**, ejecuta primero para que `localhost:8000` apunte a tu Mac:
+   ```bash
+   adb reverse tcp:8000 tcp:8000
+   ```
+3. Inicia la app Flutter desde `prototipo/movil`:
+   ```bash
+   cd prototipo/movil
+   fvm flutter run
+   ```
+   *(En macOS también puedes correrlo rápido en Chrome con `fvm flutter run -d chrome` o en el simulador de iOS con `fvm flutter run -d ios`).*
+
+> **Cómo cambiar de usuario en móvil:** en la pantalla principal (`DashboardScreen`), toca el ícono de **Cerrar Sesión** en la barra superior derecha (`AppBar`) para volver al Login y seleccionar otro rol o centro.
+
+---
+
+### 4.2 Recorrido de Pruebas Móvil por Rol y HU
+
+#### A. Como Paciente (`HU-52` — Mi Estado de Cuenta y Extracto 20 Años)
+1. Inicia sesión seleccionando **Centro Esperanza** con `mateo.quispe@centroesperanza.com` / `Paciente123*`.
+2. En el menú principal toca **Mi Estado de Cuenta y Extracto (Bs.)**.
+3. En la pestaña **Cuenta y Pagos**: verifica tus tarjetas (`Total Cargado`, `Total Pagado`, `Saldo Pendiente`) y la lista de recibos emitidos con su código de verificación.
+4. Cambia a la pestaña **Extracto 20 Años**: toca los chips **`1 Año`**, **`2 Años`**, **`10 Años`** y **`20 Años`**, revisa el **Saldo Acumulado** por movimiento y navega con **← Anterior / Siguiente →**.
+5. **Cierra sesión** (ícono superior derecho).
+
+#### B. Como Recepcionista (`HU-52` — Cobros en Caja Bs.)
+1. Inicia sesión en **Centro Esperanza** con `recepcion@centroesperanza.com` / `Recep1234*`.
+2. Toca **Caja Clínica y Extracto 20 Años (Bs.)**.
+3. Selecciona un paciente en el desplegable superior (toca el ícono de sincronizar si necesitas actualizar cargos).
+4. Toca el botón flotante **Registrar Cobro**:
+   - Prueba ingresar `-10` o un monto mayor al saldo → verifica el `SnackBar` rojo de rechazo.
+   - Elige **`QR Bancario`**, ingresa un monto válido (ej. `150.00`), una referencia y confirma → verifica el `SnackBar` verde con el `N° Recibo` generado y el saldo actualizado.
+5. **Cierra sesión**.
+
+#### C. Como Psicólogo (`HU-49`, `HU-50/51`, `HU-54`)
+1. Inicia sesión en **Centro Esperanza** con `lucia.rios@centroesperanza.com` / `Psicologo123*`.
+2. **`HU-49` (Resumen Clínico IA HITL)**:
+   - Toca **Resumen Clínico Longitudinal IA (HITL)**.
+   - Elige un paciente asignado y toca **Generar Borrador IA Longitudinal**.
+   - Verifica el banner ámbar **`Borrador IA — Requiere Revisión Profesional`** + hash SHA-256, edita el texto y toca **Editar y Aprobar (HITL)** → el banner pasa a verde.
+3. **`HU-50 / HU-51` (Alertas de Riesgo IA)**:
+   - Vuelve atrás y toca **Alertas de Riesgo Clínico IA**.
+   - Toca el ícono de **radar** arriba a la derecha para ejecutar el barrido longitudinal.
+   - Filtra por **`Críticas`**, toca **Intervenir** en una alerta, intenta pasar a `Resuelta` sin nota (bloqueado) y luego guarda con una nota clínica.
+4. **`HU-54` (Mis Honorarios)**:
+   - Vuelve atrás y toca **Mis Liquidaciones de Honorarios (Bs.)**.
+   - Confirma que solo ves tus propias liquidaciones y que el botón de crear nueva liquidación no aparece para el rol Psicólogo.
+5. **Cierra sesión**.
+
+#### D. Como Administrador del Centro (`HU-52`, `HU-53`, `HU-54`, `HU-50/51`, `HU-49`)
+1. Inicia sesión en **Centro Esperanza** con `admin@centroesperanza.com` / `Admin1234*`.
+2. **`HU-53` (Dashboard Financiero 24+ meses y Reportes)**:
+   - Toca **Dashboard Financiero Gerencial (Bs.)**.
+   - Verifica las 4 tarjetas KPI (`Ingreso Bruto`, `Honorarios Psico.`, `Margen Neto Real`, `Cartera / Morosidad`), alterna los chips **`12 Meses`**, **`24 Meses (2 Años)`**, **`36 Meses`** y **`Todo`**, y revisa la serie mensual, métodos de pago y rendimiento por psicólogo.
+   - Toca el ícono de **gráfico circular** arriba a la derecha (o vuelve al menú → **Reportes**) y comprueba que están disponibles las nuevas fuentes (`Cobros Caja (Bs.)`, `Cuentas / Morosidad`, `Extracto 20 Años`, `Honorarios`, `Alertas Riesgo IA`, `Resúmenes IA`).
+3. **`HU-54` (Emitir y Pagar Liquidaciones)**:
+   - Toca **Liquidación de Honorarios (Bs.)**.
+   - Toca **Nueva Liquidación**, elige psicólogo, rango y comisión (`30%`), y toca **Emitir**.
+   - Sobre una liquidación en estado `GENERADA`, toca **Marcar Pagada**, ingresa una referencia bancaria y confirma.
+4. **Cierra sesión**.
+
+#### E. Como SuperAdmin (`HU-55` — Consola SaaS en USD)
+1. En el Login selecciona modo **Plataforma Global** (sin centro) e ingresa con `admin@sigepsi.com` / `Admin1234*`.
+2. Toca **Suscripciones SaaS y Facturas (USD)**.
+3. Verifica las tarjetas de **MRR Mensual (USD)**, **ARR** y **Centros Activos** (`12 / 12`).
+4. En cualquier centro de la lista:
+   - Revisa sus **Cupos** (`psicólogos / límite` y `pacientes / límite`).
+   - Cambia temporalmente su plan desde el desplegable (`Básico $29` / `Pro $59` / `Emp $99`) y observa el recálculo inmediato del MRR.
+   - Toca **Facturas USD** para abrir el panel inferior con el historial de `FacturaSaaS`.
+
