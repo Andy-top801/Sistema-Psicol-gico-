@@ -28,6 +28,14 @@ from clinica.views import (
     CTR_MatchingController,
     RegistroAnimoViewSet
 )
+from clinica.ia_longitudinal_views import (
+    PacienteResumenIAListCreateView,
+    ResumenIAAprobarHITLView,
+    ResumenIAPDFView,
+    AlertasRiesgoIAListView,
+    AlertasRiesgoIAEvaluarView,
+    AlertaRiesgoIATransicionView,
+)
 
 router = DefaultRouter()
 router.register(r'especialidades', EspecialidadViewSet, basename='especialidad')
@@ -72,5 +80,12 @@ urlpatterns = [
     path('ia/sugerir-psicologo/<uuid:paciente_id>/', GenerarMatchingView.as_view(), name='ia-sugerir-psicologo'),
     path('ia/confirmar-asignacion/', AsignarPsicologoHITLView.as_view(), name='ia-confirmar-asignacion'),
     path('ia/asignacion-manual/', AsignarPsicologoHITLView.as_view(), name='ia-asignacion-manual'),
+    # Rutas Incremento Sprint 4 (CU23 HU-49 Resumen IA HITL + CU24 HU-50/HU-51 Alertas Riesgo IA)
+    path('pacientes/<uuid:paciente_id>/resumenes-ia/', PacienteResumenIAListCreateView.as_view(), name='paciente-resumenes-ia'),
+    path('resumenes-ia/<uuid:resumen_id>/aprobar/', ResumenIAAprobarHITLView.as_view(), name='resumen-ia-aprobar'),
+    path('resumenes-ia/<uuid:resumen_id>/pdf/', ResumenIAPDFView.as_view(), name='resumen-ia-pdf'),
+    path('alertas-riesgo/', AlertasRiesgoIAListView.as_view(), name='alertas-riesgo-list'),
+    path('alertas-riesgo/evaluar/', AlertasRiesgoIAEvaluarView.as_view(), name='alertas-riesgo-evaluar'),
+    path('alertas-riesgo/<uuid:alerta_id>/transicion/', AlertaRiesgoIATransicionView.as_view(), name='alerta-riesgo-transicion'),
     path('', include(router.urls)),
 ]
