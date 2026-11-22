@@ -38,6 +38,7 @@ SHARED_APPS = [
     'agenda',
     'audit',
     'reportes',
+    'finanzas',
     'subscriptions',
 ]
 
@@ -52,6 +53,7 @@ TENANT_APPS = [
     'clinica',
     'agenda',
     'reportes',
+    'finanzas',
 ]
 
 INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
