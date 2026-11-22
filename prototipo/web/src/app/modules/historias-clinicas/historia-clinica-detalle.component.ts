@@ -18,11 +18,12 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ClinicaSprint2Service } from '../../core/services/clinica-sprint2.service';
 import { HistoriaClinica, DiagnosticoCIE, CieItem } from '../../core/models/clinica-sprint2.model';
+import { ResumenIaDrawerComponent } from './resumen-ia-drawer.component';
 
 @Component({
   selector: 'app-historia-clinica-detalle',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, ResumenIaDrawerComponent],
   template: `
     <!-- Security Screen for 403 Forbidden Access (HU-26) -->
     <div class="ehr-forbidden-container glass-panel text-center p-5 mx-auto my-5" style="max-width: 650px; background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);" *ngIf="accesoRestringido()">
@@ -99,6 +100,14 @@ import { HistoriaClinica, DiagnosticoCIE, CieItem } from '../../core/models/clin
         <button class="tab-item" [class.active]="activeTab === 'timeline'" (click)="cambiarATimeline()" id="tab-evolucion-seguimiento">
           <i class="fa-solid fa-timeline"></i> Evolución y Seguimiento
         </button>
+        <button class="tab-item" [class.active]="activeTab === 'resumen-ia'" (click)="activeTab = 'resumen-ia'" id="tab-resumen-ia">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> Resumen Clínico IA (HITL)
+        </button>
+      </div>
+
+      <!-- TAB 5: RESUMEN CLÍNICO LONGITUDINAL IA (HU-49) -->
+      <div *ngIf="activeTab === 'resumen-ia'" class="tab-content-panel mb-4">
+        <app-resumen-ia-drawer [pacienteId]="getPacienteIdForIA()"></app-resumen-ia-drawer>
       </div>
 
       <!-- Mensaje de Feedback -->
@@ -1011,7 +1020,12 @@ import { HistoriaClinica, DiagnosticoCIE, CieItem } from '../../core/models/clin
 export class HistoriaClinicaDetalleComponent implements OnInit {
   historiaId!: string;
   historia = signal<HistoriaClinica | null>(null);
-  activeTab: 'anamnesis' | 'diagnosticos' | 'plan' | 'timeline' = 'anamnesis';
+  activeTab: 'anamnesis' | 'diagnosticos' | 'plan' | 'timeline' | 'resumen-ia' = 'anamnesis';
+
+  getPacienteIdForIA(): string {
+    const p: any = this.historia()?.paciente;
+    return typeof p === 'string' ? p : (p?.id || '');
+  }
   feedbackMensaje = signal<string | null>(null);
   accesoRestringido = signal<boolean>(false);
   errorMensajeAcceso = signal<string>('');

@@ -58,4 +58,22 @@ export class SubscriptionService {
   }): Observable<any> {
     return this.http.post(`${environment.apiUrl}/auth/force-change-password/`, data);
   }
+
+  // HU-55: Consola SuperAdmin SaaS (USD) y Cupos
+  getAdminDashboard(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/admin/dashboard/`);
+  }
+
+  getAdminFacturas(tenantId?: string): Observable<any[]> {
+    const url = tenantId ? `${this.apiUrl}/admin/facturas/?tenant_id=${tenantId}` : `${this.apiUrl}/admin/facturas/`;
+    return this.http.get<any[]>(url);
+  }
+
+  actualizarPlanTenant(tenantId: string, payload: { plan?: string; estado?: string }): Observable<any> {
+    return this.http.patch<any>(`${this.apiUrl}/admin/tenants/${tenantId}/`, payload);
+  }
+
+  getTenantQuotas(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/quotas/`);
+  }
 }
