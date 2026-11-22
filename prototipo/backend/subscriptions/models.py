@@ -74,3 +74,64 @@ class Suscripcion(models.Model):
 
     def __str__(self):
         return f'{self.nombre_centro} — {self.plan} ({self.estado})'
+
+
+class FacturaSaaS(models.Model):
+    """
+    HU-55 (CU26): Registro oficial de facturación SaaS en USD por centro psicológico
+    en esquema public, con idempotencia garantizada sobre eventos Stripe.
+    """
+    ESTADO_CHOICES = [
+        ('PAGADA', 'Pagada'),
+        ('PENDIENTE', 'Pendiente'),
+        ('FALLIDA', 'Fallida'),
+        ('ANULADA', 'Anulada'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    suscripcion = models.ForeignKey(
+        Suscripcion,
+        on_delete=models.CASCADE,
+        related_name='facturas',
+        verbose_name='Suscripción',
+    )
+    tenant = models.ForeignKey(
+        'tenants.Tenant',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='facturas_saas',
+        verbose_name='Centro (Tenant)',
+    )
+    numero_factura = models.CharField(max_length=40, unique=True, verbose_name='N° Factura SaaS')
+    plan = models.CharField(max_length=50, verbose_name='Plan Facturado')
+    monto_usd = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Monto (USD)')
+    moneda = models.CharField(max_length=5, default='USD', verbose_name='Moneda')
+    stripe_session_id = models.CharField(
+        max_length=255,
+        unique=True,
+        verbose_name='Stripe Session / Event ID (Idempotencia)',
+    )
+    stripe_invoice_id = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name='Stripe Invoice ID',
+    )
+    estado = models.CharField(max_length=15, choices=ESTADO_CHOICES, default='PAGADA', verbose_name='Estado')
+    fecha_emision = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de Emisión')
+    fecha_renovacion = models.DateField(null=True, blank=True, verbose_name='Próxima Renovación')
+
+    class Meta:
+        db_table = 'subscriptions_facturasaas'
+        verbose_name = 'Factura SaaS (USD)'
+        verbose_name_plural = 'Facturas SaaS (USD)'
+        ordering = ['-fecha_emision']
+        indexes = [
+            models.Index(fields=['tenant', 'fecha_emision'], name='idx_factsaas_tenant_fecha'),
+            models.Index(fields=['estado', 'fecha_emision'], name='idx_factsaas_estado_fecha'),
+        ]
+
+    def __str__(self):
+        return f'{self.numero_factura} — {self.plan} (${self.monto_usd} USD)'
+
