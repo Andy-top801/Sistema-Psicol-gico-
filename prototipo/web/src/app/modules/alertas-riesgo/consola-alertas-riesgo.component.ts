@@ -190,6 +190,7 @@ export class ConsolaAlertasRiesgoComponent implements OnInit {
   }
 
   ejecutarBarrido(): void {
+    // CU24-paso 1, 15: Solicita barrido ML de riesgo de abandono/crisis y muestra ranking consolidado
     this.evaluando.set(true);
     this.error.set('');
     this.mensaje.set('');
@@ -217,6 +218,7 @@ export class ConsolaAlertasRiesgoComponent implements OnInit {
   guardarIntervencion(): void {
     const sel = this.alertaActiva();
     if (!sel) return;
+    // CU24-paso 14: Registra nota de intervención clínica y cambia estado de alerta
     this.error.set('');
     this.iaService.transicionarAlerta(sel.id, this.formTransicion.estado, this.formTransicion.nota_intervencion).subscribe({
       next: () => {

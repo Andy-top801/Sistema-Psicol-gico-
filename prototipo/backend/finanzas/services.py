@@ -7,6 +7,7 @@
 #              y liquidación de honorarios con prevención de doble pago.
 # ==============================================================================
 import secrets
+from calendar import monthrange
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal, ROUND_HALF_UP
 
@@ -24,14 +25,26 @@ from .models import (
     MovimientoFinanciero,
     LiquidacionHonorario,
     DetalleLiquidacionCita,
+    PlanPagoTerapeutico,
+    CuotaAmortizacion,
 )
 
 TWOPLACES = Decimal('0.01')
+FOURPLACES = Decimal('0.0001')
+TASA_OFICIAL_USD_BOB = Decimal('6.9600')
 MAX_EXTRACTO_DIAS = 366 * 20  # Hasta 20 años de historial tipo extracto bancario
 
 
 def _q2(val: Decimal | float | int | str) -> Decimal:
     return Decimal(str(val)).quantize(TWOPLACES, rounding=ROUND_HALF_UP)
+
+
+def _add_months(ref: date, months: int) -> date:
+    total_m = (ref.month - 1) + months
+    anio = ref.year + total_m // 12
+    mes = (total_m % 12) + 1
+    dia = min(ref.day, monthrange(anio, mes)[1])
+    return date(anio, mes, dia)
 
 
 def _to_aware_start(d: date | datetime) -> datetime:
@@ -132,6 +145,280 @@ class FinanzasService:
         return f"{prefix}{correlativo:06d}"
 
     @classmethod
+    def convertir_a_bob(
+        cls,
+        monto_origen,
+        moneda: str = 'BOB',
+        tasa: Decimal = TASA_OFICIAL_USD_BOB,
+    ) -> tuple[Decimal, Decimal, Decimal]:
+        """
+        CU26A-paso 5: convertir_a_bob(monto, moneda, tasa_oficial=6.96)
+        Retorna (monto_bob_equivalente, ajuste_redondeo, tasa_aplicada) con ROUND_HALF_UP.
+        """
+        mon = (moneda or 'BOB').upper().strip()
+        monto_orig_dec = _q2(monto_origen)
+        if monto_orig_dec <= Decimal('0.00'):
+            raise ValueError('El monto del cobro debe ser mayor a 0.00.')
+        if mon == 'BOB':
+            return monto_orig_dec, Decimal('0.0000'), Decimal('1.0000')
+        if mon == 'USD':
+            tasa_dec = Decimal(str(tasa or TASA_OFICIAL_USD_BOB)).quantize(FOURPLACES, rounding=ROUND_HALF_UP)
+            exacto = monto_orig_dec * tasa_dec
+            redondeado = exacto.quantize(TWOPLACES, rounding=ROUND_HALF_UP)
+            ajuste = (redondeado - exacto).quantize(FOURPLACES, rounding=ROUND_HALF_UP)
+            return redondeado, ajuste, tasa_dec
+        raise ValueError(f"Moneda '{moneda}' no soportada. Use BOB o USD.")
+
+    @classmethod
+    def generar_tabla_amortizacion(
+        cls,
+        monto_total,
+        numero_cuotas: int,
+        tasa_interes_anual=Decimal('12.00'),
+        porcentaje_seguro=Decimal('1.50'),
+        fecha_inicio: date | None = None,
+    ) -> list[dict]:
+        """
+        Genera el cronograma cuota por cuota (capital amortizado, interés/comisión,
+        seguro asistencial y saldo insoluto), absorbiendo cualquier centavo residual en la
+        última cuota para cerrar exactamente en 0.00.
+        """
+        capital_total = _q2(monto_total)
+        cuotas_n = max(1, int(numero_cuotas))
+        saldo = capital_total
+        capital_base = (capital_total / Decimal(cuotas_n)).quantize(TWOPLACES, rounding=ROUND_HALF_UP)
+        tasa_mensual = (Decimal(str(tasa_interes_anual)) / Decimal('100')) / Decimal('12')
+        seguro_tasa = Decimal(str(porcentaje_seguro)) / Decimal('100')
+        f_ini = fecha_inicio or timezone.localdate()
+        cronograma = []
+
+        for idx in range(1, cuotas_n + 1):
+            capital = saldo if idx == cuotas_n else capital_base
+            interes = (saldo * tasa_mensual).quantize(TWOPLACES, rounding=ROUND_HALF_UP)
+            seguro = (saldo * seguro_tasa).quantize(TWOPLACES, rounding=ROUND_HALF_UP)
+            saldo_nuevo = max(Decimal('0.00'), _q2(saldo - capital))
+            total_cuota = _q2(capital + interes + seguro)
+            cronograma.append({
+                'numero_cuota': idx,
+                'fecha_vencimiento': _add_months(f_ini, idx - 1),
+                'capital_amortizado': capital,
+                'interes_o_comision': interes,
+                'seguro_asistencial': seguro,
+                'monto_total_cuota': total_cuota,
+                'saldo_insoluto': saldo_nuevo,
+            })
+            saldo = saldo_nuevo
+        return cronograma
+
+    @classmethod
+    @transaction.atomic
+    def crear_plan_amortizacion(
+        cls,
+        paciente: Paciente,
+        nombre_plan: str,
+        monto_total,
+        numero_cuotas: int = 6,
+        tasa_interes_anual=Decimal('12.00'),
+        porcentaje_seguro=Decimal('1.50'),
+        moneda: str = 'BOB',
+        sesiones_incluidas: int = 6,
+        fecha_inicio: date | None = None,
+    ) -> PlanPagoTerapeutico:
+        """Crea un PlanPagoTerapeutico, sus CuotaAmortizacion y el cargo contable."""
+        mon = (moneda or 'BOB').upper().strip()
+        monto_dec = _q2(monto_total)
+        if monto_dec <= Decimal('0.00'):
+            raise ValueError('El monto total del plan debe ser mayor a 0.00.')
+        monto_bob, _, _ = cls.convertir_a_bob(monto_dec, mon)
+        f_ini = fecha_inicio or timezone.localdate()
+
+        cronograma = cls.generar_tabla_amortizacion(
+            monto_total=monto_bob,
+            numero_cuotas=numero_cuotas,
+            tasa_interes_anual=tasa_interes_anual,
+            porcentaje_seguro=porcentaje_seguro,
+            fecha_inicio=f_ini,
+        )
+
+        plan = PlanPagoTerapeutico.objects.create(
+            paciente=paciente,
+            nombre_plan=nombre_plan.strip()[:160],
+            sesiones_incluidas=max(1, int(sesiones_incluidas)),
+            monto_total=monto_bob,
+            moneda='BOB',
+            tasa_interes_anual=_q2(tasa_interes_anual),
+            porcentaje_seguro=_q2(porcentaje_seguro),
+            numero_cuotas=max(1, int(numero_cuotas)),
+            saldo_insoluto=monto_bob,
+            estado='ACTIVO',
+            fecha_inicio=f_ini,
+        )
+        cuotas_objs = [
+            CuotaAmortizacion(
+                plan=plan,
+                numero_cuota=row['numero_cuota'],
+                fecha_vencimiento=row['fecha_vencimiento'],
+                capital_amortizado=row['capital_amortizado'],
+                interes_o_comision=row['interes_o_comision'],
+                seguro_asistencial=row['seguro_asistencial'],
+                monto_total_cuota=row['monto_total_cuota'],
+                saldo_insoluto=row['saldo_insoluto'],
+                estado='PENDIENTE',
+            )
+            for row in cronograma
+        ]
+        CuotaAmortizacion.objects.bulk_create(cuotas_objs)
+
+        total_plan_con_cargos = _q2(sum((row['monto_total_cuota'] for row in cronograma), Decimal('0.00')))
+        cuenta = cls.asegurar_cuenta(paciente)
+        cuenta = CuentaPaciente.objects.select_for_update().get(pk=cuenta.pk)
+        MovimientoFinanciero.objects.create(
+            cuenta=cuenta,
+            tipo='CARGO',
+            concepto=f"Plan Terapéutico ({plan.numero_cuotas} cuotas): {plan.nombre_plan}"[:255],
+            numero_documento=f"PLAN-{str(plan.id)[:8].upper()}",
+            debe=total_plan_con_cargos,
+            haber=Decimal('0.00'),
+            fecha_movimiento=_to_aware_start(f_ini),
+        )
+        cuenta.total_cargado = _q2(cuenta.total_cargado + total_plan_con_cargos)
+        cuenta.saldo_pendiente = _q2(cuenta.total_cargado - cuenta.total_pagado)
+        cuenta.save(update_fields=['total_cargado', 'saldo_pendiente', 'ultima_actualizacion'])
+        return plan
+
+    @classmethod
+    @transaction.atomic
+    def registrar_pago_cuota(
+        cls,
+        cuota_id,
+        monto=None,
+        moneda: str = 'BOB',
+        metodo_pago: str = 'QR_BANCARIO',
+        usuario=None,
+        referencia_externa: str = '',
+        tasa_cambio: Decimal = TASA_OFICIAL_USD_BOB,
+    ) -> dict:
+        """
+        Flujo exacto del Diagrama de Secuencia CU26-A (CTR_PagosAmortizacion — Pasos 3 a 15).
+        """
+        # CU26A-paso 3: CTR -> CUOTA : bloquear_cuota_para_pago(cuota_id) [SELECT FOR UPDATE]
+        cuota = CuotaAmortizacion.objects.select_for_update().select_related('plan__paciente__usuario').get(pk=cuota_id)
+        # CU26A-paso 4: CUOTA --> CTR : cuota_info(estado, monto_total_cuota, plan_id) [retorno]
+        plan = PlanPagoTerapeutico.objects.select_for_update().get(pk=cuota.plan_id)
+
+        mon = (moneda or 'BOB').upper().strip()
+        if monto is None:
+            if mon == 'USD':
+                tasa_dec = Decimal(str(tasa_cambio or TASA_OFICIAL_USD_BOB)).quantize(FOURPLACES, rounding=ROUND_HALF_UP)
+                monto_eval = (cuota.monto_total_cuota / tasa_dec).quantize(TWOPLACES, rounding=ROUND_HALF_UP)
+            else:
+                monto_eval = cuota.monto_total_cuota
+        else:
+            monto_eval = _q2(monto)
+        # CU26A-paso 14: else cuota_ya_pagada o monto_invalido -> HTTP 400 Bad Request
+        if cuota.estado not in ('PENDIENTE', 'MORA') or monto_eval <= Decimal('0.00'):
+            raise ValueError('Cuota no elegible o monto inválido.')
+
+        # CU26A-paso 5: CTR -> CTR : convertir_a_bob(monto, moneda, tasa_oficial=6.96)
+        monto_bob, _, _ = cls.convertir_a_bob(monto_eval, moneda, tasa=tasa_cambio)
+        if monto_bob + Decimal('0.50') < cuota.monto_total_cuota:
+            raise ValueError(
+                f'El equivalente en Bs. ({monto_bob}) es inferior al valor exigible de la cuota (Bs. {cuota.monto_total_cuota}).'
+            )
+
+        # CU26A-paso 6-7: CTR -> PAGO : registrar_transaccion(monto_origen, monto_bob, ajuste_redondeo)
+        pago = cls.registrar_pago(
+            paciente=plan.paciente,
+            monto=monto_eval,
+            moneda_origen=moneda,
+            tipo_cambio=tasa_cambio,
+            cuota=cuota,
+            metodo_pago=metodo_pago,
+            usuario=usuario,
+            referencia_externa=referencia_externa,
+            observaciones=f"Amortización cuota {cuota.numero_cuota}/{plan.numero_cuotas} — {plan.nombre_plan}",
+            permitir_abono_adelantado=True,
+        )
+
+        # CU26A-paso 8-9: CTR -> CUOTA : marcar_pagada(cuota_id) -> estado='PAGADA'
+        cuota.estado = 'PAGADA'
+        cuota.fecha_pago = timezone.now()
+        cuota.save(update_fields=['estado', 'fecha_pago'])
+
+        # CU26A-paso 10-11: CTR -> PLAN : calcular_saldo_restante(plan_id) -> saldo_insoluto, lista_cuotas[]
+        saldo_restante = plan.calcular_saldo_restante()
+        plan.saldo_insoluto = saldo_restante
+        if saldo_restante <= Decimal('0.00'):
+            plan.estado = 'PAGADO'
+        plan.save(update_fields=['saldo_insoluto', 'estado'])
+
+        return {
+            'pago': pago,
+            'cuota': cuota,
+            'plan': plan,
+            'extracto_amortizacion': cls.obtener_extracto_paciente_completo(plan.paciente_id),
+        }
+
+    @classmethod
+    def obtener_extracto_paciente_completo(cls, paciente_id) -> dict:
+        """Retorna todos los planes y cuotas de amortización del paciente."""
+        planes = list(
+            PlanPagoTerapeutico.objects.filter(paciente_id=paciente_id)
+            .prefetch_related('cuotas')
+            .order_by('-fecha_creacion')
+        )
+        planes_data = []
+        saldo_total = Decimal('0.00')
+        cuotas_pend = 0
+        cuotas_pag = 0
+        for pl in planes:
+            cuotas_list = list(pl.cuotas.all().order_by('numero_cuota'))
+            if pl.estado != 'ANULADO':
+                saldo_total += pl.saldo_insoluto
+            cuotas_pend += sum(1 for c in cuotas_list if c.estado != 'PAGADA')
+            cuotas_pag += sum(1 for c in cuotas_list if c.estado == 'PAGADA')
+            planes_data.append({
+                'id': str(pl.id),
+                'nombre_plan': pl.nombre_plan,
+                'sesiones_incluidas': pl.sesiones_incluidas,
+                'monto_total': float(pl.monto_total),
+                'moneda': pl.moneda,
+                'tasa_interes_anual': float(pl.tasa_interes_anual),
+                'porcentaje_seguro': float(pl.porcentaje_seguro),
+                'numero_cuotas': pl.numero_cuotas,
+                'saldo_insoluto': float(pl.saldo_insoluto),
+                'estado': pl.estado,
+                'fecha_inicio': pl.fecha_inicio.isoformat(),
+                'cuotas': [
+                    {
+                        'id': str(c.id),
+                        'numero_cuota': c.numero_cuota,
+                        'fecha_vencimiento': c.fecha_vencimiento.isoformat(),
+                        'capital_amortizado': float(c.capital_amortizado),
+                        'interes_o_comision': float(c.interes_o_comision),
+                        'seguro_asistencial': float(c.seguro_asistencial),
+                        'monto_total_cuota': float(c.monto_total_cuota),
+                        'saldo_insoluto': float(c.saldo_insoluto),
+                        'estado': c.estado,
+                        'fecha_pago': timezone.localtime(c.fecha_pago).isoformat() if c.fecha_pago else None,
+                    }
+                    for c in cuotas_list
+                ],
+            })
+        return {
+            'paciente_id': str(paciente_id),
+            'moneda': 'BOB',
+            'tasa_oficial_usd_bob': float(TASA_OFICIAL_USD_BOB),
+            'resumen_amortizacion': {
+                'total_planes': len(planes_data),
+                'saldo_insoluto_total': float(_q2(saldo_total)),
+                'cuotas_pendientes': cuotas_pend,
+                'cuotas_pagadas': cuotas_pag,
+            },
+            'planes': planes_data,
+        }
+
+    @classmethod
     @transaction.atomic
     def registrar_pago(
         cls,
@@ -144,15 +431,20 @@ class FinanzasService:
         observaciones: str = '',
         permitir_abono_adelantado: bool = False,
         fecha_pago: datetime | None = None,
+        moneda_origen: str = 'BOB',
+        tipo_cambio: Decimal = TASA_OFICIAL_USD_BOB,
+        cuota: CuotaAmortizacion | None = None,
     ) -> PagoConsulta:
         """
-        HU-52: Registra un cobro en Bs. de forma atómica (select_for_update + transaction.atomic),
-        valida monto > 0 y no exceder saldo exigible sin permiso de abono, genera recibo
-        correlativo y actualiza el libro mayor + CE_AuditLog.
+        HU-52 / CU26A-paso 5..7: Registra un cobro en BOB o USD convertido exacto a Bs.
+        de forma atómica (select_for_update + transaction.atomic), valida monto > 0,
+        genera recibo correlativo y actualiza libro mayor + CE_AuditLog.
         """
-        monto_dec = _q2(monto)
-        if monto_dec <= Decimal('0.00'):
-            raise ValueError('El monto del cobro debe ser mayor a 0.00 Bs.')
+        mon_norm = (moneda_origen or 'BOB').upper().strip()
+        monto_orig_dec = _q2(monto)
+        monto_dec, ajuste_redondeo, tasa_aplicada = cls.convertir_a_bob(
+            monto_orig_dec, mon_norm, tasa=tipo_cambio
+        )
 
         metodos_validos = {m[0] for m in PagoConsulta.METODO_PAGO_CHOICES}
         metodo_norm = (metodo_pago or '').upper().strip()
@@ -185,7 +477,12 @@ class FinanzasService:
         pago = PagoConsulta.objects.create(
             cuenta=cuenta,
             cita=cita,
+            cuota=cuota,
             monto=monto_dec,
+            moneda_origen=mon_norm,
+            monto_origen=monto_orig_dec,
+            tipo_cambio_aplicado=tasa_aplicada,
+            ajuste_redondeo=ajuste_redondeo,
             metodo_pago=metodo_norm,
             numero_recibo=numero_recibo,
             codigo_verificacion=codigo_verif,
@@ -195,7 +492,7 @@ class FinanzasService:
             fecha_pago=fecha_efectiva,
         )
 
-        concepto_abono = f"Pago recibido ({pago.get_metodo_pago_display()}) — Recibo {numero_recibo}"
+        concepto_abono = f"Pago recibido ({pago.get_metodo_pago_display()}, {mon_norm}) — Recibo {numero_recibo}"
         if cita is not None:
             concepto_abono += f" [Cita {cita.fecha.isoformat()}]"
 
@@ -213,7 +510,7 @@ class FinanzasService:
         )
 
         cuenta.total_pagado = _q2(cuenta.total_pagado + monto_dec)
-        cuenta.saldo_pendiente = _q2(cuenta.total_cargado - cuenta.total_pagado)
+        cuenta.saldo_pendiente = max(Decimal('0.00'), _q2(cuenta.total_cargado - cuenta.total_pagado))
         cuenta.save(update_fields=['total_pagado', 'saldo_pendiente', 'ultima_actualizacion'])
 
         log_event(
@@ -226,7 +523,10 @@ class FinanzasService:
             numero_recibo=numero_recibo,
             paciente_id=str(paciente.id),
             cita_id=str(cita.id) if cita else None,
+            moneda_origen=mon_norm,
+            monto_origen=float(monto_orig_dec),
             monto_bob=float(monto_dec),
+            ajuste_redondeo=float(ajuste_redondeo),
             metodo_pago=metodo_norm,
             saldo_resultante_bob=float(cuenta.saldo_pendiente),
         )

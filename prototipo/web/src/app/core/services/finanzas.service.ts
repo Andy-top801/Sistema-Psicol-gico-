@@ -6,6 +6,8 @@ import { environment } from '../../../environments/environment';
 @Injectable({ providedIn: 'root' })
 export class FinanzasService {
   private readonly apiUrl = `${environment.apiUrl}/finanzas`;
+  private readonly v1Url = `${environment.apiUrl}/v1/finanzas`;
+  private readonly crmUrl = `${environment.apiUrl}/v1/crm`;
   private readonly reportesUrl = `${environment.apiUrl}/reportes`;
 
   constructor(private http: HttpClient) {}
@@ -32,16 +34,49 @@ export class FinanzasService {
     return this.http.get<any[]>(`${this.apiUrl}/pagos/`, { params: hp });
   }
 
+  // CU26A-paso 2: Registra cobro directo soportando moneda origen BOB/USD (T.C. 6.96)
   registrarPago(payload: {
     paciente_id: string;
     cita_id?: string | null;
     monto: number;
+    moneda_origen?: 'BOB' | 'USD';
+    cuota_id?: string | null;
     metodo_pago: string;
     referencia_externa?: string;
     observaciones?: string;
     permitir_abono_adelantado?: boolean;
   }): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/pagos/`, payload);
+  }
+
+  // CU26-A: Planes Terapéuticos y Tabla de Amortización (Multimoneda BOB/USD T.C. 6.96)
+  getExtractoAmortizacion(pacienteId: string): Observable<any> {
+    return this.http.get<any>(`${this.v1Url}/extracto-paciente/${pacienteId}/`);
+  }
+
+  crearPlanAmortizacion(payload: {
+    paciente_id: string;
+    nombre_plan: string;
+    sesiones_incluidas?: number;
+    monto_total: number;
+    moneda: 'BOB' | 'USD';
+    tasa_interes_anual?: number;
+    porcentaje_seguro?: number;
+    numero_cuotas: number;
+  }): Observable<any> {
+    return this.http.post<any>(`${this.v1Url}/planes-amortizacion/`, payload);
+  }
+
+  // CU26A-paso 2: Pagar cuota o abono con conversión Decimal exacta (6.96 BOB/USD)
+  registrarPagoCuotaMultimoneda(payload: {
+    cuota_id?: string;
+    paciente_id?: string;
+    monto?: number;
+    moneda: 'BOB' | 'USD';
+    metodo_pago: string;
+    referencia_externa?: string;
+  }): Observable<any> {
+    return this.http.post<any>(`${this.v1Url}/pagos/registrar/`, payload);
   }
 
   descargarReciboPdf(pagoId: string): Observable<Blob> {
@@ -128,6 +163,54 @@ export class FinanzasService {
 
   descargarBoletaPdf(liquidacionId: string): Observable<Blob> {
     return this.http.get(`${this.apiUrl}/liquidaciones/${liquidacionId}/boleta-pdf/`, { responseType: 'blob' });
+  }
+
+  // CU26-B & CRM: Gastos Fijos, Estado de Resultados (Ganancia Bruta vs. Utilidad Neta) y CSAT/NPS 1-5★
+  getGastosFijos(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.v1Url}/gastos-fijos/`);
+  }
+
+  registrarGastoFijo(payload: {
+    categoria: string;
+    descripcion: string;
+    monto: number;
+    moneda?: 'BOB' | 'USD';
+    periodo_mes?: string;
+    comprobante_ref?: string;
+  }): Observable<any> {
+    return this.http.post<any>(`${this.v1Url}/gastos-fijos/`, payload);
+  }
+
+  // CU26B-paso 2: Consulta Estado de Resultados y métrica CRM consolidada
+  getEstadoResultados(ini?: string, fin?: string): Observable<any> {
+    let hp = new HttpParams();
+    if (ini) hp = hp.set('ini', ini);
+    if (fin) hp = hp.set('fin', fin);
+    return this.http.get<any>(`${this.v1Url}/estado-resultados/`, { params: hp });
+  }
+
+  getEstadisticasCRM(ini?: string, fin?: string): Observable<any> {
+    let hp = new HttpParams();
+    if (ini) hp = hp.set('ini', ini);
+    if (fin) hp = hp.set('fin', fin);
+    return this.http.get<any>(`${this.crmUrl}/estadisticas/`, { params: hp });
+  }
+
+  registrarCalificacionCRM(payload: {
+    paciente_id?: string;
+    cita_id?: string;
+    psicologo_id?: string;
+    puntuacion_estrellas: number;
+    puntualidad?: number;
+    empatia_profesional?: number;
+    calidad_plataforma?: number;
+    comentario?: string;
+  }): Observable<any> {
+    return this.http.post<any>(`${this.crmUrl}/calificaciones/`, payload);
+  }
+
+  atenderTicketCRM(calificacionId: string, nota_seguimiento: string): Observable<any> {
+    return this.http.patch<any>(`${this.crmUrl}/calificaciones/${calificacionId}/atender/`, { nota_seguimiento });
   }
 
   triggerBlobDownload(blob: Blob, filename: string): void {

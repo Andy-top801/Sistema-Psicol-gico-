@@ -184,9 +184,91 @@ def test_hu50_y_hu51_motor_riesgo_antiduplicado_y_consola_intervencion():
     _run_rolled_back('centro_esperanza', _body)
 
 
+def test_cu23_y_cu24_rutas_secuencia_api():
+    from rest_framework.test import APIClient
+
+    def _body():
+        paciente = Paciente.objects.select_related('usuario').first()
+        psicologo = Psicologo.objects.select_related('usuario').first()
+        hc = HistoriaClinica.objects.filter(paciente=paciente).first()
+        admin_user = psicologo.usuario
+        assert paciente and hc and admin_user
+
+        for num_ses in (905, 906):
+            NotaSesion.objects.create(
+                historia_clinica=hc,
+                psicologo=psicologo,
+                numero_sesion=num_ses,
+                subjetivo='Seguimiento longitudinal CU23 de prueba clínica.',
+                objetivo='Estabilidad psicomotriz observada en entrevista.',
+                analisis='Progreso terapéutico favorable con adherencia parcial.',
+                plan='Continuar sesiones quincenales y autorregistro.',
+            )
+
+        client = APIClient()
+        client.force_authenticate(user=admin_user)
+
+        # CU23: POST /api/v1/clinica/ia/resumen-longitudinal/
+        r_cu23 = client.post(
+            '/api/v1/clinica/ia/resumen-longitudinal/',
+            {
+                'paciente_id': str(paciente.id),
+                'fecha_ini': '2024-01-01',
+                'fecha_fin': date.today().isoformat(),
+                'usar_hf': False,
+            },
+            format='json',
+            HTTP_X_TENANT_SLUG='centro_esperanza',
+        )
+        assert r_cu23.status_code == 201, f"CU23 HTTP inesperado: {r_cu23.status_code} -> {r_cu23.content}"
+        body23 = r_cu23.json()
+        assert body23.get('resumen_id') and body23.get('hash_sha256') and body23.get('exportable_pdf') is False
+        r_aprob = client.patch(
+            f"/api/v1/clinica/resumenes-ia/{body23['resumen_id']}/aprobar/",
+            {'texto_resumen': body23['borrador_ia'] + '\nAprobado HITL.'},
+            format='json',
+            HTTP_X_TENANT_SLUG='centro_esperanza',
+        )
+        assert r_aprob.status_code == 200 and r_aprob.json().get('exportable_pdf') is True
+
+        # CU24: POST /api/v1/clinica/ml/evaluar-riesgo/
+        r_cu24 = client.post(
+            '/api/v1/clinica/ml/evaluar-riesgo/',
+            {'paciente_id': str(paciente.id), 'ventana_meses': 3},
+            format='json',
+            HTTP_X_TENANT_SLUG='centro_esperanza',
+        )
+        assert r_cu24.status_code == 200, f"CU24 HTTP inesperado: {r_cu24.status_code} -> {r_cu24.content}"
+        body24 = r_cu24.json()
+        assert 'pacientes_evaluados' in body24 and 'resumen_cohorte' in body24
+
+        if body24.get('alertas'):
+            alerta_id = body24['alertas'][0]['id']
+            assert 'indice_riesgo' in body24['alertas'][0]
+            # CU24: PATCH intervenir requiere nota para RESUELTA
+            r_bad = client.patch(
+                f'/api/v1/clinica/ml/alertas/{alerta_id}/intervenir/',
+                {'estado': 'RESUELTA', 'nota_intervencion': ''},
+                format='json',
+                HTTP_X_TENANT_SLUG='centro_esperanza',
+            )
+            assert r_bad.status_code == 400
+            r_ok = client.patch(
+                f'/api/v1/clinica/ml/alertas/{alerta_id}/intervenir/',
+                {'estado': 'INTERVENIDA', 'nota_intervencion': 'Contención telefónica verificada CU24.'},
+                format='json',
+                HTTP_X_TENANT_SLUG='centro_esperanza',
+            )
+            assert r_ok.status_code == 200 and r_ok.json().get('estado') == 'RESUELTA'
+
+    _run_rolled_back('centro_esperanza', _body)
+
+
 if __name__ == '__main__':
     test_hu49_resumen_longitudinal_pii_hitl_y_pdf()
     print('[OK] HU-49: Resumen Clínico IA (PII sanitizado, Fallback, SHA-256, HITL y PDF)')
     test_hu50_y_hu51_motor_riesgo_antiduplicado_y_consola_intervencion()
     print('[OK] HU-50 & HU-51: Motor 4 señales, anti-duplicado, consola CRITICO primero y nota obligatoria')
+    test_cu23_y_cu24_rutas_secuencia_api()
+    print('[OK] CU23 & CU24 Endpoints de Secuencia (/ia/resumen-longitudinal/, /ml/evaluar-riesgo/, /intervenir/)')
     print('ALL SPRINT 4 FASE 4 TESTS PASSED [OK]')

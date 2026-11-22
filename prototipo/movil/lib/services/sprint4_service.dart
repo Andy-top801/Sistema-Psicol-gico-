@@ -46,10 +46,12 @@ class Sprint4Service {
     throw Exception(_parseError(r, 'Error al cargar detalle de cuenta')['error']);
   }
 
+  // CU26A-paso 2: Registra cobro directo soportando moneda origen BOB/USD (T.C. 6.96)
   Future<Map<String, dynamic>> registrarPago({
     required String pacienteId,
     required double monto,
     required String metodoPago,
+    String monedaOrigen = 'BOB',
     String referenciaExterna = '',
     String observaciones = '',
   }) async {
@@ -60,6 +62,7 @@ class Sprint4Service {
       body: jsonEncode({
         'paciente_id': pacienteId,
         'monto': monto,
+        'moneda_origen': monedaOrigen,
         'metodo_pago': metodoPago,
         'referencia_externa': referenciaExterna,
         'observaciones': observaciones,
@@ -69,6 +72,71 @@ class Sprint4Service {
       return {'success': true, 'data': jsonDecode(utf8.decode(r.bodyBytes))};
     }
     return _parseError(r, 'Error al registrar cobro');
+  }
+
+  // CU26-A: Extracto de Planes Terapéuticos y Tabla de Amortización (BOB/USD)
+  Future<Map<String, dynamic>> getExtractoAmortizacion(String pacienteId) async {
+    final uri = Uri.parse('$_base${ApiConstants.finanzasExtractoPaciente}$pacienteId/');
+    final r = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 20));
+    if (r.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(utf8.decode(r.bodyBytes)));
+    }
+    throw Exception(_parseError(r, 'Error al cargar planes de amortización')['error']);
+  }
+
+  Future<Map<String, dynamic>> crearPlanAmortizacion({
+    required String pacienteId,
+    required String nombrePlan,
+    required double montoTotal,
+    String moneda = 'USD',
+    int numeroCuotas = 6,
+    int sesionesIncluidas = 6,
+    double tasaInteresAnual = 0.0,
+    double porcentajeSeguro = 1.5,
+  }) async {
+    final uri = Uri.parse('$_base${ApiConstants.finanzasPlanesAmortizacion}');
+    final r = await http.post(
+      uri,
+      headers: _headers,
+      body: jsonEncode({
+        'paciente_id': pacienteId,
+        'nombre_plan': nombrePlan,
+        'monto_total': montoTotal,
+        'moneda': moneda,
+        'numero_cuotas': numeroCuotas,
+        'sesiones_incluidas': sesionesIncluidas,
+        'tasa_interes_anual': tasaInteresAnual,
+        'porcentaje_seguro': porcentajeSeguro,
+      }),
+    ).timeout(const Duration(seconds: 20));
+    if (r.statusCode == 201 || r.statusCode == 200) {
+      return {'success': true, 'data': jsonDecode(utf8.decode(r.bodyBytes))};
+    }
+    return _parseError(r, 'Error al generar plan de amortización');
+  }
+
+  // CU26A-paso 2: Pagar cuota con conversión USD -> BOB (T.C. 6.96)
+  Future<Map<String, dynamic>> pagarCuotaMultimoneda({
+    required String cuotaId,
+    required String moneda,
+    String metodoPago = 'QR_BANCARIO',
+    String referenciaExterna = '',
+  }) async {
+    final uri = Uri.parse('$_base${ApiConstants.finanzasPagosRegistrar}');
+    final r = await http.post(
+      uri,
+      headers: _headers,
+      body: jsonEncode({
+        'cuota_id': cuotaId,
+        'moneda': moneda,
+        'metodo_pago': metodoPago,
+        'referencia_externa': referenciaExterna,
+      }),
+    ).timeout(const Duration(seconds: 20));
+    if (r.statusCode == 201 || r.statusCode == 200) {
+      return {'success': true, 'data': jsonDecode(utf8.decode(r.bodyBytes))};
+    }
+    return _parseError(r, 'Error al liquidar cuota');
   }
 
   Future<Map<String, dynamic>> getExtractoBancario({
@@ -95,8 +163,9 @@ class Sprint4Service {
   }
 
   // =========================================================================
-  // HU-53: DASHBOARD FINANCIERO GERENCIAL (>= 2 AÑOS / 24 MESES)
+  // HU-53 / CU26-B: DASHBOARD FINANCIERO, GASTOS FIJOS Y CRM (1-5★ CSAT/NPS)
   // =========================================================================
+  // CU26B-paso 2: Consulta Estado de Resultados y métrica CRM consolidada
   Future<Map<String, dynamic>> getDashboardFinanciero({String horizonte = '24m'}) async {
     final uri = Uri.parse('$_base${ApiConstants.finanzasDashboard}')
         .replace(queryParameters: {'horizonte': horizonte});
@@ -105,6 +174,61 @@ class Sprint4Service {
       return Map<String, dynamic>.from(jsonDecode(utf8.decode(r.bodyBytes)));
     }
     throw Exception(_parseError(r, 'Error al cargar dashboard financiero')['error']);
+  }
+
+  Future<Map<String, dynamic>> registrarGastoFijo({
+    required String categoria,
+    required String descripcion,
+    required double monto,
+    String moneda = 'BOB',
+  }) async {
+    final uri = Uri.parse('$_base${ApiConstants.finanzasGastosFijos}');
+    final r = await http.post(
+      uri,
+      headers: _headers,
+      body: jsonEncode({
+        'categoria': categoria,
+        'descripcion': descripcion,
+        'monto': monto,
+        'moneda': moneda,
+      }),
+    ).timeout(const Duration(seconds: 20));
+    if (r.statusCode == 201 || r.statusCode == 200) {
+      return {'success': true, 'data': jsonDecode(utf8.decode(r.bodyBytes))};
+    }
+    return _parseError(r, 'Error al registrar gasto fijo');
+  }
+
+  // CU26B-paso 1, 15: Envía encuesta de satisfacción CRM 1-5★ desde la app
+  Future<Map<String, dynamic>> registrarCalificacionCRM({
+    String? pacienteId,
+    required int puntuacionEstrellas,
+    String comentario = '',
+  }) async {
+    final uri = Uri.parse('$_base${ApiConstants.crmCalificaciones}');
+    final body = <String, dynamic>{
+      'puntuacion_estrellas': puntuacionEstrellas,
+      'comentario': comentario,
+    };
+    if (pacienteId != null && pacienteId.isNotEmpty) body['paciente_id'] = pacienteId;
+    final r = await http.post(uri, headers: _headers, body: jsonEncode(body)).timeout(const Duration(seconds: 20));
+    if (r.statusCode == 201 || r.statusCode == 200) {
+      return {'success': true, 'data': jsonDecode(utf8.decode(r.bodyBytes))};
+    }
+    return _parseError(r, 'Error al enviar calificación CRM');
+  }
+
+  Future<Map<String, dynamic>> atenderTicketCRM(String calificacionId, String notaSeguimiento) async {
+    final uri = Uri.parse('$_base${ApiConstants.crmCalificaciones}$calificacionId/atender/');
+    final r = await http.patch(
+      uri,
+      headers: _headers,
+      body: jsonEncode({'nota_seguimiento': notaSeguimiento}),
+    ).timeout(const Duration(seconds: 20));
+    if (r.statusCode == 200) {
+      return {'success': true, 'data': jsonDecode(utf8.decode(r.bodyBytes))};
+    }
+    return _parseError(r, 'Error al atender alerta CRM');
   }
 
   // =========================================================================
@@ -199,12 +323,16 @@ class Sprint4Service {
     throw Exception(_parseError(r, 'No autorizado para ver resúmenes IA')['error']);
   }
 
-  Future<Map<String, dynamic>> generarResumenIA(String pacienteId) async {
-    final uri = Uri.parse('$_base/clinica/pacientes/$pacienteId/resumenes-ia/');
+  // CU23-paso 2: Solicita resumen longitudinal IA sobre ventana clínica
+  Future<Map<String, dynamic>> generarResumenIA(String pacienteId, {String? fechaIni, String? fechaFin}) async {
+    final uri = Uri.parse('$_base${ApiConstants.iaResumenLongitudinal}');
+    final payload = <String, dynamic>{'paciente_id': pacienteId, 'usar_hf': true};
+    if (fechaIni != null && fechaIni.isNotEmpty) payload['fecha_ini'] = fechaIni;
+    if (fechaFin != null && fechaFin.isNotEmpty) payload['fecha_fin'] = fechaFin;
     final r = await http.post(
       uri,
       headers: _headers,
-      body: jsonEncode({'usar_hf': true}),
+      body: jsonEncode(payload),
     ).timeout(const Duration(seconds: 25));
     if (r.statusCode == 201 || r.statusCode == 200) {
       return {'success': true, 'data': jsonDecode(utf8.decode(r.bodyBytes))};
@@ -212,6 +340,7 @@ class Sprint4Service {
     return _parseError(r, 'Error al generar resumen IA');
   }
 
+  // CU23-paso 18: Confirma edición humana y aprueba resumen (HITL)
   Future<Map<String, dynamic>> aprobarResumenHITL(String resumenId, String textoResumen) async {
     final uri = Uri.parse('$_base${ApiConstants.resumenesIA}$resumenId/aprobar/');
     final r = await http.patch(
@@ -240,17 +369,23 @@ class Sprint4Service {
     throw Exception(_parseError(r, 'Error al cargar alertas de riesgo')['error']);
   }
 
-  Future<Map<String, dynamic>> evaluarAlertasRiesgo() async {
+  // CU24-paso 2: Dispara motor ML predictivo sobre historias activas
+  Future<Map<String, dynamic>> evaluarAlertasRiesgo({int ventanaMeses = 3}) async {
     final uri = Uri.parse('$_base${ApiConstants.alertasRiesgoEvaluar}');
-    final r = await http.post(uri, headers: _headers, body: jsonEncode({})).timeout(const Duration(seconds: 25));
+    final r = await http.post(
+      uri,
+      headers: _headers,
+      body: jsonEncode({'ventana_meses': ventanaMeses}),
+    ).timeout(const Duration(seconds: 25));
     if (r.statusCode == 200) {
       return {'success': true, 'data': jsonDecode(utf8.decode(r.bodyBytes))};
     }
     return _parseError(r, 'Error al ejecutar barrido IA');
   }
 
+  // CU24-paso 14: Registra intervención o resolución clínica sobre alerta
   Future<Map<String, dynamic>> transicionarAlerta(String alertaId, String estado, String notaIntervencion) async {
-    final uri = Uri.parse('$_base${ApiConstants.alertasRiesgoIA}$alertaId/transicion/');
+    final uri = Uri.parse('$_base${ApiConstants.mlAlertasBase}$alertaId/intervenir/');
     final r = await http.patch(
       uri,
       headers: _headers,

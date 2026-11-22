@@ -27,6 +27,7 @@ import '../services/auth_service.dart';
 import '../services/agenda_service.dart';
 import '../models/cita_model.dart';
 import '../core/theme/app_theme.dart';
+import '../services/permission_service.dart';
 import 'mood_tracker_sheet.dart';
 
 class TeleconsultaJitsiScreen extends StatefulWidget {
@@ -99,6 +100,16 @@ class _TeleconsultaJitsiScreenState extends State<TeleconsultaJitsiScreen> {
 
   /// CU13-paso 20: conectar_webrtc_jitsi(room_name, token) con el SDK nativo de Jitsi Meet.
   Future<void> _conectarWebRTC() async {
+    // CU13 / HU-44 (b): Solicitar explícitamente permisos nativos Android de Cámara y Micrófono antes del SDK WebRTC
+    final permisoOk = await PermissionService.requestCameraAndAudioPermissions();
+    if (!permisoOk && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Activa los permisos de cámara y micrófono para transmitir audio y video en teleconsulta.'),
+          backgroundColor: AppTheme.warning,
+        ),
+      );
+    }
     final serverUrl = (_acceso['server_url'] ?? 'https://meet.jit.si').toString();
     final usuario = widget.authService.currentUser;
     // ponytail: meet.jit.si público rechaza JWT propios; el token solo se envía a

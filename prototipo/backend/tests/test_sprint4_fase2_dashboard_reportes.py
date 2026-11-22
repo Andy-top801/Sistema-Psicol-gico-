@@ -73,9 +73,73 @@ def test_motor_reportes_unificado_paginacion_y_pdf_exporter():
         assert res_ext['total'] >= 400
 
 
+def test_cu26b_estado_resultados_gastos_fijos_y_crm():
+    from decimal import Decimal
+    from django.db import transaction
+    from django.utils import timezone
+    from clinica.models import Paciente, Psicologo
+    from agenda.models import Cita
+    from datetime import time
+
+    class _Rb(Exception):
+        pass
+
+    with schema_context('centro_esperanza'):
+        try:
+            with transaction.atomic():
+                hoy = timezone.localdate()
+                g = DashboardFinancieroService.registrar_gasto_fijo(
+                    categoria='ALQUILER',
+                    descripcion='Test P&L Alquiler CU26-B',
+                    monto=Decimal('100.00'),
+                    moneda='USD',  # 696.00 BOB
+                    periodo_mes=hoy.replace(day=1),
+                )
+                assert g.monto_bob == Decimal('696.00')
+
+                pl = DashboardFinancieroService.calcular_estado_resultados_y_crm()
+                assert round(pl['ganancia_bruta_bob'] - pl['total_gastos_fijos_bob'], 2) == pl['utilidad_neta_bob']
+                assert pl['total_gastos_fijos_bob'] >= 696.0
+
+                # Verificar déficit contable cuando gasto excede ganancia bruta
+                DashboardFinancieroService.registrar_gasto_fijo(
+                    categoria='OTROS',
+                    descripcion='Gasto extraordinario déficit test',
+                    monto=Decimal('9999999.00'),
+                    moneda='BOB',
+                    periodo_mes=hoy.replace(day=1),
+                )
+                pl_def = DashboardFinancieroService.calcular_estado_resultados_y_crm()
+                assert pl_def['es_deficit'] is True
+                assert pl_def['utilidad_neta_bob'] < 0
+
+                # CRM Post-Consulta: <= 2 estrellas activa seguimiento automático PENDIENTE
+                pac = Paciente.objects.first()
+                psi = Psicologo.objects.first()
+                cita = Cita.objects.create(
+                    paciente=pac, psicologo=psi, fecha=hoy,
+                    hora_inicio=time(18, 0), hora_fin=time(19, 0),
+                    modalidad='PRESENCIAL', estado='REALIZADA', costo=Decimal('150.00'),
+                )
+                calif = DashboardFinancieroService.registrar_calificacion_crm(
+                    paciente=pac, cita=cita, psicologo=psi,
+                    puntuacion_estrellas=2, comentario='Demora en sala',
+                )
+                assert calif.requiere_seguimiento is True
+                assert calif.estado_seguimiento == 'PENDIENTE'
+                crm = DashboardFinancieroService.obtener_estadisticas_crm()
+                assert crm['total_calificaciones'] >= 1
+                assert '2' in crm['histograma_1a5']
+                raise _Rb()
+        except _Rb:
+            pass
+
+
 if __name__ == '__main__':
     test_hu53_dashboard_gerencial_24_meses_y_yoy()
     print('[OK] HU-53: Dashboard Gerencial 24 meses, KPIs Margen Neto, YoY y Catálogo de Reportes')
     test_motor_reportes_unificado_paginacion_y_pdf_exporter()
     print('[OK] ReportEngine Unificado (paginación + 6 nuevas fuentes + PDFExporter + Excel)')
+    test_cu26b_estado_resultados_gastos_fijos_y_crm()
+    print('[OK] CU26-B & CRM: Ganancia Bruta vs Utilidad Neta (Gastos Fijos BOB/USD), Déficit y Alertas <=2*')
     print('ALL SPRINT 4 FASE 2 TESTS PASSED [OK]')

@@ -67,6 +67,7 @@ class _ResumenIaScreenState extends State<ResumenIaScreen> {
 
   Future<void> _generar() async {
     if (_pacienteId == null) return;
+    // CU23-paso 1, 16: Solicita resumen clínico IA longitudinal y despliega borrador editable
     setState(() {
       _generando = true;
       _error = null;
@@ -89,6 +90,7 @@ class _ResumenIaScreenState extends State<ResumenIaScreen> {
 
   Future<void> _aprobarHitl() async {
     if (_resumenActivo == null) return;
+    // CU23-paso 17, 22: Valida texto editado y confirma aprobación HITL
     final res = await _svc.aprobarResumenHITL(_resumenActivo!['id'].toString(), _textoCtrl.text);
     if (!mounted) return;
     if (res['success'] == true) {

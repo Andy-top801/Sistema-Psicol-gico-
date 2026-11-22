@@ -15,9 +15,14 @@ import { FinanzasService } from '../../core/services/finanzas.service';
           <h3><i class="fa-solid fa-wand-magic-sparkles"></i> Resumen Clínico Longitudinal IA (CU23 / HU-49)</h3>
           <p class="sub">Síntesis asistida de notas SOAP, evoluciones, Mood Tracker y adherencia a tareas (con anonimización PII y HITL).</p>
         </div>
-        <button type="button" class="btn-teal" [disabled]="generando()" (click)="generar()">
-          <i class="fa-solid fa-sparkles"></i> {{ generando() ? 'Generando...' : 'Generar Borrador IA' }}
-        </button>
+        <div class="ia-controls">
+          <input type="date" [(ngModel)]="fechaIni" title="Fecha inicio rango clínico" class="date-in" />
+          <input type="date" [(ngModel)]="fechaFin" title="Fecha fin rango clínico" class="date-in" />
+          <!-- CU23-paso 1: Clic en 'Generar Resumen Clínico IA' -->
+          <button type="button" class="btn-teal" [disabled]="generando()" (click)="generar()">
+            <i class="fa-solid fa-sparkles"></i> {{ generando() ? 'Generando...' : 'Generar Borrador IA' }}
+          </button>
+        </div>
       </div>
 
       <div *ngIf="mensaje()" class="msg ok">{{ mensaje() }}</div>
@@ -68,6 +73,8 @@ import { FinanzasService } from '../../core/services/finanzas.service';
     .ia-panel { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
     .ia-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
     .ia-head h3 { margin: 0; font-size: 1.08rem; color: #0f2922; }
+    .ia-controls { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+    .date-in { padding: .42rem .55rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: .82rem; }
     .sub { margin: .25rem 0 0; font-size: .84rem; color: #64748b; }
     .compliance-banner { display: flex; align-items: center; flex-wrap: wrap; gap: .6rem; padding: .75rem 1rem; border-radius: 8px; background: #fef3c7; border: 1px solid #f59e0b; color: #92400e; margin-bottom: 1rem; }
     .compliance-banner.approved { background: #d1fae5; border-color: #10b981; color: #065f46; }
@@ -96,6 +103,8 @@ export class ResumenIaDrawerComponent implements OnChanges {
   mensaje = signal('');
   error = signal('');
   textoEditable = '';
+  fechaIni = '';
+  fechaFin = '';
 
   constructor(
     private iaService: IaLongitudinalService,
@@ -121,10 +130,11 @@ export class ResumenIaDrawerComponent implements OnChanges {
 
   generar(): void {
     if (!this.pacienteId) return;
+    // CU23-paso 1, 16: Solicita generación asíncrona de borrador IA y despliega texto editable
     this.generando.set(true);
     this.error.set('');
     this.mensaje.set('');
-    this.iaService.generarResumenIA(this.pacienteId).subscribe({
+    this.iaService.generarResumenIA(this.pacienteId, true, this.fechaIni || undefined, this.fechaFin || undefined).subscribe({
       next: (r) => {
         this.generando.set(false);
         this.resumenActivo.set(r);
@@ -139,6 +149,7 @@ export class ResumenIaDrawerComponent implements OnChanges {
   }
 
   aprobarHitl(r: any): void {
+    // CU23-paso 17, 22: Revisa/edita manualmente borrador y confirma aprobación HITL
     this.iaService.aprobarResumenHITL(r.id, this.textoEditable).subscribe({
       next: (updated) => {
         this.resumenActivo.set(updated);
@@ -149,6 +160,7 @@ export class ResumenIaDrawerComponent implements OnChanges {
   }
 
   exportarPdf(r: any): void {
+    // CU23-paso 23, 26: Exporta documento oficial firmado en PDF
     this.iaService.descargarResumenPdf(r.id).subscribe({
       next: (blob) => this.finanzasService.triggerBlobDownload(blob, `resumen_ia_${r.expediente}.pdf`),
     });

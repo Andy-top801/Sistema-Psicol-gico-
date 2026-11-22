@@ -5,6 +5,7 @@
 # ==============================================================================
 import re
 from datetime import timedelta
+from decimal import Decimal, ROUND_HALF_UP
 from django.db import connection
 from django.db.models import Case, IntegerField, Value, When
 from django.utils import timezone
@@ -14,6 +15,7 @@ from audit.services import log_event
 from clinica.chatbot_service import ChatbotEngine
 from clinica.models import (
     Paciente,
+    HistoriaClinica,
     NotaSesion,
     EvolucionClinica,
     RegistroAnimo,
@@ -37,7 +39,7 @@ def _clasificar_severidad(score: int) -> str:
 
 class RiesgoLongitudinalService:
     """
-    HU-50: Evalúa 4 señales combinadas sobre el historial longitudinal del paciente:
+    CTR_DetectorRiesgoML (CU24 / HU-50): Evalúa 4 señales combinadas sobre el historial longitudinal:
       1. Léxico de riesgo vital en notas SOAP, evoluciones o check-ins de ánimo.
       2. 3+ registros consecutivos de ánimo MUY_BAJO/BAJO (<= 2/5).
       3. 2+ INASISTENCIA consecutivas o > 21 días sin cita realizada/programada.
@@ -46,8 +48,77 @@ class RiesgoLongitudinalService:
     """
 
     @classmethod
+    def listar_historias_activas(cls):
+        """CU24-paso 3: listar_historias_activas() -> CU24-paso 4: lista_historias[] [retorno]."""
+        return HistoriaClinica.objects.filter(cerrada=False).select_related('paciente__usuario')
+
+    @classmethod
+    def calcular_pendiente_30d(cls, paciente: Paciente) -> Decimal:
+        """CU24-paso 5: calcular_pendiente_30d(paciente_id) -> CU24-paso 6: pendiente_animo_30d [retorno]."""
+        hoy = timezone.localdate()
+        qs = list(
+            RegistroAnimo.objects.filter(paciente=paciente, fecha_registro__gte=hoy - timedelta(days=30))
+            .order_by('fecha_registro')
+            .values_list('escala_valor', flat=True)
+        )
+        if len(qs) < 2:
+            return Decimal('0.000')
+        mitad = len(qs) // 2
+        prom_prev = sum(qs[:mitad]) / mitad
+        prom_rec = sum(qs[mitad:]) / (len(qs) - mitad)
+        return Decimal(str(round(prom_rec - prom_prev, 3))).quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+
+    @classmethod
+    def calcular_tasa_inasistencia(cls, paciente: Paciente) -> Decimal:
+        """CU24-paso 7: calcular_tasa_inasistencia(paciente_id) -> CU24-paso 8: tasa_inasistencia [retorno]."""
+        qs = Cita.objects.filter(paciente=paciente, estado__in=['REALIZADA', 'INASISTENCIA'])
+        tot = qs.count()
+        if tot == 0:
+            return Decimal('0.000')
+        inas = qs.filter(estado='INASISTENCIA').count()
+        return (Decimal(inas) / Decimal(tot)).quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+
+    @classmethod
+    def calcular_ratio_cumplimiento(cls, paciente: Paciente) -> Decimal:
+        """CU24-paso 9: calcular_ratio_cumplimiento(paciente_id) -> CU24-paso 10: ratio_adherencia [retorno]."""
+        tareas = list(TareaTerapeutica.objects.filter(historia_clinica__paciente=paciente))
+        if not tareas:
+            return Decimal('1.000')
+        comp = sum(1 for t in tareas if t.estado in ('COMPLETADA', 'COMPLETADA_CON_RETRASO'))
+        return (Decimal(comp) / Decimal(len(tareas))).quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+
+    @classmethod
+    def calcular_score_riesgo_ml(cls, features: dict) -> dict:
+        """CU24-paso 11: calcular_score_riesgo_ml(features) -> indice_riesgo (0.000-1.000) y score (0-100)."""
+        pendiente = float(features.get('pendiente_animo_30d', 0.0))
+        caida_norm = max(0.0, min(1.0, (-pendiente) / 2.5))
+        tasa_inas = min(1.0, float(features.get('tasa_inasistencia', 0.0)) * 2.0)
+        incumpl = max(0.0, min(1.0, 1.0 - float(features.get('ratio_adherencia', 1.0))))
+        indice = (
+            Decimal(str(caida_norm)) * Decimal('0.40')
+            + Decimal(str(tasa_inas)) * Decimal('0.30')
+            + Decimal(str(incumpl)) * Decimal('0.30')
+        ).quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+        score = min(100, int(indice * Decimal('100')))
+        return {
+            'indice_riesgo': indice,
+            'score_riesgo': score,
+            'nivel_severidad': _clasificar_severidad(score),
+        }
+
+    @classmethod
     def evaluar_paciente(cls, paciente: Paciente) -> list[AlertaRiesgoIA]:
         hoy = timezone.localdate()
+        # CU24-paso 5-10: métricas BCE longitudinales de soporte
+        pendiente_30d = cls.calcular_pendiente_30d(paciente)
+        tasa_inasist_bce = cls.calcular_tasa_inasistencia(paciente)
+        ratio_adherencia_bce = cls.calcular_ratio_cumplimiento(paciente)
+        ml_meta = cls.calcular_score_riesgo_ml({
+            'pendiente_animo_30d': pendiente_30d,
+            'tasa_inasistencia': tasa_inasist_bce,
+            'ratio_adherencia': ratio_adherencia_bce,
+        })
+
         factores_vital = []
         factores_abandono = []
         score_vital = 0
@@ -92,7 +163,7 @@ class RiesgoLongitudinalService:
                 'peso': 25,
             })
 
-        # Señal 2: 3+ registros consecutivos de ánimo <= 2/5
+        # Señal 2: 3+ registros consecutivos de ánimo <= 2/5 (CU24-paso 5-6)
         consecutivos_bajos = 0
         for a in animo_rec:
             if a.escala_valor <= 2 or a.estado_animo in ('MUY_BAJO', 'BAJO'):
@@ -109,7 +180,7 @@ class RiesgoLongitudinalService:
                 'peso': peso_animo,
             })
 
-        # Señal 3: 2+ INASISTENCIA consecutivas o > 21 días sin cita
+        # Señal 3: 2+ INASISTENCIA consecutivas o > 21 días sin cita (CU24-paso 7-8)
         ultimas_citas = list(
             Cita.objects.filter(paciente=paciente, estado__in=['REALIZADA', 'INASISTENCIA'])
             .order_by('-fecha', '-hora_inicio')[:5]
@@ -141,7 +212,7 @@ class RiesgoLongitudinalService:
                     'peso': 25,
                 })
 
-        # Señal 4: Caída de adherencia en tareas terapéuticas
+        # Señal 4: Caída de adherencia en tareas terapéuticas (CU24-paso 9-10)
         tareas = list(TareaTerapeutica.objects.filter(historia_clinica__paciente=paciente))
         if tareas:
             vencidas = [t for t in tareas if t.estado in ('VENCIDA', 'NO_REALIZADA')]
@@ -156,9 +227,9 @@ class RiesgoLongitudinalService:
 
         alertas_generadas = []
 
-        # Persistir / actualizar alerta de riesgo vital o retroceso agudo sin duplicar
+        # CU24-paso 11-12: Persistir alerta si supera umbral (opt indice_riesgo >= 0.50 / score >= 35)
         if score_vital >= 35:
-            score_v = min(100, score_vital)
+            score_v = min(100, max(score_vital, ml_meta['score_riesgo']) if score_vital >= 35 else score_vital)
             sev_v = _clasificar_severidad(score_v)
             if hits_lexico and score_v < 80:
                 score_v = 85
@@ -174,7 +245,7 @@ class RiesgoLongitudinalService:
             alerta_v = cls._upsert_alerta_abierta(paciente, tipo_v, score_v, sev_v, factores_vital, explicacion_v)
             alertas_generadas.append(alerta_v)
 
-        # Persistir / actualizar alerta de deserción / abandono sin duplicar
+        # CU24-paso 12-13: Guardar / actualizar alerta de deserción sin duplicados
         if score_abandono >= 35:
             score_a = min(100, score_abandono)
             sev_a = _clasificar_severidad(score_a)
@@ -198,7 +269,11 @@ class RiesgoLongitudinalService:
         factores: list,
         explicacion: str,
     ) -> AlertaRiesgoIA:
-        """HU-50 (c): Evita duplicados actualizando la alerta abierta existente para paciente + tipo."""
+        """
+        CU24-paso 12: guardar_alerta(indice_riesgo, nivel, factores_contribuyentes)
+        CU24-paso 13: alerta_id [retorno]
+        HU-50 (c): Evita duplicados actualizando la alerta abierta existente para paciente + tipo.
+        """
         existente = (
             AlertaRiesgoIA.objects.filter(
                 paciente=paciente,
@@ -239,13 +314,22 @@ class RiesgoLongitudinalService:
 
     @classmethod
     def evaluar_todos_pacientes(cls) -> dict:
+        # CU24-paso 3-4: listar_historias_activas() -> lista_historias[]
+        historias_activas = cls.listar_historias_activas().count()
         pacientes = list(Paciente.objects.select_related('usuario').all())
         total_alertas = []
         for p in pacientes:
             total_alertas.extend(cls.evaluar_paciente(p))
         return {
             'pacientes_evaluados': len(pacientes),
+            'historias_activas': historias_activas,
             'alertas_activas_actualizadas': len(total_alertas),
+            'alertas_generadas': [str(a.id) for a in total_alertas],
+            'resumen_cohorte': {
+                'criticas': sum(1 for a in total_alertas if a.severidad == 'CRITICO'),
+                'altas': sum(1 for a in total_alertas if a.severidad == 'ALTO'),
+                'medias': sum(1 for a in total_alertas if a.severidad == 'MEDIO'),
+            },
         }
 
     @classmethod
@@ -276,9 +360,12 @@ class RiesgoLongitudinalService:
     ) -> AlertaRiesgoIA:
         """
         HU-51 (b, c): Cambia estado (ABIERTA -> EN_ATENCION -> RESUELTA/DESCARTADA).
+        Acepta 'INTERVENIDA' (diagrama CU24) mapeándolo a 'RESUELTA'.
         Exige nota_intervencion obligatoria al resolver o descartar y registra en CE_AuditLog.
         """
         est = (nuevo_estado or '').upper().strip()
+        if est == 'INTERVENIDA':
+            est = 'RESUELTA'
         estados_validos = {'ABIERTA', 'EN_ATENCION', 'RESUELTA', 'DESCARTADA'}
         if est not in estados_validos:
             raise ValueError(f"Estado inválido '{nuevo_estado}'. Permitidos: {', '.join(sorted(estados_validos))}.")

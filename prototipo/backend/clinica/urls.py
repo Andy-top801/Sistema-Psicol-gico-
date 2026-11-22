@@ -30,6 +30,7 @@ from clinica.views import (
 )
 from clinica.ia_longitudinal_views import (
     PacienteResumenIAListCreateView,
+    ResumenLongitudinalIASequenceView,
     ResumenIAAprobarHITLView,
     ResumenIAPDFView,
     AlertasRiesgoIAListView,
@@ -87,5 +88,11 @@ urlpatterns = [
     path('alertas-riesgo/', AlertasRiesgoIAListView.as_view(), name='alertas-riesgo-list'),
     path('alertas-riesgo/evaluar/', AlertasRiesgoIAEvaluarView.as_view(), name='alertas-riesgo-evaluar'),
     path('alertas-riesgo/<uuid:alerta_id>/transicion/', AlertaRiesgoIATransicionView.as_view(), name='alerta-riesgo-transicion'),
+    # Rutas exactas de Diagramas de Secuencia CU23 (Pasos 2, 18) y CU24 (Paso 2)
+    path('ia/resumen-longitudinal/', ResumenLongitudinalIASequenceView.as_view(), name='ia-resumen-longitudinal-seq'),
+    path('ia/resumen-longitudinal/<uuid:resumen_id>/aprobar/', ResumenIAAprobarHITLView.as_view(), name='ia-resumen-longitudinal-aprobar-seq'),
+    path('ia/resumen-longitudinal/<uuid:resumen_id>/pdf/', ResumenIAPDFView.as_view(), name='ia-resumen-longitudinal-pdf-seq'),
+    path('ml/evaluar-riesgo/', AlertasRiesgoIAEvaluarView.as_view(), name='ml-evaluar-riesgo-seq'),
+    path('ml/alertas/<uuid:alerta_id>/intervenir/', AlertaRiesgoIATransicionView.as_view(), name='ml-alerta-intervenir-seq'),
     path('', include(router.urls)),
 ]

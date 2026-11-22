@@ -15,9 +15,18 @@ from django.utils import timezone
 from django_tenants.utils import get_public_schema_name, schema_context
 
 from agenda.models import Cita
-from clinica.models import Paciente, Psicologo
-from finanzas.models import CuentaPaciente, PagoConsulta, MovimientoFinanciero, LiquidacionHonorario
+from clinica.models import Paciente, Psicologo, HistoriaClinica
+from finanzas.models import (
+    CuentaPaciente,
+    PagoConsulta,
+    MovimientoFinanciero,
+    LiquidacionHonorario,
+    PlanPagoTerapeutico,
+    GastoFijoMensual,
+    CalificacionCRM,
+)
 from finanzas.services import FinanzasService
+from finanzas.dashboard_service import DashboardFinancieroService
 from tenants.models import Tenant
 
 
@@ -73,9 +82,19 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING(f"  [SKIP] {schema_name} sin pacientes o psicólogos."))
             return
 
-        # Idempotencia: si ya hay >= 20 liquidaciones históricas, saltar
+        # Idempotencia: asegurar historia clínica base + finanzas + gastos fijos + CRM
+        for p_chk in pacientes[:3]:
+            if not HistoriaClinica.objects.filter(paciente=p_chk).exists():
+                HistoriaClinica.objects.create(
+                    paciente=p_chk,
+                    psicologo_apertura=psicologos[0],
+                    codigo_historia=f"HC-{str(p_chk.id)[:8].upper()}",
+                    motivo_consulta_inicial='Seguimiento clínico integral registrado en plataforma SIGEPSI.',
+                )
+
         if LiquidacionHonorario.objects.count() >= 20:
-            self.stdout.write(f"  [SKIP] {schema_name} ya tiene historial financiero sembrado.")
+            self.stdout.write(f"  [INFO] {schema_name} ya tiene historial financiero; verificando Gastos Fijos, Amortización y CRM...")
+            self._asegurar_gastos_amortizacion_crm(schema_name, hoy, meses, rng, pacientes, psicologos)
             return
 
         total_citas = 0
@@ -208,7 +227,89 @@ class Command(BaseCommand):
             cuenta_demo.saldo_pendiente = cuenta_demo.total_cargado - cuenta_demo.total_pagado
             cuenta_demo.save(update_fields=['total_cargado', 'total_pagado', 'saldo_pendiente', 'ultima_actualizacion'])
 
+        self._asegurar_gastos_amortizacion_crm(schema_name, hoy, meses, rng, pacientes, psicologos)
+
         self.stdout.write(
             f"  [OK] {schema_name}: {total_citas} citas (24m), {total_pagos} pagos, "
             f"{total_liqs} liquidaciones, {len(movs_bulk)} movimientos históricos extra (20 años)."
         )
+
+    def _asegurar_gastos_amortizacion_crm(self, schema_name: str, hoy: date, meses: int, rng, pacientes, psicologos):
+        # 3. Gastos fijos mensuales (Alquiler, Servicios Básicos, Personal Apoyo, Licencias SaaS) para Utilidad Neta (CU26-B)
+        if GastoFijoMensual.objects.count() == 0:
+            rubros = [
+                ('ALQUILER', 'Alquiler consultorios clínicos y sala grupal', Decimal('3200.00')),
+                ('SERVICIOS_BASICOS', 'Energía eléctrica, agua potable y fibra óptica', Decimal('650.00')),
+                ('PERSONAL_APOYO', 'Asistente de recepción y limpieza del centro', Decimal('2400.00')),
+                ('LICENCIAS_SAAS', 'Suscripción mensual SIGEPSI Cloud SaaS', Decimal('410.64')),
+            ]
+            gastos_bulk = []
+            for offset in range(min(meses, 24)):
+                anio_g, mes_g = _subtract_months(hoy, offset)
+                periodo = f"{anio_g:04d}-{mes_g:02d}"
+                f_g = date(anio_g, mes_g, 5)
+                for cat, desc, base_m in rubros:
+                    gastos_bulk.append(GastoFijoMensual(
+                        periodo_mes=periodo,
+                        fecha_gasto=f_g,
+                        categoria=cat,
+                        descripcion=f"{desc} ({periodo})",
+                        moneda='BOB',
+                        monto_bob=base_m,
+                        comprobante_ref=f"GF-{anio_g}{mes_g:02d}-{cat[:3]}",
+                    ))
+            GastoFijoMensual.objects.bulk_create(gastos_bulk)
+
+        # 4. Plan de pago con amortización multimoneda BOB/USD (CU26-A)
+        if PlanPagoTerapeutico.objects.count() == 0:
+            pac_plan = pacientes[0]
+            plan = FinanzasService.crear_plan_amortizacion(
+                paciente=pac_plan,
+                nombre_plan='Programa Terapéutico Integral (6 Sesiones)',
+                monto_total=Decimal('1200.00'),
+                numero_cuotas=6,
+                tasa_interes_anual=Decimal('12.00'),
+                porcentaje_seguro=Decimal('1.50'),
+                moneda='BOB',
+                sesiones_incluidas=6,
+                fecha_inicio=hoy,
+            )
+            primera_cuota = plan.cuotas.order_by('numero_cuota').first()
+            if primera_cuota:
+                monto_usd = round(float(primera_cuota.monto_total_cuota) / 6.96, 2)
+                try:
+                    FinanzasService.registrar_pago_cuota(
+                        cuota_id=primera_cuota.id,
+                        monto=Decimal(str(monto_usd)),
+                        moneda='USD',
+                        metodo_pago='QR_BANCARIO',
+                        referencia_externa=f'USD-DEMO-{schema_name[:4].upper()}',
+                    )
+                except ValueError:
+                    pass
+
+        # 5. Calificaciones CRM 1–5★ con CSAT/NPS y alerta de baja puntuación (<= 2★) (CU26-CRM)
+        if CalificacionCRM.objects.count() == 0:
+            citas_realizadas = list(Cita.objects.filter(estado='REALIZADA').select_related('paciente', 'psicologo').order_by('-fecha')[:8])
+            muestras = [
+                (5, 'Excelente atención y puntualidad en la teleconsulta.'),
+                (5, 'Muy buena empatía clínica del profesional.'),
+                (4, 'Plataforma ágil y clara para revisar mis tareas.'),
+                (5, 'Proceso de pago rápido y extracto transparente.'),
+                (2, 'Demora de 15 minutos en iniciar la conexión de sala.'),
+                (5, 'Gran acompañamiento terapéutico continuo.'),
+            ]
+            for idx, (est, com) in enumerate(muestras):
+                c_ref = citas_realizadas[idx] if idx < len(citas_realizadas) else None
+                pac_c = c_ref.paciente if c_ref else pacientes[idx % len(pacientes)]
+                psi_c = c_ref.psicologo if c_ref else psicologos[idx % len(psicologos)]
+                try:
+                    DashboardFinancieroService.registrar_calificacion_crm(
+                        paciente=pac_c,
+                        puntuacion_estrellas=est,
+                        cita=c_ref,
+                        psicologo=psi_c,
+                        comentario=com,
+                    )
+                except ValueError:
+                    pass

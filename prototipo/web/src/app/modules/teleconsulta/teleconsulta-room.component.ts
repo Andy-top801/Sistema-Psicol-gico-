@@ -52,6 +52,17 @@ declare const JitsiMeetExternalAPI: any;
         </div>
       </div>
 
+      <!-- Banner de Permiso de Cámara/Micrófono en caso de bloqueo -->
+      <div *ngIf="permisoDenegadoAviso" class="permission-alert-banner glass-panel">
+        <div class="d-flex align-items-center gap-2">
+          <i class="fa-solid fa-camera text-warning"></i>
+          <span>El navegador no tiene permiso de cámara o micrófono. Pulsa para solicitarlo:</span>
+        </div>
+        <button class="btn btn-warning btn-sm" (click)="solicitarYReconectar()">
+          <i class="fa-solid fa-video me-1"></i> Solicitar Permiso de Cámara
+        </button>
+      </div>
+
       <!-- Contenedor del Iframe de Jitsi Meet -->
       <div class="video-wrapper glass-panel">
         <div *ngIf="cargando" class="loading-overlay">
@@ -75,6 +86,17 @@ declare const JitsiMeetExternalAPI: any;
     </div>
   `,
   styles: [`
+    .permission-alert-banner {
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 10px;
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: #fbbf24;
+      font-size: 0.85rem;
+    }
     .teleconsulta-container {
       display: flex;
       flex-direction: column;
@@ -196,6 +218,9 @@ export class TeleconsultaRoomComponent implements OnInit, OnDestroy {
   cargando = true;
   errorMsg = '';
   finalizando = false;
+  solicitandoPermiso = false;
+  permisoCamaraConcedido = false;
+  permisoDenegadoAviso = false;
 
   // Temporizador de Videoconsulta
   segundosTranscurridos = 0;
@@ -251,8 +276,9 @@ export class TeleconsultaRoomComponent implements OnInit, OnDestroy {
     // --- Paso 2: GET /api/agenda/teleconsulta/{cita_id}/access/ + Bearer JWT ---
     this.agendaService.getTeleconsultaAccess(this.citaId).subscribe({
       // --- Paso 7: 200 OK {room_name, jwt_token, domain, is_moderator} ---
-      next: (access) => {
+      next: async (access) => {
         this.accessData = access;
+        await this.solicitarPermisoCamara();
         this.cargarScriptJitsiYMontar(access);
       },
       error: (err) => {
@@ -260,6 +286,34 @@ export class TeleconsultaRoomComponent implements OnInit, OnDestroy {
         this.errorMsg = err.error?.error || 'No fue posible acceder a la sala de teleconsulta. Verifica el estado y horario de la cita.';
       }
     });
+  }
+
+  async solicitarPermisoCamara(): Promise<boolean> {
+    if (typeof navigator === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      return true;
+    }
+    try {
+      this.solicitandoPermiso = true;
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      stream.getTracks().forEach(track => track.stop());
+      this.permisoCamaraConcedido = true;
+      this.permisoDenegadoAviso = false;
+      this.solicitandoPermiso = false;
+      return true;
+    } catch (err: any) {
+      console.warn('Permiso de cámara/micrófono denegado en el navegador:', err);
+      this.permisoCamaraConcedido = false;
+      this.permisoDenegadoAviso = true;
+      this.solicitandoPermiso = false;
+      return false;
+    }
+  }
+
+  async solicitarYReconectar(): Promise<void> {
+    const ok = await this.solicitarPermisoCamara();
+    if (ok && this.accessData) {
+      this.cargarScriptJitsiYMontar(this.accessData);
+    }
   }
 
   private cargarScriptJitsiYMontar(access: TeleconsultaAccess): void {

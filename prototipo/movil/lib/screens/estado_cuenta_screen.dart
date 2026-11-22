@@ -27,6 +27,10 @@ class _EstadoCuentaScreenState extends State<EstadoCuentaScreen> with SingleTick
   int _paginaExtracto = 1;
   bool _cargandoExtracto = false;
 
+  // CU26-A: Planes Terapéuticos y Amortización (BOB/USD)
+  Map<String, dynamic>? _extractoAmort;
+  bool _cargandoAmort = false;
+
   bool get _esStaffCaja =>
       widget.authService.isAdminCentro ||
       widget.authService.isSuperAdmin ||
@@ -36,7 +40,7 @@ class _EstadoCuentaScreenState extends State<EstadoCuentaScreen> with SingleTick
   void initState() {
     super.initState();
     _svc = Sprint4Service(authService: widget.authService);
-    _tabs = TabController(length: 2, vsync: this);
+    _tabs = TabController(length: 3, vsync: this);
     _cargarCuentas();
   }
 
@@ -79,8 +83,26 @@ class _EstadoCuentaScreenState extends State<EstadoCuentaScreen> with SingleTick
         _cuentaActiva = Map<String, dynamic>.from(det['cuenta'] ?? cta);
         _pagosRecientes = List<Map<String, dynamic>>.from(det['pagos_recientes'] ?? []);
       });
+      await _cargarAmortizacion();
     } catch (_) {
       if (mounted) setState(() => _cuentaActiva = cta);
+    }
+  }
+
+  Future<void> _cargarAmortizacion() async {
+    final pacId = _cuentaActiva?['paciente_id']?.toString();
+    if (pacId == null || pacId.isEmpty) return;
+    setState(() => _cargandoAmort = true);
+    try {
+      final res = await _svc.getExtractoAmortizacion(pacId);
+      if (mounted) {
+        setState(() {
+          _extractoAmort = res;
+          _cargandoAmort = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _cargandoAmort = false);
     }
   }
 
@@ -122,13 +144,14 @@ class _EstadoCuentaScreenState extends State<EstadoCuentaScreen> with SingleTick
     final montoCtrl = TextEditingController(text: saldo > 0 ? saldo.toStringAsFixed(2) : '150.00');
     final refCtrl = TextEditingController();
     String metodo = 'QR_BANCARIO';
+    String moneda = 'BOB';
 
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDlg) => AlertDialog(
           backgroundColor: AppTheme.cardBg,
-          title: Text('Registrar Cobro (Bs.) — ${cta['codigo_expediente']}',
+          title: Text('Registrar Cobro ($moneda) — ${cta['codigo_expediente']}',
               style: const TextStyle(color: AppTheme.textMain, fontSize: 16)),
           content: SingleChildScrollView(
             child: Column(
@@ -137,6 +160,17 @@ class _EstadoCuentaScreenState extends State<EstadoCuentaScreen> with SingleTick
               children: [
                 Text('Paciente: ${cta['paciente_nombre']}', style: const TextStyle(color: AppTheme.textMuted)),
                 const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: moneda,
+                  dropdownColor: AppTheme.cardBgElevated,
+                  decoration: const InputDecoration(labelText: 'Moneda (T.C. Oficial 6.96 BOB/USD)'),
+                  items: const [
+                    DropdownMenuItem(value: 'BOB', child: Text('BOB (Bolivianos Bs.)')),
+                    DropdownMenuItem(value: 'USD', child: Text('USD (Dólares -> Bs. 6.96)')),
+                  ],
+                  onChanged: (v) => setDlg(() => moneda = v ?? 'BOB'),
+                ),
+                const SizedBox(height: 10),
                 DropdownButtonFormField<String>(
                   value: metodo,
                   dropdownColor: AppTheme.cardBgElevated,
@@ -153,7 +187,7 @@ class _EstadoCuentaScreenState extends State<EstadoCuentaScreen> with SingleTick
                 TextField(
                   controller: montoCtrl,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  decoration: const InputDecoration(labelText: 'Monto a Cobrar (Bs.)'),
+                  decoration: InputDecoration(labelText: 'Monto a Cobrar ($moneda)'),
                 ),
                 const SizedBox(height: 10),
                 TextField(
@@ -169,17 +203,19 @@ class _EstadoCuentaScreenState extends State<EstadoCuentaScreen> with SingleTick
               onPressed: () async {
                 final monto = double.tryParse(montoCtrl.text.trim()) ?? -1;
                 Navigator.pop(ctx);
+                // CU26A-paso 1, 13, 15: Registra pago BOB o USD convertido a T.C. 6.96
                 final res = await _svc.registrarPago(
                   pacienteId: cta['paciente_id'].toString(),
                   monto: monto,
                   metodoPago: metodo,
+                  monedaOrigen: moneda,
                   referenciaExterna: refCtrl.text.trim(),
                 );
                 if (!mounted) return;
                 if (res['success'] == true) {
                   final rec = res['data']?['numero_recibo'] ?? '';
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Cobro registrado — Recibo $rec'), backgroundColor: AppTheme.success),
+                    SnackBar(content: Text('Cobro registrado — Recibo $rec ($moneda)'), backgroundColor: AppTheme.success),
                   );
                   await _cargarCuentas();
                 } else {
@@ -189,6 +225,56 @@ class _EstadoCuentaScreenState extends State<EstadoCuentaScreen> with SingleTick
                 }
               },
               child: const Text('Confirmar Cobro'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _abrirDialogoCRM() {
+    int estrellas = 5;
+    final comCtrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDlg) => AlertDialog(
+          backgroundColor: AppTheme.cardBg,
+          title: const Text('Encuesta Post-Consulta (CRM 1–5★)', style: TextStyle(color: AppTheme.textMain, fontSize: 16)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (i) {
+                  final val = i + 1;
+                  return IconButton(
+                    icon: Icon(val <= estrellas ? Icons.star_rounded : Icons.star_border_rounded, color: AppTheme.warning),
+                    onPressed: () => setDlg(() => estrellas = val),
+                  );
+                }),
+              ),
+              TextField(controller: comCtrl, decoration: const InputDecoration(labelText: 'Comentario opcional')),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                // CU26B-paso 1, 15: Envía valoración CRM 1-5★
+                final res = await _svc.registrarCalificacionCRM(
+                  pacienteId: _cuentaActiva?['paciente_id']?.toString(),
+                  puntuacionEstrellas: estrellas,
+                  comentario: comCtrl.text.trim(),
+                );
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text(res['success'] == true ? '¡Gracias por calificar con $estrellas★!' : res['error'].toString()),
+                  backgroundColor: res['success'] == true ? AppTheme.success : AppTheme.danger,
+                ));
+              },
+              child: const Text('Enviar'),
             ),
           ],
         ),
@@ -222,6 +308,11 @@ class _EstadoCuentaScreenState extends State<EstadoCuentaScreen> with SingleTick
       appBar: AppBar(
         title: Text(_esStaffCaja ? 'Caja Clínica y Extracto (Bs.)' : 'Mi Estado de Cuenta (Bs.)'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.star_rate_rounded, color: AppTheme.warning),
+            tooltip: 'Calificar atención CRM (1-5★)',
+            onPressed: _abrirDialogoCRM,
+          ),
           if (_esStaffCaja)
             IconButton(
               icon: const Icon(Icons.sync_rounded),
@@ -234,6 +325,7 @@ class _EstadoCuentaScreenState extends State<EstadoCuentaScreen> with SingleTick
           indicatorColor: AppTheme.primaryLight,
           tabs: const [
             Tab(icon: Icon(Icons.account_balance_wallet_outlined), text: 'Cuenta y Pagos'),
+            Tab(icon: Icon(Icons.calculate_outlined), text: 'Amortización'),
             Tab(icon: Icon(Icons.account_balance_outlined), text: 'Extracto 20 Años'),
           ],
         ),
@@ -244,7 +336,7 @@ class _EstadoCuentaScreenState extends State<EstadoCuentaScreen> with SingleTick
               ? Center(child: Padding(padding: const EdgeInsets.all(16), child: Text(_error!, style: const TextStyle(color: AppTheme.danger))))
               : TabBarView(
                   controller: _tabs,
-                  children: [_buildTabCaja(), _buildTabExtracto()],
+                  children: [_buildTabCaja(), _buildTabAmortizacion(), _buildTabExtracto()],
                 ),
       floatingActionButton: _esStaffCaja && _cuentaActiva != null
           ? FloatingActionButton.extended(
@@ -421,6 +513,75 @@ class _EstadoCuentaScreenState extends State<EstadoCuentaScreen> with SingleTick
               ),
             ],
           ),
+      ],
+    );
+  }
+
+  Widget _buildTabAmortizacion() {
+    if (_cargandoAmort) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    final planes = List<Map<String, dynamic>>.from(_extractoAmort?['planes'] ?? []);
+    return ListView(
+      padding: const EdgeInsets.all(14),
+      children: [
+        if (_esStaffCaja && _cuentaActiva != null)
+          ElevatedButton.icon(
+            onPressed: () async {
+              final res = await _svc.crearPlanAmortizacion(
+                pacienteId: _cuentaActiva!['paciente_id'].toString(),
+                nombrePlan: 'Plan Terapéutico 6 Sesiones',
+                montoTotal: 300,
+                moneda: 'USD',
+              );
+              if (res['success'] == true) await _cargarAmortizacion();
+            },
+            icon: const Icon(Icons.add_card_rounded),
+            label: const Text('Generar Plan 6 Cuotas (USD 300)'),
+          ),
+        const SizedBox(height: 10),
+        if (planes.isEmpty)
+          const Padding(
+            padding: EdgeInsets.all(20),
+            child: Text('Sin planes de amortización activos para este paciente.', style: TextStyle(color: AppTheme.textMuted)),
+          )
+        else
+          ...planes.map((pl) {
+            final cuotas = List<Map<String, dynamic>>.from(pl['cuotas'] ?? []);
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(12),
+              decoration: AppTheme.glassDecoration(radius: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('${pl['nombre_plan']} (${pl['moneda']} ${pl['monto_total']})',
+                      style: const TextStyle(color: AppTheme.textMain, fontWeight: FontWeight.bold)),
+                  Text('Saldo insoluto: ${pl['moneda']} ${pl['saldo_insoluto']} • ${pl['estado']}',
+                      style: const TextStyle(color: AppTheme.warning, fontSize: 12)),
+                  const SizedBox(height: 8),
+                  ...cuotas.map((q) => ListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        title: Text('Cuota #${q['numero_cuota']} • ${q['monto_total_cuota']} ${pl['moneda']}',
+                            style: const TextStyle(color: AppTheme.textMain, fontSize: 13)),
+                        subtitle: Text('Vence ${q['fecha_vencimiento']} • Saldo: ${q['saldo_insoluto']}',
+                            style: const TextStyle(color: AppTheme.textMuted, fontSize: 11)),
+                        trailing: q['estado'] == 'PAGADA'
+                            ? const Text('PAGADA', style: TextStyle(color: AppTheme.success, fontWeight: FontWeight.bold, fontSize: 11))
+                            : TextButton(
+                                onPressed: () async {
+                                  // CU26A-paso 1, 15: Liquidar cuota en USD con conversión a T.C. 6.96
+                                  final r = await _svc.pagarCuotaMultimoneda(cuotaId: q['id'].toString(), moneda: pl['moneda'].toString());
+                                  if (r['success'] == true) await _cargarAmortizacion();
+                                },
+                                child: Text('Pagar ${pl['moneda']}'),
+                              ),
+                      )),
+                ],
+              ),
+            );
+          }),
       ],
     );
   }

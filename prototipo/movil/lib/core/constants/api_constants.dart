@@ -62,16 +62,25 @@ class ApiConstants {
   static const String triajeAlertas = '/clinica/triaje/alertas/';
   static const String triajeAsignar = '/clinica/triaje/asignar/';
 
-  // Sprint 4 - Finanzas (Bs.), IA Longitudinal (HITL/Riesgo) y SaaS (USD)
+  // Sprint 4 - Finanzas (Bs./USD), Amortización, Gastos Fijos, CRM, IA Longitudinal y SaaS
   static const String finanzasCuentas = '/finanzas/cuentas/';
   static const String finanzasPagos = '/finanzas/pagos/';
+  static const String finanzasPagosRegistrar = '/v1/finanzas/pagos/registrar/';
+  static const String finanzasPlanesAmortizacion = '/v1/finanzas/planes-amortizacion/';
+  static const String finanzasExtractoPaciente = '/v1/finanzas/extracto-paciente/';
+  static const String finanzasGastosFijos = '/v1/finanzas/gastos-fijos/';
+  static const String finanzasEstadoResultados = '/v1/finanzas/estado-resultados/';
   static const String finanzasExtracto = '/finanzas/extracto/';
   static const String finanzasDashboard = '/finanzas/dashboard/';
   static const String finanzasLiquidaciones = '/finanzas/liquidaciones/';
   static const String finanzasLiquidacionesPreview = '/finanzas/liquidaciones/preview/';
+  static const String crmCalificaciones = '/v1/crm/calificaciones/';
+  static const String crmEstadisticas = '/v1/crm/estadisticas/';
   static const String alertasRiesgoIA = '/clinica/alertas-riesgo/';
-  static const String alertasRiesgoEvaluar = '/clinica/alertas-riesgo/evaluar/';
+  static const String alertasRiesgoEvaluar = '/v1/clinica/ml/evaluar-riesgo/';
+  static const String mlAlertasBase = '/v1/clinica/ml/alertas/';
   static const String resumenesIA = '/clinica/resumenes-ia/';
+  static const String iaResumenLongitudinal = '/v1/clinica/ia/resumen-longitudinal/';
   static const String saasAdminDashboard = '/subscriptions/admin/dashboard/';
   static const String saasAdminFacturas = '/subscriptions/admin/facturas/';
   static const String saasAdminTenants = '/subscriptions/admin/tenants/';

@@ -54,6 +54,7 @@ class _AlertasRiesgoIaScreenState extends State<AlertasRiesgoIaScreen> {
   }
 
   Future<void> _ejecutarBarrido() async {
+    // CU24-paso 1, 15: Lanza evaluación ML sobre historias clínicas activas
     setState(() => _evaluando = true);
     final res = await _svc.evaluarAlertasRiesgo();
     if (!mounted) return;

@@ -71,6 +71,8 @@ class _DashboardFinancieroScreenState extends State<DashboardFinancieroScreen> {
     final metodos = List<Map<String, dynamic>>.from(_data?['distribucion_metodo_pago'] ?? []);
     final psicos = List<Map<String, dynamic>>.from(_data?['rendimiento_psicologos'] ?? []);
     final serie = List<Map<String, dynamic>>.from(_data?['serie_mensual'] ?? []);
+    final pl = Map<String, dynamic>.from(_data?['estado_resultados_pl'] ?? {});
+    final crm = Map<String, dynamic>.from(_data?['crm_stats'] ?? {});
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -151,6 +153,46 @@ class _DashboardFinancieroScreenState extends State<DashboardFinancieroScreen> {
                         ],
                       ),
                       const SizedBox(height: 16),
+                      if (pl.isNotEmpty) ...[
+                        const Text('Estado de Resultados (CU26-B: Utilidad Neta)',
+                            style: TextStyle(color: AppTheme.textMain, fontWeight: FontWeight.bold, fontSize: 15)),
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: AppTheme.glassDecoration(radius: 12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Ganancia Bruta: Bs. ${pl['ganancia_bruta_bob']}', style: const TextStyle(color: AppTheme.textMain)),
+                              Text('Gastos Fijos Operativos: - Bs. ${pl['total_gastos_fijos_bob']}',
+                                  style: const TextStyle(color: AppTheme.warning)),
+                              const Divider(),
+                              Text(
+                                'Utilidad Neta Real: Bs. ${pl['utilidad_neta_bob']} (${pl['margen_neto_pct']}%)',
+                                style: TextStyle(
+                                  color: pl['es_deficit'] == true ? AppTheme.danger : AppTheme.success,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                      ],
+                      if (crm.isNotEmpty) ...[
+                        const Text('CRM Post-Consulta (CSAT / NPS / 1–5★)',
+                            style: TextStyle(color: AppTheme.textMain, fontWeight: FontWeight.bold, fontSize: 15)),
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: AppTheme.glassDecoration(radius: 12),
+                          child: Text(
+                            'Promedio: ${crm['promedio_estrellas']}/5★ • CSAT: ${crm['csat_pct']}% • NPS: ${crm['nps_score']} • Alertas ≤2★: ${crm['total_alertas_pendientes']}',
+                            style: const TextStyle(color: AppTheme.primaryLight, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                      ],
                       Text('Serie Longitudinal (${serie.length} meses)',
                           style: const TextStyle(color: AppTheme.textMain, fontWeight: FontWeight.bold, fontSize: 15)),
                       const SizedBox(height: 8),

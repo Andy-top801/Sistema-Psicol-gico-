@@ -108,6 +108,91 @@ import { FinanzasService } from '../../core/services/finanzas.service';
           </div>
         </div>
 
+        <!-- CU26-B & CRM: Estado de Resultados (Ganancia Bruta vs. Utilidad Neta) + CRM Post-Consulta 1-5★ -->
+        <div class="grid-2" *ngIf="d.estado_resultados_pl as pl">
+          <div class="card">
+            <div class="card-head">
+              <h3><i class="fa-solid fa-scale-balanced"></i> Estado de Resultados Contable (CU26-B)</h3>
+              <span class="badge-pl" [class.deficit]="pl.es_deficit">
+                {{ pl.es_deficit ? 'DÉFICIT OPERATIVO' : ('Margen Neto: ' + pl.margen_neto_pct + '%') }}
+              </span>
+            </div>
+            <div class="pl-waterfall">
+              <div class="pl-row"><span>(+) Ingresos Brutos Cobrados (BOB)</span><strong>Bs. {{ pl.ingresos_brutos_bob | number:'1.2-2' }}</strong></div>
+              <div class="pl-row"><span>(-) Costos / Honorarios Psicólogos</span><strong class="amber">- Bs. {{ pl.costos_honorarios_bob | number:'1.2-2' }}</strong></div>
+              <div class="pl-row pl-sub"><span>(=) Ganancia Bruta</span><strong>Bs. {{ pl.ganancia_bruta_bob | number:'1.2-2' }}</strong></div>
+              <div class="pl-row"><span>(-) Total Gastos Fijos Operativos</span><strong class="amber">- Bs. {{ pl.total_gastos_fijos_bob | number:'1.2-2' }}</strong></div>
+              <div class="pl-row pl-net" [class.deficit-txt]="pl.es_deficit">
+                <span>(=) Utilidad Neta Real del Centro</span>
+                <strong>Bs. {{ pl.utilidad_neta_bob | number:'1.2-2' }}</strong>
+              </div>
+            </div>
+            <table class="tbl" style="margin-top:.75rem" *ngIf="pl.gastos_fijos_desglose?.length">
+              <thead><tr><th>Categoría Gasto Fijo</th><th class="num">Reg.</th><th class="num">Monto (Bs.)</th></tr></thead>
+              <tbody>
+                <tr *ngFor="let g of pl.gastos_fijos_desglose">
+                  <td>{{ g.label }}</td><td class="num">{{ g.registros }}</td><td class="num">Bs. {{ g.monto_bob | number:'1.2-2' }}</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="gasto-form">
+              <select [(ngModel)]="gastoForm.categoria" class="in-sm">
+                <option value="ALQUILER">Alquiler Consultorios</option>
+                <option value="SERVICIOS_BASICOS">Servicios Básicos</option>
+                <option value="PERSONAL_APOYO">Personal Administrativo</option>
+                <option value="LICENCIAS_SAAS">Licencias Cloud / IA</option>
+                <option value="OTROS">Otros Gastos</option>
+              </select>
+              <input type="text" [(ngModel)]="gastoForm.descripcion" placeholder="Descripción gasto..." class="in-sm" />
+              <input type="number" step="0.01" min="1" [(ngModel)]="gastoForm.monto" class="in-sm num-in" />
+              <select [(ngModel)]="gastoForm.moneda" class="in-sm"><option value="BOB">BOB</option><option value="USD">USD</option></select>
+              <button type="button" class="btn-xs pdf" (click)="registrarGasto()">+ Gasto Fijo</button>
+            </div>
+          </div>
+
+          <div class="card" *ngIf="d.crm_stats as crm">
+            <div class="card-head">
+              <h3><i class="fa-solid fa-star"></i> CRM Post-Consulta (CSAT / NPS / 1–5★)</h3>
+              <span class="badge-pl">CSAT: {{ crm.csat_pct }}% | NPS: {{ crm.nps_score }}</span>
+            </div>
+            <div class="kpi-mini-3">
+              <div class="kpi-card"><span>Promedio Global</span><strong>{{ crm.promedio_estrellas }} / 5.0 ★</strong></div>
+              <div class="kpi-card"><span>Evaluaciones</span><strong>{{ crm.total_calificaciones }}</strong></div>
+              <div class="kpi-card highlight-amber"><span>Alertas Baja Calif. (&le;2★)</span><strong class="amber">{{ crm.total_alertas_pendientes }}</strong></div>
+            </div>
+            <div class="crm-hist">
+              <span *ngFor="let st of ['5','4','3','2','1']" class="hist-pill">
+                {{ st }}★: <strong>{{ crm.histograma_1a5?.[st] || 0 }}</strong>
+              </span>
+            </div>
+            <table class="tbl" *ngIf="crm.alertas_baja_calif?.length">
+              <thead><tr><th>Paciente</th><th>★</th><th>Comentario</th><th>Acción</th></tr></thead>
+              <tbody>
+                <tr *ngFor="let a of crm.alertas_baja_calif">
+                  <td>{{ a.paciente_nombre }}</td>
+                  <td class="amber"><strong>{{ a.puntuacion_estrellas }}★</strong></td>
+                  <td>{{ a.comentario || 'Sin comentario' }}</td>
+                  <td>
+                    <button *ngIf="a.estado_seguimiento === 'PENDIENTE'" type="button" class="btn-xs" (click)="atenderCrm(a.id)">Atender</button>
+                    <span *ngIf="a.estado_seguimiento !== 'PENDIENTE'" class="emerald">{{ a.estado_seguimiento }}</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="gasto-form" style="margin-top:.75rem">
+              <select [(ngModel)]="crmForm.puntuacion_estrellas" class="in-sm">
+                <option [ngValue]="5">5 ★ Excelente</option>
+                <option [ngValue]="4">4 ★ Bueno</option>
+                <option [ngValue]="3">3 ★ Regular</option>
+                <option [ngValue]="2">2 ★ Bajo (Alerta)</option>
+                <option [ngValue]="1">1 ★ Crítico (Alerta)</option>
+              </select>
+              <input type="text" [(ngModel)]="crmForm.comentario" placeholder="Feedback de satisfacción..." class="in-sm" style="flex:1" />
+              <button type="button" class="btn-xs xls" (click)="enviarCrm()">+ Registrar Encuesta</button>
+            </div>
+          </div>
+        </div>
+
         <!-- Centro Integral de Todos los Reportes y Consultas -->
         <div class="card">
           <div class="card-head">
@@ -178,6 +263,19 @@ import { FinanzasService } from '../../core/services/finanzas.service';
     .btn-xs.xls { background: #15803d; color: #fff; border-color: #15803d; }
     .btn-teal { padding: .5rem .9rem; background: #0d9488; color: #fff; border-radius: 8px; text-decoration: none; font-size: .84rem; font-weight: 600; }
     .alert-err { padding: .75rem; background: #fef2f2; color: #991b1b; border-radius: 8px; }
+    .badge-pl { padding: .28rem .65rem; border-radius: 999px; background: #ecfdf5; color: #047857; font-size: .78rem; font-weight: 700; }
+    .badge-pl.deficit { background: #fef2f2; color: #b91c1c; }
+    .pl-waterfall { display: flex; flex-direction: column; gap: .38rem; font-size: .88rem; }
+    .pl-row { display: flex; justify-content: space-between; padding: .35rem .5rem; border-bottom: 1px dashed #e2e8f0; }
+    .pl-row.pl-sub { background: #f8fafc; font-weight: 600; }
+    .pl-row.pl-net { background: #ecfdf5; color: #065f46; font-size: .96rem; border-radius: 6px; border: 1px solid #a7f3d0; }
+    .pl-row.deficit-txt { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
+    .gasto-form { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: .8rem; align-items: center; }
+    .in-sm { padding: .35rem .5rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: .78rem; }
+    .num-in { width: 85px; }
+    .kpi-mini-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; margin-bottom: .75rem; }
+    .crm-hist { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: .75rem; }
+    .hist-pill { background: #f1f5f9; border-radius: 999px; padding: .25rem .6rem; font-size: .78rem; color: #334155; }
   `]
 })
 export class DashboardFinancieroComponent implements OnInit {
@@ -185,6 +283,18 @@ export class DashboardFinancieroComponent implements OnInit {
   error = signal('');
   horizonte = '24m';
   maxSerieVal = 1;
+
+  gastoForm = {
+    categoria: 'ALQUILER',
+    descripcion: 'Alquiler mensual consultorios',
+    monto: 2500,
+    moneda: 'BOB' as 'BOB' | 'USD',
+  };
+
+  crmForm = {
+    puntuacion_estrellas: 5,
+    comentario: '',
+  };
 
   horizontes = [
     { id: '12m', label: '12 Meses' },
@@ -225,6 +335,32 @@ export class DashboardFinancieroComponent implements OnInit {
     this.finanzasService.descargarReporte(fuente, formato).subscribe({
       next: (blob) => this.finanzasService.triggerBlobDownload(blob, `reporte_${fuente}.${ext}`),
       error: () => this.error.set(`Error al exportar ${fuente} en ${formato.toUpperCase()}.`),
+    });
+  }
+
+  registrarGasto(): void {
+    // CU26B-paso 2, 15: Registra gasto fijo operativo y recalcula Ganancia Bruta vs. Utilidad Neta
+    this.finanzasService.registrarGastoFijo(this.gastoForm).subscribe({
+      next: () => this.cargar(),
+      error: (err) => this.error.set(err?.error?.detail || 'No se pudo registrar el gasto fijo.'),
+    });
+  }
+
+  enviarCrm(): void {
+    // CU26B-paso 1, 15: Registra evaluación CRM 1-5★ y actualiza CSAT/NPS y alertas <=2★
+    this.finanzasService.registrarCalificacionCRM(this.crmForm).subscribe({
+      next: () => {
+        this.crmForm.comentario = '';
+        this.cargar();
+      },
+      error: (err) => this.error.set(err?.error?.detail || 'Error al guardar calificación CRM.'),
+    });
+  }
+
+  atenderCrm(id: string): void {
+    this.finanzasService.atenderTicketCRM(id, 'Contactado desde consola gerencial CRM.').subscribe({
+      next: () => this.cargar(),
+      error: (err) => this.error.set(err?.error?.detail || 'No se pudo atender la alerta CRM.'),
     });
   }
 }

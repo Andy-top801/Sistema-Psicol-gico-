@@ -11,17 +11,30 @@ from .views import (
     LiquidacionAnularView,
     LiquidacionBoletaPDFView,
     DashboardFinancieroView,
+    PlanPagoAmortizacionListCreateView,
+    ExtractoPacienteAmortizacionView,
+    PagoRegistrarMultimonedaView,
+    GastoFijoMensualListCreateView,
+    EstadoResultadosContableView,
+    CalificacionCRMListCreateView,
+    CalificacionCRMSeguimientoView,
+    EstadisticasCRMView,
 )
 
 urlpatterns = [
     # HU-53: Dashboard Financiero y Gerencial Integral (>= 2 años + todos los reportes)
     path('dashboard/', DashboardFinancieroView.as_view(), name='finanzas-dashboard-gerencial'),
 
-    # HU-52: Caja Clínica, Estado de Cuenta y Cobros en Bs.
+    # HU-52: Caja Clínica, Estado de Cuenta y Cobros en Bs. / USD
     path('cuentas/', CuentaPacienteListView.as_view(), name='finanzas-cuentas-list'),
     path('cuentas/<uuid:paciente_id>/', CuentaPacienteDetailView.as_view(), name='finanzas-cuenta-detail'),
     path('pagos/', PagoConsultaListCreateView.as_view(), name='finanzas-pagos-list-create'),
     path('pagos/<uuid:pago_id>/recibo-pdf/', PagoReciboPDFView.as_view(), name='finanzas-pago-recibo-pdf'),
+
+    # Incremento CU26-A: Planes de Amortización, Extracto por Paciente y Pago Multimoneda BOB/USD
+    path('planes-amortizacion/', PlanPagoAmortizacionListCreateView.as_view(), name='finanzas-planes-amortizacion'),
+    path('extracto-paciente/<uuid:paciente_id>/', ExtractoPacienteAmortizacionView.as_view(), name='finanzas-extracto-paciente-amort'),
+    path('pagos/registrar/', PagoRegistrarMultimonedaView.as_view(), name='finanzas-pagos-registrar-seq'),
 
     # HU-52 (Ampliado): Extracto Histórico de Pagos Tipo Bancario (hasta 20 años)
     path('extracto/', ExtractoBancarioView.as_view(), name='finanzas-extracto-bancario'),
@@ -32,4 +45,12 @@ urlpatterns = [
     path('liquidaciones/<uuid:liquidacion_id>/pagar/', LiquidacionPagarView.as_view(), name='finanzas-liquidacion-pagar'),
     path('liquidaciones/<uuid:liquidacion_id>/anular/', LiquidacionAnularView.as_view(), name='finanzas-liquidacion-anular'),
     path('liquidaciones/<uuid:liquidacion_id>/boleta-pdf/', LiquidacionBoletaPDFView.as_view(), name='finanzas-liquidacion-boleta-pdf'),
+
+    # Incremento CU26-B & CRM: Liquidación alias, Gastos Fijos, Estado Resultados (Utilidad Neta) y CRM
+    path('honorarios/liquidar/', LiquidacionHonorarioListCreateView.as_view(), name='finanzas-honorarios-liquidar-seq'),
+    path('gastos-fijos/', GastoFijoMensualListCreateView.as_view(), name='finanzas-gastos-fijos'),
+    path('estado-resultados/', EstadoResultadosContableView.as_view(), name='finanzas-estado-resultados'),
+    path('crm/calificaciones/', CalificacionCRMListCreateView.as_view(), name='finanzas-crm-calificaciones'),
+    path('crm/calificaciones/<uuid:calificacion_id>/atender/', CalificacionCRMSeguimientoView.as_view(), name='finanzas-crm-atender'),
+    path('crm/estadisticas/', EstadisticasCRMView.as_view(), name='finanzas-crm-estadisticas'),
 ]

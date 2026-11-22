@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.urls import path, include
+from finanzas.views import CalificacionCRMListCreateView, CalificacionCRMSeguimientoView, EstadisticasCRMView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -27,6 +28,12 @@ urlpatterns = [
     # Endpoints de finanzas clínicas y honorarios (Bs.) - Sprint 4
     path('api/finanzas/', include('finanzas.urls')),
     path('api/v1/finanzas/', include('finanzas.urls')),
+    # Endpoints directos CRM 1-5 estrellas (CU26-CRM / HU-55)
+    path('api/crm/calificaciones/', CalificacionCRMListCreateView.as_view(), name='crm-calificaciones-root'),
+    path('api/v1/crm/calificaciones/', CalificacionCRMListCreateView.as_view(), name='crm-calificaciones-v1'),
+    path('api/v1/crm/calificaciones/<uuid:calificacion_id>/atender/', CalificacionCRMSeguimientoView.as_view(), name='crm-atender-v1'),
+    path('api/crm/estadisticas/', EstadisticasCRMView.as_view(), name='crm-estadisticas-root'),
+    path('api/v1/crm/estadisticas/', EstadisticasCRMView.as_view(), name='crm-estadisticas-v1'),
     # Endpoints de suscripciones y pagos Stripe (Punto 7+8)
     path('api/subscriptions/', include('subscriptions.urls')),
 ]

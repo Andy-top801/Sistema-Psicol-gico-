@@ -18,6 +18,9 @@ import { FinanzasService } from '../../core/services/finanzas.service';
           <button type="button" class="tab-btn" [class.active]="tabActiva() === 'caja'" (click)="tabActiva.set('caja')">
             <i class="fa-solid fa-receipt"></i> Caja y Cobros
           </button>
+          <button type="button" class="tab-btn" [class.active]="tabActiva() === 'amortizacion'" (click)="abrirAmortizacion()">
+            <i class="fa-solid fa-table-list"></i> Planes y Amortización (BOB/USD)
+          </button>
           <button type="button" class="tab-btn" [class.active]="tabActiva() === 'extracto'" (click)="abrirExtracto()">
             <i class="fa-solid fa-building-columns"></i> Extracto Tipo Banco (20 Años)
           </button>
@@ -95,8 +98,17 @@ import { FinanzasService } from '../../core/services/finanzas.service';
                 </button>
               </div>
 
-              <label>Monto a Cobrar (Bs.)</label>
+              <label>Moneda de Pago (CU26-A T.C. Oficial 6.96)</label>
+              <div class="method-pills">
+                <button type="button" [class.active]="pagoForm.moneda_origen === 'BOB'" (click)="pagoForm.moneda_origen = 'BOB'">BOB (Bs.)</button>
+                <button type="button" [class.active]="pagoForm.moneda_origen === 'USD'" (click)="pagoForm.moneda_origen = 'USD'">USD ($us &rarr; Bs. 6.96)</button>
+              </div>
+
+              <label>Monto a Cobrar ({{ pagoForm.moneda_origen }})</label>
               <input type="number" step="0.01" min="0.01" [(ngModel)]="pagoForm.monto" class="input-full" />
+              <small *ngIf="pagoForm.moneda_origen === 'USD'" class="subtitle">
+                Equivalente contable a convertir: <strong>Bs. {{ (pagoForm.monto * 6.96) | number:'1.2-2' }}</strong>
+              </small>
 
               <label>Referencia Bancaria / Voucher (opcional)</label>
               <input type="text" [(ngModel)]="pagoForm.referencia_externa" placeholder="Ej: QR-BNB-88412" class="input-full" />
@@ -141,7 +153,106 @@ import { FinanzasService } from '../../core/services/finanzas.service';
         </div>
       </div>
 
-      <!-- TAB 2: EXTRACTO HISTÓRICO TIPO BANCO (HASTA 20 AÑOS) -->
+      <!-- TAB 2: PLANES TERAPÉUTICOS Y TABLA DE AMORTIZACIÓN (CU26-A: BOB / USD) -->
+      <div *ngIf="tabActiva() === 'amortizacion'" class="grid-2col">
+        <div class="card">
+          <div class="card-head wrap">
+            <h3><i class="fa-solid fa-file-invoice-dollar"></i> Crear Plan Terapéutico Financiado (BOB / USD)</h3>
+            <select [(ngModel)]="amortPacienteId" (change)="cargarExtractoAmort()" class="input-sm">
+              <option value="">-- Seleccionar Paciente --</option>
+              <option *ngFor="let c of cuentas()" [value]="c.paciente_id">{{ c.codigo_expediente }} — {{ c.paciente_nombre }}</option>
+            </select>
+          </div>
+          <div class="form-grid">
+            <label>Nombre del Plan / Paquete</label>
+            <input type="text" [(ngModel)]="planForm.nombre_plan" class="input-full" placeholder="Ej: Paquete Terapia Cognitiva 6 Sesiones" />
+            <div class="kpi-mini-grid">
+              <div>
+                <label>Moneda</label>
+                <select [(ngModel)]="planForm.moneda" class="input-full">
+                  <option value="USD">USD ($us)</option>
+                  <option value="BOB">BOB (Bs.)</option>
+                </select>
+              </div>
+              <div>
+                <label>Monto Total</label>
+                <input type="number" step="0.01" min="1" [(ngModel)]="planForm.monto_total" class="input-full" />
+              </div>
+              <div>
+                <label>Cuotas</label>
+                <input type="number" min="1" max="36" [(ngModel)]="planForm.numero_cuotas" class="input-full" />
+              </div>
+            </div>
+            <div class="kpi-mini-grid">
+              <div>
+                <label>Sesiones Incluidas</label>
+                <input type="number" min="1" [(ngModel)]="planForm.sesiones_incluidas" class="input-full" />
+              </div>
+              <div>
+                <label>Interés Anual (%)</label>
+                <input type="number" step="0.01" min="0" [(ngModel)]="planForm.tasa_interes_anual" class="input-full" />
+              </div>
+              <div>
+                <label>Seguro Asist. (%)</label>
+                <input type="number" step="0.01" min="0" [(ngModel)]="planForm.porcentaje_seguro" class="input-full" />
+              </div>
+            </div>
+            <button type="button" class="btn-primary-full" [disabled]="guardando() || !amortPacienteId" (click)="crearPlanAmortizacion()">
+              <i class="fa-solid fa-calculator"></i> Generar Plan y Tabla de Amortización
+            </button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3><i class="fa-solid fa-layer-group"></i> Tabla de Amortización y Cobro de Cuotas</h3>
+            <span *ngIf="extractoAmort()" class="btn-chip active">T.C. Oficial: 6.96 BOB/USD</span>
+          </div>
+          <div *ngIf="extractoAmort() as ea; else sinPacienteAmort">
+            <div *ngIf="ea.planes?.length; else sinPlanes">
+              <div *ngFor="let pl of ea.planes" style="margin-bottom: 1.25rem;">
+                <div class="kpi-mini-grid">
+                  <div class="kpi-mini"><span>Plan ({{ pl.moneda }})</span><strong>{{ pl.nombre_plan }}</strong></div>
+                  <div class="kpi-mini"><span>Monto Total</span><strong>{{ pl.moneda }} {{ pl.monto_total | number:'1.2-2' }}</strong></div>
+                  <div class="kpi-mini"><span>Saldo Insoluto</span><strong class="amber">{{ pl.moneda }} {{ pl.saldo_insoluto | number:'1.2-2' }}</strong></div>
+                </div>
+                <div class="table-wrap">
+                  <table class="fin-table">
+                    <thead>
+                      <tr>
+                        <th>N°</th><th>Venc.</th><th class="num">Capital</th><th class="num">Int.</th><th class="num">Seg.</th><th class="num">Total</th><th class="num">Saldo</th><th>Estado / Acción</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let q of pl.cuotas">
+                        <td>#{{ q.numero_cuota }}</td>
+                        <td>{{ q.fecha_vencimiento }}</td>
+                        <td class="num">{{ q.capital_amortizado | number:'1.2-2' }}</td>
+                        <td class="num">{{ q.interes_o_comision | number:'1.2-2' }}</td>
+                        <td class="num">{{ q.seguro_asistencial | number:'1.2-2' }}</td>
+                        <td class="num"><strong>{{ q.monto_total_cuota | number:'1.2-2' }}</strong></td>
+                        <td class="num">{{ q.saldo_insoluto | number:'1.2-2' }}</td>
+                        <td>
+                          <ng-container *ngIf="q.estado !== 'PAGADA'; else cuotaPagadaBadge">
+                            <!-- CU26A-paso 1, 15: Cobrar cuota en BOB o USD con ajuste de saldo -->
+                            <button type="button" class="btn-teal-sm" (click)="pagarCuotaAmort(q, 'BOB')">BOB</button>
+                            <button type="button" class="btn-outline" (click)="pagarCuotaAmort(q, 'USD')">USD</button>
+                          </ng-container>
+                          <ng-template #cuotaPagadaBadge><span class="emerald">PAGADA</span></ng-template>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            <ng-template #sinPlanes><p class="empty">El paciente seleccionado no tiene planes de amortización aún.</p></ng-template>
+          </div>
+          <ng-template #sinPacienteAmort><p class="empty">Selecciona un paciente en la izquierda para ver o generar planes de amortización.</p></ng-template>
+        </div>
+      </div>
+
+      <!-- TAB 3: EXTRACTO HISTÓRICO TIPO BANCO (HASTA 20 AÑOS) -->
       <div *ngIf="tabActiva() === 'extracto'" class="card">
         <div class="card-head wrap">
           <div>
@@ -281,11 +392,13 @@ import { FinanzasService } from '../../core/services/finanzas.service';
   `]
 })
 export class CajaClinicaComponent implements OnInit {
-  tabActiva = signal<'caja' | 'extracto'>('caja');
+  tabActiva = signal<'caja' | 'extracto' | 'amortizacion'>('caja');
   cuentas = signal<any[]>([]);
   cuentaSeleccionada = signal<any | null>(null);
   pagosPaciente = signal<any[]>([]);
   extracto = signal<any | null>(null);
+  extractoAmort = signal<any | null>(null);
+  amortPacienteId = '';
   guardando = signal(false);
   mensaje = signal('');
   error = signal('');
@@ -300,9 +413,20 @@ export class CajaClinicaComponent implements OnInit {
 
   pagoForm = {
     monto: 150,
+    moneda_origen: 'BOB' as 'BOB' | 'USD',
     metodo_pago: 'QR_BANCARIO',
     referencia_externa: '',
     observaciones: '',
+  };
+
+  planForm = {
+    nombre_plan: 'Plan Terapéutico Integral (6 Sesiones)',
+    sesiones_incluidas: 6,
+    monto_total: 300,
+    moneda: 'USD' as 'BOB' | 'USD',
+    tasa_interes_anual: 0,
+    porcentaje_seguro: 1.5,
+    numero_cuotas: 6,
   };
 
   extractoFiltros = {
@@ -327,6 +451,7 @@ export class CajaClinicaComponent implements OnInit {
   seleccionarCuenta(cta: any): void {
     this.error.set('');
     this.mensaje.set('');
+    this.amortPacienteId = cta.paciente_id;
     this.finanzasService.getCuentaDetalle(cta.paciente_id).subscribe({
       next: (res) => {
         this.cuentaSeleccionada.set(res.cuenta);
@@ -340,19 +465,21 @@ export class CajaClinicaComponent implements OnInit {
   confirmarCobro(): void {
     const cta = this.cuentaSeleccionada();
     if (!cta) return;
+    // CU26A-paso 1, 13, 15: Registra pago en BOB o USD con conversión automática T.C. 6.96
     this.guardando.set(true);
     this.error.set('');
     this.mensaje.set('');
     this.finanzasService.registrarPago({
       paciente_id: cta.paciente_id,
       monto: Number(this.pagoForm.monto),
+      moneda_origen: this.pagoForm.moneda_origen,
       metodo_pago: this.pagoForm.metodo_pago,
       referencia_externa: this.pagoForm.referencia_externa,
       observaciones: this.pagoForm.observaciones,
     }).subscribe({
       next: (pago) => {
         this.guardando.set(false);
-        this.mensaje.set(`Cobro registrado con éxito — Recibo ${pago.numero_recibo} (Bs. ${pago.monto}).`);
+        this.mensaje.set(`Cobro registrado (${pago.moneda_origen || 'BOB'} ${pago.monto_origen || pago.monto} -> Bs. ${pago.monto}) — Recibo ${pago.numero_recibo}.`);
         this.pagoForm.referencia_externa = '';
         this.pagoForm.observaciones = '';
         this.cargarCuentas();
@@ -361,6 +488,68 @@ export class CajaClinicaComponent implements OnInit {
       error: (err) => {
         this.guardando.set(false);
         this.error.set(err?.error?.detail || 'Error al registrar el cobro.');
+      },
+    });
+  }
+
+  abrirAmortizacion(): void {
+    this.tabActiva.set('amortizacion');
+    if (!this.amortPacienteId && this.cuentas().length > 0) {
+      this.amortPacienteId = this.cuentaSeleccionada()?.paciente_id || this.cuentas()[0].paciente_id;
+    }
+    if (this.amortPacienteId) this.cargarExtractoAmort();
+  }
+
+  cargarExtractoAmort(): void {
+    if (!this.amortPacienteId) {
+      this.extractoAmort.set(null);
+      return;
+    }
+    this.finanzasService.getExtractoAmortizacion(this.amortPacienteId).subscribe({
+      next: (res) => this.extractoAmort.set(res),
+      error: (err) => this.error.set(err?.error?.detail || 'Error al cargar tabla de amortización.'),
+    });
+  }
+
+  crearPlanAmortizacion(): void {
+    if (!this.amortPacienteId) return;
+    this.guardando.set(true);
+    this.error.set('');
+    this.finanzasService.crearPlanAmortizacion({
+      paciente_id: this.amortPacienteId,
+      ...this.planForm,
+    }).subscribe({
+      next: (res) => {
+        this.guardando.set(false);
+        this.extractoAmort.set(res);
+        this.mensaje.set('Plan de amortización generado y registrado correctamente.');
+      },
+      error: (err) => {
+        this.guardando.set(false);
+        this.error.set(err?.error?.detail || 'No se pudo generar el plan de amortización.');
+      },
+    });
+  }
+
+  pagarCuotaAmort(cuota: any, moneda: 'BOB' | 'USD'): void {
+    // CU26A-paso 1, 2, 13, 15: Liquidación transaccional de cuota y recalculo inmediato del saldo insoluto
+    this.guardando.set(true);
+    this.error.set('');
+    this.finanzasService.registrarPagoCuotaMultimoneda({
+      cuota_id: cuota.id,
+      moneda,
+      metodo_pago: this.pagoForm.metodo_pago,
+      referencia_externa: this.pagoForm.referencia_externa,
+    }).subscribe({
+      next: (res) => {
+        this.guardando.set(false);
+        this.extractoAmort.set(res.extracto_actualizado);
+        this.mensaje.set(`Cuota #${cuota.numero_cuota} liquidada (${res.comprobante.moneda_origen} ${res.comprobante.monto_origen} -> Bs. ${res.comprobante.monto_bob}).`);
+        this.cargarCuentas();
+      },
+      error: (err) => {
+        this.guardando.set(false);
+        this.error.set(err?.error?.detail || err?.error?.error || 'Error al registrar pago de cuota.');
       },
     });
   }

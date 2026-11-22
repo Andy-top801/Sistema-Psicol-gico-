@@ -11,6 +11,7 @@ import os
 import re
 import urllib.request
 import urllib.error
+from datetime import date, datetime
 from django.db import connection
 from django.http import HttpResponse
 from django.utils import timezone
@@ -40,6 +41,7 @@ ETIQUETA_OBLIGATORIA = 'Borrador IA — Requiere Revisión Profesional'
 
 def psicologo_asignado_al_paciente(user, paciente: Paciente) -> bool:
     """
+    CU23-paso 3: verificar_asignacion_tratante(paciente_id, psicologo_id) -> CU23-paso 4: autorizado [retorno].
     HU-49 (b): Verifica que solo el psicólogo tratante asignado, Coordinador,
     Admin Centro o SuperAdmin puedan leer o generar resúmenes IA del paciente.
     """
@@ -100,19 +102,33 @@ def _llamar_hf_resumen(payload_anonimizado: dict) -> str | None:
 
 
 class ResumenIAService:
-    """Servicio longitudinal híbrido (HF + Fallback determinístico + HITL)."""
+    """CTR_ResumenLongitudinalIA — Servicio longitudinal híbrido (HF + Fallback determinístico + HITL)."""
 
     @classmethod
-    def generar_resumen(cls, paciente: Paciente, usuario=None, usar_hf: bool = True) -> ResumenClinicoIA:
+    def generar_resumen(
+        cls,
+        paciente: Paciente,
+        usuario=None,
+        usar_hf: bool = True,
+        fecha_ini: date | None = None,
+        fecha_fin: date | None = None,
+    ) -> ResumenClinicoIA:
+        # CU23-paso 4: autorizado, historia_id [retorno]
         hc = HistoriaClinica.objects.filter(paciente=paciente).order_by('-fecha_apertura').first()
-        notas = list(
-            NotaSesion.objects.filter(historia_clinica__paciente=paciente)
-            .order_by('fecha_sesion')[:30]
-        )
-        evoluciones = list(
-            EvolucionClinica.objects.filter(historia_clinica__paciente=paciente)
-            .order_by('fecha_registro')[:30]
-        )
+
+        # CU23-paso 5: CTR -> SOAP : obtener_notas_firmadas(historia_id, fecha_ini, fecha_fin)
+        notas_qs = NotaSesion.objects.filter(historia_clinica__paciente=paciente)
+        evol_qs = EvolucionClinica.objects.filter(historia_clinica__paciente=paciente)
+        if fecha_ini:
+            notas_qs = notas_qs.filter(fecha_sesion__date__gte=fecha_ini)
+            evol_qs = evol_qs.filter(fecha_registro__date__gte=fecha_ini)
+        if fecha_fin:
+            notas_qs = notas_qs.filter(fecha_sesion__date__lte=fecha_fin)
+            evol_qs = evol_qs.filter(fecha_registro__date__lte=fecha_fin)
+
+        notas = list(notas_qs.order_by('fecha_sesion')[:30])
+        evoluciones = list(evol_qs.order_by('fecha_registro')[:30])
+        # CU23-paso 6: SOAP --> CTR : lista_notas_soap[] [retorno]
         total_insumos = len(notas) + len(evoluciones)
         if total_insumos < 2:
             raise ValueError(
@@ -129,7 +145,7 @@ class ResumenIAService:
                 motivo_raw = resp_intake.motivo_consulta or ''
         motivo_sanitizado = _sanitizar_narrativa_paciente(motivo_raw or 'No registrado en historia clínica.', paciente)
 
-        # 2. Síntesis de notas SOAP sanitizadas
+        # CU23-paso 7: loop por cada nota en lista_notas_soap[] -> CTR -> CTR : sanitizar_pii(nota.subjetivo + nota.analisis)
         soap_extractos = []
         for n in notas[-6:]:
             s_clean = _sanitizar_narrativa_paciente(n.subjetivo, paciente)[:180]
@@ -145,8 +161,14 @@ class ResumenIAService:
                 f"Evolución ({ev.fecha_registro.strftime('%Y-%m-%d')} — {ev.estado_avance}): {j_clean}"
             )
 
-        # 3. Tendencia Mood Tracker
-        animo_qs = list(RegistroAnimo.objects.filter(paciente=paciente).order_by('-fecha_registro')[:14])
+        # CU23-paso 8: CTR -> MOOD : obtener_serie_animo(paciente_id, fecha_ini, fecha_fin)
+        animo_base = RegistroAnimo.objects.filter(paciente=paciente)
+        if fecha_ini:
+            animo_base = animo_base.filter(fecha_registro__gte=fecha_ini)
+        if fecha_fin:
+            animo_base = animo_base.filter(fecha_registro__lte=fecha_fin)
+        animo_qs = list(animo_base.order_by('-fecha_registro')[:14])
+        # CU23-paso 9: MOOD --> CTR : serie_emocional[] [retorno]
         if animo_qs:
             promedio_animo = round(sum(a.escala_valor for a in animo_qs) / len(animo_qs), 2)
             ultimo_animo = animo_qs[0]
@@ -197,6 +219,7 @@ class ResumenIAService:
                 f"Nota clínica: Este borrador es un apoyo de preparación de sesión y no emite diagnósticos CIE automáticos."
             )
 
+        # CU23-paso 10: CTR -> CTR : construir_sintesis_y_hash_sha256()
         hash_input = json.dumps({
             'paciente_id': str(paciente.id),
             'fuente': fuente,
@@ -204,6 +227,7 @@ class ResumenIAService:
         }, sort_keys=True, ensure_ascii=False).encode('utf-8')
         hash_sha256 = hashlib.sha256(hash_input).hexdigest()
 
+        # CU23-paso 11: CTR -> RES : crear_borrador_ia(resumen_texto, hash_pii_sha256)
         resumen = ResumenClinicoIA.objects.create(
             paciente=paciente,
             historia_clinica=hc,
@@ -216,9 +240,11 @@ class ResumenIAService:
             total_notas_analizadas=total_insumos,
             generado_por=usuario,
         )
+        # CU23-paso 12: RES --> CTR : resumen_id (estado='BORRADOR_IA') [retorno]
 
+        # CU23-paso 13: CTR -> AUD : registrar_evento('GENERACION_RESUMEN_IA', ip)
         log_event(
-            action='RESUMEN_IA_GENERADO',
+            action='GENERACION_RESUMEN_IA',
             modulo='CU23_IA_LONGITUDINAL',
             tenant=getattr(connection, 'schema_name', None),
             user=getattr(usuario, 'email', None),
@@ -228,6 +254,7 @@ class ResumenIAService:
             fuente_modelo=fuente,
             hash_sha256=hash_sha256,
         )
+        # CU23-paso 14: AUD --> CTR : ok [retorno]
         return resumen
 
     @classmethod
@@ -238,12 +265,16 @@ class ResumenIAService:
         texto_editado: str | None = None,
         contenido_editado: dict | None = None,
     ) -> ResumenClinicoIA:
-        """HU-49 (c): Aprobación explícita Human-in-the-Loop sin diagnósticos automáticos."""
+        """
+        CU23-paso 19: CTR -> RES : aprobar_con_supervision(psicologo_id, texto_final)
+        HU-49 (c): Aprobación explícita Human-in-the-Loop sin diagnósticos automáticos.
+        """
         if texto_editado is not None and texto_editado.strip():
             resumen.texto_resumen = texto_editado.strip()
         if contenido_editado is not None and isinstance(contenido_editado, dict):
             resumen.contenido_estructurado = contenido_editado
 
+        # CU23-paso 20: RES --> CTR : estado='APROBADO_HITL' [retorno]
         resumen.estado = 'APROBADO_HITL'
         resumen.aprobado_por = usuario
         resumen.fecha_aprobacion = timezone.now()

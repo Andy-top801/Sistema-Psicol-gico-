@@ -221,6 +221,60 @@ def test_hu54_liquidacion_honorarios_antidoble_pago_y_boleta_pdf():
     _run_rolled_back('centro_esperanza', _body)
 
 
+def test_cu26a_multimoneda_usd_bob_y_amortizacion_6_cuotas():
+    from finanzas.models import CuotaAmortizacion, PagoConsulta
+
+    def _body():
+        paciente = Paciente.objects.select_related('usuario').first()
+        psicologo = Psicologo.objects.select_related('usuario').first()
+        assert paciente is not None and psicologo is not None
+
+        # CU26-A Paso 1-6: Crear plan financiado 6 cuotas en USD (300.00 USD -> 2088.00 BOB @ 6.96)
+        plan = FinanzasService.crear_plan_amortizacion(
+            paciente=paciente,
+            nombre_plan='Plan CU26-A 6 Sesiones USD',
+            sesiones_incluidas=6,
+            monto_total=Decimal('300.00'),
+            moneda='USD',
+            tasa_interes_anual=Decimal('0.00'),
+            porcentaje_seguro=Decimal('1.50'),
+            numero_cuotas=6,
+        )
+        cuotas = list(CuotaAmortizacion.objects.filter(plan=plan).order_by('numero_cuota'))
+        assert len(cuotas) == 6
+        assert plan.monto_total == Decimal('2088.00')
+        assert cuotas[-1].saldo_insoluto == Decimal('0.00'), "La cuota final debe dejar saldo insoluto exacto 0.00"
+        assert sum(c.capital_amortizado for c in cuotas) == Decimal('2088.00')
+
+        # CU26-A Paso 7-13: Pagar Cuota #1 en USD usando T.C. 6.9600 (Decimal ROUND_HALF_UP)
+        c1 = cuotas[0]
+        res = FinanzasService.registrar_pago_cuota(
+            cuota_id=c1.id,
+            moneda='USD',
+            metodo_pago='TARJETA_STRIPE',
+            referencia_externa='USD-CU26A-001',
+        )
+        c1.refresh_from_db()
+        plan.refresh_from_db()
+        assert c1.estado == 'PAGADA'
+        pago_obj = res['pago']
+        assert isinstance(pago_obj, PagoConsulta)
+        assert pago_obj.moneda_origen == 'USD'
+        assert pago_obj.tipo_cambio_aplicado == Decimal('6.9600')
+        assert abs(pago_obj.monto - c1.monto_total_cuota) <= Decimal('0.05')
+        assert plan.saldo_insoluto == (Decimal('2088.00') - c1.capital_amortizado).quantize(Decimal('0.01'))
+
+        # CU26-A: Bloquear doble pago sobre cuota ya liquidada
+        bloqueado = False
+        try:
+            FinanzasService.registrar_pago_cuota(cuota_id=c1.id, moneda='USD', metodo_pago='EFECTIVO')
+        except ValueError:
+            bloqueado = True
+        assert bloqueado, "Debió rechazar el doble pago sobre cuota ya PAGADA"
+
+    _run_rolled_back('centro_esperanza', _body)
+
+
 if __name__ == '__main__':
     test_hu52_cobro_atomico_validaciones_y_recibo_pdf()
     print('[OK] HU-52: Cobro atómico, validaciones de saldo y Recibo PDF')
@@ -228,4 +282,6 @@ if __name__ == '__main__':
     print('[OK] HU-52: Extracto Bancario 20 años (running balance, subtotales, PDF, Excel streaming, CSV)')
     test_hu54_liquidacion_honorarios_antidoble_pago_y_boleta_pdf()
     print('[OK] HU-54: Liquidación de honorarios (70/30), anti-doble pago y Boleta PDF')
+    test_cu26a_multimoneda_usd_bob_y_amortizacion_6_cuotas()
+    print('[OK] CU26-A: Plan 6 cuotas, amortización decimal exacta, USD->BOB (6.96) y bloqueo doble pago')
     print('ALL SPRINT 4 FASE 1 TESTS PASSED [OK]')

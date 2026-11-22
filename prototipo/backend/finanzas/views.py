@@ -13,7 +13,7 @@ from rest_framework.views import APIView
 
 from agenda.models import Cita
 from clinica.models import Paciente, Psicologo
-from .models import CuentaPaciente, PagoConsulta, LiquidacionHonorario
+from .models import CuentaPaciente, PagoConsulta, LiquidacionHonorario, PlanPagoTerapeutico, CuotaAmortizacion, GastoFijoMensual, CalificacionCRM
 from .permissions import (
     IsCajaStaff,
     IsAdminFinanciero,
@@ -26,6 +26,10 @@ from .serializers import (
     CuentaPacienteSerializer,
     PagoConsultaSerializer,
     RegistrarPagoInputSerializer,
+    CrearPlanAmortizacionInputSerializer,
+    RegistrarPagoCuotaInputSerializer,
+    RegistrarGastoFijoInputSerializer,
+    RegistrarCalificacionCRMInputSerializer,
     LiquidacionHonorarioSerializer,
     GenerarLiquidacionInputSerializer,
     PagarLiquidacionInputSerializer,
@@ -159,6 +163,17 @@ class PagoConsultaListCreateView(APIView):
             cita = get_object_or_404(Cita, pk=data['cita_id'])
 
         try:
+            if data.get('cuota_id'):
+                res = FinanzasService.registrar_pago_cuota(
+                    cuota_id=data['cuota_id'],
+                    monto=data['monto'],
+                    moneda=data.get('moneda_origen', 'BOB'),
+                    metodo_pago=data['metodo_pago'],
+                    usuario=request.user,
+                    referencia_externa=data.get('referencia_externa', ''),
+                )
+                return Response(PagoConsultaSerializer(res['pago']).data, status=status.HTTP_201_CREATED)
+
             pago = FinanzasService.registrar_pago(
                 paciente=paciente,
                 monto=data['monto'],
@@ -168,6 +183,7 @@ class PagoConsultaListCreateView(APIView):
                 referencia_externa=data.get('referencia_externa', ''),
                 observaciones=data.get('observaciones', ''),
                 permitir_abono_adelantado=data.get('permitir_abono_adelantado', False),
+                moneda_origen=data.get('moneda_origen', 'BOB'),
             )
         except ValueError as exc:
             return Response({'detail': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
@@ -415,6 +431,288 @@ class DashboardFinancieroView(APIView):
                 incluir_superadmin_reportes=bool(request.user.is_superuser),
             )
             return Response(data)
+        except ValueError as exc:
+            return Response({'detail': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+# ==============================================================================
+# INCREMENTO CU26-A: PLANES DE AMORTIZACIÓN, EXTRACTO POR PACIENTE Y PAGO BOB/USD
+# ==============================================================================
+class PlanPagoAmortizacionListCreateView(APIView):
+    """CTR_PagosAmortizacion — Crea y lista planes de pago con tabla de amortización."""
+    permission_classes = [IsAuthenticated, IsCajaOrOwnerPaciente]
+
+    def get(self, request):
+        paciente_id = request.query_params.get('paciente_id')
+        if not is_caja_staff(request.user):
+            paciente_id = str(request.user.perfil_paciente.id)
+        if not paciente_id:
+            qs = PlanPagoTerapeutico.objects.select_related('paciente__usuario').prefetch_related('cuotas')[:50]
+            return Response([
+                {
+                    'id': str(pl.id),
+                    'paciente_id': str(pl.paciente_id),
+                    'paciente_nombre': f"{pl.paciente.usuario.nombre} {pl.paciente.usuario.apellido}".strip(),
+                    'nombre_plan': pl.nombre_plan,
+                    'monto_total': float(pl.monto_total),
+                    'numero_cuotas': pl.numero_cuotas,
+                    'saldo_insoluto': float(pl.saldo_insoluto),
+                    'estado': pl.estado,
+                }
+                for pl in qs
+            ])
+        return Response(FinanzasService.obtener_extracto_paciente_completo(paciente_id))
+
+    def post(self, request):
+        if not is_caja_staff(request.user):
+            return Response({'detail': 'Solo personal de caja puede crear planes.'}, status=status.HTTP_403_FORBIDDEN)
+        inp = CrearPlanAmortizacionInputSerializer(data=request.data)
+        if not inp.is_valid():
+            return Response(inp.errors, status=status.HTTP_400_BAD_REQUEST)
+        d = inp.validated_data
+        paciente = get_object_or_404(Paciente, pk=d['paciente_id'])
+        try:
+            plan = FinanzasService.crear_plan_amortizacion(
+                paciente=paciente,
+                nombre_plan=d['nombre_plan'],
+                monto_total=d['monto_total'],
+                numero_cuotas=d['numero_cuotas'],
+                tasa_interes_anual=d['tasa_interes_anual'],
+                porcentaje_seguro=d['porcentaje_seguro'],
+                moneda=d['moneda'],
+                sesiones_incluidas=d['sesiones_incluidas'],
+                fecha_inicio=d.get('fecha_inicio'),
+            )
+            return Response(FinanzasService.obtener_extracto_paciente_completo(plan.paciente_id), status=status.HTTP_201_CREATED)
+        except ValueError as exc:
+            return Response({'detail': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ExtractoPacienteAmortizacionView(APIView):
+    """Ruta CU26-A: GET /api/v1/finanzas/extracto-paciente/<paciente_id>/"""
+    permission_classes = [IsAuthenticated, IsCajaOrOwnerPaciente]
+
+    def get(self, request, paciente_id):
+        paciente = get_object_or_404(Paciente, pk=paciente_id)
+        if not is_caja_staff(request.user):
+            if not hasattr(request.user, 'perfil_paciente') or request.user.perfil_paciente.id != paciente.id:
+                return Response({'detail': 'Acceso denegado.'}, status=status.HTTP_403_FORBIDDEN)
+        return Response(FinanzasService.obtener_extracto_paciente_completo(paciente.id))
+
+
+class PagoRegistrarMultimonedaView(APIView):
+    """
+    CU26A-paso 2: POST /api/v1/finanzas/pagos/registrar/
+    Soporta pago de Cuota de Amortización (cuota_id) o cobro directo en BOB/USD.
+    """
+    permission_classes = [IsAuthenticated, IsCajaStaff]
+
+    def post(self, request):
+        inp = RegistrarPagoCuotaInputSerializer(data=request.data)
+        if not inp.is_valid():
+            return Response(inp.errors, status=status.HTTP_400_BAD_REQUEST)
+        d = inp.validated_data
+        try:
+            if d.get('cuota_id'):
+                res = FinanzasService.registrar_pago_cuota(
+                    cuota_id=d['cuota_id'],
+                    monto=d.get('monto'),
+                    moneda=d.get('moneda', 'BOB'),
+                    metodo_pago=d.get('metodo_pago', 'QR_BANCARIO'),
+                    usuario=request.user,
+                    referencia_externa=d.get('referencia_externa', ''),
+                )
+                # CU26A-paso 12: HTTP 201 Created {comprobante, extracto_actualizado}
+                return Response({
+                    'comprobante': PagoConsultaSerializer(res['pago']).data,
+                    'extracto_actualizado': res['extracto_amortizacion'],
+                }, status=status.HTTP_201_CREATED)
+
+            if not d.get('paciente_id') or not d.get('monto'):
+                return Response({'detail': 'Debe enviar cuota_id o paciente_id + monto.'}, status=status.HTTP_400_BAD_REQUEST)
+            pac = get_object_or_404(Paciente, pk=d['paciente_id'])
+            pago = FinanzasService.registrar_pago(
+                paciente=pac,
+                monto=d['monto'],
+                metodo_pago=d.get('metodo_pago', 'QR_BANCARIO'),
+                usuario=request.user,
+                referencia_externa=d.get('referencia_externa', ''),
+                observaciones=d.get('observaciones', ''),
+                moneda_origen=d.get('moneda', 'BOB'),
+            )
+            return Response({
+                'comprobante': PagoConsultaSerializer(pago).data,
+                'extracto_actualizado': FinanzasService.obtener_extracto_paciente_completo(pac.id),
+            }, status=status.HTTP_201_CREATED)
+        except CuotaAmortizacion.DoesNotExist:
+            return Response({'detail': 'Cuota de amortización no encontrada.'}, status=status.HTTP_404_NOT_FOUND)
+        except ValueError as exc:
+            # CU26A-paso 14: HTTP 400 Bad Request
+            return Response({'detail': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+# ==============================================================================
+# INCREMENTO CU26-B & CRM: GASTOS FIJOS, ESTADO DE RESULTADOS P&L Y CRM 1–5★
+# ==============================================================================
+class GastoFijoMensualListCreateView(APIView):
+    """CRUD de Gastos Fijos Mensuales (Alquiler, Servicios, Personal, SaaS)."""
+    permission_classes = [IsAuthenticated, IsAdminFinanciero]
+
+    def get(self, request):
+        qs = GastoFijoMensual.objects.all()
+        periodo = request.query_params.get('periodo_mes')
+        categoria = request.query_params.get('categoria')
+        if periodo:
+            qs = qs.filter(periodo_mes=periodo.strip())
+        if categoria:
+            qs = qs.filter(categoria=categoria.upper().strip())
+        return Response([
+            {
+                'id': str(g.id),
+                'periodo_mes': g.periodo_mes,
+                'fecha_gasto': g.fecha_gasto.isoformat(),
+                'categoria': g.categoria,
+                'categoria_display': g.get_categoria_display(),
+                'descripcion': g.descripcion,
+                'moneda': g.moneda,
+                'monto_bob': float(g.monto_bob),
+                'comprobante_ref': g.comprobante_ref,
+            }
+            for g in qs[:200]
+        ])
+
+    def post(self, request):
+        inp = RegistrarGastoFijoInputSerializer(data=request.data)
+        if not inp.is_valid():
+            return Response(inp.errors, status=status.HTTP_400_BAD_REQUEST)
+        d = inp.validated_data
+        try:
+            gasto = DashboardFinancieroService.registrar_gasto_fijo(
+                categoria=d['categoria'],
+                descripcion=d['descripcion'],
+                monto=d['monto'],
+                moneda=d.get('moneda', 'BOB'),
+                fecha_gasto=d.get('fecha_gasto'),
+                periodo_mes=d.get('periodo_mes') or None,
+                comprobante_ref=d.get('comprobante_ref', ''),
+                usuario=request.user,
+            )
+            return Response({
+                'id': str(gasto.id),
+                'periodo_mes': gasto.periodo_mes,
+                'categoria': gasto.categoria,
+                'descripcion': gasto.descripcion,
+                'monto_bob': float(gasto.monto_bob),
+            }, status=status.HTTP_201_CREATED)
+        except ValueError as exc:
+            return Response({'detail': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class EstadoResultadosContableView(APIView):
+    """CU26B-paso 2: GET /api/v1/finanzas/estado-resultados/?ini=...&fin=..."""
+    permission_classes = [IsAuthenticated, IsAdminFinanciero]
+
+    def get(self, request):
+        try:
+            f_ini = _parse_iso_date(request.query_params.get('ini') or request.query_params.get('fecha_desde'))
+            f_fin = _parse_iso_date(request.query_params.get('fin') or request.query_params.get('fecha_hasta'))
+            res = DashboardFinancieroService.calcular_estado_resultados_y_crm(fecha_desde=f_ini, fecha_hasta=f_fin)
+            return Response(res)
+        except ValueError as exc:
+            return Response({'detail': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CalificacionCRMListCreateView(APIView):
+    """Registro y listado de calificaciones post-consulta CRM 1–5 estrellas."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        qs = CalificacionCRM.objects.select_related('paciente__usuario', 'psicologo__usuario')
+        if not is_caja_staff(request.user) and hasattr(request.user, 'perfil_paciente'):
+            qs = qs.filter(paciente=request.user.perfil_paciente)
+        return Response([
+            {
+                'id': str(c.id),
+                'cita_id': str(c.cita_id) if c.cita_id else None,
+                'paciente_id': str(c.paciente_id),
+                'paciente_nombre': f"{c.paciente.usuario.nombre} {c.paciente.usuario.apellido}".strip(),
+                'psicologo_nombre': f"Lic. {c.psicologo.usuario.nombre} {c.psicologo.usuario.apellido}".strip() if c.psicologo else '-',
+                'puntuacion_estrellas': c.puntuacion_estrellas,
+                'puntualidad': c.puntualidad,
+                'empatia_profesional': c.empatia_profesional,
+                'calidad_plataforma': c.calidad_plataforma,
+                'comentario': c.comentario,
+                'requiere_seguimiento': c.requiere_seguimiento,
+                'estado_seguimiento': c.estado_seguimiento,
+                'nota_seguimiento': c.nota_seguimiento,
+                'fecha_calificacion': c.fecha_calificacion.isoformat(),
+            }
+            for c in qs[:100]
+        ])
+
+    def post(self, request):
+        inp = RegistrarCalificacionCRMInputSerializer(data=request.data)
+        if not inp.is_valid():
+            return Response(inp.errors, status=status.HTTP_400_BAD_REQUEST)
+        d = inp.validated_data
+        cita = get_object_or_404(Cita, pk=d['cita_id']) if d.get('cita_id') else None
+        paciente = None
+        if hasattr(request.user, 'perfil_paciente') and not is_caja_staff(request.user):
+            paciente = request.user.perfil_paciente
+        elif d.get('paciente_id'):
+            paciente = get_object_or_404(Paciente, pk=d['paciente_id'])
+        elif cita is not None:
+            paciente = cita.paciente
+        else:
+            paciente = Paciente.objects.first()
+        if not paciente:
+            return Response({'detail': 'No se pudo resolver el paciente para la calificación CRM.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        psicologo = get_object_or_404(Psicologo, pk=d['psicologo_id']) if d.get('psicologo_id') else None
+        try:
+            calif = DashboardFinancieroService.registrar_calificacion_crm(
+                paciente=paciente,
+                puntuacion_estrellas=d['puntuacion_estrellas'],
+                cita=cita,
+                psicologo=psicologo,
+                puntualidad=d['puntualidad'],
+                empatia_profesional=d['empatia_profesional'],
+                calidad_plataforma=d['calidad_plataforma'],
+                comentario=d.get('comentario', ''),
+            )
+            return Response({
+                'id': str(calif.id),
+                'puntuacion_estrellas': calif.puntuacion_estrellas,
+                'requiere_seguimiento': calif.requiere_seguimiento,
+                'estado_seguimiento': calif.estado_seguimiento,
+            }, status=status.HTTP_201_CREATED)
+        except ValueError as exc:
+            return Response({'detail': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CalificacionCRMSeguimientoView(APIView):
+    """Permite marcar como ATENDIDO un ticket CRM de baja puntuación (<= 2★)."""
+    permission_classes = [IsAuthenticated, IsAdminFinanciero]
+
+    def patch(self, request, calificacion_id):
+        calif = get_object_or_404(CalificacionCRM, pk=calificacion_id)
+        nota = (request.data.get('nota_seguimiento') or '').strip()
+        calif.estado_seguimiento = 'ATENDIDO'
+        if nota:
+            calif.nota_seguimiento = nota
+        calif.save(update_fields=['estado_seguimiento', 'nota_seguimiento'])
+        return Response({'id': str(calif.id), 'estado_seguimiento': calif.estado_seguimiento, 'nota_seguimiento': calif.nota_seguimiento})
+
+
+class EstadisticasCRMView(APIView):
+    """Estadísticas consolidadas CSAT/NPS e histograma 1–5★."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            f_ini = _parse_iso_date(request.query_params.get('ini') or request.query_params.get('fecha_desde'))
+            f_fin = _parse_iso_date(request.query_params.get('fin') or request.query_params.get('fecha_hasta'))
+            return Response(DashboardFinancieroService.obtener_estadisticas_crm(fecha_desde=f_ini, fecha_hasta=f_fin))
         except ValueError as exc:
             return Response({'detail': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
