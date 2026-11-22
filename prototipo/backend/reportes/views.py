@@ -120,6 +120,12 @@ class ReporteGenericoView(ReportesPermission, APIView):
                     status=status.HTTP_403_FORBIDDEN,
                 )
 
+        if fuente == "facturas_saas" and not EsSuperAdmin().has_permission(request, self):
+            return Response(
+                {"error": "Solo el SuperAdmin puede consultar la facturación SaaS global."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         # Extraer filtros de query params
         filtros = {}
         fuente_def = FUENTES_DISPONIBLES[fuente]
@@ -141,8 +147,11 @@ class ReporteGenericoView(ReportesPermission, APIView):
                 "direccion": request.query_params.get("orden_dir", "ASC"),
             }
 
+        page = request.query_params.get("page")
+        page_size = request.query_params.get("page_size")
+
         try:
-            resultado = ReportEngine.generar(fuente, columnas, filtros, orden)
+            resultado = ReportEngine.generar(fuente, columnas, filtros, orden, page=page, page_size=page_size)
             return Response(resultado)
         except ValueError as exc:
             return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
@@ -223,6 +232,12 @@ class ReportePersonalizadoView(ReportesPermission, APIView):
                 response['Content-Disposition'] = f'attachment; filename="reporte_{fuente}.xlsx"'
                 return response
 
+            # Canal Descarga Directa PDF oficial (ReportLab - HU-53)
+            if formato == "PDF":
+                from .exporters import PDFExporter
+                nombre_centro = tenant_obj.nombre if tenant_obj else "Centro Psicológico"
+                return PDFExporter.generar(resultado, fuente, tenant_name=nombre_centro)
+
             # Canal Descarga Directa CSV
             if formato == "CSV":
                 from .exporters import CSVExporter
@@ -287,6 +302,59 @@ class ReportePersonalizadoView(ReportesPermission, APIView):
 # ─────────────────────────────────────────────────────────────
 # Exportar a CSV (descarga directa)
 # ─────────────────────────────────────────────────────────────
+class ReporteExportPDFView(ReportesPermission, APIView):
+    """
+    GET /api/reportes/<fuente>/export/pdf/
+    Descarga directa en formato PDF oficial multipágina (ReportLab - HU-53).
+    """
+
+    def get(self, request, fuente):
+        if fuente not in FUENTES_DISPONIBLES:
+            return Response({"error": "Fuente no reconocida."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if fuente == "bitacora":
+            perm = AuditDeveloperPermission()
+            if not perm.has_permission(request, self):
+                return Response({"error": perm.message}, status=status.HTTP_403_FORBIDDEN)
+
+        if fuente == "facturas_saas" and not EsSuperAdmin().has_permission(request, self):
+            return Response(
+                {"error": "Solo el SuperAdmin puede exportar facturación SaaS."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        filtros = {}
+        for f_def in FUENTES_DISPONIBLES[fuente]["filtros"]:
+            val = request.query_params.get(f_def["key"])
+            if val:
+                filtros[f_def["key"]] = val
+
+        columnas_raw = request.query_params.get("columnas")
+        columnas = columnas_raw.split(",") if columnas_raw else None
+
+        orden = None
+        orden_col = request.query_params.get("orden_columna")
+        if orden_col:
+            orden = {
+                "columna": orden_col,
+                "direccion": request.query_params.get("orden_dir", "ASC"),
+            }
+
+        try:
+            resultado = ReportEngine.generar(fuente, columnas, filtros, orden)
+            from .exporters import PDFExporter
+            tenant_obj = getattr(request, 'tenant', None)
+            nombre_centro = tenant_obj.nombre if tenant_obj else "Centro Psicológico"
+            return PDFExporter.generar(resultado, fuente, tenant_name=nombre_centro)
+        except ValueError as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as exc:
+            return Response(
+                {"error": f"Error al exportar PDF: {str(exc)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
 class ReporteExportCSVView(ReportesPermission, APIView):
     """
     GET /api/reportes/<fuente>/export/csv/
